@@ -1,0 +1,67 @@
+// controllers/leadController.js
+const leadService = require('../services/LeadService');
+
+const getLeads = async (req, res) => {
+  try {
+    const leads = await leadService.getLeads();
+    res.json(leads);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getLeadById = async (req, res) => {
+  try {
+    const lead = await leadService.getLeadById(req.params.id);
+    res.json(lead);
+  } catch (error) {
+    res.status(404).json({ error: error.message });
+  }
+};
+
+const createLead = async (req, res) => {
+  try {
+    const novoLead = await leadService.createLead(req.body);
+    res.status(201).json(novoLead);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+const updateLead = async (req, res) => {
+  try {
+    const leadAtualizado = await leadService.updateLead(req.params.id, req.body);
+    res.json(leadAtualizado);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+const deleteLead = async (req, res) => {
+  try {
+    const msg = await leadService.deleteLead(req.params.id);
+    res.json(msg);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const descartarLead = async (req, res) => {
+  try {
+    const lead = await leadService.descartarLead(req.params.id, req.body);
+    res.json(lead);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+
+
+module.exports = {
+  getLeads,
+  getLeadById,
+  createLead,
+  updateLead,
+  deleteLead,
+  descartarLead
+};
