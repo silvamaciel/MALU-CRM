@@ -8,17 +8,78 @@ const LeadStage = require("../models/LeadStage"); // Verifique se este arquivo e
 const User = require("../models/User"); // Verifique se este arquivo e exportação estão corretos
 const cpfcnpj = require("cpf-cnpj-validator"); // Validador
 
-const getLeads = async () => {
+const getLeads = async (filters = {}) => { // Aceita um objeto de filtros
   try {
-    const leads = await Lead.find()
+    console.log("[getLeads] Filtros recebidos:", filters); // Log para depuração
+    const queryConditions = {}; // Objeto para construir a query do MongoDB
+
+    // Filtro por Nome (busca parcial, case-insensitive)
+    if (filters.nome) {
+      queryConditions.nome = { $regex: filters.nome, $options: 'i' };
+    }
+
+    // Filtro por Email (busca parcial, case-insensitive)
+    if (filters.email) {
+       queryConditions.email = { $regex: filters.email, $options: 'i' };
+    }
+
+    // Filtro por Situação (ID exato)
+    if (filters.situacao && mongoose.Types.ObjectId.isValid(filters.situacao)) {
+      queryConditions.situacao = filters.situacao;
+    }
+
+    // Filtro por Origem (ID exato)
+    if (filters.origem && mongoose.Types.ObjectId.isValid(filters.origem)) {
+      queryConditions.origem = filters.origem;
+    }
+
+    // Filtro por Responsável (ID exato)
+    if (filters.responsavel && mongoose.Types.ObjectId.isValid(filters.responsavel)) {
+      queryConditions.responsavel = filters.responsavel;
+    }
+
+    // Filtro por Data de Criação (Intervalo)
+    // Espera receber dataInicio e dataFim no formato YYYY-MM-DD
+    const dateQuery = {};
+    if (filters.dataInicio) {
+        try {
+            const startDate = new Date(filters.dataInicio);
+            startDate.setUTCHours(0, 0, 0, 0); // Começo do dia em UTC
+            if (!isNaN(startDate)) { // Verifica se a data é válida
+                 dateQuery.$gte = startDate;
+            } else { console.warn("Formato de dataInicio inválido:", filters.dataInicio);}
+        } catch(e){ console.warn("Erro ao processar dataInicio:", filters.dataInicio, e); }
+    }
+    if (filters.dataFim) {
+         try {
+            const endDate = new Date(filters.dataFim);
+            endDate.setUTCHours(23, 59, 59, 999); // Fim do dia em UTC
+             if (!isNaN(endDate)) { // Verifica se a data é válida
+                 dateQuery.$lte = endDate;
+             } else { console.warn("Formato de dataFim inválido:", filters.dataFim); }
+         } catch(e){ console.warn("Erro ao processar dataFim:", filters.dataFim, e); }
+    }
+    // Adiciona o filtro de data apenas se $gte ou $lte foram definidos
+    if (Object.keys(dateQuery).length > 0) {
+        queryConditions.createdAt = dateQuery; // Filtra pelo campo createdAt gerenciado pelo timestamps:true
+    }
+
+    console.log("[getLeads] Condições da Query MongoDB:", JSON.stringify(queryConditions, null, 2)); // Log da query
+
+    // Executa a busca com as condições
+    const leads = await Lead.find(queryConditions) // <<< Passa as condições para o find()
       .populate("situacao", "nome")
       .populate("origem", "nome")
       .populate("responsavel", "nome perfil")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 }); // Mantém a ordenação
+
+    console.log(`[getLeads] Encontrados ${leads.length} leads.`);
     return leads;
+
   } catch (err) {
     console.error("Erro ao buscar leads no serviço:", err);
-    throw new Error("Erro ao buscar os leads");
+    // Evita expor detalhes internos no erro genérico
+    throw new Error("Erro ao buscar os leads com os filtros aplicados.");
   }
 };
 
