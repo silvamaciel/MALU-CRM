@@ -1,0 +1,103 @@
+/* src/components/ConfirmModal/ConfirmModal.css */
+/* Estilos similares ao DiscardLeadModal, mas com nomes de classe diferentes para evitar conflitos */
+.modal-overlay-confirm {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050; /* Acima do modal de descarte, se ambos pudessem abrir */
+    padding: 1rem;
+  }
+  
+  .modal-content-confirm {
+    background-color: white;
+    padding: 1.5rem 2rem; /* Um pouco menor talvez */
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    max-width: 450px;
+    width: 100%;
+    animation: fadeInConfirm 0.2s ease-out;
+  }
+  
+   @keyframes fadeInConfirm {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .modal-content-confirm h2 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.3em;
+    color: #333;
+  }
+  
+  .modal-content-confirm p {
+    margin-bottom: 1.5rem;
+    color: #555;
+    line-height: 1.5;
+  }
+  
+  .error-message-modal-confirm {
+     color: #dc3545;
+     font-size: 0.9em;
+     margin-top: -0.5rem; /* Mais perto do parágrafo */
+     margin-bottom: 1rem;
+     text-align: center;
+     font-weight: 500;
+  }
+  
+  
+  .modal-actions-confirm {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.8rem;
+    margin-top: 1.5rem;
+  }
+  
+  /* Estilo base para botões (pode reutilizar .button se global) */
+  .modal-actions-confirm .button {
+     padding: 0.6rem 1.2rem;
+     border-radius: 5px;
+     text-decoration: none;
+     font-weight: 500;
+     cursor: pointer;
+     border: 1px solid transparent;
+     transition: background-color 0.2s ease;
+     font-size: 0.95em;
+  }
+   .modal-actions-confirm .button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+  }
+  
+  
+  .cancel-button-confirm {
+     background-color: #6c757d;
+     border-color: #6c757d;
+     color: white;
+  }
+  .cancel-button-confirm:hover:not(:disabled) {
+     background-color: #5a6268;
+  }
+  
+  /* Estilo padrão para botão de confirmação (pode ser sobrescrito pela prop) */
+  .confirm-button-default {
+     background-color: #007bff; /* Azul */
+     border-color: #007bff;
+     color: white;
+  }
+   .confirm-button-default:hover:not(:disabled) {
+     background-color: #0056b3;
+  }
+  
+   /* Estilo específico para confirmação de exclusão */
+   .confirm-button-delete {
+      background-color: #dc3545; /* Vermelho */
+      border-color: #dc3545;
+      color: white;
+   }
+    .confirm-button-delete:hover:not(:disabled) {
+      background-color: #c82333;
+   }

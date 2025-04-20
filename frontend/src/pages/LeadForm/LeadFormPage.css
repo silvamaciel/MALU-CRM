@@ -1,0 +1,250 @@
+/* src/pages/LeadForm/LeadFormPage.css */
+.lead-form-page {
+  max-width: 700px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.lead-form-page h1 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 1rem;
+}
+
+.lead-form .form-group {
+  margin-bottom: 1.5rem;
+}
+
+.lead-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  color: #555;
+  font-size: 0.9em;
+}
+
+.lead-form input[type="text"],
+.lead-form input[type="email"],
+.lead-form input[type="tel"],
+.lead-form input[type="date"],
+.lead-form select,
+/* Se usar select */
+.lead-form textarea {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1em;
+  transition: border-color 0.2s ease;
+}
+
+.lead-form input:focus,
+.lead-form select:focus,
+.lead-form textarea:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.lead-form textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.submit-button {
+  display: block;
+  width: 100%;
+  padding: 0.9rem 1.5rem;
+  background-color: #28a745;
+  /* Verde sucesso */
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1.1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.submit-button:hover:not(:disabled) {
+  background-color: #218838;
+  /* Verde mais escuro */
+}
+
+.submit-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Mensagens de erro e sucesso */
+.error-message {
+  color: #721c24;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 0.8rem;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.success-message {
+  color: #155724;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  padding: 0.8rem;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.lead-form select {
+  /* Herdará os estilos dos inputs, mas pode adicionar específicos */
+  background-color: white;
+  /* Garante fundo branco */
+  cursor: pointer;
+}
+
+.lead-form select:required:invalid {
+  color: #6c757d;
+  /* Cor cinza para a opção "Selecione..." */
+}
+
+.lead-form option {
+  color: #212529;
+  /* Cor padrão para as opções */
+}
+
+/* Estilo para a mensagem de "nenhuma opção cadastrada" */
+.lead-form small {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.8em;
+  color: #dc3545;
+  /* Vermelho alerta */
+}
+
+
+.form-top-actions {
+  display: flex;
+  gap: 0.8rem;
+  /* Espaço entre botões */
+  margin-bottom: 1.5rem;
+  /* Espaço abaixo dos botões */
+  padding-bottom: 1rem;
+  /* Espaçamento antes da linha */
+  border-bottom: 1px solid #eee;
+  /* Linha separadora opcional */
+  flex-wrap: wrap;
+  /* Permite quebrar linha em telas pequenas */
+}
+
+/* Container para os botões no topo */
+.form-top-actions {
+  display: flex;
+  gap: 0.8rem;
+  /* Espaço entre botões */
+  margin-bottom: 1.5rem;
+  /* Espaço abaixo dos botões */
+  padding-bottom: 1rem;
+  /* Espaçamento antes da linha */
+  border-bottom: 1px solid #eee;
+  /* Linha separadora opcional */
+  flex-wrap: wrap;
+  /* Permite quebrar linha em telas pequenas */
+}
+
+/* Estilo para os botões no topo (reutilizando .button se definido globalmente ou copie estilos) */
+.form-top-actions .button {
+  padding: 0.5rem 1rem;
+  /* Tamanho um pouco menor */
+  font-size: 0.9em;
+  border-radius: 4px;
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s ease-in-out;
+  display: inline-flex;
+  /* Para alinhar ícone e texto */
+  align-items: center;
+  gap: 0.4rem;
+  /* Espaço entre ícone e texto */
+}
+
+/* Cores específicas para os botões do topo */
+.back-to-detail-button {
+  background-color: #6c757d; /* Cinza */
+  border-color: #6c757d;
+  color: white;
+}
+
+.back-to-detail-button:hover {
+  background-color: #e2e6ea;
+}
+
+.back-to-list-button {
+  background-color: #EA4C89;
+  border-radius: 8px;
+  border-style: none;
+  box-sizing: border-box;
+  color: #FFFFFF;
+  cursor: pointer;
+  display: inline-block;
+  font-family: "Haas Grot Text R Web", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  height: 40px;
+  line-height: 20px;
+  list-style: none;
+  margin: 0;
+  outline: none;
+  padding: 10px 16px;
+  position: relative;
+  text-align: center;
+  text-decoration: none;
+  transition: color 100ms;
+  vertical-align: baseline;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.back-to-list-button:hover {
+  background-color: #e2e6ea;
+}
+
+/* Ajuste no container de ações inferior para alinhar botão Salvar à direita */
+.form-actions {
+  display: flex;
+  margin-top: 2rem;
+  justify-content: flex-end;
+  /* Alinha o conteúdo (botão) à direita */
+}
+
+.form-actions .submit-button {
+  width: auto;
+  padding: 0.9rem 1.5rem;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1.1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.form-actions .submit-button:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.form-actions .submit-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+  opacity: 0.7;
+}

@@ -1,0 +1,198 @@
+/* src/pages/LeadDetail/LeadDetailPage.css */
+.lead-detail-page {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.lead-detail-page.loading,
+.lead-detail-page.error-page {
+    text-align: center;
+    padding: 3rem;
+    font-size: 1.1em;
+}
+
+.error-page h2 {
+    color: #dc3545;
+    margin-bottom: 1rem;
+}
+
+.error-message {
+    color: #721c24;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 1.5rem;
+    display: inline-block;
+    /* Para não ocupar largura total */
+}
+
+
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    /* Permite quebrar linha em telas menores */
+    gap: 1rem;
+}
+
+.detail-header h1 {
+    margin: 0;
+    color: #343a40;
+    font-size: 1.8em;
+    flex-grow: 1;
+    /* Ocupa espaço disponível */
+}
+
+.header-actions {
+    display: flex;
+    gap: 0.8rem;
+}
+
+/* Estilos gerais para botões na página */
+.button {
+    padding: 0.6rem 1.2rem;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s ease-in-out;
+    font-size: 0.9em;
+    text-align: center;
+}
+
+.back-button {
+    background-color: #6c757d;
+    /* Cinza */
+    border-color: #6c757d;
+    color: white;
+}
+
+.back-button:hover {
+    background-color: #5a626890;
+    border-color: #545b62;
+    color: #ffffff;
+}
+
+.edit-button {
+    background-color: #ffc107;
+    /* Amarelo */
+    border-color: #ffc107;
+    color: #ffffff;
+}
+
+.edit-button:hover {
+    background-color: #e0a800;
+    border-color: #d39e00;
+}
+
+/* Grid para detalhes */
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    /* Colunas responsivas */
+    gap: 1.5rem;
+    /* Espaçamento entre itens */
+}
+
+.detail-item {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 5px;
+    border: 1px solid #e9ecef;
+    word-wrap: break-word;
+    /* Quebra palavras longas */
+}
+
+.detail-label {
+    display: block;
+    font-weight: bold;
+    color: #495057;
+    font-size: 0.85em;
+    margin-bottom: 0.3rem;
+    text-transform: uppercase;
+}
+
+.detail-value {
+    font-size: 1em;
+    color: #212529;
+}
+
+/* Estilos específicos */
+.detail-item.comentario {
+    grid-column: 1 / -1;
+    /* Faz o comentário ocupar a largura inteira */
+}
+
+.comentario-value {
+    white-space: pre-wrap;
+    /* Preserva quebras de linha e espaços */
+    line-height: 1.5;
+}
+
+.discard-info {
+    background-color: #fff3cd;
+    /* Fundo amarelo claro para destaque */
+    border-color: #ffeeba;
+}
+
+.discard-info .detail-label {
+    color: #856404;
+}
+
+.discard-button-detail {
+    background-color: #dc3545;
+    /* Vermelho */
+    border-color: #dc3545;
+    color: white;
+}
+
+.discard-button-detail:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+}
+
+.reactivate-button {
+    background-color: #28a745; /* Verde sucesso */
+    border-color: #28a745;
+    color: white;
+}
+.reactivate-button:hover:not(:disabled) {
+    background-color: #218838;
+    border-color: #1e7e34;
+}
+.reactivate-button:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+/* Estilo para a mensagem de erro da reativação */
+.reactivation-error {
+    /* Similar ao error-message, mas pode ser posicionado diferente */
+    color: #dc3545;
+    margin-top: -1rem; /* Puxa para perto dos botões do header */
+    margin-bottom: 1rem;
+    text-align: right; /* Alinha com os botões */
+    font-size: 0.9em;
+}
+
+
+.delete-button-detail {
+    background-color: #dc3545; /* Vermelho */
+    border-color: #dc3545;
+    color: white;
+    margin-left: auto; /* Empurra para a direita, se houver espaço */
+}
+.delete-button-detail:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+}

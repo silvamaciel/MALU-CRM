@@ -1,0 +1,127 @@
+/* src/components/DiscardLeadModal/DiscardLeadModal.css */
+.modal-overlay {
+    position: fixed; /* Cobre a tela toda */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6); /* Fundo semi-transparente */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000; /* Garante que fique por cima */
+    padding: 1rem;
+  }
+  
+  .modal-content {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    max-width: 500px; /* Largura máxima */
+    width: 100%;
+    max-height: 90vh; /* Altura máxima */
+    overflow-y: auto; /* Permite scroll se conteúdo for grande */
+    animation: fadeIn 0.3s ease-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  
+  
+  .modal-content h2 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.5rem;
+  }
+  
+  .modal-content p {
+    margin-bottom: 1.5rem;
+    color: #555;
+    font-size: 0.95em;
+    line-height: 1.5;
+  }
+  
+  /* Estilos para o formulário dentro do modal */
+  .modal-content .form-group {
+    margin-bottom: 1rem;
+  }
+  
+  .modal-content label {
+    display: block;
+    margin-bottom: 0.3rem;
+    font-weight: 500;
+    color: #444;
+    font-size: 0.9em;
+  }
+  
+  .modal-content input[type="text"],
+  .modal-content textarea {
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+  }
+  
+  .modal-content textarea {
+    resize: vertical;
+    min-height: 60px;
+  }
+  
+  .error-message-modal {
+    color: #dc3545; /* Vermelho */
+    font-size: 0.9em;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+  
+  
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end; /* Alinha botões à direita */
+    gap: 0.8rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #eee;
+  }
+  
+  /* Estilos básicos para botões no modal (reutilizar classe .button se definida globalmente) */
+  .modal-actions .button {
+     padding: 0.6rem 1.2rem;
+     border-radius: 5px;
+     text-decoration: none;
+     font-weight: 500;
+     cursor: pointer;
+     border: 1px solid transparent;
+     transition: background-color 0.2s ease;
+     font-size: 0.9em;
+  }
+  .modal-actions .button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+  }
+  
+  
+  .cancel-button-modal {
+     background-color: #6c757d; /* Cinza */
+     border-color: #6c757d;
+     color: white;
+  }
+  .cancel-button-modal:hover:not(:disabled) {
+     background-color: #5a6268;
+  }
+  
+  .confirm-discard-button {
+     background-color: #dc3545; /* Vermelho */
+     border-color: #dc3545;
+     color: white;
+  }
+   .confirm-discard-button:hover:not(:disabled) {
+     background-color: #c82333;
+  }
