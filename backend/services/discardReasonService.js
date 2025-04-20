@@ -1,4 +1,5 @@
 // services/discardReasonService.js
+const mongoose = require("mongoose"); 
 const DiscardReason = require("../models/DiscardReason");
 
 // Função para buscar todos os motivos (ordenados por nome)
