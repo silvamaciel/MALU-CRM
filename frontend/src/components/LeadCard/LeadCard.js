@@ -98,7 +98,8 @@ function LeadCard({
       {/* Mostra motivo do descarte APENAS se estiver descartado E houver motivo */}
       {isCurrentlyDiscarded && lead.motivoDescarte && (
         <p className="discard-reason">
-          <strong>Motivo Descarte:</strong> {lead.motivoDescarte}
+          <strong>Motivo Descarte:</strong> {lead.motivoDescarte?.nome}{" "}
+          {/* Acessa o nome */}
         </p>
       )}
       <p className="datas">

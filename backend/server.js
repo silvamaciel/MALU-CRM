@@ -21,6 +21,8 @@ app.use('/api/users', require('./routes/userRoutes'));
 
 app.use('/api/origens', require('./routes/origemRoutes'));
 
+app.use('/api/motivosdescarte', require('./routes/discardReasonRoutes'));
+
 
 
 

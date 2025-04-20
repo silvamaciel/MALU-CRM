@@ -38,8 +38,10 @@ const leadSchema = new Schema(
       required: [true, "A situação do lead é obrigatória."],
     },
     motivoDescarte: {
-      type: String,
-      default: null,
+      type: Schema.Types.ObjectId,
+      ref: 'DiscardReason',       
+      required: false,            
+      default: null
     },
     comentario: {
       type: String,

@@ -1,18 +1,15 @@
 // services/LeadService.js
 
-const mongoose = require("mongoose"); // Verifique se está no topo
+const mongoose = require("mongoose"); 
 const Lead = require("../models/Lead");
 const Origem = require("../models/origem");
-const LeadStage = require("../models/LeadStage"); // Verifique se este arquivo e exportação estão corretos
-const User = require("../models/User"); // Verifique se este arquivo e exportação estão corretos
-const cpfcnpj = require("cpf-cnpj-validator"); // 
+const LeadStage = require("../models/LeadStage"); 
+const User = require("../models/User"); 
+const DiscardReason = require('../models/DiscardReason');
+const cpfcnpj = require("cpf-cnpj-validator"); 
 
 const phoneUtil = require('google-libphonenumber').PhoneNumberUtil.getInstance();
 const PNF = require('google-libphonenumber').PhoneNumberFormat;
-
-
-
-
 
 const getLeads = async (filters = {}) => {
   // Aceita um objeto de filtros
@@ -94,6 +91,7 @@ const getLeads = async (filters = {}) => {
       .populate("situacao", "nome")
       .populate("origem", "nome")
       .populate("responsavel", "nome perfil")
+      .populate("motivoDescarte", "nome")
       .sort({ createdAt: -1 }); // Mantém a ordenação
 
     console.log(`[getLeads] Encontrados ${leads.length} leads.`);
@@ -112,7 +110,8 @@ const getLeadById = async (id) => {
   const lead = await Lead.findById(id)
     .populate("situacao", "nome")
     .populate("origem", "nome")
-    .populate("responsavel", "nome perfil");
+    .populate("responsavel", "nome perfil")
+    .populate("motivoDescarte", "nome");
 
   if (!lead) throw new Error("Lead não encontrado");
   return lead;
@@ -279,34 +278,40 @@ const deleteLead = async (id) => {
 };
 
 const descartarLead = async (id, dados) => {
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new Error("ID de Lead inválido.");
-  }
-  const { motivoDescarte, comentario } = dados;
-  if (!motivoDescarte) {
-    throw new Error("O motivo do descarte é obrigatório.");
+  if (!mongoose.Types.ObjectId.isValid(id)) { throw new Error("ID de Lead inválido."); }
+
+  const { motivoDescarte, comentario } = dados; // motivoDescarte agora é um ID
+
+  // Valida se o ID do motivo foi enviado e é válido
+  if (!motivoDescarte || !mongoose.Types.ObjectId.isValid(motivoDescarte)) {
+    throw new Error("ID do motivo de descarte inválido ou não fornecido.");
   }
 
-  const situacaoDescartado = await LeadStage.findOne({
-    nome: "Descartado", // !!! Verifique se este nome está EXATO no seu DB !!!
-  }).lean();
-  if (!situacaoDescartado) {
-    console.error('Situação "Descartado" não configurada no banco de dados.');
-    throw new Error('Erro interno: Situação "Descartado" não encontrada.');
+  // Valida se o motivo realmente existe no banco (opcional mas recomendado)
+  const reasonExists = await DiscardReason.findById(motivoDescarte);
+  if (!reasonExists) {
+      throw new Error(`Motivo de descarte com ID ${motivoDescarte} não encontrado.`);
   }
 
+  // Busca a situação "Descartado" (igual antes)
+  const situacaoDescartado = await LeadStage.findOne({ nome: "Descartado" }).lean();
+  if (!situacaoDescartado) { /* ... erro ... */ }
+
+  // Atualiza o lead com o ID da situação e o ID do motivo
   const lead = await Lead.findByIdAndUpdate(
     id,
     {
       situacao: situacaoDescartado._id,
-      motivoDescarte,
+      motivoDescarte: reasonExists._id, // <<< Salva o ID do motivo
       comentario: comentario || null,
     },
     { new: true }
-  ).populate("situacao", "nome");
+  )
+    // Popula situação E o novo motivoDescarte referenciado
+    .populate("situacao", "nome")
+    .populate("motivoDescarte", "nome"); // <<< Adiciona populate para motivoDescarte
 
-  if (!lead)
-    throw new Error("Lead não encontrado (não foi possível descartar).");
+  if (!lead) { throw new Error("Lead não encontrado (não foi possível descartar)."); }
   return lead;
 };
 
