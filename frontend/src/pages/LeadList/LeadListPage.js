@@ -7,206 +7,222 @@ import { Link } from "react-router-dom";
 import { getLeads, discardLead, updateLead, deleteLead } from "../../api/leads";
 import { getSituacoes } from "../../api/situacoes";
 import { getOrigens } from "../../api/origens";
-import { getUsuarios } from "../../api/usuarios"; 
+// Verifique se o import/arquivo é 'users' ou 'usuarios'
+import { getUsuarios } from "../../api/usuarios"; // <--- VERIFIQUE ESTE CAMINHO/NOME
 
 // Componentes
 import LeadCard from "../../components/LeadCard/LeadCard";
 import DiscardLeadModal from "../../components/DiscardLeadModal/DiscardLeadModal";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
-import LeadFilters from '../../components/LeadFilters/LeadFilters'; // Componente de filtros
+import LeadFilters from '../../components/LeadFilters/LeadFilters';
 
 // Estilos
 import "./LeadListPage.css";
 
-// Opcional: Notificações
-// import { ToastContainer, toast } from 'react-toastify';
-// import 'react-toastify/dist/ReactToastify.css';
+// Toastify
+import { toast } from 'react-toastify';
+// O <ToastContainer /> deve estar no App.js
 
 function LeadListPage() {
 
-  // State para Leads
+  // State Leads
   const [leads, setLeads] = useState([]);
-  const [isLoadingLeads, setIsLoadingLeads] = useState(true); // Loading específico para leads
-  const [leadsError, setLeadsError] = useState(null); // Erro específico para leads
+  const [isLoadingLeads, setIsLoadingLeads] = useState(true);
+  const [leadsError, setLeadsError] = useState(null);
 
-  // State para Opções dos Filtros/Dropdowns
+  // State Opções Filtro
   const [situacoesList, setSituacoesList] = useState([]);
   const [origensList, setOrigensList] = useState([]);
   const [usuariosList, setUsuariosList] = useState([]);
-  const [isLoadingOptions, setIsLoadingOptions] = useState(true); // Loading para as opções
-  const [optionsError, setOptionsError] = useState(null); // Erro ao buscar opções
+  const [isLoadingOptions, setIsLoadingOptions] = useState(true);
+  const [optionsError, setOptionsError] = useState(null);
 
-  // State para Filtros Ativos
-  const [activeFilters, setActiveFilters] = useState({}); // Guarda o objeto de filtros atual
+  // State Filtros Ativos
+  const [activeFilters, setActiveFilters] = useState({});
 
-  // State para Modais e Ações
+  // State Modais e Ações
   const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
   const [discardTargetLead, setDiscardTargetLead] = useState(null);
   const [isDiscarding, setIsDiscarding] = useState(false);
   const [discardError, setDiscardError] = useState(null);
 
   const [isReactivatingId, setIsReactivatingId] = useState(null);
-  const [reactivateError, setReactivateError] = useState(null);
+  // Erro de reativação agora é tratado via toast
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteTargetLead, setDeleteTargetLead] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState(null);
 
-  // State para forçar refresh da lista após ações
-  const [refreshKey, setRefreshKey] = useState(0); // Incrementa para re-executar o useEffect de leads
+  // State Refresh Key
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  // --- EFEITO 1: Buscar opções para filtros (roda uma vez no mount) ---
+  // --- EFEITO 1: Buscar opções ---
   useEffect(() => {
     console.log("Buscando opções para filtros...");
     const fetchFilterOptions = async () => {
-      setIsLoadingOptions(true);
-      setOptionsError(null);
+      setIsLoadingOptions(true); setOptionsError(null);
       try {
-        const [situacoesData, origensData, usuariosData] = await Promise.all([
-          getSituacoes(),
-          getOrigens(),
-          getUsuarios() // Certifique-se que a função e API estão corretas
-        ]);
-        setSituacoesList(Array.isArray(situacoesData) ? situacoesData : []);
-        setOrigensList(Array.isArray(origensData) ? origensData : []);
-        setUsuariosList(Array.isArray(usuariosData) ? usuariosData : []);
-        if (!Array.isArray(situacoesData) || !Array.isArray(origensData) || !Array.isArray(usuariosData)) {
-            console.warn("Uma ou mais APIs de opções não retornaram um array.");
-        }
+         const [situacoesData, origensData, usuariosData] = await Promise.all([
+            getSituacoes(), getOrigens(), getUsuarios()
+         ]);
+         setSituacoesList(Array.isArray(situacoesData) ? situacoesData : []);
+         setOrigensList(Array.isArray(origensData) ? origensData : []);
+         setUsuariosList(Array.isArray(usuariosData) ? usuariosData : []);
+         if (!Array.isArray(situacoesData) || !Array.isArray(origensData) || !Array.isArray(usuariosData)) {
+             console.warn("Uma ou mais APIs de opções não retornaram um array.");
+         }
       } catch (err) {
-        console.error("Falha ao buscar opções para filtros:", err);
-        setOptionsError("Não foi possível carregar opções de filtro.");
-        setSituacoesList([]); setOrigensList([]); setUsuariosList([]);
-      } finally {
-        setIsLoadingOptions(false);
-      }
+         console.error("Falha ao buscar opções:", err);
+         setOptionsError("Não foi possível carregar opções de filtro.");
+         setSituacoesList([]); setOrigensList([]); setUsuariosList([]);
+      } finally { setIsLoadingOptions(false); }
     };
     fetchFilterOptions();
-  }, []); // Array vazio = roda só no mount
+  }, []);
 
 
-  // --- EFEITO 2: Buscar LEADS (roda no mount e quando activeFilters ou refreshKey mudam) ---
+  // --- EFEITO 2: Buscar LEADS filtrados ---
   useEffect(() => {
-    console.log("Effect para buscar leads disparado. Filtros:", activeFilters, "RefreshKey:", refreshKey);
+    console.log("Effect leads: Filtros:", activeFilters, "Refresh:", refreshKey);
     const fetchFilteredLeads = async () => {
-        setIsLoadingLeads(true);
-        setLeadsError(null);
+        setIsLoadingLeads(true); setLeadsError(null);
         try {
-            console.log("Chamando getLeads com filtros:", activeFilters);
-            const data = await getLeads(activeFilters); // Passa os filtros ativos para a API
+            const data = await getLeads(activeFilters);
             setLeads(Array.isArray(data) ? data : []);
         } catch (err) {
-            console.error("Falha ao buscar leads filtrados:", err);
-            setLeadsError(err.message || 'Não foi possível carregar os leads.');
-            setLeads([]);
-        } finally {
-            setIsLoadingLeads(false);
-        }
+            console.error("Falha ao buscar leads:", err);
+            setLeadsError(err.message || 'Falha ao carregar.'); setLeads([]);
+        } finally { setIsLoadingLeads(false); }
     };
     fetchFilteredLeads();
-  // Depende dos filtros ativos e da chave de refresh
   }, [activeFilters, refreshKey]);
 
 
-  // --- Handler chamado pelo componente LeadFilters ---
+  // --- Handler Filtros ---
   const handleFilterChange = useCallback((newFilters) => {
-    console.log("LeadListPage: Atualizando filtros ativos:", newFilters);
-    // O debounce já está no LeadFilters, aqui apenas atualizamos o state
     setActiveFilters(newFilters);
-    // Não precisamos chamar fetchLeads aqui, o useEffect acima vai cuidar disso
-  }, []); // useCallback para estabilizar a função
+  }, []);
 
 
-  // --- Handlers Modais e Ações (ajustados para usar refreshKey) ---
-  const handleOpenDiscardModal = (id, nome) => {
-    setDiscardTargetLead({ id, nome }); setDiscardError(null); setIsDiscardModalOpen(true);
-  };
-  const handleCloseDiscardModal = () => {
-    if (!isDiscarding) { setDiscardTargetLead(null); setIsDiscardModalOpen(false); setDiscardError(null); }
-  };
-  const handleConfirmDiscard = async (discardData) => {
-    if (!discardTargetLead) return; setIsDiscarding(true); setDiscardError(null);
+  // --- Handlers Modais e Ações ---
+
+  // Handlers Descarte
+  const handleOpenDiscardModal = useCallback((id, nome) => { // Adicionado useCallback
+    setDiscardTargetLead({ id, nome });
+    setDiscardError(null);
+    setIsDiscardModalOpen(true);
+  }, []); // Sem dependências, apenas define state
+
+  const handleCloseDiscardModal = useCallback(() => { // Adicionado useCallback
+    if (!isDiscarding) {
+      setDiscardTargetLead(null);
+      setIsDiscardModalOpen(false);
+      setDiscardError(null);
+    }
+  }, [isDiscarding]); // Depende de isDiscarding
+
+  const handleConfirmDiscard = useCallback(async (discardData) => { // Adicionado useCallback
+    if (!discardTargetLead) return;
+    setIsDiscarding(true); setDiscardError(null);
     try {
       await discardLead(discardTargetLead.id, discardData);
-      console.log(`Lead "${discardTargetLead.nome}" descartado.`);
-      handleCloseDiscardModal();
-      setRefreshKey(prevKey => prevKey + 1); // <<< Força re-busca de leads
-      // toast.success(...)
-    } catch (err) { setDiscardError(err.message || "Falha"); console.error(err); }
-    finally { setIsDiscarding(false); }
-  };
+      toast.success(`Lead "${discardTargetLead.nome}" descartado!`);
+      handleCloseDiscardModal(); // Chama o handler de fechar
+      setRefreshKey(prevKey => prevKey + 1);
+    } catch (err) {
+      const errorMsg = err.message || "Falha ao descartar.";
+      console.error("Erro ao confirmar descarte:", err);
+      setDiscardError(errorMsg);
+      toast.error(errorMsg);
+    } finally { setIsDiscarding(false); }
+  }, [discardTargetLead, handleCloseDiscardModal]); // Depende do target e do handler de fechar
 
-  const handleReactivateLead = async (id) => {
+  // Handler Reativação
+  const handleReactivateLead = useCallback(async (id) => { // Adicionado useCallback
     if (isReactivatingId) return;
     const situacaoAtendimento = situacoesList.find(s => s.nome === "Em Atendimento");
-    if (!situacaoAtendimento) { setReactivateError("Status 'Em Atendimento' não encontrado."); return; }
-    setIsReactivatingId(id); setReactivateError(null);
+    if (!situacaoAtendimento) {
+       const errorMsg = "Erro: Status 'Em Atendimento' não encontrado.";
+       console.error(errorMsg);
+       toast.error(errorMsg);
+       return;
+    }
+    setIsReactivatingId(id);
     try {
-      await updateLead(id, { situacao: situacaoAtendimento._id });
-      console.log(`Lead ${id} reativado.`);
-      setRefreshKey(prevKey => prevKey + 1); // <<< Força re-busca de leads
-      // toast.success(...)
-    } catch (err) { setReactivateError(err.message || "Falha"); console.error(err); }
-    finally { setIsReactivatingId(null); }
-  };
+      const leadReativado = await updateLead(id, { situacao: situacaoAtendimento._id });
+      toast.success(`Lead "${leadReativado?.nome || id}" reativado!`);
+      setRefreshKey(prevKey => prevKey + 1);
+    } catch (err) {
+      console.error(`Erro ao reativar lead ${id}:`, err);
+      toast.error(err.message || "Falha ao reativar.");
+    } finally { setIsReactivatingId(null); }
+  }, [isReactivatingId, situacoesList]); // Depende de situacoesList
 
-  const handleOpenDeleteModal = (id, nome) => {
-    setDeleteTargetLead({ id, nome }); setDeleteError(null); setIsDeleteModalOpen(true);
-  };
-  const handleCloseDeleteModal = () => {
-    if (!isDeleting) { setDeleteTargetLead(null); setIsDeleteModalOpen(false); setDeleteError(null); }
-  };
-  const handleConfirmDelete = async () => {
-    if (!deleteTargetLead) return; setIsDeleting(true); setDeleteError(null);
+  // Handlers Exclusão
+  const handleOpenDeleteModal = useCallback((id, nome) => { // Adicionado useCallback
+    setDeleteTargetLead({ id, nome });
+    setDeleteError(null);
+    setIsDeleteModalOpen(true);
+  }, []); // Sem dependências
+
+  const handleCloseDeleteModal = useCallback(() => { // Adicionado useCallback
+    if (!isDeleting) {
+      setDeleteTargetLead(null);
+      setIsDeleteModalOpen(false);
+      setDeleteError(null);
+    }
+  }, [isDeleting]); // Depende de isDeleting
+
+  const handleConfirmDelete = useCallback(async () => { // Adicionado useCallback
+    if (!deleteTargetLead) return;
+    setIsDeleting(true); setDeleteError(null);
     try {
       await deleteLead(deleteTargetLead.id);
-      console.log(`Lead "${deleteTargetLead.nome}" excluído.`);
-      handleCloseDeleteModal();
-      setRefreshKey(prevKey => prevKey + 1); // <<< Força re-busca de leads
-      // toast.success(...)
-    } catch (err) { setDeleteError(err.message || "Falha"); console.error(err); }
-    finally { setIsDeleting(false); }
-  };
+      const tempName = deleteTargetLead.nome; // Guarda antes de fechar e limpar o target
+      handleCloseDeleteModal(); // Chama o handler de fechar
+      toast.success(`Lead "${tempName}" excluído permanentemente!`);
+      setRefreshKey(prevKey => prevKey + 1);
+    } catch (err) {
+      const errorMsg = err.message || "Falha ao excluir.";
+      console.error("Erro ao confirmar exclusão:", err);
+      setDeleteError(errorMsg);
+      toast.error(errorMsg);
+    } finally { setIsDeleting(false); }
+  }, [deleteTargetLead, handleCloseDeleteModal]); // Depende do target e do handler de fechar
   // --- Fim Handlers ---
 
 
   return (
     <div className="lead-list-page">
-      {/* <ToastContainer /> */}
+      {/* O ToastContainer fica no App.js */}
       <h1>Meus Leads</h1>
 
-       {/* Exibe erros gerais (opções ou leads) */}
-       {optionsError && <div className="error-message">Erro ao carregar opções: {optionsError}</div>}
-       {/* leadsError é exibido abaixo, perto da lista */}
-       {reactivateError && <div className="error-message">Erro ao reativar: {reactivateError}</div>}
-
+      {/* Exibe erros */}
+      {optionsError && <div className="error-message">Erro ao carregar opções: {optionsError}</div>}
+      {/* Erro de reativação é tratado via toast */}
 
       <div className="add-lead-button-container">
          <Link to="/leads/novo" className="add-lead-button">Cadastrar Novo Lead</Link>
       </div>
 
-      {/* Renderiza Filtros APENAS se as opções carregaram sem erro */}
+      {/* Renderiza Filtros */}
       {isLoadingOptions && <div className="loading-message">Carregando opções de filtro...</div>}
       {!isLoadingOptions && !optionsError && (
          <LeadFilters
              situacoesList={situacoesList}
-             origensList={origensList} // Passa a lista de origens
-             usuariosList={usuariosList} // Passa a lista de usuários
-             onFilterChange={handleFilterChange} // Passa o handler para receber filtros
-             // Desabilita filtros enquanto carrega os leads (resultado do filtro)
+             origensList={origensList}
+             usuariosList={usuariosList}
+             onFilterChange={handleFilterChange}
              isProcessing={isLoadingLeads}
          />
       )}
 
-      {/* Mostra loading se estiver carregando leads */}
+      {/* Loading/Erro dos Leads */}
       {isLoadingLeads && <div className="loading-message">Buscando leads...</div>}
-
-      {/* Mostra erro de leads, se houver */}
       {!isLoadingLeads && leadsError && <div className="error-message">Erro ao carregar leads: {leadsError}</div>}
 
-
-      {/* Mostra lista de Leads apenas se NÂO estiver carregando E não houver erro de leads E opções carregadas */}
+      {/* Lista de Leads */}
       {!isLoadingLeads && !leadsError && !isLoadingOptions && (
         <div className="leads-container">
           {leads.length > 0 ? (
@@ -214,10 +230,10 @@ function LeadListPage() {
               <LeadCard
                 key={lead._id}
                 lead={lead}
-                onDiscardClick={handleOpenDiscardModal}
-                onReactivateClick={handleReactivateLead}
-                isProcessingReactivation={isReactivatingId === lead._id}
-                onDeleteClick={handleOpenDeleteModal} // Passando o handler de delete
+                onDiscardClick={handleOpenDiscardModal} // Passa handler de abrir modal descarte
+                onReactivateClick={handleReactivateLead} // Passa handler de reativar
+                isProcessingReactivation={isReactivatingId === lead._id} // Passa estado de processamento
+                onDeleteClick={handleOpenDeleteModal} // Passa handler de abrir modal exclusão
               />
             ))
           ) : (
@@ -231,16 +247,16 @@ function LeadListPage() {
       {/* Modais */}
       <DiscardLeadModal
         isOpen={isDiscardModalOpen}
-        onClose={handleCloseDiscardModal}
-        onSubmit={handleConfirmDiscard}
+        onClose={handleCloseDiscardModal} // Passa handler de fechar
+        onSubmit={handleConfirmDiscard} // Passa handler de confirmar
         leadName={discardTargetLead?.nome}
         isProcessing={isDiscarding}
         errorMessage={discardError}
       />
       <ConfirmModal
         isOpen={isDeleteModalOpen}
-        onClose={handleCloseDeleteModal}
-        onConfirm={handleConfirmDelete}
+        onClose={handleCloseDeleteModal} // Passa handler de fechar
+        onConfirm={handleConfirmDelete} // Passa handler de confirmar
         title="Confirmar Exclusão"
         message={`Tem certeza que deseja excluir permanentemente o lead "${deleteTargetLead?.nome || ''}"? Esta ação não pode ser desfeita.`}
         confirmText="Excluir Permanentemente"
@@ -249,7 +265,6 @@ function LeadListPage() {
         isProcessing={isDeleting}
         errorMessage={deleteError}
       />
-
     </div>
   );
 }
