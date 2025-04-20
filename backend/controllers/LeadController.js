@@ -3,7 +3,7 @@ const leadService = require('../services/LeadService');
 
 const getLeads = async (req, res) => {
   try {
-    const leads = await leadService.getLeads();
+    const leads = await leadService.getLeads(req.query); 
     res.json(leads);
   } catch (error) {
     res.status(500).json({ error: error.message });
