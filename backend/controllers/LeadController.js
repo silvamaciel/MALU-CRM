@@ -20,6 +20,7 @@ const getLeadById = async (req, res) => {
 };
 
 const createLead = async (req, res) => {
+  
   try {
     const novoLead = await leadService.createLead(req.body);
     res.status(201).json(novoLead);
