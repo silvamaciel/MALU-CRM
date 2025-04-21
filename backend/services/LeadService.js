@@ -1,155 +1,105 @@
 // services/LeadService.js
 
-const mongoose = require("mongoose"); 
+const mongoose = require("mongoose");
 const Lead = require("../models/Lead");
+// !!! Verifique o nome do arquivo: origem.js ou Origem.js? Ajuste o require abaixo !!!
 const Origem = require("../models/origem");
-const LeadStage = require("../models/LeadStage"); 
-const User = require("../models/User"); 
-const DiscardReason = require('../models/DiscardReason');
-const cpfcnpj = require("cpf-cnpj-validator"); 
+const LeadStage = require("../models/LeadStage");
+const User = require("../models/User");
+// REMOVIDO: const DiscardReason = require('../models/DiscardReason');
+// REMOVIDO: const cpfcnpj = require("cpf-cnpj-validator");
+// REMOVIDO: const phoneUtil = require('google-libphonenumber')...
+// REMOVIDO: const PNF = require('google-libphonenumber')...
 
-const phoneUtil = require('google-libphonenumber').PhoneNumberUtil.getInstance();
-const PNF = require('google-libphonenumber').PhoneNumberFormat;
 
+// --- GET Leads (Mantém Filtros e Paginação) ---
 const getLeads = async (queryParams = {}) => {
   try {
-    console.log("[getLeads] Query Params Recebidos:", queryParams);
-
-    // 1. Extrair e validar parâmetros de paginação
-    let page = parseInt(queryParams.page, 10);
-    let limit = parseInt(queryParams.limit, 10);
-
-    // Definir padrões e limites razoáveis
-    page = isNaN(page) || page < 1 ? 1 : page;
-    limit = isNaN(limit) || limit < 1 ? 10 : (limit > 100 ? 100 : limit); // Ex: Limite padrão 10, máximo 100
-
-    const skip = (page - 1) * limit; // Calcular quantos documentos pular
-
-    // 2. Construir objeto de filtros (queryConditions) - Igual ao anterior
+    console.log("[getLeads] Query Params:", queryParams);
+    let page = parseInt(queryParams.page, 10) || 1;
+    let limit = parseInt(queryParams.limit, 10) || 10;
+    limit = Math.min(limit, 100); page = Math.max(1, page); limit = Math.max(1, limit);
+    const skip = (page - 1) * limit;
     const queryConditions = {};
-    const filters = queryParams; // Usar queryParams como base para filtros
-
+    const filters = queryParams;
     if (filters.nome) queryConditions.nome = { $regex: filters.nome, $options: 'i' };
     if (filters.email) queryConditions.email = { $regex: filters.email, $options: 'i' };
     if (filters.situacao && mongoose.Types.ObjectId.isValid(filters.situacao)) queryConditions.situacao = filters.situacao;
     if (filters.origem && mongoose.Types.ObjectId.isValid(filters.origem)) queryConditions.origem = filters.origem;
     if (filters.responsavel && mongoose.Types.ObjectId.isValid(filters.responsavel)) queryConditions.responsavel = filters.responsavel;
-
     const dateQuery = {};
-    if (filters.dataInicio) { /* ... lógica data inicio ... */ }
-    if (filters.dataFim) { /* ... lógica data fim ... */ }
-     if (Object.keys(dateQuery).length > 0) queryConditions.createdAt = dateQuery;
-
-    console.log("[getLeads] Condições Query MongoDB:", JSON.stringify(queryConditions, null, 2));
-
-    // 3. Executar DUAS queries: uma para contar o total, outra para buscar a página
-    // Usamos Promise.all para executá-las em paralelo
+    if (filters.dataInicio) { try { /*...*/ } catch(e){/*...*/} }
+    if (filters.dataFim) { try { /*...*/ } catch(e){/*...*/} }
+    if (Object.keys(dateQuery).length > 0) queryConditions.createdAt = dateQuery;
+    console.log("[getLeads] Condições Query:", JSON.stringify(queryConditions, null, 2));
     const [totalLeads, leads] = await Promise.all([
-      Lead.countDocuments(queryConditions), // Conta o TOTAL de documentos que correspondem aos filtros
-      Lead.find(queryConditions)           // Busca os documentos da PÁGINA ATUAL
+      Lead.countDocuments(queryConditions),
+      Lead.find(queryConditions)
         .populate("situacao", "nome")
         .populate("origem", "nome")
         .populate("responsavel", "nome perfil")
-        .sort({ createdAt: -1 })           // Aplica ordenação
-        .skip(skip)                        // Pula os documentos das páginas anteriores
-        .limit(limit)                      // Limita ao número de itens por página
+        // REMOVIDO: .populate("motivoDescarte", "nome")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
     ]);
-
-    // 4. Calcular total de páginas
     const totalPages = Math.ceil(totalLeads / limit);
-
-    console.log(`[getLeads] Encontrados ${leads.length} leads (Total: ${totalLeads}, Página: ${page}/${totalPages})`);
-
-    // 5. Retornar um objeto estruturado com os dados e metadados da paginação
-    return {
-      leads: leads,           // Array de leads da página atual
-      totalLeads: totalLeads, // Contagem total de leads com os filtros aplicados
-      currentPage: page,      // Página atual que foi retornada
-      totalPages: totalPages, // Número total de páginas existentes
-      limit: limit            // Limite de itens por página usado
-    };
-
-  } catch (err) {
-    console.error("Erro ao buscar leads paginados no serviço:", err);
-    throw new Error("Erro ao buscar os leads com paginação.");
-  }
+    console.log(`[getLeads] ${leads.length}/${totalLeads} leads (Pág ${page}/${totalPages})`);
+    return { leads, totalLeads, currentPage: page, totalPages, limit };
+  } catch (err) { /* ... tratamento erro ... */ }
 };
 
+// --- GET Lead By Id (Remove populate de motivoDescarte) ---
 const getLeadById = async (id) => {
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new Error("ID de Lead inválido.");
-  }
+  if (!mongoose.Types.ObjectId.isValid(id)) { throw new Error("ID inválido."); }
   const lead = await Lead.findById(id)
     .populate("situacao", "nome")
     .populate("origem", "nome")
-    .populate("responsavel", "nome perfil")
-    .populate("motivoDescarte", "nome");
-
+    .populate("responsavel", "nome perfil");
+    // REMOVIDO: .populate("motivoDescarte", "nome");
   if (!lead) throw new Error("Lead não encontrado");
   return lead;
 };
 
 const createLead = async (leadData) => {
   const {
-    nome, contato, email, nascimento, endereco, cpf,
-    situacao, // ID
+    nome, contato, email, nascimento, endereco, // SEM CPF
+    situacao, // ID Obrigatório
     motivoDescarte, comentario,
-    origem, // ID
-    responsavel, // ID
+    origem, // ID Obrigatório
+    responsavel, // ID Obrigatório
   } = leadData;
 
-  // --- Validação e Formatação do Contato --- <<< LÓGICA ADICIONADA AQUI >>>
-  let formattedPhoneNumber = null;
-  // Assumindo que 'contato' é obrigatório pelo Schema do Lead
-  if (!contato) {
-      throw new Error("O campo Contato é obrigatório.");
+  // Validação básica de campos que deveriam vir (Schema também valida 'required')
+  if (!nome || !contato || !email || !situacao || !origem || !responsavel) {
+    throw new Error("Campos obrigatórios (Nome, Contato, Email, Situação, Origem, Responsável) não foram fornecidos.");
   }
-  try {
-      const phoneNumber = phoneUtil.parseAndKeepRawInput(contato, 'BR'); // Tenta parsear
-      if (phoneUtil.isValidNumber(phoneNumber)) { // Valida
-          formattedPhoneNumber = phoneUtil.format(phoneNumber, PNF.E164); // Formata E.164
-          console.log(`[createLead] Contato formatado: ${contato} -> ${formattedPhoneNumber}`);
-      } else {
-          // Se chegou aqui mas não é válido (raro com parseAndKeepRawInput, mas possível)
-          throw new Error(`Número de contato inválido: ${contato}`);
-      }
-  } catch (e) {
-      // Erro no parse (formato não reconhecido)
-      console.warn(`[createLead] Erro ao processar contato: ${contato}`, e.message);
-      throw new Error(`Formato de número de contato não reconhecido: ${contato}`);
-  }
-  // -----------------------------------------
 
-  // --- Validação de CPF ---
-  let cpfLimpo = null;
-  if (cpf) {
-    cpfLimpo = cpf.replace(/\D/g, "");
-    if (!cpfcnpj.cpf.isValid(cpfLimpo)) {
-      throw new Error(`CPF inválido fornecido: ${cpf}`);
-    }
-  }
+  // REMOVIDO: Validação/Formatação de Contato
+  // REMOVIDO: Validação de CPF
 
   // --- Validações dos IDs de Referência ---
+  // (Garante que os IDs obrigatórios são válidos e existem)
   const [responsavelDoc, origemDoc, situacaoDoc] = await Promise.all([
     User.findById(responsavel).lean(),
-    Origem.findById(origem).lean(),
-    LeadStage.findById(situacao).lean(),
-  ]).catch((err) => { /* ... tratamento erro ... */ });
+    Origem.findById(origem).lean(), // Usa Origem do topo
+    LeadStage.findById(situacao).lean()
+  ]).catch(err => { throw new Error("Erro ao verificar referências."); });
 
   if (!responsavelDoc) throw new Error("Responsável não encontrado");
   if (!origemDoc) throw new Error("Origem não encontrada");
   if (!situacaoDoc) throw new Error("Situação não encontrada");
+  // --------------------------------------
 
-  // --- Criação do Novo Lead ---
   const novoLead = new Lead({
     nome,
-    contato: formattedPhoneNumber, // <-- USA NÚMERO FORMATADO
+    contato, // <-- Salva o contato raw (como veio)
     email,
     nascimento: nascimento || null,
     endereco: endereco || null,
-    cpf: cpfLimpo,
+    // SEM CPF
     situacao: situacaoDoc._id,
-    motivoDescarte: motivoDescarte || null,
+    motivoDescarte: motivoDescarte || null, // Continua sendo String
     comentario: comentario || null,
     origem: origemDoc._id,
     responsavel: responsavelDoc._id,
@@ -159,134 +109,135 @@ const createLead = async (leadData) => {
   try {
     const leadSalvo = await novoLead.save();
     return leadSalvo;
-  } catch (error) { /* ... tratamento erro ... */ }
+  } catch (error) {
+    console.error("[createLead] Erro ao salvar:", error);
+    throw new Error(error.message || "Erro interno ao salvar lead.");
+  }
 };
 
 
 const updateLead = async (id, leadData) => {
-  console.log(`[updateLead] Iniciando para ID: ${id}`);
+  console.log(`--- [updateLead] Iniciando para ID: ${id} ---`);
   console.log("[updateLead] leadData recebido:", JSON.stringify(leadData, null, 2));
 
   if (!mongoose.Types.ObjectId.isValid(id)) { throw new Error("ID inválido."); }
 
   const {
-    nome, contato, email, nascimento, endereco, cpf,
-    responsavel, situacao, motivoDescarte, comentario, origem
+    nome, contato, email, nascimento, endereco, // SEM CPF
+    responsavel, // ID
+    situacao,    // ID
+    motivoDescarte, // STRING
+    comentario,
+    origem       // ID
   } = leadData;
 
   const updateFields = {};
 
-  // Adiciona campos simples (EXCETO CONTATO, que será tratado abaixo)
+  // Campos simples
   if (nome !== undefined) updateFields.nome = nome;
+  if (contato !== undefined) updateFields.contato = contato;
   if (email !== undefined) updateFields.email = email;
   if (nascimento !== undefined) updateFields.nascimento = nascimento;
   if (endereco !== undefined) updateFields.endereco = endereco;
-  // motivo/comentario tratados na lógica da situação ou se situação não mudar
+  if (motivoDescarte !== undefined) updateFields.motivoDescarte = motivoDescarte;
+  if (comentario !== undefined) updateFields.comentario = comentario;
 
-  // --- Validação e Formatação do Contato --- <<< LÓGICA ADICIONADA/MODIFICADA AQUI >>>
-  if (contato !== undefined) { // Verifica se o campo 'contato' veio na atualização
-    if (contato === null || String(contato).trim() === '') { // Permite limpar o campo
-      updateFields.contato = null;
-      console.log(`[updateLead] Contato limpo (setado para null).`);
-    } else {
-      // Se não for nulo/vazio, tenta validar e formatar
-      try {
-        const phoneNumber = phoneUtil.parseAndKeepRawInput(contato, 'BR');
-        if (phoneUtil.isValidNumber(phoneNumber)) {
-          const formattedNumber = phoneUtil.format(phoneNumber, PNF.E164);
-          updateFields.contato = formattedNumber; // Adiciona número formatado
-          console.log(`[updateLead] Contato formatado: ${contato} -> ${formattedNumber}`);
-        } else {
-          // Se não for válido, lança erro para impedir atualização com dado ruim
-          throw new Error(`Número de contato inválido para atualização: ${contato}`);
-        }
-      } catch (e) {
-        // Erro no parse (formato inválido)
-        console.warn(`[updateLead] Erro ao processar contato na atualização: ${contato}`, e.message);
-        throw new Error(`Formato de número de contato não reconhecido: ${contato}`);
+  try { // Adiciona try/catch em volta das validações para pegar erros
+      // --- Handle Referências (Valida IDs se forem enviados) ---
+      if (situacao !== undefined) {
+        console.log("[updateLead] Processando campo 'situacao' com ID:", situacao);
+        if (!mongoose.Types.ObjectId.isValid(situacao)) throw new Error("ID Situação inválido.");
+        const situacaoDoc = await LeadStage.findById(situacao).lean();
+        if (!situacaoDoc) throw new Error("Situação não encontrada para o ID fornecido.");
+        updateFields.situacao = situacaoDoc._id;
+        console.log(`[updateLead] OK - Adicionado ao updateFields: situacao=${updateFields.situacao}`);
       }
-    }
+
+      if (origem !== undefined) {
+        console.log("[updateLead] Processando campo 'origem' com ID:", origem);
+        if (!mongoose.Types.ObjectId.isValid(origem)) throw new Error("ID Origem inválido.");
+        // !!! VERIFIQUE SE ESTE REQUIRE ESTÁ CORRETO (Origem vs origem) !!!
+        const OrigemModel = require("../models/origem"); // Assumindo 'Origem.js'
+        const origemDoc = await OrigemModel.findById(origem).lean();
+        if (!origemDoc) throw new Error("Origem não encontrada para o ID fornecido.");
+        updateFields.origem = origemDoc._id;
+        console.log(`[updateLead] OK - Adicionado ao updateFields: origem=${updateFields.origem}`);
+      }
+
+      if (responsavel !== undefined) {
+        console.log("[updateLead] Processando campo 'responsavel' com ID:", responsavel);
+        if (!mongoose.Types.ObjectId.isValid(responsavel)) throw new Error("ID Responsável inválido.");
+        const responsavelDoc = await User.findById(responsavel).lean();
+        if (!responsavelDoc) throw new Error("Responsável não encontrado para o ID fornecido.");
+        updateFields.responsavel = responsavelDoc._id;
+        console.log(`[updateLead] OK - Adicionado ao updateFields: responsavel=${updateFields.responsavel}`);
+      }
+
+  } catch(validationError) {
+       // Captura erros das validações findById ou ObjectId.isValid
+       console.error("[updateLead] Erro durante validação de referência:", validationError);
+       throw validationError; // Re-lança o erro para o controller tratar
   }
-  // -----------------------------------------
-
-  // --- Handle CPF ---
-  if (cpf !== undefined) { /* ... código CPF existente ... */ }
-
-  // --- Handle Situação e Limpeza de Descarte ---
-  if (situacao !== undefined) { /* ... código Situação existente ... */ }
-  else {
-      // Se situação NÃO mudou, permite atualizar motivo/comentário se vieram
-       if (motivoDescarte !== undefined) updateFields.motivoDescarte = motivoDescarte;
-       if (comentario !== undefined) updateFields.comentario = comentario;
-  }
-
-  // --- Handle Origem ---
-  if (origem !== undefined) { /* ... código Origem existente ... */ }
-
-  // --- Handle Responsável ---
-  if (responsavel !== undefined) { /* ... código Responsável existente ... */ }
 
 
   // --- Executa Update ---
-  if (Object.keys(updateFields).length === 0) { /* ... código existente ... */ }
-  console.log("[updateLead] Final updateFields:", JSON.stringify(updateFields, null, 2));
+  if (Object.keys(updateFields).length === 0) {
+    console.warn(`[updateLead] Nenhum campo para atualizar ID: ${id}`);
+    return await getLeadById(id);
+  }
+
+  console.log("[updateLead] Objeto FINAL updateFields:", JSON.stringify(updateFields, null, 2)); // Log crucial
+
   try {
     const updatedLead = await Lead.findByIdAndUpdate(id, { $set: updateFields }, { new: true, runValidators: true });
-    if (!updatedLead) { throw new Error("Lead não encontrado."); }
-    console.log("[updateLead] Raw updated doc:", JSON.stringify(updatedLead, null, 2));
-    await updatedLead.populate([ /* ... populate paths ... */ ]);
-    console.log("[updateLead] Final populated doc:", JSON.stringify(updatedLead, null, 2));
+    if (!updatedLead) { throw new Error("Lead não encontrado (update falhou)."); }
+
+    console.log("[updateLead] Documento atualizado no DB (antes populate):", JSON.stringify(updatedLead, null, 2));
+
+    // Re-populate
+    await updatedLead.populate([
+        { path: "situacao", select: "nome" },
+        { path: "origem", select: "nome" },
+        { path: "responsavel", select: "nome perfil" }
+        // Sem populate para motivoDescarte (String)
+    ]);
     return updatedLead;
-  } catch (error) { /* ... tratamento de erro existente ... */ }
+
+  } catch (error) {
+    console.error("[updateLead] Erro durante findByIdAndUpdate/populate:", error);
+    throw new Error(error.message || "Erro interno ao atualizar.");
+  }
 };
 
-const deleteLead = async (id) => {
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new Error("ID de Lead inválido.");
-  }
-  const deleted = await Lead.findByIdAndDelete(id);
-  if (!deleted) throw new Error("Lead não encontrado");
-  return { message: "Lead deletado com sucesso" };
-};
+const deleteLead = async (id) => { /* ... código existente ... */ };
 
 const descartarLead = async (id, dados) => {
-  if (!mongoose.Types.ObjectId.isValid(id)) { throw new Error("ID de Lead inválido."); }
+  if (!mongoose.Types.ObjectId.isValid(id)) { throw new Error("ID inválido."); }
+  const { motivoDescarte, comentario } = dados; // motivoDescarte é STRING
 
-  const { motivoDescarte, comentario } = dados; // motivoDescarte agora é um ID
-
-  // Valida se o ID do motivo foi enviado e é válido
-  if (!motivoDescarte || !mongoose.Types.ObjectId.isValid(motivoDescarte)) {
-    throw new Error("ID do motivo de descarte inválido ou não fornecido.");
+  if (!motivoDescarte || typeof motivoDescarte !== 'string' || motivoDescarte.trim() === '') {
+    throw new Error("O motivo do descarte (texto) é obrigatório."); // Ajustada mensagem
   }
 
-  // Valida se o motivo realmente existe no banco (opcional mas recomendado)
-  const reasonExists = await DiscardReason.findById(motivoDescarte);
-  if (!reasonExists) {
-      throw new Error(`Motivo de descarte com ID ${motivoDescarte} não encontrado.`);
-  }
+  // Busca situação "Descartado"
+  const situacaoDescartado = await LeadStage.findOne({ nome: "Descartado" }).lean(); // <-- Nome Exato!
+  if (!situacaoDescartado) { throw new Error("Configuração: Situação 'Descartado' não encontrada."); }
 
-  // Busca a situação "Descartado" (igual antes)
-  const situacaoDescartado = await LeadStage.findOne({ nome: "Descartado" }).lean();
-  if (!situacaoDescartado) { /* ... erro ... */ }
-
-  // Atualiza o lead com o ID da situação e o ID do motivo
   const lead = await Lead.findByIdAndUpdate(
     id,
     {
       situacao: situacaoDescartado._id,
-      motivoDescarte: reasonExists._id, // <<< Salva o ID do motivo
+      motivoDescarte: motivoDescarte.trim(), // <-- Salva a STRING
       comentario: comentario || null,
     },
     { new: true }
-  )
-    // Popula situação E o novo motivoDescarte referenciado
-    .populate("situacao", "nome")
-    .populate("motivoDescarte", "nome"); // <<< Adiciona populate para motivoDescarte
+  ).populate("situacao", "nome"); // Não popula mais motivoDescarte
 
-  if (!lead) { throw new Error("Lead não encontrado (não foi possível descartar)."); }
+  if (!lead) throw new Error("Lead não encontrado.");
   return lead;
 };
 
+// --- EXPORTS ---
 module.exports = {
   getLeads,
   getLeadById,
@@ -295,3 +246,7 @@ module.exports = {
   deleteLead,
   descartarLead,
 };
+
+// Cole as implementações completas das funções omitidas com /* ... */
+// (getLeads filter logic, error handling blocks, populate paths)
+// Certifique-se que o require de Origem está correto.
