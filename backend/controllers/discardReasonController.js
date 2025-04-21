@@ -22,7 +22,6 @@ const createDiscardReason = async (req, res) => {
     }
   };
   
-  // <<< NOVO CONTROLLER: Atualizar Motivo >>>
   const updateDiscardReason = async (req, res) => {
       try {
           const updatedReason = await discardReasonService.updateDiscardReason(req.params.id, req.body);
@@ -33,7 +32,6 @@ const createDiscardReason = async (req, res) => {
       }
   };
   
-  // <<< NOVO CONTROLLER: Deletar Motivo >>>
   const deleteDiscardReason = async (req, res) => {
        try {
           const result = await discardReasonService.deleteDiscardReason(req.params.id);

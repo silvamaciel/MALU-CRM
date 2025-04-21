@@ -31,19 +31,18 @@ function DiscardLeadModal({ isOpen, onClose, onSubmit, leadName, isProcessing, e
         } catch (error) {
           console.error("Erro buscando motivos no modal:", error);
           setReasonsError("Não foi possível carregar os motivos.");
-          setReasonsList([]); // Limpa lista em caso de erro
+          setReasonsList([]);
         } finally {
           setIsLoadingReasons(false);
         }
       };
       fetchReasons();
     }
-  }, [isOpen]); // Depende de isOpen para rodar quando abrir
+  }, [isOpen]); // Depende de isOpen
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Valida se um motivo foi selecionado (o ID não pode ser vazio)
-    if (!motivoDescarteId) {
+    if (!motivoDescarteId) { // Valida se um ID foi selecionado
       setInternalError('Por favor, selecione um motivo do descarte.');
       return;
     }
@@ -63,17 +62,18 @@ function DiscardLeadModal({ isOpen, onClose, onSubmit, leadName, isProcessing, e
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="motivoDescarte">Motivo do Descarte *</label>
-            {/* Troca Input por Select */}
+            {/* <<< TROCA Input por Select >>> */}
             <select
               id="motivoDescarte"
-              value={motivoDescarteId} // Controlado pelo state que guarda o ID
-              onChange={(e) => setMotivoDescarteId(e.target.value)} // Atualiza o ID
+              value={motivoDescarteId}
+              onChange={(e) => setMotivoDescarteId(e.target.value)}
               required
-              disabled={isLoadingReasons || isProcessing} // Desabilita se estiver carregando
+              disabled={isLoadingReasons || isProcessing}
             >
               <option value="" disabled>
-                {isLoadingReasons ? "Carregando motivos..." : "Selecione um motivo..."}
+                {isLoadingReasons ? "Carregando..." : "Selecione um motivo..."}
               </option>
+              {/* Popula com os motivos buscados */}
               {!isLoadingReasons && reasonsList.map(reason => (
                 <option key={reason._id} value={reason._id}>
                   {reason.nome}
@@ -86,7 +86,14 @@ function DiscardLeadModal({ isOpen, onClose, onSubmit, leadName, isProcessing, e
 
           <div className="form-group">
             <label htmlFor="comentarioDescarte">Comentário Adicional</label>
-            <textarea /* ... props iguais ... */ ></textarea>
+            <textarea
+              id="comentarioDescarte"
+              value={comentario}
+              onChange={(e) => setComentario(e.target.value)}
+              rows={3}
+              maxLength={500}
+              disabled={isProcessing}
+            ></textarea>
           </div>
 
           {(internalError || errorMessage) && (
@@ -94,11 +101,15 @@ function DiscardLeadModal({ isOpen, onClose, onSubmit, leadName, isProcessing, e
           )}
 
           <div className="modal-actions">
-            {/* ... Botões Cancelar e Confirmar ... */}
             <button type="button" onClick={onClose} className="button cancel-button-modal" disabled={isProcessing}>
               Cancelar
             </button>
-            <button type="submit" className="button confirm-discard-button" disabled={isProcessing || isLoadingReasons}>
+            {/* Desabilita submit se motivos não carregaram ou erro */}
+            <button
+                type="submit"
+                className="button confirm-discard-button"
+                disabled={isProcessing || isLoadingReasons || reasonsError || !reasonsList.length}
+             >
               {isProcessing ? 'Descartando...' : 'Confirmar Descarte'}
             </button>
           </div>
@@ -109,3 +120,4 @@ function DiscardLeadModal({ isOpen, onClose, onSubmit, leadName, isProcessing, e
 }
 
 export default DiscardLeadModal;
+

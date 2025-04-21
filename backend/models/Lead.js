@@ -33,46 +33,33 @@ const leadSchema = new Schema(
       ref: "LeadStage",
       required: [true, "A situação do lead é obrigatória."],
     },
-    motivoDescarte: { // <-- VOLTOU a ser String
-      type: String,
-      default: null,
-    },
+    motivoDescarte: {
+      type: Schema.Types.ObjectId, 
+      ref: 'DiscardReason',     
+      required: false,          
+      default: null
+  },
     comentario: {
       type: String,
       default: null,
     },
-    origem: { // <-- Obrigatório
+    origem: { 
       type: Schema.Types.ObjectId,
-      ref: "Origem", // Verifique nome do Model 'Origem'/'origem'
+      ref: "Origem", 
       required: [true, "A origem do lead é obrigatória."],
     },
-    responsavel: { // <-- Obrigatório
+    responsavel: { 
       type: Schema.Types.ObjectId,
       ref: "User",
       required: [true, "O responsável pelo lead é obrigatório."],
     },
   },
   {
-    timestamps: true, // Mantém createdAt e updatedAt
+    timestamps: true, 
   }
 );
 
-// REMOVIDOS Hooks de validação/formatação CPF ou Telefone que pudessem existir aqui
-// MANTIDOS Hooks de erro de duplicação (se aplicável a outros campos unique que você tenha)
-// Exemplo (se CPF fosse mantido, mas não é o caso agora):
-/*
-leadSchema.post("save", function (error, doc, next) {
-  if (error.name === "MongoServerError" && error.code === 11000) {
-     // Adapte a mensagem para qual campo deu duplicidade, se houver outros unique
-     next(new Error("Erro de duplicidade ao salvar."));
-  } else { next(error); }
-});
-leadSchema.post("findOneAndUpdate", function (error, doc, next) {
-   if (error.name === "MongoServerError" && error.code === 11000) {
-     next(new Error("Erro de duplicidade ao atualizar."));
-   } else { next(error); }
-});
-*/
+
 
 const Lead = mongoose.model("Lead", leadSchema);
 module.exports = Lead;

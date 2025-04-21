@@ -6,10 +6,10 @@ const Lead = require("../models/Lead");
 const Origem = require("../models/origem");
 const LeadStage = require("../models/LeadStage");
 const User = require("../models/User");
-// REMOVIDO: const DiscardReason = require('../models/DiscardReason');
-// REMOVIDO: const cpfcnpj = require("cpf-cnpj-validator");
-// REMOVIDO: const phoneUtil = require('google-libphonenumber')...
-// REMOVIDO: const PNF = require('google-libphonenumber')...
+const DiscardReason = require('../models/DiscardReason');
+const cpfcnpj = require("cpf-cnpj-validator");
+const phoneUtil = require('google-libphonenumber');
+const PNF = require('google-libphonenumber');
 
 
 // --- GET Leads (Mantém Filtros e Paginação) ---
@@ -38,7 +38,7 @@ const getLeads = async (queryParams = {}) => {
         .populate("situacao", "nome")
         .populate("origem", "nome")
         .populate("responsavel", "nome perfil")
-        // REMOVIDO: .populate("motivoDescarte", "nome")
+        .populate("motivoDescarte", "nome")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -55,8 +55,8 @@ const getLeadById = async (id) => {
   const lead = await Lead.findById(id)
     .populate("situacao", "nome")
     .populate("origem", "nome")
-    .populate("responsavel", "nome perfil");
-    // REMOVIDO: .populate("motivoDescarte", "nome");
+    .populate("responsavel", "nome perfil")
+    .populate("motivoDescarte", "nome");
   if (!lead) throw new Error("Lead não encontrado");
   return lead;
 };
@@ -120,52 +120,77 @@ const updateLead = async (id, leadData) => {
   console.log(`--- [updateLead] Iniciando para ID: ${id} ---`);
   console.log("[updateLead] leadData recebido:", JSON.stringify(leadData, null, 2));
 
-  if (!mongoose.Types.ObjectId.isValid(id)) { throw new Error("ID inválido."); }
+  if (!mongoose.Types.ObjectId.isValid(id)) { throw new Error("ID de Lead inválido."); }
 
   const {
-    nome, contato, email, nascimento, endereco, // SEM CPF
+    nome, contato, email, nascimento, endereco, // SEM CPF neste estado do código
     responsavel, // ID
     situacao,    // ID
-    motivoDescarte, // STRING
+    motivoDescarte, // STRING (neste estado do código)
     comentario,
     origem       // ID
   } = leadData;
 
   const updateFields = {};
 
-  // Campos simples
+  // Campos simples (exceto motivo/comentario que dependem da situação)
   if (nome !== undefined) updateFields.nome = nome;
-  if (contato !== undefined) updateFields.contato = contato;
+  if (contato !== undefined) updateFields.contato = contato; // Salva o contato raw (sem formatação E.164 nesta versão)
   if (email !== undefined) updateFields.email = email;
   if (nascimento !== undefined) updateFields.nascimento = nascimento;
   if (endereco !== undefined) updateFields.endereco = endereco;
-  if (motivoDescarte !== undefined) updateFields.motivoDescarte = motivoDescarte;
-  if (comentario !== undefined) updateFields.comentario = comentario;
+  // NÃO adiciona motivoDescarte/comentario aqui ainda
 
-  try { // Adiciona try/catch em volta das validações para pegar erros
-      // --- Handle Referências (Valida IDs se forem enviados) ---
+  // REMOVIDO: Validação/Formatação de Contato e CPF (conforme o estado revertido)
+
+  try { // Try/catch em volta das validações de ID
+      // --- Handle Referências ---
       if (situacao !== undefined) {
-        console.log("[updateLead] Processando campo 'situacao' com ID:", situacao);
+        console.log("[updateLead] Processando Situação ID:", situacao);
         if (!mongoose.Types.ObjectId.isValid(situacao)) throw new Error("ID Situação inválido.");
-        const situacaoDoc = await LeadStage.findById(situacao).lean();
+
+        // Busca o documento completo para ler o nome
+        const situacaoDoc = await LeadStage.findById(situacao);
         if (!situacaoDoc) throw new Error("Situação não encontrada para o ID fornecido.");
-        updateFields.situacao = situacaoDoc._id;
-        console.log(`[updateLead] OK - Adicionado ao updateFields: situacao=${updateFields.situacao}`);
+
+        console.log(`[updateLead] Nova situação encontrada: ID=${situacaoDoc._id}, Nome="${situacaoDoc.nome}"`);
+        updateFields.situacao = situacaoDoc._id; // Adiciona a nova situação ao update
+
+        // *** LÓGICA ESSENCIAL ADICIONADA AQUI ***
+        // Verifica o NOME da nova situação
+        // !!! Garanta que o nome no seu DB é EXATAMENTE "Descartado" !!!
+        if (situacaoDoc.nome !== "Descartado") {
+            // Se NÃO for "Descartado", força a limpeza dos campos de descarte
+            console.log(`[updateLead] Limpando motivoDescarte e comentario porque a nova situação é "${situacaoDoc.nome}".`);
+            updateFields.motivoDescarte = null;
+            updateFields.comentario = null;
+        } else {
+            // Se a nova situação FOR "Descartado", permite que motivo/comentário sejam atualizados
+            // (se eles vieram no leadData)
+            console.log(`[updateLead] Nova situação é "Descartado". Atualizando motivo/comentário se fornecidos.`);
+            if (motivoDescarte !== undefined) updateFields.motivoDescarte = motivoDescarte;
+            if (comentario !== undefined) updateFields.comentario = comentario;
+        }
+        // *** FIM DA LÓGICA ADICIONADA ***
+
+      } else {
+          // Se a situação NÃO foi alterada no payload,
+          // permite que motivoDescarte e comentario sejam atualizados se vieram
+          if (motivoDescarte !== undefined) updateFields.motivoDescarte = motivoDescarte;
+          if (comentario !== undefined) updateFields.comentario = comentario;
       }
 
       if (origem !== undefined) {
-        console.log("[updateLead] Processando campo 'origem' com ID:", origem);
+        console.log("[updateLead] Processando Origem ID:", origem);
         if (!mongoose.Types.ObjectId.isValid(origem)) throw new Error("ID Origem inválido.");
-        // !!! VERIFIQUE SE ESTE REQUIRE ESTÁ CORRETO (Origem vs origem) !!!
-        const OrigemModel = require("../models/origem"); // Assumindo 'Origem.js'
-        const origemDoc = await OrigemModel.findById(origem).lean();
+        const origemDoc = await Origem.findById(origem).lean(); // Usa Origem do topo
         if (!origemDoc) throw new Error("Origem não encontrada para o ID fornecido.");
         updateFields.origem = origemDoc._id;
         console.log(`[updateLead] OK - Adicionado ao updateFields: origem=${updateFields.origem}`);
       }
 
       if (responsavel !== undefined) {
-        console.log("[updateLead] Processando campo 'responsavel' com ID:", responsavel);
+        console.log("[updateLead] Processando Responsavel ID:", responsavel);
         if (!mongoose.Types.ObjectId.isValid(responsavel)) throw new Error("ID Responsável inválido.");
         const responsavelDoc = await User.findById(responsavel).lean();
         if (!responsavelDoc) throw new Error("Responsável não encontrado para o ID fornecido.");
@@ -174,32 +199,35 @@ const updateLead = async (id, leadData) => {
       }
 
   } catch(validationError) {
-       // Captura erros das validações findById ou ObjectId.isValid
-       console.error("[updateLead] Erro durante validação de referência:", validationError);
-       throw validationError; // Re-lança o erro para o controller tratar
+       console.error("[updateLead] Erro durante validação:", validationError);
+       throw validationError;
   }
 
 
   // --- Executa Update ---
   if (Object.keys(updateFields).length === 0) {
     console.warn(`[updateLead] Nenhum campo para atualizar ID: ${id}`);
-    return await getLeadById(id);
+    return await getLeadById(id); // Retorna o lead sem alterações
   }
 
   console.log("[updateLead] Objeto FINAL updateFields:", JSON.stringify(updateFields, null, 2)); // Log crucial
 
   try {
-    const updatedLead = await Lead.findByIdAndUpdate(id, { $set: updateFields }, { new: true, runValidators: true });
+    const updatedLead = await Lead.findByIdAndUpdate(
+      id,
+      { $set: updateFields },
+      { new: true, runValidators: true } // runValidators valida o schema no update
+    );
+
     if (!updatedLead) { throw new Error("Lead não encontrado (update falhou)."); }
+    console.log("[updateLead] Raw updated doc:", JSON.stringify(updatedLead, null, 2));
 
-    console.log("[updateLead] Documento atualizado no DB (antes populate):", JSON.stringify(updatedLead, null, 2));
-
-    // Re-populate
+    // Re-populate para retornar dados consistentes
     await updatedLead.populate([
         { path: "situacao", select: "nome" },
         { path: "origem", select: "nome" },
         { path: "responsavel", select: "nome perfil" }
-        // Sem populate para motivoDescarte (String)
+        // Não popula motivoDescarte pois é String aqui
     ]);
     return updatedLead;
 
@@ -209,31 +237,48 @@ const updateLead = async (id, leadData) => {
   }
 };
 
-const deleteLead = async (id) => { /* ... código existente ... */ };
+
+const deleteLead = async (id) => {
+  if (!mongoose.Types.ObjectId.isValid(id)) { throw new Error("ID inválido."); }
+  const deleted = await Lead.findByIdAndDelete(id);
+  if (!deleted) throw new Error("Lead não encontrado");
+  return { message: "Lead deletado com sucesso" };
+};
 
 const descartarLead = async (id, dados) => {
-  if (!mongoose.Types.ObjectId.isValid(id)) { throw new Error("ID inválido."); }
-  const { motivoDescarte, comentario } = dados; // motivoDescarte é STRING
+  if (!mongoose.Types.ObjectId.isValid(id)) { throw new Error("ID de Lead inválido."); }
+  const { motivoDescarte, comentario } = dados; // motivoDescarte agora é um ID
 
-  if (!motivoDescarte || typeof motivoDescarte !== 'string' || motivoDescarte.trim() === '') {
-    throw new Error("O motivo do descarte (texto) é obrigatório."); // Ajustada mensagem
+  // Valida se o ID do motivo foi enviado e é válido
+  if (!motivoDescarte || !mongoose.Types.ObjectId.isValid(motivoDescarte)) {
+    throw new Error("ID do motivo de descarte inválido ou não fornecido.");
   }
 
-  // Busca situação "Descartado"
+  // Busca a situação "Descartado" (igual antes)
   const situacaoDescartado = await LeadStage.findOne({ nome: "Descartado" }).lean(); // <-- Nome Exato!
   if (!situacaoDescartado) { throw new Error("Configuração: Situação 'Descartado' não encontrada."); }
 
+  // Valida se o motivo realmente existe no banco ANTES de atualizar o lead
+  const reasonExists = await DiscardReason.findById(motivoDescarte).lean(); // Busca pelo ID
+  if (!reasonExists) {
+      throw new Error(`Motivo de descarte com ID ${motivoDescarte} não encontrado.`);
+  }
+
+  // Atualiza o lead com o ID da situação e o ID do motivo
   const lead = await Lead.findByIdAndUpdate(
     id,
     {
       situacao: situacaoDescartado._id,
-      motivoDescarte: motivoDescarte.trim(), // <-- Salva a STRING
+      motivoDescarte: reasonExists._id, // <<< Salva o ID do motivo validado
       comentario: comentario || null,
     },
-    { new: true }
-  ).populate("situacao", "nome"); // Não popula mais motivoDescarte
+    { new: true } // Retorna o documento atualizado
+  )
+    // Popula os nomes para retornar ao frontend
+    .populate("situacao", "nome")
+    .populate("motivoDescarte", "nome"); // <<< Popula o motivo
 
-  if (!lead) throw new Error("Lead não encontrado.");
+  if (!lead) { throw new Error("Lead não encontrado (não foi possível descartar)."); }
   return lead;
 };
 
