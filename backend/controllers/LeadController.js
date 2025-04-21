@@ -1,5 +1,6 @@
 // controllers/leadController.js
 const leadService = require('../services/LeadService');
+const leadHistoryService = require('../services/leadHistoryService'); 
 
 const getLeads = async (req, res) => {
   try {
@@ -58,6 +59,19 @@ const descartarLead = async (req, res) => {
   }
 };
 
+const getLeadHistory = async (req, res) => {
+  try {
+      // Validação do ID do Lead pode ser feita no serviço
+      const history = await leadHistoryService.getLeadHistory(req.params.id);
+      res.json(history);
+  } catch (error) {
+      // Se o erro for 'Lead não encontrado' pode ser 404, senão 500
+      const statusCode = error.message.toLowerCase().includes("não encontrado") ? 404 : 500;
+      res.status(statusCode).json({ error: error.message });
+  }
+};
+
+
 
 
 module.exports = {
@@ -66,5 +80,6 @@ module.exports = {
   createLead,
   updateLead,
   deleteLead,
-  descartarLead
+  descartarLead,
+  getLeadHistory
 };
