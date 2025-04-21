@@ -404,7 +404,7 @@ const descartarLead = async (id, dados) => {
     throw new Error("Lead não encontrado (não foi possível descartar).");
   }
 
-  const details = `Motivo: <span class="math-inline">\{reasonExists\.nome\}</span>{dados.comentario ? ' | Comentário: ' + dados.comentario : ''}`;
+  const details = `Motivo: ${reasonExists.nome}${dados.comentario ? ' | Comentário: ' + dados.comentario : ''}`;
   await logHistory(lead._id, null, "DESCARTE", details);
   
   return lead;
