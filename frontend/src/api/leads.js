@@ -132,3 +132,27 @@ export const deleteLead = async (id) => {
     throw new Error(apiErrorMessage || 'Falha ao excluir lead.');
   }
 };
+
+/**
+ * Busca o histórico de alterações de um lead específico.
+ * @param {string} leadId - O ID do lead cujo histórico deve ser buscado.
+ * @returns {Promise<Array>} - Uma promessa que resolve com um array de registros de histórico.
+ */
+export const getLeadHistory = async (leadId) => {
+  if (!leadId) {
+     // Evita chamada desnecessária se ID não estiver disponível
+     console.warn("Tentativa de buscar histórico sem ID de lead.");
+     return []; // Retorna array vazio ou pode lançar erro
+  }
+  try {
+    // Chama o endpoint GET /api/leads/:id/history
+    const response = await axiosInstance.get(`/leads/${leadId}/history`);
+    // Espera-se que a resposta seja um array de objetos de histórico
+    return Array.isArray(response.data) ? response.data : [];
+  } catch (error) {
+    console.error(`Erro ao buscar histórico para lead ${leadId}:`, error.response?.data || error.message);
+    // Pode retornar array vazio ou lançar erro dependendo de como quer tratar na UI
+    // throw new Error("Falha ao buscar histórico do lead.");
+    return []; // Retorna vazio para não quebrar a UI que espera um array
+  }
+};

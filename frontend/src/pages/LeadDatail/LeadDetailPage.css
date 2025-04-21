@@ -1,6 +1,6 @@
 /* src/pages/LeadDetail/LeadDetailPage.css */
 .lead-detail-page {
-    max-width: 900px;
+    max-width: 90%;
     margin: 2rem auto;
     padding: 2rem;
     background-color: #fff;
@@ -196,3 +196,104 @@
     background-color: #c82333;
     border-color: #bd2130;
 }
+
+.detail-layout-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* Uma coluna por padrão (mobile) */
+    gap: 2rem; /* Espaço entre colunas/linhas */
+    margin-top: 2rem;
+  }
+  
+  /* Em telas maiores, usar duas colunas */
+  @media (min-width: 992px) {
+    .detail-layout-grid {
+      /* Duas colunas, a primeira um pouco maior */
+      grid-template-columns: 1.5fr 1fr;
+    }
+  }
+  
+  .lead-details-section {
+    margin-bottom: 2.5rem; /* Espaço maior antes da próxima seção */
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .lead-details-section h2 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    font-size: 1.3em;
+    color: #444;
+  }
+  
+  /* Grid para as subseções (Histórico e Conversas) */
+  .lead-subsections-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* Uma coluna por padrão */
+    gap: 2rem; /* Espaço entre as colunas/linhas */
+  }
+  
+  /* Em telas maiores, usar duas colunas */
+  @media (min-width: 992px) {
+    .lead-subsections-grid {
+      grid-template-columns: 1fr 1fr; /* Duas colunas de tamanho igual */
+    }
+  }
+  
+  /* Estilos para as colunas individuais */
+  .lead-history-column h2,
+  .lead-conversations-column h2 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    font-size: 1.2em; /* Título um pouco menor que o principal */
+    color: #444;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.5rem;
+  }
+  
+  /* Estilos para a lista de histórico (mantidos da resposta anterior) */
+  .lead-history-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 400px; /* Altura máxima, ajuste conforme necessário */
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    padding: 0.5rem; /* Padding interno */
+    background-color: #fdfdfd;
+  }
+  
+  .history-entry {
+    padding: 0.7rem 0.5rem;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.9em;
+    line-height: 1.4;
+  }
+  .history-entry:last-child { border-bottom: none; }
+  .history-timestamp { display: block; font-size: 0.8em; color: #888; margin-bottom: 0.2rem; }
+  .history-action { color: #333; margin-right: 0.5rem; text-transform: capitalize; }
+  .history-details { color: #555; }
+  .history-user { font-size: 0.85em; color: #777; font-style: italic; margin-left: 0.5rem; }
+  
+  /* Estilos para a coluna de conversas (placeholder) */
+  .lead-conversations-column p {
+    color: #6c757d;
+    font-style: italic;
+    text-align: center;
+    padding: 2rem;
+    background-color: #f8f9fa;
+    border: 1px dashed #ccc;
+    border-radius: 5px;
+  }
+  
+  /* Ajuste no grid de detalhes se necessário */
+  .detail-grid {
+    /* Seus estilos existentes */
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem 1.5rem;
+  }
+  .detail-item.comentario {
+      grid-column: 1 / -1; /* Faz comentário ocupar toda a largura no grid */
+  }
+  
