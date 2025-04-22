@@ -10,14 +10,22 @@ export const loginWithGoogle = async (idToken) => {
       throw new Error("Token de ID do Google não fornecido.");
     }
     try {
-      // <<< IMPORTANTE: Este endpoint /api/auth/google/callback PRECISA SER CRIADO no seu backend >>>
       const response = await axiosInstance.post('/auth/google/callback', { token: idToken });
-      // Espera-se que o backend retorne algo útil, como o token JWT da SUA aplicação
-      // e talvez informações do usuário do seu banco de dados.
       console.log("Backend respondeu ao login do Google:", response.data);
-      return response.data; // Ex: { token: "seu_jwt_aqui", user: { ... } }
+      return response.data;
     } catch (error) {
-      console.error("Erro ao enviar token do Google para o backend:", error.response?.data || error.message);
-      throw error.response?.data || new Error("Falha na autenticação com o servidor.");
+      console.error("Erro ao enviar token do Google para o backend:", error.response || error);
+  
+      // <<< INÍCIO DA CORREÇÃO >>>
+      // Tenta pegar a mensagem de erro específica enviada pelo backend ({ error: "mensagem" })
+      const backendErrorMessage = error.response?.data?.error || error.response?.data?.message;
+  
+      // Se encontrou uma mensagem específica do backend, usa ela. Senão, usa a genérica.
+      const errorMessage = backendErrorMessage || "Falha na autenticação com o servidor.";
+  
+      // Joga um NOVO erro com a mensagem correta
+      throw new Error(errorMessage);
+      // <<< FIM DA CORREÇÃO >>>
+  
     }
   };
