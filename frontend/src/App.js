@@ -1,5 +1,5 @@
 // src/App.jsx (ou App.js)
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -9,6 +9,7 @@ import {
 import LeadListPage from "./pages/LeadList/LeadListPage";
 import LeadFormPage from "./pages/LeadForm/LeadFormPage";
 import LeadDetailPage from "./pages/LeadDatail/LeadDetailPage";
+import LoginPage from "./pages/Login/LoginPage";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -19,6 +20,25 @@ import "react-toastify/dist/ReactToastify.css";
 import "./App.css"; // Seus estilos globais
 
 function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    !!localStorage.getItem("userToken")
+  );
+
+  const handleLoginSuccess = () => {
+    setIsLoggedIn(true);
+    // Opcional: forçar navegação para /leads se já não estiver lá
+    // window.location.href = '/leads'; // Ou usar navigate se disponível aqui
+  };
+
+  // Função de Logout (exemplo básico)
+  const handleLogout = () => {
+    localStorage.removeItem("userToken");
+    localStorage.removeItem("userData");
+    setIsLoggedIn(false);
+    // Redireciona para login
+    // window.location.href = '/login'; // Ou use navigate
+  };
+
   return (
     <Router>
       {/* Pode adicionar um Layout global aqui (Navbar, Sidebar) se desejar */}
@@ -37,22 +57,66 @@ function App() {
         />
 
         <main>
-          {" "}
-          {/* Use <main> para o conteúdo principal */}
+          
           <Routes>
-            {/* Rota raiz redireciona para /leads */}
-            <Route path="/" element={<Navigate replace to="/leads" />} />
+          <Route
+            path="/login"
+            element={
+              !isLoggedIn ? (
+                <LoginPage onLoginSuccess={handleLoginSuccess} />
+              ) : (
+                <Navigate replace to="/leads" />
+              )
+            }
+          />
+            <Route
+              path="/login"
+              element={
+                !isLoggedIn ? (
+                  <LoginPage onLoginSuccess={handleLoginSuccess} />
+                ) : (
+                  <Navigate replace to="/leads" />
+                )
+              }
+            />
 
-            {/* Rota para listar leads */}
-            <Route path="/leads" element={<LeadListPage />} />
+            {/* Rotas Protegidas (Exemplo Básico) */}
+            <Route
+              path="/leads"
+              element={
+                isLoggedIn ? <LeadListPage /> : <Navigate replace to="/login" />
+              }
+            />
+            <Route
+              path="/leads/novo"
+              element={
+                isLoggedIn ? <LeadFormPage /> : <Navigate replace to="/login" />
+              }
+            />
+            <Route
+              path="/leads/:id"
+              element={
+                isLoggedIn ? (
+                  <LeadDetailPage />
+                ) : (
+                  <Navigate replace to="/login" />
+                )
+              }
+            />
+            <Route
+              path="/leads/:id/editar"
+              element={
+                isLoggedIn ? <LeadFormPage /> : <Navigate replace to="/login" />
+              }
+            />
 
-            <Route path="/leads/novo" element={<LeadFormPage />} />
-
-            <Route path="/leads/:id" element={<LeadDetailPage />} />
-
-            <Route path="/leads/:id/editar" element={<LeadFormPage />} />
-
-            {/* Rota para página não encontrada (404) */}
+            {/* Rota Raiz e Rota 404 */}
+            <Route
+              path="/"
+              element={
+                <Navigate replace to={isLoggedIn ? "/leads" : "/login"} />
+              }
+            />
             <Route
               path="*"
               element={
@@ -63,6 +127,12 @@ function App() {
             />
           </Routes>
         </main>
+        <button
+          onClick={handleLogout}
+          style={{ position: "fixed", top: "10px", right: "10px", zIndex: 100 }}
+        >
+          Logout
+        </button>
       </div>
     </Router>
   );

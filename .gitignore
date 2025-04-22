@@ -25,3 +25,4 @@ frontend/dist/
 backend/node_modules/
 backend/build/
 backend/dist/
+frontend/.env
