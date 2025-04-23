@@ -1,18 +1,27 @@
+// models/LeadStage.js
 const mongoose = require("mongoose");
+const { Schema } = mongoose;
 
-const LeadStageSchema = new mongoose.Schema(
+const leadStageSchema = new Schema(
   {
     nome: {
       type: String,
-      required: true,
+      required: [true, "O nome da situação é obrigatório."],
+      trim: true,
     },
     ordem: {
       type: Number,
-      required: true,
+      default: 0,
     },
-    cor: {
-      type: String,
-      default: "#1976D2", // Azul padrão, você pode customizar depois
+    company: {
+      type: Schema.Types.ObjectId,
+      ref: "Company",
+      required: [true, "A empresa da situação é obrigatória."],
+      index: true,
+    },
+    ativo: {
+      type: Boolean,
+      default: true,
     },
   },
   {
@@ -20,4 +29,35 @@ const LeadStageSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("LeadStage", LeadStageSchema);
+leadStageSchema.index({ company: 1, nome: 1 }, { unique: true });
+
+leadStageSchema.post("save", function (error, doc, next) {
+  if (
+    error.name === "MongoServerError" &&
+    error.code === 11000 &&
+    error.keyPattern?.company &&
+    error.keyPattern?.nome
+  ) {
+    next(new Error(`A situação '${doc.nome}' já existe nesta empresa.`));
+  } else {
+    next(error);
+  }
+});
+leadStageSchema.post("findOneAndUpdate", function (error, doc, next) {
+  if (
+    error.name === "MongoServerError" &&
+    error.code === 11000 &&
+    error.keyPattern?.company &&
+    error.keyPattern?.nome
+  ) {
+    next(
+      new Error(`Erro ao atualizar: Nome de situação já existe nesta empresa.`)
+    );
+  } else {
+    next(error);
+  }
+});
+
+const LeadStage = mongoose.model("LeadStage", leadStageSchema);
+
+module.exports = LeadStage;
