@@ -62,26 +62,23 @@ function LeadDetailPage() { // <<< INÍCIO DO COMPONENTE
       setSituacoesList(Array.isArray(situacoesData) ? situacoesData : []);
       setHistoryList(Array.isArray(historyData) ? historyData : []);
     } catch (err) {
-      console.error(`Erro ao buscar dados para lead ${id}:`, err);
-      // Define erro principal se falhar ao buscar lead, senão um erro de histórico/situação
-      const errorMessage = err.message || 'Falha ao carregar dados.';
-      if (!leadDetails && !(err.config?.url?.includes('situacoes') || err.config?.url?.includes('history'))) {
-           setError(errorMessage);
-           setLeadDetails(null); // Garante que não mostre dados antigos
-      } else if (!Array.isArray(historyList) && err.config?.url?.includes('history')) {
-          setHistoryError("Falha ao carregar histórico.");
-      } else if (!Array.isArray(situacoesList) && err.config?.url?.includes('situacoes')) {
-           // Lidar com erro de situações se necessário (ex: desabilitar reativar)
-           console.error("Falha ao carregar situações.");
-           setSituacoesList([]); // Define como vazio
-      }
-      // Limpa listas em caso de erro
-      if(error) setSituacoesList([]);
-      if(historyError) setHistoryList([]);
+        console.error(`Erro ao buscar dados para lead ${id}:`, err);
+        // Define um erro geral se algo falhar ao carregar dados principais
+        const errorMessage = err.message || 'Falha ao carregar dados.';
+        setError(errorMessage); // Define o erro principal da página
+    
+        // Define erros específicos para partes que podem ter falhado
+        setHistoryError("Falha ao carregar histórico."); // Assume que histórico pode ter falhado
+    
+        // Limpa os dados para evitar mostrar informações inconsistentes
+        setLeadDetails(null);
+        setSituacoesList([]);
+        setHistoryList([]);
     } finally {
-      setIsLoading(false); setIsLoadingHistory(false);
+        setIsLoading(false);
+        setIsLoadingHistory(false);
     }
-  }, [id]); // Recriar apenas se ID mudar
+  }, [id]);
 
   // --- Effects ---
   useEffect(() => {
