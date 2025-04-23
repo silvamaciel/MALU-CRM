@@ -26,7 +26,8 @@ const leadSchema = new Schema(
       type: String,
       required: false, // Opcional
     },
-    // --- REMOVIDO o campo CPF ---
+    
+    cpf: { type: String, required: false, unique: true, sparse: true },
 
     situacao: { // <-- Obrigatório
       type: Schema.Types.ObjectId,
@@ -48,11 +49,17 @@ const leadSchema = new Schema(
       ref: "Origem", 
       required: [true, "A origem do lead é obrigatória."],
     },
-    responsavel: { 
-      type: Schema.Types.ObjectId,
+    responsavel: { type: Schema.Types.ObjectId,
       ref: "User",
       required: [true, "O responsável pelo lead é obrigatório."],
     },
+
+    company: {   type: Schema.Types.ObjectId,
+      ref: 'Company', 
+      required: [true, 'A empresa do lead é obrigatória.'], 
+      index: true 
+  },
+
   },
   {
     timestamps: true, 
