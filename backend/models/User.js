@@ -1,26 +1,60 @@
+// models/User.js
 const mongoose = require('mongoose');
+const { Schema } = mongoose;
 
-const UserSchema = new mongoose.Schema({
-  nome: {
-    type: String,
-    required: true
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  senha: {
-    type: String,
-    required: false
-  },
-  perfil: {
-    type: String,
-    enum: ['admin', 'corretor', 'usuario'],
-    default: 'usuario'
+const userSchema = new Schema({
+    nome: {
+        type: String,
+        required: [true, 'Nome do usuário é obrigatório.'],
+        trim: true,
+    },
+    email: {
+        type: String,
+        required: [true, 'Email do usuário é obrigatório.'],
+        unique: true, // Geralmente email é único em todo o sistema
+        lowercase: true,
+        trim: true,
+        match: [/\S+@\S+\.\S+/, 'Por favor, insira um endereço de e-mail válido.']
+    },
+    senha: { 
+        type: String,
+        required: false, 
+        select: false 
+    },
+    perfil: {
+        type: String,
+        required: [true, 'Perfil do usuário é obrigatório.'],
+        enum: ['admin', 'corretor'],
+        default: 'corretor'
+    },
+    company: {
+        type: Schema.Types.ObjectId,
+        ref: 'Company', 
+        required: [true, 'A empresa do usuário é obrigatória.'], 
+    },
+    googleId: { 
+       type: String,
+       unique: true,
+       sparse: true, 
+       index: true
+    },
+    ativo: { 
+        type: Boolean,
+        default: true
+    }
+
+}, { timestamps: true });
+
+userSchema.post('save', function(error, doc, next) {
+  if (error.name === 'MongoServerError' && error.code === 11000 && error.keyPattern?.email) {
+    next(new Error(`O email ${doc.email} já está cadastrado.`));
+  } else if (error.name === 'MongoServerError' && error.code === 11000 && error.keyPattern?.googleId){
+    next(new Error(`Esta conta Google já está associada a outro usuário.`));
+  } else {
+    next(error);
   }
-}, {
-  timestamps: true
 });
 
-module.exports = mongoose.model('User', UserSchema);
+const User = mongoose.model('User', userSchema);
+
+module.exports = User;
