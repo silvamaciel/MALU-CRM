@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 // API Functions
 import { getLeadById, discardLead, updateLead, deleteLead, getLeadHistory } from '../../api/leads';
-import { getSituacoes } from '../../api/situacoes';
+import { getSituacoes } from '../../api/leadStages';
 // Modal Components
 import DiscardLeadModal from '../../components/DiscardLeadModal/DiscardLeadModal';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';

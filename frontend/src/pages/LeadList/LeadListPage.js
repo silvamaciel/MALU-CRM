@@ -6,7 +6,7 @@ import ReactPaginate from 'react-paginate'; // Importar react-paginate
 
 // Funções da API
 import { getLeads, discardLead, updateLead, deleteLead } from "../../api/leads";
-import { getSituacoes } from "../../api/situacoes";
+import { getSituacoes } from "../../api/leadStages";
 import { getOrigens } from "../../api/origens";
 // !!! ATENÇÃO: Verifique se o nome do arquivo/caminho está correto !!!
 import { getUsuarios } from "../../api/usuarios"; // ou '../../api/users'
