@@ -1,4 +1,4 @@
-import axiosInstance from './axiosInstante.js'; 
+import axiosInstance from './axiosInstance.js'; 
 
 /**
  * Envia o token de ID do Google para o backend para validação e login/criação de usuário.

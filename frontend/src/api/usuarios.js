@@ -1,5 +1,5 @@
 // src/api/usuarios.js
-import axiosInstance from "./axiosInstante.js";
+import axiosInstance from "./axiosInstance.js";
 
 export const getUsuarios = async () => {
   try {

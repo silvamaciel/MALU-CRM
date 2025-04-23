@@ -1,5 +1,5 @@
 // src/api/origens.js
-import axiosInstance from "./axiosInstante.js";
+import axiosInstance from "./axiosInstance.js";
 
 export const getOrigens = async () => {
   try {

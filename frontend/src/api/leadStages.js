@@ -1,5 +1,5 @@
-// src/api/situacoes.js
-import axiosInstance from "./axiosInstante.js";
+// src/api/leadStage.js
+import axiosInstance from "./axiosInstance.js";
 
 export const getSituacoes = async () => {
   try {

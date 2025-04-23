@@ -1,5 +1,5 @@
 // src/api/discardReasons.js
-import axiosInstance from "./axiosInstante.js";
+import axiosInstance from "./axiosInstance.js";
 
 export const getDiscardReasons = async () => {
   try {

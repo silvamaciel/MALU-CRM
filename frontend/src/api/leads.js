@@ -1,5 +1,5 @@
 // src/api/leads.js
-import axiosInstance from "./axiosInstante.js";
+import axiosInstance from "./axiosInstance.js";
 
 /**
  * Busca todos os leads.
