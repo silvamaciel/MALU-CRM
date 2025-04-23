@@ -18,9 +18,6 @@ connectDB();
 app.use('/api/auth', require('./routes/authRoutes')); 
 
 
-//app.use(require('./middleware/authMiddleware'));
-
-
 app.use('/api/companies', require('./routes/companyRoutes')); 
 
 

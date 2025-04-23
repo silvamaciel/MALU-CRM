@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom"; // Link pode ser usado nos botões superiores
 import { createLead, getLeadById, updateLead } from "../../api/leads";
-import { getSituacoes } from "../../api/leadStages";
+import { getLeadStages } from "../../api/leadStages";
 import { getOrigens } from "../../api/origens";
 // Verifique o nome/caminho real do seu arquivo API para usuários
 import { getUsuarios } from "../../api/usuarios"; // Ou '../../api/usuarios'
@@ -48,7 +48,7 @@ function LeadFormPage() {
       setOptionsError(null);
       try {
         const [situacoesData, origensData, usuariosData] = await Promise.all([
-          getSituacoes(),
+          getLeadStages(),
           getOrigens(),
           getUsuarios(),
         ]);

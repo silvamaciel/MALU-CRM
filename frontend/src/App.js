@@ -11,11 +11,12 @@ import LeadFormPage from "./pages/LeadForm/LeadFormPage";
 import LeadDetailPage from "./pages/LeadDatail/LeadDetailPage";
 import LoginPage from "./pages/Login/LoginPage";
 
+import LeadStageAdminPage from './pages/Admin/LeadStageAdminPage';
+
+
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// Importar outras páginas aqui quando criadas
-// import LeadFormPage from './pages/LeadForm/LeadFormPage';
 
 import "./App.css"; // Seus estilos globais
 
@@ -23,116 +24,90 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(
     !!localStorage.getItem("userToken")
   );
+  const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+  const isAdmin = userData?.perfil === 'admin'; // Verifica se é admin
 
   const handleLoginSuccess = () => {
     setIsLoggedIn(true);
-    // Opcional: forçar navegação para /leads se já não estiver lá
-    // window.location.href = '/leads'; // Ou usar navigate se disponível aqui
+    window.location.reload(); 
   };
 
-  // Função de Logout (exemplo básico)
   const handleLogout = () => {
     localStorage.removeItem("userToken");
     localStorage.removeItem("userData");
     setIsLoggedIn(false);
-    // Redireciona para login
-    // window.location.href = '/login'; // Ou use navigate
+    window.location.href = '/login';
   };
 
   return (
     <Router>
-      {/* Pode adicionar um Layout global aqui (Navbar, Sidebar) se desejar */}
       <div className="App">
-        <ToastContainer
-          position="top-right" // Posição na tela
-          autoClose={3000} // Fecha automaticamente após 3 segundos
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="colored" // Ou "light", "dark"
-        />
+        <ToastContainer position="top-right" autoClose={3000} theme="colored"/>
+
+        {/* Botão Logout Simples (visível se logado) */}
+        {isLoggedIn && (
+             <button onClick={handleLogout} style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 1000, padding: '5px 10px', cursor: 'pointer'}}>
+                 Logout ({userData?.nome || 'Usuário'}) {/* Mostra nome se disponível */}
+             </button>
+         )}
 
         <main>
-          
           <Routes>
-          <Route
-            path="/login"
-            element={
-              !isLoggedIn ? (
-                <LoginPage onLoginSuccess={handleLoginSuccess} />
-              ) : (
-                <Navigate replace to="/leads" />
-              )
-            }
-          />
+            {/* Rota de Login */}
             <Route
-              path="/login"
-              element={
-                !isLoggedIn ? (
-                  <LoginPage onLoginSuccess={handleLoginSuccess} />
-                ) : (
-                  <Navigate replace to="/leads" />
-                )
-              }
+                path="/login"
+                element={
+                  !isLoggedIn ? ( <LoginPage onLoginSuccess={handleLoginSuccess} /> )
+                   : ( <Navigate replace to="/leads" /> ) /* Redireciona se já logado */
+                }
             />
+            {/* Rota /login duplicada foi REMOVIDA daqui */}
 
-            {/* Rotas Protegidas (Exemplo Básico) */}
+            {/* Rotas Protegidas Comuns */}
             <Route
-              path="/leads"
-              element={
-                isLoggedIn ? <LeadListPage /> : <Navigate replace to="/login" />
-              }
+                path="/leads"
+                element={ isLoggedIn ? <LeadListPage /> : <Navigate replace to="/login" /> }
             />
             <Route
-              path="/leads/novo"
-              element={
-                isLoggedIn ? <LeadFormPage /> : <Navigate replace to="/login" />
-              }
+                path="/leads/novo"
+                element={ isLoggedIn ? <LeadFormPage /> : <Navigate replace to="/login" /> }
             />
-            <Route
-              path="/leads/:id"
-              element={
-                isLoggedIn ? (
-                  <LeadDetailPage />
-                ) : (
-                  <Navigate replace to="/login" />
-                )
-              }
-            />
-            <Route
-              path="/leads/:id/editar"
-              element={
-                isLoggedIn ? <LeadFormPage /> : <Navigate replace to="/login" />
-              }
-            />
+             <Route
+                path="/leads/:id"
+                element={ isLoggedIn ? <LeadDetailPage /> : <Navigate replace to="/login" /> }
+             />
+             <Route
+                path="/leads/:id/editar"
+                element={ isLoggedIn ? <LeadFormPage /> : <Navigate replace to="/login" /> }
+             />
 
-            {/* Rota Raiz e Rota 404 */}
+            {/* <<< Rota Adicionada para Admin de Situações >>> */}
             <Route
-              path="/"
-              element={
-                <Navigate replace to={isLoggedIn ? "/leads" : "/login"} />
-              }
+                path="/admin/situacoes"
+                element={
+                    isLoggedIn ? // 1. Logado?
+                        (isAdmin ? // 2. É admin?
+                            <LeadStageAdminPage /> // Sim -> Mostra página
+                        : <Navigate replace to="/leads" /> // Não é admin -> Vai para leads
+                        )
+                    : <Navigate replace to="/login" /> // Não logado -> Vai para login
+                }
+            />
+            {/* <<< Fim da Rota Adicionada >>> */}
+
+
+             {/* Rota Raiz e Rota 404 */}
+            <Route
+                path="/"
+                element={ <Navigate replace to={isLoggedIn ? "/leads" : "/login"} /> }
             />
             <Route
-              path="*"
-              element={
-                <div>
-                  <h1>404 - Página Não Encontrada</h1>
-                </div>
-              }
+                path="*"
+                element={ <div><h1>404 - Página Não Encontrada</h1></div> }
             />
           </Routes>
         </main>
-        <button
-          onClick={handleLogout}
-          style={{ position: "fixed", top: "10px", right: "10px", zIndex: 100 }}
-        >
-          Logout
-        </button>
+
       </div>
     </Router>
   );

@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 // API Functions
 import { getLeadById, discardLead, updateLead, deleteLead, getLeadHistory } from '../../api/leads';
-import { getSituacoes } from '../../api/leadStages';
+import { getLeadStages } from '../../api/leadStages';
 // Modal Components
 import DiscardLeadModal from '../../components/DiscardLeadModal/DiscardLeadModal';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
@@ -56,7 +56,7 @@ function LeadDetailPage() { // <<< INÍCIO DO COMPONENTE
     setHistoryError(null); setReactivateError(null);
     try {
       const [leadData, situacoesData, historyData] = await Promise.all([
-        getLeadById(id), getSituacoes(), getLeadHistory(id)
+        getLeadById(id), getLeadStages(), getLeadHistory(id)
       ]);
       setLeadDetails(leadData);
       setSituacoesList(Array.isArray(situacoesData) ? situacoesData : []);
