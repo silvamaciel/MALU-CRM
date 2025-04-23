@@ -17,8 +17,11 @@ connectDB();
 // --- Rotas Públicas (Autenticação) ---
 app.use('/api/auth', require('./routes/authRoutes')); 
 
-// --- Middleware de Autenticação (será criado depois) ---
-// app.use(require('./middleware/authMiddleware')); /
+
+//app.use(require('./middleware/authMiddleware'));
+
+
+app.use('/api/companies', require('./routes/companyRoutes')); 
 
 
 // --rotas protegidas -- // 
@@ -26,7 +29,7 @@ app.use('/api/leads', require('./routes/leadRoutes'));
 app.use('/api/leadStage', require('./routes/leadStageRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 
-app.use('/api/origens', require('./routes/origemRoutes'));
+app.use('/api/origens', require('./routes/OrigemRoutes'));
 
 app.use('/api/motivosdescarte', require('./routes/discardReasonRoutes'));
 
