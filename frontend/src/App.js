@@ -10,6 +10,8 @@ import LeadListPage from "./pages/LeadList/LeadListPage";
 import LeadFormPage from "./pages/LeadForm/LeadFormPage";
 import LeadDetailPage from "./pages/LeadDatail/LeadDetailPage";
 import LoginPage from "./pages/Login/LoginPage";
+import OrigensAdminPage from './pages/Admin/OrigensAdminPage'; 
+
 
 import LeadStageAdminPage from './pages/Admin/LeadStageAdminPage';
 
@@ -93,7 +95,10 @@ function App() {
                     : <Navigate replace to="/login" /> // Não logado -> Vai para login
                 }
             />
-            {/* <<< Fim da Rota Adicionada >>> */}
+            <Route
+              path="/admin/origens"
+              element={ isLoggedIn && isAdmin ? <OrigensAdminPage /> : <Navigate replace to={isLoggedIn ? "/leads" : "/login"} /> }
+          />
 
 
              {/* Rota Raiz e Rota 404 */}
