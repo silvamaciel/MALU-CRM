@@ -12,7 +12,3 @@ router.get('/:id', protect, Usercontroller.getUserById);
 router.delete('/:id', protect, Usercontroller.deleteUser);
 
 module.exports = router;
-
-
-
-console.log('/api/origens');  // Adicione esse log

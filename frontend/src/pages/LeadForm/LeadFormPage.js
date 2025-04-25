@@ -118,33 +118,31 @@ function LeadFormPage() {
     setIsProcessing(true);
 
     // Validação Frontend (voltando a exigir os selects)
-    if (
-      !formData.nome ||
-      !formData.contato ||
-      !formData.email ||
-      !formData.situacao ||
-      !formData.origem ||
-      !formData.responsavel
-    ) {
-      toast.warn("Todos os campos marcados com * são obrigatórios.");
+    if (!formData.nome || !formData.contato) {
+      toast.warn('Nome e Contato são obrigatórios.'); // Mensagem ajustada
       setIsProcessing(false);
       return;
-    }
-    if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      toast.warn("Formato de email inválido.");
-      setIsProcessing(false);
-      return;
-    }
-    // SEM validação de CPF aqui
+   }
 
+   
+   if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
+    toast.warn('Formato de email inválido.');
+    setIsProcessing(false);
+    return;
+ }
+    
+    
     // Preparar dados: Enviar o formData como está (backend valida)
     const dataToSend = { ...formData };
 
-    console.log(
-      `Dados enviados para ${isEditMode ? "updateLead" : "createLead"}:`,
-      dataToSend
-    );
+    Object.keys(dataToSend).forEach(key => {
+      if (['nome', 'contato', 'cpf'].includes(key)) return;
 
+      if (dataToSend[key] === '' || dataToSend[key] === null) {
+           delete dataToSend[key];
+      }
+  });
+ 
     try {
       if (isEditMode) {
         await updateLead(id, dataToSend);
@@ -234,7 +232,6 @@ function LeadFormPage() {
             name="email"
             value={formData.email}
             onChange={handleChange}
-            required
           />
         </div>
         <div className="form-group">
