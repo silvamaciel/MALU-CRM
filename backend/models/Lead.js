@@ -4,7 +4,6 @@ const { Schema } = mongoose;
 
 const leadSchema = new Schema(
   {
-    // --- Campos Essenciais ---
     nome: {
       type: String,
       required: [true, "O nome do lead é obrigatório."],
@@ -15,8 +14,12 @@ const leadSchema = new Schema(
     },
     email: {
       type: String,
-      required: [true, "O email do lead é obrigatório."],
-      // Opcional: match: [/\S+@\S+\.\S+/, 'Email inválido.']
+      required: [false, "O email do lead é obrigatório."],
+      match: [/\S+@\S+\.\S+/, 'Email inválido.'],
+      unique: true,
+      sparse: true,
+      trim: true,
+      lowercase: true
     },
     nascimento: {
       type: Date,
@@ -29,7 +32,7 @@ const leadSchema = new Schema(
     
     cpf: { type: String, required: false, unique: true, sparse: true },
 
-    situacao: { // <-- Obrigatório
+    situacao: {
       type: Schema.Types.ObjectId,
       ref: "LeadStage",
       required: [true, "A situação do lead é obrigatória."],
