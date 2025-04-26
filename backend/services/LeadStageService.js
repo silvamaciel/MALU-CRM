@@ -3,14 +3,12 @@ const mongoose = require('mongoose');
 const LeadStage = require('../models/LeadStage');
 const Lead = require('../models/Lead'); // Para checar uso antes de deletar
 
-// Valor alto para garantir que 'Descartado' fique por último na ordenação
 const DESCARTADO_ORDER_VALUE = 9999;
 
 /**
  * Lista todas as situações ATIVAS de uma empresa específica, ordenadas por 'ordem'.
  * @param {string} companyId - ID da empresa.
  */
-// <<< NOME PADRONIZADO e recebe companyId >>>
 const getAllLeadStages = async (companyId) => {
     if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
          throw new Error('ID da empresa inválido ou não fornecido para buscar situações.');
