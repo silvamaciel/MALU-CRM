@@ -99,6 +99,10 @@ function App() {
               path="/admin/origens"
               element={ isLoggedIn && isAdmin ? <OrigensAdminPage /> : <Navigate replace to={isLoggedIn ? "/leads" : "/login"} /> }
           />
+          <Route
+                path="/admin/motivosdescarte"
+                element={ isLoggedIn && isAdmin ? <DiscardReasonAdminPage /> : <Navigate replace to={isLoggedIn ? "/leads" : "/login"} /> }
+            />
 
 
              {/* Rota Raiz e Rota 404 */}
