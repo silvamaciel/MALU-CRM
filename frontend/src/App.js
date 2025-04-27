@@ -11,6 +11,7 @@ import LeadFormPage from "./pages/LeadForm/LeadFormPage";
 import LeadDetailPage from "./pages/LeadDatail/LeadDetailPage";
 import LoginPage from "./pages/Login/LoginPage";
 import OrigensAdminPage from './pages/Admin/OrigensAdminPage'; 
+import DiscardReasonAdminPage from './pages/Admin/DiscardReasonAdminPage';
 
 
 import LeadStageAdminPage from './pages/Admin/LeadStageAdminPage';
