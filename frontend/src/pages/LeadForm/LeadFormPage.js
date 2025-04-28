@@ -284,21 +284,18 @@ function LeadFormPage() {
         <div className="form-group">
           <label htmlFor="situacao">Situação</label> {/* Sem * */}
           <select id="situacao" name="situacao" value={formData.situacao} onChange={handleChange}>
-            <option value="">(Padrão: Aguardando Atendimento)</option>
             {situacoesList.map(s => <option key={s._id} value={s._id}>{s.nome}</option>)}
           </select>
         </div>
          <div className="form-group">
            <label htmlFor="origem">Origem</label> {/* Sem * */}
            <select id="origem" name="origem" value={formData.origem} onChange={handleChange}>
-             <option value="">(Nenhuma)</option>
              {origensList.map(o => <option key={o._id} value={o._id}>{o.nome}</option>)}
            </select>
         </div>
          <div className="form-group">
            <label htmlFor="responsavel">Responsável</label> {/* Sem * */}
            <select id="responsavel" name="responsavel" value={formData.responsavel} onChange={handleChange}>
-             <option value="">(Usuário Atual)</option>
              {usuariosList.map(u => <option key={u._id} value={u._id}>{u.nome}</option>)}
            </select>
         </div>
