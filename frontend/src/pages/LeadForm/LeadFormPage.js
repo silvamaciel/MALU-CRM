@@ -5,7 +5,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { createLead, getLeadById, updateLead } from '../../api/leads';
 import { getLeadStages } from '../../api/leadStages'; // Padronizado
 import { getOrigens } from '../../api/origens';
-import { getUsuarios } from '../../api/usuarios'; // Verifique nome/caminho real!
+import { getUsuarios } from '../../api/users'; // Verifique nome/caminho real!
 // Notifications
 import { toast } from 'react-toastify';
 // CSS

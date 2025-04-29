@@ -9,7 +9,7 @@ import { getLeads, discardLead, updateLead, deleteLead } from "../../api/leads";
 import { getLeadStages } from "../../api/leadStages";
 import { getOrigens } from "../../api/origens";
 // !!! ATENÇÃO: Verifique se o nome do arquivo/caminho está correto !!!
-import { getUsuarios } from "../../api/usuarios"; // ou '../../api/users'
+import { getUsuarios } from "../../api/users"; // ou '../../api/users'
 
 // Componentes
 import LeadCard from "../../components/LeadCard/LeadCard";

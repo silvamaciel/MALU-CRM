@@ -10,7 +10,7 @@ import {
 import { toast } from "react-toastify";
 
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
-import "./LeadStageAdminPage.css";
+import './AdminPages.css';
 
 function LeadStageAdminPage() {
   const [stages, setStages] = useState([]);

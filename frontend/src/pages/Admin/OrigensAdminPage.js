@@ -6,7 +6,7 @@ import { toast } from 'react-toastify';
 // Componentes
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 // CSS
-import './LeadStageAdminPage'; // Reutiliza o CSS admin
+import './AdminPages.css';
 
 function OrigensAdminPage() {
     // --- States ---

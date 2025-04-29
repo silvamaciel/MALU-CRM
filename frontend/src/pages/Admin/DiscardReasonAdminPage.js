@@ -6,7 +6,7 @@ import { toast } from 'react-toastify';
 // Shared Components
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 // Shared Admin CSS
-import './LeadStageAdminPage.css';
+import './AdminPages.css';
 
 function DiscardReasonAdminPage() {
     // State for the list
