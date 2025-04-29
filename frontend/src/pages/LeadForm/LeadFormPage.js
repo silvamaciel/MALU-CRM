@@ -1,11 +1,11 @@
 // src/pages/LeadForm/LeadFormPage.js
-import React, { useState, useEffect} from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 // API Functions
 import { createLead, getLeadById, updateLead } from '../../api/leads';
-import { getLeadStages } from '../../api/leadStages'; // Usando getLeadStages consistentemente
+import { getLeadStages } from '../../api/leadStages'; // Padronizado
 import { getOrigens } from '../../api/origens';
-import { getUsuarios } from '../../api/usuarios'; // Ou usuarios.js - VERIFIQUE O CAMINHO/NOME REAL
+import { getUsuarios } from '../../api/usuarios'; // Verifique nome/caminho real!
 // Notifications
 import { toast } from 'react-toastify';
 // CSS
@@ -20,9 +20,9 @@ const initialState = {
 };
 
 function LeadFormPage() {
-  const { id } = useParams(); // Pega ID da URL
+  const { id } = useParams();
   const navigate = useNavigate();
-  const isEditMode = Boolean(id); // True se ID existe
+  const isEditMode = Boolean(id);
 
   // State principal do formulário
   const [formData, setFormData] = useState(initialState);
@@ -36,7 +36,7 @@ function LeadFormPage() {
 
   // States de Loading e Erro
   const [loadingOptions, setLoadingOptions] = useState(true);
-  const [isLoadingData, setIsLoadingData] = useState(isEditMode); // Só carrega dados se for edição
+  const [isLoadingData, setIsLoadingData] = useState(isEditMode);
   const [isProcessing, setIsProcessing] = useState(false); // Para submit
   const [optionsError, setOptionsError] = useState(null); // Erro ao carregar opções
 
@@ -46,37 +46,33 @@ function LeadFormPage() {
   useEffect(() => {
     console.log("Buscando opções de dropdown...");
     const fetchOptions = async () => {
-      // Só mostra loading de opções se não estiver no modo de edição (que tem seu próprio loading)
       if (!isEditMode) setLoadingOptions(true);
       setOptionsError(null);
       try {
         const [situacoesData, origensData, usuariosData] = await Promise.all([
-          getLeadStages(),
+          getLeadStages(), // Usando getLeadStages
           getOrigens(),
-          getUsuarios() // <-- Verifique se esta função/API está correta
+          getUsuarios() // Verifique esta função/API
         ]);
         setSituacoesList(Array.isArray(situacoesData) ? situacoesData : []);
         setOrigensList(Array.isArray(origensData) ? origensData : []);
         setUsuariosList(Array.isArray(usuariosData) ? usuariosData : []);
-         if (!Array.isArray(situacoesData) || !Array.isArray(origensData) || !Array.isArray(usuariosData)) {
-             console.warn("Uma ou mais APIs de opções não retornaram um array.");
-         }
       } catch (error) {
         console.error("Erro ao buscar opções:", error);
         const errorMsg = error.message || "Falha ao carregar opções para o formulário.";
         setOptionsError(errorMsg);
         toast.error(errorMsg);
-        setSituacoesList([]); setOrigensList([]); setUsuariosList([]); // Garante arrays vazios
+        setSituacoesList([]); setOrigensList([]); setUsuariosList([]);
       } finally {
-        // Só para o loading de opções se não estiver carregando dados do lead no modo edição
          if (!isEditMode) setLoadingOptions(false);
       }
     };
     fetchOptions();
-  }, [isEditMode]); // Roda se o modo mudar (raro, mas seguro)
+  }, [isEditMode]);
 
   // Efeito para buscar dados do Lead no modo Edição E guarda estado inicial
   useEffect(() => {
+    // Só roda se estiver em modo edição e o ID for válido
     if (isEditMode && id) {
       console.log(`Modo Edição: Buscando lead ID ${id}`);
       setIsLoadingData(true);
@@ -87,51 +83,55 @@ function LeadFormPage() {
           // Prepara os dados formatados para o formulário
           const formDataToSet = {
             nome: data.nome || '',
-            contato: data.contato || '', // Recebe formatado do backend
+            contato: data.contato || '',
             email: data.email || '',
             nascimento: formattedNascimento,
             endereco: data.endereco || '',
-            cpf: data.cpf || '', // Recebe limpo do backend
-            situacao: data.situacao?._id || '', // Pega o ID
-            origem: data.origem?._id || '',     // Pega o ID
-            responsavel: data.responsavel?._id || '', // Pega o ID
+            cpf: data.cpf || '',
+            situacao: data.situacao?._id || '',
+            origem: data.origem?._id || '',
+            responsavel: data.responsavel?._id || '',
             comentario: data.comentario || '',
           };
           setFormData(formDataToSet);
-          setInitialData(formDataToSet); // <<< GUARDA os dados iniciais para comparação
+          setInitialData(formDataToSet); // Guarda os dados iniciais
         } catch (err) {
           console.error("Erro ao buscar dados para edição:", err);
           toast.error(err.message || "Falha ao carregar dados do lead para edição.");
-          // Navega de volta ou mostra erro permanente se falhar em carregar
+          // Considerar redirecionar se o lead não puder ser carregado
           // navigate('/leads');
         } finally {
           setIsLoadingData(false);
-          setLoadingOptions(false); // Garante que o loading geral pare
+          // Garante que o loading geral termine após carregar dados E opções
+          // (se as opções ainda estiverem carregando, setLoadingOptions(false) será chamado no outro effect)
+          if (!loadingOptions) setLoadingOptions(false); // Ajuste fino no loading
         }
       };
       fetchLeadData();
     } else {
       // Modo Criação
-      setFormData(initialState); // Garante formulário limpo
-      setInitialData(null); // Sem dados iniciais
-      setIsLoadingData(false); // Não está carregando dados
-       // Loading de opções é tratado no outro useEffect
-       // setLoadingOptions(false); // Removido daqui
+      setFormData(initialState);
+      setInitialData(null);
+      setIsLoadingData(false);
+      // Se opções já carregaram, loading geral para
+       if (!loadingOptions) setLoadingOptions(false);
     }
-  }, [id, isEditMode, navigate]); // Adicionado navigate às dependências
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, isEditMode]); // Roda se ID ou modo mudarem (navigate não precisa aqui)
 
   // Handler de Mudança padrão
-  const handleChange = (e) => {
+  const handleChange = useCallback((e) => {
     const { name, value } = e.target;
+    console.log(`handleChange: name=${name}, value=${value}`); // Log para depurar selects
     setFormData(prevState => ({ ...prevState, [name]: value }));
-  };
+  }, []); // useCallback sem dependências
 
-  // Handler de Submit com lógica condicional Create/Update e envio de alterações
-  const handleSubmit = async (e) => {
+  // --- Handler de Submit AJUSTADO ---
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
-    setIsProcessing(true); // Inicia processamento
+    setIsProcessing(true);
 
-    // Validação Frontend Mínima (Nome/Contato Obrigatórios + Email formato se preenchido)
+    // 1. Validação Frontend Mínima
     if (!formData.nome || !formData.contato) {
        toast.warn('Nome e Contato são obrigatórios.');
        setIsProcessing(false); return;
@@ -149,8 +149,8 @@ function LeadFormPage() {
     if (isEditMode) {
         // --- MODO EDIÇÃO: Enviar apenas campos alterados ---
         const changedData = {};
-        if (!initialData) { // Segurança
-             toast.error("Erro: Dados iniciais não carregados para comparação.");
+        if (!initialData) {
+             toast.error("Erro: Dados iniciais não carregados.");
              setIsProcessing(false); return;
         }
 
@@ -158,13 +158,7 @@ function LeadFormPage() {
             const currentValue = formData[key] ?? '';
             const initialValue = initialData[key] ?? '';
             if (currentValue !== initialValue) {
-                 // Envia null se o campo foi limpo, senão envia o valor atual
-                 // Tratar 'nascimento' especificamente se '' deve ser null
-                 if (key === 'nascimento' && currentValue === '') {
-                     changedData[key] = null;
-                 } else {
-                      changedData[key] = currentValue === '' ? null : currentValue;
-                 }
+                 changedData[key] = currentValue === '' ? null : currentValue;
             }
         });
 
@@ -176,20 +170,18 @@ function LeadFormPage() {
         dataToSend = changedData;
         console.log("Dados ALTERADOS enviados para updateLead:", dataToSend);
         operationPromise = updateLead(id, dataToSend);
-        successMessage = 'Lead atualizado com sucesso!';
-        navigateTo = `/leads/${id}`; // Volta para detalhes
+        successMessage = 'Lead atualizado!';
+        navigateTo = `/leads/${id}`;
 
     } else {
-        // --- MODO CRIAÇÃO: Enviar dados relevantes ---
+        // --- MODO CRIAÇÃO: Enviar dados relevantes do formData ---
+        // Backend agora trata os defaults para situacao/responsavel/origem se não enviados
         dataToSend = { ...formData };
-        // Remove chaves vazias/nulas OPCIONAIS antes de enviar
+        // Remove chaves que são string vazia (exceto nome/contato) ou explicitamente null
         Object.keys(dataToSend).forEach(key => {
-             // Mantem nome e contato
-             if (['nome', 'contato'].includes(key)) return;
-             // Remove outros se vazios/nulos
-             if (dataToSend[key] === '' || dataToSend[key] === null) {
-                  delete dataToSend[key];
-             }
+            if (!['nome', 'contato'].includes(key) && (dataToSend[key] === '' || dataToSend[key] === null)) {
+                 delete dataToSend[key];
+            }
         });
         // Limpa CPF se só tiver máscara/espaços
         if (dataToSend.cpf && dataToSend.cpf.replace(/\D/g, '') === '') {
@@ -198,8 +190,8 @@ function LeadFormPage() {
 
         console.log("Dados enviados para createLead:", dataToSend);
         operationPromise = createLead(dataToSend);
-        successMessage = 'Lead cadastrado com sucesso!';
-        navigateTo = '/leads'; // Volta para lista
+        successMessage = 'Lead cadastrado!';
+        navigateTo = '/leads';
     }
 
     // --- Executa a chamada API ---
@@ -207,29 +199,32 @@ function LeadFormPage() {
         await operationPromise;
         toast.success(successMessage);
         if (!isEditMode) { setFormData(initialState); } // Limpa form só na criação
-        setTimeout(() => { navigate(navigateTo); }, 1000); // Navega após delay
+        // Atraso um pouco menor para navegação
+        setTimeout(() => { navigate(navigateTo); }, 800);
     } catch (err) {
         toast.error(err.message || `Falha ao ${isEditMode ? 'atualizar' : 'cadastrar'}.`);
-        console.error(err);
+        console.error("Erro no submit:", err);
     } finally {
-        setIsProcessing(false); // Finaliza processamento
+        setIsProcessing(false);
     }
-  };
+  // Adiciona dependências corretas para useCallback
+  }, [formData, initialData, isEditMode, id, navigate]);
 
   // ---- Renderização ----
 
-  // Loading geral inicial (opções ou dados no modo edição)
+  // Loading inicial (mostra se opções OU dados do lead estão carregando)
   if (loadingOptions || isLoadingData) {
      return <div className="lead-form-page loading"><p>Carregando...</p></div>;
   }
-  // Erro crítico ao carregar opções
+  // Erro crítico ao carregar opções (impede renderizar o form)
   if (optionsError) {
      return <div className="lead-form-page error"><p className="error-message">{optionsError}</p></div>;
   }
+  // Se chegou aqui, options carregaram. Se for edit mode, data também carregou (ou deu erro tratado com toast).
 
   return (
     <div className="lead-form-page">
-      <h1>{isEditMode ? `Editar Lead: ${initialData?.nome || formData.nome}` : 'Cadastrar Novo Lead'}</h1>
+      <h1>{isEditMode ? `Editar Lead: ${initialData?.nome || formData.nome || ''}` : 'Cadastrar Novo Lead'}</h1>
 
       {/* Botões Voltar (apenas modo edição) */}
       {isEditMode && (
@@ -280,22 +275,26 @@ function LeadFormPage() {
           <textarea id="comentario" name="comentario" value={formData.comentario} onChange={handleChange}></textarea>
         </div>
 
-        {/* Grupo 4: Selects (Opcionais no preenchimento inicial, mas backend pode exigir/default) */}
+        {/* Grupo 4: Selects (Não 'required' no HTML) */}
         <div className="form-group">
-          <label htmlFor="situacao">Situação</label> {/* Sem * */}
+          <label htmlFor="situacao">Situação</label>
           <select id="situacao" name="situacao" value={formData.situacao} onChange={handleChange}>
+            {/* Opção informativa sobre default */}
+            <option value=""></option>
             {situacoesList.map(s => <option key={s._id} value={s._id}>{s.nome}</option>)}
           </select>
         </div>
          <div className="form-group">
-           <label htmlFor="origem">Origem</label> {/* Sem * */}
+           <label htmlFor="origem">Origem</label>
            <select id="origem" name="origem" value={formData.origem} onChange={handleChange}>
+             <option value=""></option>
              {origensList.map(o => <option key={o._id} value={o._id}>{o.nome}</option>)}
            </select>
         </div>
          <div className="form-group">
-           <label htmlFor="responsavel">Responsável</label> {/* Sem * */}
+           <label htmlFor="responsavel">Responsável</label>
            <select id="responsavel" name="responsavel" value={formData.responsavel} onChange={handleChange}>
+             <option value=""></option>
              {usuariosList.map(u => <option key={u._id} value={u._id}>{u.nome}</option>)}
            </select>
         </div>

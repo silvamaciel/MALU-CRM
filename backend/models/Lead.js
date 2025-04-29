@@ -50,7 +50,7 @@ const leadSchema = new Schema(
     origem: { 
       type: Schema.Types.ObjectId,
       ref: "Origem", 
-      required: [true, "A origem do lead é obrigatória."],
+      required: [false, "A origem do lead é obrigatória."]
     },
     responsavel: { type: Schema.Types.ObjectId,
       ref: "User",

@@ -248,19 +248,26 @@ const createLead = async (leadData, companyId, userId) => {
   }
 
   // Origem (Default = null)
+  console.log(`[createLead DEBUG] Valor de 'origem' recebido do frontend: ID = ${origem}, Tipo = ${typeof origem}`); // <<< DEBUG LOG 1
   if (origem && mongoose.Types.ObjectId.isValid(origem)) {
-    const doc = await Origem.findOne({
-      _id: origem,
-      company: companyId,
-    }).lean();
-    if (!doc)
-      throw new Error(
-        `Origem ID ${origem} inválida ou não pertence à esta empresa.`
-      );
-    origemIdFinal = doc._id;
-  } else {
-    origemIdFinal = null;
-  }
+    console.log(`[createLead DEBUG] ID de Origem tem formato válido. Buscando no DB...`); // <<< DEBUG LOG 2
+    try {
+        const doc = await Origem.findOne({ _id: origem, company: companyId }).lean(); // Busca na empresa
+        if (!doc) {
+            console.error(`[createLead DEBUG] Origem ID ${origem} NÃO ENCONTRADA para company ${companyId}!`); // <<< DEBUG LOG 3
+            // Mantém o lançamento do erro se fornecido mas inválido/não pertence
+            throw new Error(`Origem fornecida inválida ou não pertence a esta empresa.`);
+        }
+        origemIdFinal = doc._id;
+        console.log(`[createLead DEBUG] Origem encontrada no DB e ID final definido: ${origemIdFinal}`); // <<< DEBUG LOG 4
+    } catch(dbError){
+        console.error("[createLead DEBUG] Erro ao buscar Origem no DB:", dbError);
+        throw new Error("Erro ao validar Origem no banco de dados.");
+    }
+} else {
+     origemIdFinal = null; // Define null se não veio ou formato inválido
+     console.log(`[createLead DEBUG] Origem não fornecida ou formato inválido. ID final definido como: ${origemIdFinal}`); // <<< DEBUG LOG 5
+}
 
   // 5. Criação do Novo Lead
   const novoLead = new Lead({
