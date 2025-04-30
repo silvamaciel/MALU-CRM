@@ -141,7 +141,7 @@ const updateUser = async (id, companyId, updateData) => {
             { _id: id, company: companyId }, 
             { $set: fieldsToUpdate },
             { new: true, runValidators: true }
-        ).select('-senha'); o
+        ).select('-senha');
 
         if (!updatedUser) {
             throw new Error('Usuário não encontrado nesta empresa ou não foi possível atualizar.');
