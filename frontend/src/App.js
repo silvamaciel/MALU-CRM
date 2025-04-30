@@ -13,8 +13,8 @@ import LoginPage from "./pages/Login/LoginPage";
 import OrigensAdminPage from "./pages/Admin/OrigensAdminPage";
 import DiscardReasonAdminPage from "./pages/Admin/DiscardReasonAdminPage";
 import UsuariosAdminPage from "./pages/Admin/UsuariosAdminPage";
-
 import LeadStageAdminPage from "./pages/Admin/LeadStageAdminPage";
+import DashboardPage from "./pages/Dashboard/DashboardPage";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -24,7 +24,7 @@ import "./App.css"; // Seus estilos globais
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(
     !!localStorage.getItem("userToken")
-  );
+    );
   const userData = JSON.parse(localStorage.getItem("userData") || "{}");
   const isAdmin = userData?.perfil === "admin"; // Verifica se é admin
 
@@ -76,7 +76,6 @@ function App() {
                 ) /* Redireciona se já logado */
               }
             />
-            {/* Rota /login duplicada foi REMOVIDA daqui */}
 
             {/* Rotas Protegidas Comuns */}
             <Route
@@ -158,9 +157,13 @@ function App() {
             <Route
               path="/"
               element={
-                <Navigate replace to={isLoggedIn ? "/leads" : "/login"} />
+                <Navigate replace to={isLoggedIn ? "/dashboard" : "/login"} />
               }
             />
+            <Route
+                path="/dashboard"
+                 element={ isLoggedIn ? <DashboardPage /> : <Navigate replace to="/login" /> }
+             />
             <Route
               path="*"
               element={

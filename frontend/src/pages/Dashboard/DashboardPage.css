@@ -1,0 +1,89 @@
+/* src/pages/Dashboard/DashboardPage.css */
+.dashboard-page {
+    padding: 2rem;
+    max-width: 1200px; /* Permitir mais largura para dashboard */
+    margin: 1rem auto; /* Margem menor */
+}
+
+.dashboard-page h1 {
+    margin-bottom: 2rem;
+    text-align: center;
+    color: #333;
+}
+
+/* Cards de Resumo */
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Colunas responsivas */
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.summary-card {
+    background-color: #fff;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+    text-align: center;
+    border-left: 5px solid #0d6efd; /* Cor primária (azul) */
+}
+/* Cores diferentes para outros cards (exemplo) */
+.summary-card:nth-child(2) { border-left-color: #198754; } /* Verde */
+.summary-card:nth-child(3) { border-left-color: #ffc107; } /* Amarelo */
+
+.summary-card h2 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    font-size: 1.1em;
+    color: #6c757d;
+}
+
+.summary-card .summary-value {
+    font-size: 2.5em;
+    font-weight: 600;
+    color: #343a40;
+    margin-bottom: 0.25rem;
+}
+.summary-card small {
+    font-size: 0.85em;
+    color: #6c757d;
+}
+
+/* Seção de Gráficos */
+.charts-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+}
+
+.chart-container {
+    background-color: #fff;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    /* Define uma altura para o container do gráfico funcionar bem */
+    min-height: 350px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Placeholder para outros cards/charts */
+.summary-card.placeholder,
+.chart-container.placeholder {
+    border-left-color: #ced4da;
+    opacity: 0.7;
+}
+.chart-container.placeholder h3 { margin-top: 0; color: #6c757d; }
+.chart-container.placeholder p { color: #6c757d; }
+
+/* Mensagem de erro na página */
+.dashboard-page .error-message {
+    text-align: center;
+    padding: 2rem;
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    border-radius: 5px;
+}
