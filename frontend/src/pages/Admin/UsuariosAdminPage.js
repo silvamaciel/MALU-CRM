@@ -196,9 +196,9 @@ function UsuariosAdminPage() {
                             {/* Email */}
                              <div className="form-group">
                                 <label htmlFor="userEmail">Email *</label>
-                                <input type="email" id="userEmail" name="email" value={formData.email} onChange={handleInputChange} required disabled={isProcessingForm || isEditMode} /> {/* Desabilita email na edição */}
-                                {isEditMode && <small>Email não pode ser alterado.</small>}
-                            </div>
+                                <input type="email" id="userEmail" name="email" value={formData.email} onChange={handleInputChange} required disabled={isProcessingForm || !!currentUser} />
+                                {currentUser && <small>Email não pode ser alterado.</small>}
+                                </div>
                              {/* Perfil */}
                              <div className="form-group">
                                 <label htmlFor="userPerfil">Perfil *</label>
