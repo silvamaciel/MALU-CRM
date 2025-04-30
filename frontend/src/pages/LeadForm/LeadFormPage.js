@@ -57,6 +57,8 @@ function LeadFormPage() {
         setSituacoesList(Array.isArray(situacoesData) ? situacoesData : []);
         setOrigensList(Array.isArray(origensData) ? origensData : []);
         setUsuariosList(Array.isArray(usuariosData) ? usuariosData : []);
+        console.log("DEBUG FORM: Opções de Dropdown CARREGADAS!");
+
       } catch (error) {
         console.error("Erro ao buscar opções:", error);
         const errorMsg = error.message || "Falha ao carregar opções para o formulário.";
@@ -64,7 +66,8 @@ function LeadFormPage() {
         toast.error(errorMsg);
         setSituacoesList([]); setOrigensList([]); setUsuariosList([]);
       } finally {
-         if (!isEditMode) setLoadingOptions(false);
+        console.log("DEBUG FORM: Finalizando fetchOptions.");
+        setLoadingOptions(false);
       }
     };
     fetchOptions();
@@ -95,6 +98,8 @@ function LeadFormPage() {
           };
           setFormData(formDataToSet);
           setInitialData(formDataToSet); // Guarda os dados iniciais
+          console.log("DEBUG FORM: Dados do Lead para Edição CARREGADOS!");
+
         } catch (err) {
           console.error("Erro ao buscar dados para edição:", err);
           toast.error(err.message || "Falha ao carregar dados do lead para edição.");
