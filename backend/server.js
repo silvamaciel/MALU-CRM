@@ -30,6 +30,8 @@ app.use('/api/origens', require('./routes/OrigemRoutes'));
 
 app.use('/api/motivosdescarte', require('./routes/discardReasonRoutes'));
 
+app.use('/api/dashboard', require('./routes/dashboardRoutes'));
+
 
 
 
