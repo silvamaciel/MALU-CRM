@@ -52,7 +52,7 @@
 /* Seção de Gráficos */
 .charts-section {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
     gap: 2rem;
 }
 
@@ -86,4 +86,12 @@
     color: #721c24;
     border: 1px solid #f5c6cb;
     border-radius: 5px;
+}
+
+
+.chart-container-bar {
+    min-height: 300px;
+}
+.chart-container-line {
+     min-height: 300px; 
 }
