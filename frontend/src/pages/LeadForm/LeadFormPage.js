@@ -1,22 +1,34 @@
 // src/pages/LeadForm/LeadFormPage.js
-import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
 // API Functions
-import { createLead, getLeadById, updateLead } from '../../api/leads';
-import { getLeadStages } from '../../api/leadStages'; // Padronizado
-import { getOrigens } from '../../api/origens';
-import { getUsuarios } from '../../api/users'; // Verifique nome/caminho real!
+import { createLead, getLeadById, updateLead } from "../../api/leads";
+import { getLeadStages } from "../../api/leadStages";
+import { getOrigens } from "../../api/origens";
+import { getUsuarios } from "../../api/users";
+
 // Notifications
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 // CSS
-import './LeadFormPage.css';
-// Opcional: Input Mask
+import "./LeadFormPage.css";
+
+//formatacao
+import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 // import InputMask from 'react-input-mask';
 
 // Estado inicial (com CPF)
 const initialState = {
-    nome: '', contato: '', email: '', nascimento: '', endereco: '', cpf: '',
-    situacao: '', origem: '', responsavel: '', comentario: ''
+  nome: "",
+  contato: "",
+  email: "",
+  nascimento: "",
+  endereco: "",
+  cpf: "",
+  situacao: "",
+  origem: "",
+  responsavel: "",
+  comentario: "",
 };
 
 function LeadFormPage() {
@@ -52,19 +64,21 @@ function LeadFormPage() {
         const [situacoesData, origensData, usuariosData] = await Promise.all([
           getLeadStages(), // Usando getLeadStages
           getOrigens(),
-          getUsuarios() // Verifique esta função/API
+          getUsuarios(), // Verifique esta função/API
         ]);
         setSituacoesList(Array.isArray(situacoesData) ? situacoesData : []);
         setOrigensList(Array.isArray(origensData) ? origensData : []);
         setUsuariosList(Array.isArray(usuariosData) ? usuariosData : []);
         console.log("DEBUG FORM: Opções de Dropdown CARREGADAS!");
-
       } catch (error) {
         console.error("Erro ao buscar opções:", error);
-        const errorMsg = error.message || "Falha ao carregar opções para o formulário.";
+        const errorMsg =
+          error.message || "Falha ao carregar opções para o formulário.";
         setOptionsError(errorMsg);
         toast.error(errorMsg);
-        setSituacoesList([]); setOrigensList([]); setUsuariosList([]);
+        setSituacoesList([]);
+        setOrigensList([]);
+        setUsuariosList([]);
       } finally {
         console.log("DEBUG FORM: Finalizando fetchOptions.");
         setLoadingOptions(false);
@@ -82,27 +96,30 @@ function LeadFormPage() {
       const fetchLeadData = async () => {
         try {
           const data = await getLeadById(id);
-          const formattedNascimento = data.nascimento ? data.nascimento.substring(0, 10) : '';
+          const formattedNascimento = data.nascimento
+            ? data.nascimento.substring(0, 10)
+            : "";
           // Prepara os dados formatados para o formulário
           const formDataToSet = {
-            nome: data.nome || '',
-            contato: data.contato || '',
-            email: data.email || '',
+            nome: data.nome || "",
+            contato: data.contato || "",
+            email: data.email || "",
             nascimento: formattedNascimento,
-            endereco: data.endereco || '',
-            cpf: data.cpf || '',
-            situacao: data.situacao?._id || '',
-            origem: data.origem?._id || '',
-            responsavel: data.responsavel?._id || '',
-            comentario: data.comentario || '',
+            endereco: data.endereco || "",
+            cpf: data.cpf || "",
+            situacao: data.situacao?._id || "",
+            origem: data.origem?._id || "",
+            responsavel: data.responsavel?._id || "",
+            comentario: data.comentario || "",
           };
           setFormData(formDataToSet);
           setInitialData(formDataToSet); // Guarda os dados iniciais
           console.log("DEBUG FORM: Dados do Lead para Edição CARREGADOS!");
-
         } catch (err) {
           console.error("Erro ao buscar dados para edição:", err);
-          toast.error(err.message || "Falha ao carregar dados do lead para edição.");
+          toast.error(
+            err.message || "Falha ao carregar dados do lead para edição."
+          );
           // Considerar redirecionar se o lead não puder ser carregado
           // navigate('/leads');
         } finally {
@@ -119,196 +136,314 @@ function LeadFormPage() {
       setInitialData(null);
       setIsLoadingData(false);
       // Se opções já carregaram, loading geral para
-       if (!loadingOptions) setLoadingOptions(false);
+      if (!loadingOptions) setLoadingOptions(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, isEditMode]); // Roda se ID ou modo mudarem (navigate não precisa aqui)
 
   // Handler de Mudança padrão
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     console.log(`handleChange: name=${name}, value=${value}`); // Log para depurar selects
-    setFormData(prevState => ({ ...prevState, [name]: value }));
+    setFormData((prevState) => ({ ...prevState, [name]: value }));
   }, []); // useCallback sem dependências
 
-  // --- Handler de Submit AJUSTADO ---
-  const handleSubmit = useCallback(async (e) => {
-    e.preventDefault();
-    setIsProcessing(true);
+  // --- Handler de Submit  ---
+  const handleSubmit = useCallback(
+    async (e) => {
+      e.preventDefault();
+      setIsProcessing(true);
 
-    // 1. Validação Frontend Mínima
-    if (!formData.nome || !formData.contato) {
-       toast.warn('Nome e Contato são obrigatórios.');
-       setIsProcessing(false); return;
-    }
-    if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
-       toast.warn('Formato de email inválido.');
-       setIsProcessing(false); return;
-    }
+      // 1. Validação Frontend Mínima
+      if (!formData.nome || !formData.contato) {
+        toast.warn("Nome e Contato são obrigatórios.");
+        setIsProcessing(false);
+        return;
+      }
+      if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
+        toast.warn("Formato de email inválido.");
+        setIsProcessing(false);
+        return;
+      }
 
-    let dataToSend = {};
-    let operationPromise;
-    let successMessage;
-    let navigateTo;
+      let dataToSend = {};
+      let operationPromise;
+      let successMessage;
+      let navigateTo;
 
-    if (isEditMode) {
+      if (isEditMode) {
         // --- MODO EDIÇÃO: Enviar apenas campos alterados ---
         const changedData = {};
         if (!initialData) {
-             toast.error("Erro: Dados iniciais não carregados.");
-             setIsProcessing(false); return;
+          toast.error("Erro: Dados iniciais não carregados.");
+          setIsProcessing(false);
+          return;
         }
 
-        Object.keys(formData).forEach(key => {
-            const currentValue = formData[key] ?? '';
-            const initialValue = initialData[key] ?? '';
-            if (currentValue !== initialValue) {
-                 changedData[key] = currentValue === '' ? null : currentValue;
-            }
+        Object.keys(formData).forEach((key) => {
+          const currentValue = formData[key] ?? "";
+          const initialValue = initialData[key] ?? "";
+          if (currentValue !== initialValue) {
+            changedData[key] = currentValue === "" ? null : currentValue;
+          }
         });
 
         if (Object.keys(changedData).length === 0) {
-            toast.info("Nenhuma alteração detectada.");
-            setIsProcessing(false); return;
+          toast.info("Nenhuma alteração detectada.");
+          setIsProcessing(false);
+          return;
         }
 
         dataToSend = changedData;
         console.log("Dados ALTERADOS enviados para updateLead:", dataToSend);
         operationPromise = updateLead(id, dataToSend);
-        successMessage = 'Lead atualizado!';
+        successMessage = "Lead atualizado!";
         navigateTo = `/leads/${id}`;
-
-    } else {
+      } else {
         // --- MODO CRIAÇÃO: Enviar dados relevantes do formData ---
         // Backend agora trata os defaults para situacao/responsavel/origem se não enviados
         dataToSend = { ...formData };
         // Remove chaves que são string vazia (exceto nome/contato) ou explicitamente null
-        Object.keys(dataToSend).forEach(key => {
-            if (!['nome', 'contato'].includes(key) && (dataToSend[key] === '' || dataToSend[key] === null)) {
-                 delete dataToSend[key];
-            }
+        Object.keys(dataToSend).forEach((key) => {
+          if (
+            !["nome", "contato"].includes(key) &&
+            (dataToSend[key] === "" || dataToSend[key] === null)
+          ) {
+            delete dataToSend[key];
+          }
         });
         // Limpa CPF se só tiver máscara/espaços
-        if (dataToSend.cpf && dataToSend.cpf.replace(/\D/g, '') === '') {
-            delete dataToSend.cpf;
+        if (dataToSend.cpf && dataToSend.cpf.replace(/\D/g, "") === "") {
+          delete dataToSend.cpf;
         }
 
         console.log("Dados enviados para createLead:", dataToSend);
         operationPromise = createLead(dataToSend);
-        successMessage = 'Lead cadastrado!';
-        navigateTo = '/leads';
-    }
+        successMessage = "Lead cadastrado!";
+        navigateTo = "/leads";
+      }
 
-    // --- Executa a chamada API ---
-    try {
+      // --- Executa a chamada API ---
+      try {
         await operationPromise;
         toast.success(successMessage);
-        if (!isEditMode) { setFormData(initialState); } // Limpa form só na criação
+        if (!isEditMode) {
+          setFormData(initialState);
+        } // Limpa form só na criação
         // Atraso um pouco menor para navegação
-        setTimeout(() => { navigate(navigateTo); }, 800);
-    } catch (err) {
-        toast.error(err.message || `Falha ao ${isEditMode ? 'atualizar' : 'cadastrar'}.`);
+        setTimeout(() => {
+          navigate(navigateTo);
+        }, 800);
+      } catch (err) {
+        toast.error(
+          err.message || `Falha ao ${isEditMode ? "atualizar" : "cadastrar"}.`
+        );
         console.error("Erro no submit:", err);
-    } finally {
+      } finally {
         setIsProcessing(false);
-    }
-  // Adiciona dependências corretas para useCallback
-  }, [formData, initialData, isEditMode, id, navigate]);
+      }
+      // Adiciona dependências corretas para useCallback
+    },
+    [formData, initialData, isEditMode, id, navigate]
+  );
+
+  // A biblioteca retorna o valor já formatado (ou undefined)
+  const handlePhoneChange = useCallback((value) => {
+    setFormData((prevState) => ({ ...prevState, contato: value || "" }));
+  }, []);
 
   // ---- Renderização ----
 
   // Loading inicial (mostra se opções OU dados do lead estão carregando)
   if (loadingOptions || isLoadingData) {
-     return <div className="lead-form-page loading"><p>Carregando...</p></div>;
+    return (
+      <div className="lead-form-page loading">
+        <p>Carregando...</p>
+      </div>
+    );
   }
   // Erro crítico ao carregar opções (impede renderizar o form)
   if (optionsError) {
-     return <div className="lead-form-page error"><p className="error-message">{optionsError}</p></div>;
+    return (
+      <div className="lead-form-page error">
+        <p className="error-message">{optionsError}</p>
+      </div>
+    );
   }
   // Se chegou aqui, options carregaram. Se for edit mode, data também carregou (ou deu erro tratado com toast).
 
   return (
     <div className="lead-form-page">
-      <h1>{isEditMode ? `Editar Lead: ${initialData?.nome || formData.nome || ''}` : 'Cadastrar Novo Lead'}</h1>
+      <h1>
+        {isEditMode
+          ? `Editar Lead: ${initialData?.nome || formData.nome || ""}`
+          : "Cadastrar Novo Lead"}
+      </h1>
 
       {/* Botões Voltar (apenas modo edição) */}
       {isEditMode && (
-          <div className="form-top-actions">
-              <Link to={`/leads/${id}`} className="button back-to-detail-button">
-                   <i className="fas fa-arrow-left"></i> Cancelar Edição
-              </Link>
-              <Link to="/leads" className="button back-to-list-button">
-                   <i className="fas fa-list"></i> Voltar para Lista
-              </Link>
-          </div>
+        <div className="form-top-actions">
+          <Link to={`/leads/${id}`} className="button back-to-detail-button">
+            <i className="fas fa-arrow-left"></i> Cancelar Edição
+          </Link>
+          <Link to="/leads" className="button back-to-list-button">
+            <i className="fas fa-list"></i> Voltar para Lista
+          </Link>
+        </div>
       )}
 
       {/* Formulário */}
       <form onSubmit={handleSubmit} className="lead-form">
-
         {/* Grupo 1: Nome*, Contato* */}
         <div className="form-group">
-            <label htmlFor="nome">Nome Completo *</label>
-            <input type="text" id="nome" name="nome" value={formData.nome} onChange={handleChange} required />
+          <label htmlFor="nome">Nome Completo *</label>
+          <input
+            type="text"
+            id="nome"
+            name="nome"
+            value={formData.nome}
+            onChange={handleChange}
+            required
+          />
         </div>
         <div className="form-group">
             <label htmlFor="contato">Contato *</label>
-            <input type="tel" id="contato" name="contato" value={formData.contato} onChange={handleChange} placeholder="(XX) XXXX-XXXX" required/>
+            <PhoneInput
+                id="contato"
+                name="contato" // Name pode não ser necessário aqui
+                placeholder="Digite o telefone"
+                value={formData.contato} // Controlado pelo state
+                onChange={handlePhoneChange} // USA O NOVO HANDLER
+                defaultCountry="BR" // País padrão (Brasil)
+                international // Mostra o código do país
+                limitMaxLength // Tenta limitar digitação ao formato do país
+                required
+                className="form-control phone-input-control" // Adiciona classes se precisar estilizar
+            />
+            {formData.contato && !isValidPhoneNumber(formData.contato) && <small style={{color: 'red'}}>Número inválido</small>}
         </div>
 
         {/* Grupo 2: Email, CPF (Opcionais) */}
         <div className="form-group">
-           <label htmlFor="email">Email</label>
-           <input type="email" id="email" name="email" value={formData.email} onChange={handleChange} />
-         </div>
-         <div className="form-group">
-           <label htmlFor="cpf">CPF</label>
-           <input type="text" id="cpf" name="cpf" value={formData.cpf} onChange={handleChange} placeholder="000.000.000-00" maxLength={14} />
-         </div>
+          <label htmlFor="email">Email</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+          />
+        </div>
+        <div className="form-group">
+          <label htmlFor="cpf">CPF</label>
+          <input
+            type="text"
+            id="cpf"
+            name="cpf"
+            value={formData.cpf}
+            onChange={handleChange}
+            placeholder="000.000.000-00"
+            maxLength={11}
+          />
+        </div>
 
         {/* Grupo 3: Nascimento, Endereço, Comentário (Opcionais) */}
         <div className="form-group">
-           <label htmlFor="nascimento">Data de Nascimento</label>
-           <input type="date" id="nascimento" name="nascimento" value={formData.nascimento} onChange={handleChange} />
+          <label htmlFor="nascimento">Data de Nascimento</label>
+          <input
+            type="date"
+            id="nascimento"
+            name="nascimento"
+            value={formData.nascimento}
+            onChange={handleChange}
+          />
         </div>
         <div className="form-group">
-            <label htmlFor="endereco">Endereço</label>
-            <input type="text" id="endereco" name="endereco" value={formData.endereco} onChange={handleChange} />
+          <label htmlFor="endereco">Endereço</label>
+          <input
+            type="text"
+            id="endereco"
+            name="endereco"
+            value={formData.endereco}
+            onChange={handleChange}
+          />
         </div>
-         <div className="form-group">
+        <div className="form-group">
           <label htmlFor="comentario">Comentário</label>
-          <textarea id="comentario" name="comentario" value={formData.comentario} onChange={handleChange}></textarea>
+          <textarea
+            id="comentario"
+            name="comentario"
+            value={formData.comentario}
+            onChange={handleChange}
+          ></textarea>
         </div>
 
         {/* Grupo 4: Selects (Não 'required' no HTML) */}
         <div className="form-group">
           <label htmlFor="situacao">Situação</label>
-          <select id="situacao" name="situacao" value={formData.situacao} onChange={handleChange}>
+          <select
+            id="situacao"
+            name="situacao"
+            value={formData.situacao}
+            onChange={handleChange}
+          >
             {/* Opção informativa sobre default */}
             <option value=""></option>
-            {situacoesList.map(s => <option key={s._id} value={s._id}>{s.nome}</option>)}
+            {situacoesList.map((s) => (
+              <option key={s._id} value={s._id}>
+                {s.nome}
+              </option>
+            ))}
           </select>
         </div>
-         <div className="form-group">
-           <label htmlFor="origem">Origem</label>
-           <select id="origem" name="origem" value={formData.origem} onChange={handleChange}>
-             <option value=""></option>
-             {origensList.map(o => <option key={o._id} value={o._id}>{o.nome}</option>)}
-           </select>
+        <div className="form-group">
+          <label htmlFor="origem">Origem</label>
+          <select
+            id="origem"
+            name="origem"
+            value={formData.origem}
+            onChange={handleChange}
+          >
+            <option value=""></option>
+            {origensList.map((o) => (
+              <option key={o._id} value={o._id}>
+                {o.nome}
+              </option>
+            ))}
+          </select>
         </div>
-         <div className="form-group">
-           <label htmlFor="responsavel">Responsável</label>
-           <select id="responsavel" name="responsavel" value={formData.responsavel} onChange={handleChange}>
-             <option value=""></option>
-             {usuariosList.map(u => <option key={u._id} value={u._id}>{u.nome}</option>)}
-           </select>
+        <div className="form-group">
+          <label htmlFor="responsavel">Responsável</label>
+          <select
+            id="responsavel"
+            name="responsavel"
+            value={formData.responsavel}
+            onChange={handleChange}
+          >
+            <option value=""></option>
+            {usuariosList.map((u) => (
+              <option key={u._id} value={u._id}>
+                {u.nome}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Botão Submit */}
         <div className="form-actions">
-             <button type="submit" disabled={isProcessing} className="submit-button">
-              {isProcessing ? (isEditMode ? 'Salvando...' : 'Cadastrando...') : (isEditMode ? 'Salvar Alterações' : 'Cadastrar Lead')}
-             </button>
+          <button
+            type="submit"
+            disabled={isProcessing}
+            className="submit-button"
+          >
+            {isProcessing
+              ? isEditMode
+                ? "Salvando..."
+                : "Cadastrando..."
+              : isEditMode
+              ? "Salvar Alterações"
+              : "Cadastrar Lead"}
+          </button>
         </div>
       </form>
     </div>
