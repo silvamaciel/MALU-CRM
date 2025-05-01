@@ -177,7 +177,7 @@ const createLead = async (leadData, companyId, userId) => {
   // 2. Validação/Formatação Contato
   let formattedPhoneNumber = null;
   try {
-    const phoneNumber = phoneUtil.parseAndKeepRawInput(contato, "BR");
+    const phoneNumber = phoneUtil.parseAndKeepRawInput(contato, null);
     if (phoneUtil.isValidNumber(phoneNumber)) {
       formattedPhoneNumber = phoneUtil.format(phoneNumber, PNF.E164);
     } else {
@@ -342,7 +342,7 @@ const updateLead = async (id, leadData, companyId, userId) => {
       updateFields.contato = null;
     } else {
       try {
-        const phoneNumber = phoneUtil.parseAndKeepRawInput(contato, "BR");
+        const phoneNumber = phoneUtil.parseAndKeepRawInput(contato, null);
         if (phoneUtil.isValidNumber(phoneNumber)) {
           updateFields.contato = phoneUtil.format(phoneNumber, PNF.E164);
         } else {
