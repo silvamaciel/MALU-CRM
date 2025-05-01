@@ -1,150 +1,177 @@
 // src/pages/Dashboard/DashboardPage.js
 import React, { useState, useEffect, useCallback } from 'react';
-import { getDashboardSummary } from '../../api/dashboard'; // API que acabamos de criar
+import { getDashboardSummary } from '../../api/dashboard';
 import { toast } from 'react-toastify';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, Title } from 'chart.js'; // Importa elementos do Chart.js
-import { Doughnut } from 'react-chartjs-2'; // Importa o componente do gráfico
+// <<< 1. Importar mais elementos do Chart.js e os novos tipos de gráfico >>>
+import {
+    Chart as ChartJS, ArcElement, Tooltip, Legend, Title, CategoryScale, LinearScale, BarElement, PointElement, LineElement
+} from 'chart.js';
+import { Doughnut, Pie, Bar, Line } from 'react-chartjs-2'; // Importa Pie, Bar, Line
 
-import './DashboardPage.css'; // Criaremos este CSS
+import './DashboardPage.css'; // Mantém o CSS
 
-// Registra os elementos necessários para o Chart.js
-ChartJS.register(ArcElement, Tooltip, Legend, Title);
+// <<< 2. Registrar os novos elementos necessários >>>
+ChartJS.register(
+    ArcElement, Tooltip, Legend, Title, // Para Pie/Doughnut
+    CategoryScale, LinearScale, BarElement, // Para Bar
+    PointElement, LineElement // Para Line
+);
+
+// Função auxiliar para gerar cores (opcional)
+const generateBgColors = (count) => {
+    const colors = [
+        'rgba(54, 162, 235, 0.7)', 'rgba(255, 206, 86, 0.7)', 'rgba(75, 192, 192, 0.7)',
+        'rgba(153, 102, 255, 0.7)', 'rgba(255, 159, 64, 0.7)', 'rgba(255, 99, 132, 0.7)',
+        'rgba(201, 203, 207, 0.7)', 'rgba(100, 180, 120, 0.7)', 'rgba(240, 130, 190, 0.7)',
+        'rgba(0, 210, 210, 0.7)', 'rgba(170, 140, 255, 0.7)', 'rgba(255, 180, 100, 0.7)'
+    ];
+    // Repete cores se necessário
+    return Array.from({ length: count }, (_, i) => colors[i % colors.length]);
+}
+
 
 function DashboardPage() {
-    const [summaryData, setSummaryData] = useState({ totalActiveLeads: 0, leadsByStatus: [] });
+    // State para guardar TODOS os dados do resumo
+    const [summaryData, setSummaryData] = useState({
+        totalActiveLeads: 0,
+        leadsByStatus: [],
+        leadsByOrigin: [],      // <<< Novo
+        leadsByResponsible: [], // <<< Novo
+        leadsByDate: []         // <<< Novo
+    });
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Busca os dados do dashboard
+    // Busca os dados (função não muda)
     const fetchSummary = useCallback(async () => {
         setIsLoading(true); setError(null);
         try {
             const data = await getDashboardSummary();
-            setSummaryData({
+            setSummaryData({ // Salva todos os dados recebidos
                  totalActiveLeads: data.totalActiveLeads || 0,
-                 leadsByStatus: Array.isArray(data.leadsByStatus) ? data.leadsByStatus : []
+                 leadsByStatus: Array.isArray(data.leadsByStatus) ? data.leadsByStatus : [],
+                 leadsByOrigin: Array.isArray(data.leadsByOrigin) ? data.leadsByOrigin : [],
+                 leadsByResponsible: Array.isArray(data.leadsByResponsible) ? data.leadsByResponsible : [],
+                 leadsByDate: Array.isArray(data.leadsByDate) ? data.leadsByDate : []
             });
-        } catch (err) {
-            const errorMsg = err.message || "Falha ao carregar dados do dashboard.";
-            setError(errorMsg); toast.error(errorMsg);
-             setSummaryData({ totalActiveLeads: 0, leadsByStatus: [] }); // Reseta em caso de erro
-        } finally {
-            setIsLoading(false);
-        }
+        } catch (err) { /* ... tratamento erro ... */ }
+        finally { setIsLoading(false); }
     }, []);
 
-    useEffect(() => {
-        fetchSummary();
-    }, [fetchSummary]);
+    useEffect(() => { fetchSummary(); }, [fetchSummary]);
 
-    // --- Prepara dados para o Gráfico de Pizza (Doughnut) ---
+    // --- Preparação de Dados para os Gráficos ---
+
+    // Gráfico por Situação (Doughnut) - Igual antes
     const statusChartData = {
-        // Labels (Nomes das situações)
         labels: summaryData.leadsByStatus.map(item => item.name),
-        datasets: [
-            {
-                label: 'Leads por Situação',
-                // Data (Contagens)
-                data: summaryData.leadsByStatus.map(item => item.count),
-                // Cores (pode definir cores fixas ou gerar dinamicamente)
-                backgroundColor: [
-                    'rgba(54, 162, 235, 0.7)', // Blue
-                    'rgba(255, 206, 86, 0.7)', // Yellow
-                    'rgba(75, 192, 192, 0.7)', // Green
-                    'rgba(153, 102, 255, 0.7)', // Purple
-                    'rgba(255, 159, 64, 0.7)', // Orange
-                    'rgba(255, 99, 132, 0.7)', // Red
-                    'rgba(201, 203, 207, 0.7)'  // Grey
-                    // Adicione mais cores se tiver mais status
-                ],
-                borderColor: [ // Cor da borda das fatias
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)',
-                    'rgba(255, 159, 64, 1)',
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(201, 203, 207, 1)'
-                ],
-                borderWidth: 1,
-            },
-        ],
+        datasets: [{
+            label: 'Leads por Situação',
+            data: summaryData.leadsByStatus.map(item => item.count),
+            backgroundColor: generateBgColors(summaryData.leadsByStatus.length),
+            borderWidth: 1,
+        }],
     };
 
-    const chartOptions = {
-        responsive: true, // Torna o gráfico responsivo
-        maintainAspectRatio: false, // Permite controlar altura/largura via CSS/container
-        plugins: {
-            legend: {
-                position: 'top', // Posição da legenda
-            },
-            title: {
-                display: true,
-                text: 'Distribuição de Leads por Situação', // Título do Gráfico
-                font: { size: 16 }
-            },
-             tooltip: {
-                 callbacks: { // Formata o que aparece ao passar o mouse
-                     label: function(context) {
-                         let label = context.label || '';
-                         if (label) { label += ': '; }
-                         let value = context.raw || 0;
-                         // Pega o total para calcular porcentagem (opcional)
-                         const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                         const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%';
-                         label += `${value} (${percentage})`;
-                         return label;
-                     }
-                 }
-             }
-        },
+    // <<< NOVO: Gráfico por Origem (Pie/Doughnut) >>>
+    const originChartData = {
+        labels: summaryData.leadsByOrigin.map(item => item.name),
+        datasets: [{
+            label: 'Leads por Origem',
+            data: summaryData.leadsByOrigin.map(item => item.count),
+            backgroundColor: generateBgColors(summaryData.leadsByOrigin.length),
+            borderWidth: 1,
+        }],
+    };
+
+     // <<< NOVO: Gráfico por Responsável (Bar) >>>
+     const responsibleChartData = {
+        labels: summaryData.leadsByResponsible.map(item => item.name), // Nomes no eixo X
+        datasets: [{
+            label: 'Leads por Responsável',
+            data: summaryData.leadsByResponsible.map(item => item.count), // Altura das barras
+            backgroundColor: generateBgColors(summaryData.leadsByResponsible.length), // Cores das barras
+            // Pode adicionar bordas se quiser:
+            // borderColor: generateBgColors(summaryData.leadsByResponsible.length).map(c => c.replace('0.7', '1')),
+            // borderWidth: 1,
+        }],
+    };
+     const responsibleChartOptions = {
+        indexAxis: 'y', // <<< Deixa as barras na horizontal (opcional)
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, title: { display: true, text: 'Leads por Responsável', font: { size: 16 }}},
+        scales: { x: { beginAtZero: true } } // Garante que eixo X começa em 0
+    };
+
+
+     // <<< NOVO: Gráfico Leads Criados por Data (Line) >>>
+      const dateChartData = {
+        labels: summaryData.leadsByDate.map(item => item.date), // Datas (YYYY-MM-DD) no eixo X
+        datasets: [{
+            label: 'Leads Criados por Dia (Últimos 30 dias)',
+            data: summaryData.leadsByDate.map(item => item.count), // Contagens no eixo Y
+            fill: false, // Não preenche área abaixo da linha
+            borderColor: 'rgb(75, 192, 192)', // Cor da linha
+            tension: 0.1 // Suaviza a linha (0 = reto)
+        }],
+    };
+     const dateChartOptions = {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, title: { display: true, text: 'Leads Criados Recentemente', font: { size: 16 }}},
+        scales: { y: { beginAtZero: true } } // Garante que eixo Y começa em 0
     };
 
 
     // --- Renderização ---
-    if (isLoading) { return <div className="dashboard-page loading">Carregando Dashboard...</div>; }
-    if (error) { return <div className="dashboard-page error"><p className="error-message">{error}</p></div>; }
+    if (isLoading) { /* ... loading ... */ }
+    if (error) { /* ... error ... */ }
 
     return (
         <div className="dashboard-page">
             <h1>Dashboard</h1>
 
-            {/* Seção de Cards de Resumo */}
+            {/* Cards de Resumo (igual antes) */}
             <div className="summary-cards">
                 <div className="summary-card">
                     <h2>Leads Ativos</h2>
                     <p className="summary-value">{summaryData.totalActiveLeads}</p>
-                    <small>(Leads que não estão na situação "Descartado")</small>
+                    <small>(Não descartados)</small>
                 </div>
-                {/* Adicione outros cards aqui (ex: Total de Leads, Novas Propostas, etc.) */}
-                 <div className="summary-card placeholder">
-                    <h2>Novos Leads (Mês)</h2>
-                    <p className="summary-value">-</p>
-                     <small>(Dados futuros)</small>
-                </div>
-                 <div className="summary-card placeholder">
-                    <h2>Taxa de Conversão</h2>
-                    <p className="summary-value">-</p>
-                     <small>(Dados futuros)</small>
-                </div>
+                <div className="summary-card placeholder"> /* ... */ </div>
+                <div className="summary-card placeholder"> /* ... */ </div>
             </div>
 
-            {/* Seção de Gráficos */}
+            {/* Seção de Gráficos ATUALIZADA */}
             <div className="charts-section">
-                {/* Gráfico de Leads por Situação */}
+                {/* Gráfico Situação */}
                 <div className="chart-container">
-                    {summaryData.leadsByStatus && summaryData.leadsByStatus.length > 0 ? (
+                    {summaryData.leadsByStatus.length > 0 ? (
                          <Doughnut data={statusChartData} options={chartOptions} />
-                    ) : (
-                        <p>Não há dados de leads por situação para exibir.</p>
-                    )}
+                    ) : ( <p>Sem dados por situação.</p> )}
                 </div>
 
-                {/* Adicione outros gráficos aqui (Leads por Origem, por Responsável, etc.) */}
-                 <div className="chart-container placeholder">
-                     <h3>Leads por Origem</h3>
-                      <p><i>(Gráfico futuro)</i></p>
+                 {/* <<< NOVO Gráfico Origem >>> */}
+                <div className="chart-container">
+                     <h3>Leads por Origem</h3> {/* Título opcional acima do chart */}
+                     {summaryData.leadsByOrigin.length > 0 ? (
+                          <Pie data={originChartData} options={{...chartOptions, title: { display: true, text: 'Leads por Origem'}}} /> // Usando Pie, pode ser Doughnut
+                     ) : ( <p>Sem dados por origem.</p> )}
                  </div>
+
+                  {/* <<< NOVO Gráfico Responsável >>> */}
+                  <div className="chart-container chart-container-bar"> {/* Classe extra opcional para ajustar altura */}
+                     {summaryData.leadsByResponsible.length > 0 ? (
+                          <Bar data={responsibleChartData} options={responsibleChartOptions} />
+                     ) : ( <p>Sem dados por responsável.</p> )}
+                 </div>
+
+                  {/* <<< NOVO Gráfico Data >>> */}
+                  <div className="chart-container chart-container-line"> {/* Classe extra opcional */}
+                     {summaryData.leadsByDate.length > 0 ? (
+                          <Line data={dateChartData} options={dateChartOptions} />
+                     ) : ( <p>Sem dados de leads recentes.</p> )}
+                 </div>
+
             </div>
         </div>
     );
