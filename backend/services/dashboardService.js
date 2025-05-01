@@ -106,6 +106,27 @@ const getDashboardSummary = async (companyId) => {
           ];
         const leadsByDatePromise = Lead.aggregate(leadsByDatePipeline);
 
+        //Query 6: Leads Descartados
+        let totalDiscardedLeadsPromise;
+        if (discardedStageId) {
+            // Só conta se o estágio 'Descartado' existir
+            totalDiscardedLeadsPromise = Lead.countDocuments({ company: companyObjectId, situacao: discardedStageId });
+        } else {
+            // Se não existe estágio 'Descartado', não há leads descartados
+            totalDiscardedLeadsPromise = Promise.resolve(0); // Retorna uma promessa resolvida com 0
+        }
+
+        //Query 6: Leads Descartados
+        const now = new Date();
+        const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0)); 
+        // Último milissegundo do mês atual UTC
+        const endOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59, 999));
+
+        console.log(`[DSvc] Intervalo Mês Atual (UTC): ${startOfMonth.toISOString()} a ${endOfMonth.toISOString()}`);
+        const totalNewLeadsThisMonthPromise = Lead.countDocuments({
+            company: companyObjectId,
+            createdAt: { $gte: startOfMonth, $lte: endOfMonth }
+        });
 
         // --- Executa todas as queries em paralelo ---
         const [
@@ -113,13 +134,17 @@ const getDashboardSummary = async (companyId) => {
             leadsByStatus,
             leadsByOrigin,
             leadsByResponsible,
-            leadsByDate
+            leadsByDate,
+            totalDiscardedLeads,
+            totalNewLeadsThisMonth
         ] = await Promise.all([
             totalActiveLeadsPromise,
             leadsByStatusPromise,
             leadsByOriginPromise,       
             leadsByResponsiblePromise,   
-            leadsByDatePromise          
+            leadsByDatePromise,
+            totalDiscardedLeadsPromise,
+            totalNewLeadsThisMonthPromise      
         ]);
 
         console.log("[DashboardService] Resumo Gerado");
@@ -130,7 +155,9 @@ const getDashboardSummary = async (companyId) => {
             leadsByStatus: leadsByStatus,
             leadsByOrigin: leadsByOrigin,          
             leadsByResponsible: leadsByResponsible, 
-            leadsByDate: leadsByDate               
+            leadsByDate: leadsByDate,
+            totalDiscardedLeads: totalDiscardedLeads,
+            totalNewLeadsThisMonth: totalNewLeadsThisMonth
         };
 
     } catch (error) {
