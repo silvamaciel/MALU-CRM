@@ -1,180 +1,119 @@
 // src/App.jsx (ou App.js)
-import React, { useState } from "react";
+import React, { useState, Link } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
+  // Removido useNavigate daqui pois não está sendo chamado nesta versão
 } from "react-router-dom";
+
+// Pages & Layout
 import LeadListPage from "./pages/LeadList/LeadListPage";
 import LeadFormPage from "./pages/LeadForm/LeadFormPage";
-import LeadDetailPage from "./pages/LeadDatail/LeadDetailPage";
+import LeadDetailPage from "./pages/LeadDatail/LeadDetailPage"; // <<< Verifique nome da pasta 'LeadDetail'
 import LoginPage from "./pages/Login/LoginPage";
-import OrigensAdminPage from "./pages/Admin/OrigensAdminPage";
-import DiscardReasonAdminPage from "./pages/Admin/DiscardReasonAdminPage";
-import UsuariosAdminPage from "./pages/Admin/UsuariosAdminPage";
-import LeadStageAdminPage from "./pages/Admin/LeadStageAdminPage";
-import DashboardPage from "./pages/Dashboard/DashboardPage";
+import DashboardPage from './pages/Dashboard/DashboardPage';
+import LeadStageAdminPage from './pages/Admin/LeadStageAdminPage';
+import OrigensAdminPage from './pages/Admin/OrigensAdminPage';
+import DiscardReasonAdminPage from './pages/Admin/DiscardReasonAdminPage';
+import UsuariosAdminPage from './pages/Admin/UsuariosAdminPage';
+import MainLayout from './components/Layout/MainLayout'; // Importa Layout
 
+// Libs & CSS
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
-import "./App.css"; // Seus estilos globais
+import "./App.css";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(
     !!localStorage.getItem("userToken")
-    );
-  const userData = JSON.parse(localStorage.getItem("userData") || "{}");
-  const isAdmin = userData?.perfil === "admin"; // Verifica se é admin
+  );
+  const [userData, setUserData] = useState(JSON.parse(localStorage.getItem('userData') || '{}'));
+  const isAdmin = userData?.perfil === 'admin';
 
+  // Chamado pelo LoginPage para atualizar o estado após sucesso
   const handleLoginSuccess = () => {
+    // Re-lê do localStorage caso tenha sido atualizado pela API de login
+    setUserData(JSON.parse(localStorage.getItem('userData') || '{}'));
     setIsLoggedIn(true);
-    window.location.reload();
+    // O Navigate na rota cuidará do redirecionamento
   };
 
+  // Chamado pelo Sidebar/MainLayout
   const handleLogout = () => {
     localStorage.removeItem("userToken");
     localStorage.removeItem("userData");
+    setUserData({});
     setIsLoggedIn(false);
-    window.location.href = "/login";
+    // O Navigate na rota cuidará do redirecionamento
   };
 
   return (
     <Router>
-      <div className="App">
-        <ToastContainer position="top-right" autoClose={3000} theme="colored" />
-
-        {/* Botão Logout Simples (visível se logado) */}
-        {isLoggedIn && (
-          <button
-            onClick={handleLogout}
-            style={{
-              position: "fixed",
-              top: "10px",
-              right: "10px",
-              zIndex: 1000,
-              padding: "5px 10px",
-              cursor: "pointer",
-            }}
-          >
-            Logout ({userData?.nome || "Usuário"}){" "}
-            {/* Mostra nome se disponível */}
-          </button>
-        )}
-
-        <main>
-          <Routes>
-            {/* Rota de Login */}
-            <Route
+      <ToastContainer position="top-right" autoClose={3000} theme="colored"/>
+      {/* Classe App pode ser removida se o layout for controlado por MainLayout */}
+      {/* <div className="App"> */}
+        <Routes>
+          {/* Rota de Login (Fora do Layout Principal) */}
+          <Route
               path="/login"
               element={
-                !isLoggedIn ? (
-                  <LoginPage onLoginSuccess={handleLoginSuccess} />
-                ) : (
-                  <Navigate replace to="/leads" />
-                ) /* Redireciona se já logado */
+                !isLoggedIn ? ( <LoginPage onLoginSuccess={handleLoginSuccess} /> )
+                 : ( <Navigate replace to="/dashboard" /> ) // Logado? Vai pro dashboard
               }
-            />
+          />
 
-            {/* Rotas Protegidas Comuns */}
-            <Route
-              path="/leads"
+          {/* --- Rotas Protegidas QUE USAM o MainLayout --- */}
+          <Route
+              path="/" // Rota pai para o layout
               element={
-                isLoggedIn ? <LeadListPage /> : <Navigate replace to="/login" />
+                  isLoggedIn
+                  ? <MainLayout userData={userData} handleLogout={handleLogout} /> // Renderiza layout
+                  : <Navigate replace to="/login" /> // Se não logado, vai para login
               }
-            />
-            <Route
-              path="/leads/novo"
-              element={
-                isLoggedIn ? <LeadFormPage /> : <Navigate replace to="/login" />
-              }
-            />
-            <Route
-              path="/leads/:id"
-              element={
-                isLoggedIn ? (
-                  <LeadDetailPage />
-                ) : (
-                  <Navigate replace to="/login" />
-                )
-              }
-            />
-            <Route
-              path="/leads/:id/editar"
-              element={
-                isLoggedIn ? <LeadFormPage /> : <Navigate replace to="/login" />
-              }
-            />
+          >
+                {/* --- Rotas Filhas (Renderizadas DENTRO do <Outlet/> do MainLayout) --- */}
 
-            {/* <<< Rota Adicionada para Admin de Situações >>> */}
-            <Route
-              path="/admin/situacoes"
-              element={
-                isLoggedIn ? ( // 1. Logado?
-                  isAdmin ? ( // 2. É admin?
-                    <LeadStageAdminPage /> // Sim -> Mostra página
-                  ) : (
-                    <Navigate replace to="/leads" />
-                  ) // Não é admin -> Vai para leads
-                ) : (
-                  <Navigate replace to="/login" />
-                ) // Não logado -> Vai para login
-              }
-            />
-            <Route
-              path="/admin/origens"
-              element={
-                isLoggedIn && isAdmin ? (
-                  <OrigensAdminPage />
-                ) : (
-                  <Navigate replace to={isLoggedIn ? "/leads" : "/login"} />
-                )
-              }
-            />
-            <Route
-              path="/admin/motivosdescarte"
-              element={
-                isLoggedIn && isAdmin ? (
-                  <DiscardReasonAdminPage />
-                ) : (
-                  <Navigate replace to={isLoggedIn ? "/leads" : "/login"} />
-                )
-              }
-            />
-            <Route
-              path="/admin/usuarios"
-              element={
-                isLoggedIn && isAdmin ? (
-                  <UsuariosAdminPage />
-                ) : (
-                  <Navigate replace to={isLoggedIn ? "/leads" : "/login"} />
-                )
-              }
-            />
+                {/* Rota índice default (ex: /) dentro do layout -> redireciona para dashboard */}
+                <Route index element={<Navigate replace to="/dashboard" />} />
 
-            {/* Rota Raiz e Rota 404 */}
-            <Route
-              path="/"
-              element={
-                <Navigate replace to={isLoggedIn ? "/dashboard" : "/login"} />
-              }
-            />
-            <Route
-                path="/dashboard"
-                 element={ isLoggedIn ? <DashboardPage /> : <Navigate replace to="/login" /> }
-             />
-            <Route
-              path="*"
-              element={
-                <div>
-                  <h1>404 - Página Não Encontrada</h1>
-                </div>
-              }
-            />
-          </Routes>
-        </main>
-      </div>
+                {/* Rotas Comuns */}
+                <Route path="dashboard" element={<DashboardPage />} />
+                <Route path="leads" element={<LeadListPage />} />
+                <Route path="leads/novo" element={<LeadFormPage />} />
+                <Route path="leads/:id" element={<LeadDetailPage />} />
+                <Route path="leads/:id/editar" element={<LeadFormPage />} />
+
+                {/* Rotas Admin (Renderizadas condicionalmente DENTRO do Outlet) */}
+                {isAdmin && (
+                    <>
+                        <Route path="admin/situacoes" element={<LeadStageAdminPage />} />
+                        <Route path="admin/origens" element={<OrigensAdminPage />} />
+                        <Route path="admin/motivosdescarte" element={<DiscardReasonAdminPage />} />
+                        <Route path="admin/usuarios" element={<UsuariosAdminPage />} />
+                        {/* Adicione mais rotas admin aqui, sempre com path relativo ao pai "/" */}
+                    </>
+                )}
+
+                {/* Rota para não-admins tentando acessar /admin (opcional) */}
+                {/* Se isAdmin for false E isLoggedIn for true, renderiza um componente de acesso negado */}
+                {/* Nota: Isso pode precisar de lógica mais robusta se houver muitas rotas admin */}
+                {!isAdmin && isLoggedIn && (
+                    <Route path="admin/*" element={<div><h2>Acesso Negado</h2><p>Você não tem permissão.</p></div>} />
+                )}
+
+                {/* --- Fim das Rotas Filhas --- */}
+          </Route>
+          {/* --- Fim das Rotas Protegidas --- */}
+
+
+          {/* Rota 404 (Fora do Layout Principal) */}
+          {/* Esta rota pega qualquer coisa que não deu match acima */}
+          <Route path="*" element={ <div><h1>404 - Página Não Encontrada</h1><Link to="/">Voltar</Link></div> } />
+
+        </Routes>
+      {/* </div> */} {/* Fim div.App (opcional) */}
     </Router>
   );
 }
