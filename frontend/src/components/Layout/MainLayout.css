@@ -1,0 +1,24 @@
+/* src/components/Layout/MainLayout.css */
+.main-layout {
+    display: flex;
+    min-height: 100vh; /* Ocupa altura total da tela */
+  }
+  
+  .main-content {
+    flex-grow: 1; /* Faz a área de conteúdo ocupar o espaço restante */
+    padding: 1.5rem 2rem; /* Espaçamento interno */
+    background-color: #f4f7f6; /* Um fundo levemente diferente da sidebar */
+    overflow-y: auto; /* Adiciona scroll se conteúdo for maior */
+  }
+  
+  /* Ajustes para telas menores (exemplo) */
+  @media (max-width: 768px) {
+    .main-layout {
+       /* Poderia fazer a sidebar ficar oculta ou superior */
+       flex-direction: column;
+    }
+    .main-content {
+       padding: 1rem;
+    }
+    /* Precisa de mais estilos para menu responsivo/hambúrguer */
+  }
