@@ -29,7 +29,7 @@ const generateBorderColors = (bgColors) => bgColors.map(c => c.replace('0.7', '1
 function DashboardPage() {
     const [summaryData, setSummaryData] = useState({
         totalActiveLeads: 0, leadsByStatus: [], leadsByOrigin: [],
-        leadsByResponsible: [], leadsByDate: []
+        leadsByResponsible: [], leadsByDate: [], totalDiscardedLeads: 0, totalNewLeadsThisMonth: 0
     });
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -44,13 +44,15 @@ function DashboardPage() {
                  leadsByStatus: Array.isArray(data.leadsByStatus) ? data.leadsByStatus : [],
                  leadsByOrigin: Array.isArray(data.leadsByOrigin) ? data.leadsByOrigin : [],
                  leadsByResponsible: Array.isArray(data.leadsByResponsible) ? data.leadsByResponsible : [],
-                 leadsByDate: Array.isArray(data.leadsByDate) ? data.leadsByDate : []
+                 leadsByDate: Array.isArray(data.leadsByDate) ? data.leadsByDate : [],
+                 totalDiscardedLeads: data.totalDiscardedLeads ?? 0,
+                 totalNewLeadsThisMonth: data.totalNewLeadsThisMonth ?? 0 
             });
         } catch (err) {
             const errorMsg = err.message || "Falha ao carregar dados do dashboard.";
             setError(errorMsg);
             // Poderia usar toast aqui se quisesse: toast.error(errorMsg);
-             setSummaryData({ totalActiveLeads: 0, leadsByStatus: [], leadsByOrigin: [], leadsByResponsible: [], leadsByDate: [] });
+             setSummaryData({ totalActiveLeads: 0, leadsByStatus: [], leadsByOrigin: [], leadsByResponsible: [], leadsByDate: [], totalDiscardedLeads: 0, totalNewLeadsThisMonth: 0});
         } finally { setIsLoading(false); }
     }, []);
 
@@ -106,8 +108,8 @@ function DashboardPage() {
             {/* Cards de Resumo */}
             <div className="summary-cards">
                 <div className="summary-card"><h2>Leads Ativos</h2><p className="summary-value">{summaryData.totalActiveLeads}</p><small>(Não descartados)</small></div>
-                <div className="summary-card placeholder"><h2>Novos Leads (Mês)</h2><p className="summary-value">-</p><small>(Dados futuros)</small></div>
-                <div className="summary-card placeholder"><h2>Taxa de Conversão</h2><p className="summary-value">-</p><small>(Dados futuros)</small></div>
+                <div className="summary-card"><h2>Novos Leads (Mês)</h2><p className="summary-value">{summaryData.totalNewLeadsThisMonth}</p><small>(Leads cadastrados neste mês)</small></div>
+                <div className="summary-card"><h2>Leads Descartados</h2><p className="summary-value">{summaryData.totalDiscardedLeads}</p><small>(Todos os Leads Descartados)</small></div>
             </div>
             {/* Seção de Gráficos */}
             <div className="charts-section">
