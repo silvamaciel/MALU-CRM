@@ -1,0 +1,104 @@
+/* src/components/Sidebar/Sidebar.css */
+.sidebar {
+    width: 240px; /* Largura da sidebar */
+    flex-shrink: 0; /* Impede que encolha */
+    background-color: #343a40; /* Cor escura de fundo */
+    color: #adb5bd; /* Cor do texto padrão */
+    display: flex;
+    flex-direction: column; /* Organiza header, nav, footer verticalmente */
+    height: 100vh; /* Ocupa altura total */
+    position: sticky; /* Mantém visível ao rolar (se .main-content tiver scroll) */
+    top: 0;
+  }
+  
+  .sidebar-header {
+    padding: 1.5rem 1rem;
+    text-align: center;
+    border-bottom: 1px solid #495057;
+  }
+  
+  .sidebar-header h3 {
+    color: #fff;
+    margin: 0;
+    font-size: 1.4em;
+  }
+  
+  .sidebar-nav {
+    flex-grow: 1; /* Ocupa espaço entre header e footer */
+    padding-top: 1rem;
+  }
+  
+  .sidebar-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .sidebar-nav li a {
+    display: block;
+    padding: 0.8rem 1.5rem;
+    color: #adb5bd;
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    border-left: 3px solid transparent; /* Para indicar link ativo */
+  }
+  
+  .sidebar-nav li a:hover {
+    background-color: #495057;
+    color: #fff;
+  }
+  
+  /* Estilo do link ativo (definido pelo NavLink) */
+  .sidebar-nav li a.active {
+    background-color: #0d6efd; /* Azul */
+    color: #fff;
+    font-weight: 500;
+    border-left-color: #fff; /* Barra branca indicando ativo */
+  }
+  
+  /* Seção Admin */
+  .admin-section {
+      margin-top: 1.5rem;
+      border-top: 1px solid #495057;
+      padding-top: 0.5rem;
+  }
+  .admin-section-title {
+      display: block;
+      padding: 0.8rem 1.5rem;
+      font-size: 0.8em;
+      text-transform: uppercase;
+      color: #6c757d;
+      font-weight: 600;
+  }
+  .admin-section ul li a {
+      padding-left: 2.5rem; /* Indentação para links admin */
+      font-size: 0.95em;
+  }
+  
+  
+  /* Footer da Sidebar */
+  .sidebar-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #495057;
+  }
+  .user-info {
+      margin-bottom: 1rem;
+      font-size: 0.9em;
+  }
+  .user-info span { display: block; }
+  .user-info small { color: #6c757d; }
+  
+  .logout-button {
+    width: 100%;
+    padding: 0.6rem;
+    background-color: #dc3545; /* Vermelho */
+    border: none;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    text-align: center;
+  }
+  .logout-button:hover {
+    background-color: #c82333;
+  }
