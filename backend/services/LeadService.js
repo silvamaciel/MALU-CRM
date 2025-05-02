@@ -564,37 +564,88 @@ const deleteLead = async (id, companyId, userId) => { // <<< Recebe parâmetros 
 
 
 // --- DESCARTAR Lead (com Multi-Empresa) ---
-const descartarLead = async (id, dados, companyId, userId) => { // <<< Recebe parâmetros corretos
-     if (!mongoose.Types.ObjectId.isValid(id)) { throw new Error("ID Lead inválido."); }
-     if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) { throw new Error('ID Empresa inválido.'); }
-     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) { throw new Error('ID Usuário inválido.'); }
-     const { motivoDescarte, comentario } = dados; // motivoDescarte é ID
-     if (!motivoDescarte || !mongoose.Types.ObjectId.isValid(motivoDescarte)) { throw new Error("ID Motivo Descarte inválido."); }
+const descartarLead = async (id, dados, companyId, userId) => {
+  // Validações de entrada (iguais)
+  if (!mongoose.Types.ObjectId.isValid(id)) { throw new Error("ID de Lead inválido."); }
+  if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) { throw new Error('ID da empresa inválido.'); }
+  if (!userId || !mongoose.Types.ObjectId.isValid(userId)) { throw new Error('ID do usuário inválido.'); }
+  const { motivoDescarte, comentario } = dados;
+  if (!motivoDescarte || !mongoose.Types.ObjectId.isValid(motivoDescarte)) { throw new Error("ID do motivo de descarte inválido ou não fornecido."); }
 
-     // Busca Situação "Descartado" e Motivo Descarte (ambos da empresa)
-     const [reasonExists, situacaoDescartado] = await Promise.all([
-        // <<< Ajuste: Busca motivo na empresa >>>
-        DiscardReason.findOne({_id: motivoDescarte, company: companyId }).lean(),
-        LeadStage.findOne({ nome: "Descartado", company: companyId }).lean() // Busca na empresa
-     ]).catch(err => { throw new Error("Erro ao buscar refs para descarte."); });
+  // Define nome padrão e ordem alta
+  const nomeSituacaoDescartado = "Descartado";
+  const ordemSituacaoDescartado = 9999; // Ordem alta padrão
 
-     if (!reasonExists) throw new Error(`Motivo Descarte ID ${motivoDescarte} não encontrado nesta empresa.`);
-     if (!situacaoDescartado) throw new Error(`Situação 'Descartado' não encontrada para a empresa ${companyId}.`);
+  try {
+      // Busca Motivo de Descarte E Situação "Descartado" em paralelo
+      const [reasonExists, situacaoDescartadoExistente] = await Promise.all([
+          DiscardReason.findOne({_id: motivoDescarte, company: companyId }).lean(), // Busca Motivo na empresa
+          LeadStage.findOne({ nome: nomeSituacaoDescartado, company: companyId }) // Busca Situação na empresa (SEM .lean() para poder salvar se precisar criar)
+      ]);
 
-     // <<< MULTI-TENANCY: Adiciona companyId ao filtro >>>
-     const lead = await Lead.findOneAndUpdate(
-        { _id: id, company: companyId }, // Filtra por empresa
-        { situacao: situacaoDescartado._id, motivoDescarte: reasonExists._id, comentario: comentario || null, },
-        { new: true }
-     ).populate("situacao", "nome").populate("motivoDescarte", "nome");
+      // Valida Motivo
+      if (!reasonExists) throw new Error(`Motivo Descarte ID ${motivoDescarte} não encontrado nesta empresa.`);
 
-     if (!lead) throw new Error("Lead não encontrado nesta empresa.");
+      let situacaoDescartadoFinal = situacaoDescartadoExistente;
 
-     const details = `Motivo: ${reasonExists.nome}${comentario ? ` | Comentário: ${comentario}` : ''}`;
-     await logHistory(lead._id, userId, 'DESCARTE', details); // Passa userId
+      // <<< LÓGICA "FIND OR CREATE" PARA SITUAÇÃO DESCARTADO >>>
+      if (!situacaoDescartadoFinal) {
+          // Se NÃO encontrou, CRIA a situação "Descartado" para esta empresa
+          console.warn(`[descartarLead] Situação '${nomeSituacaoDescartado}' não encontrada para ${companyId}. Criando...`);
+          situacaoDescartadoFinal = new LeadStage({
+              nome: nomeSituacaoDescartado,
+              ordem: ordemSituacaoDescartado,
+              company: companyId,
+              ativo: true // Garante que seja criada como ativa
+          });
+          try {
+              await situacaoDescartadoFinal.save(); // Salva a nova situação padrão
+              console.log(`[descartarLead] Situação '${nomeSituacaoDescartado}' criada para ${companyId} com ID: ${situacaoDescartadoFinal._id}`);
+          } catch (creationError) {
+              // Pode dar erro se houver race condition (outra req criou ao mesmo tempo) ou outra validação
+              console.error(`[descartarLead] Falha ao tentar criar situação '${nomeSituacaoDescartado}' para ${companyId}:`, creationError);
+               // Verifica se o erro foi de duplicidade (outra req criou antes)
+               if (creationError.message.includes("já existe")) {
+                   // Tenta buscar novamente
+                   situacaoDescartadoFinal = await LeadStage.findOne({ nome: nomeSituacaoDescartado, company: companyId });
+                   if (!situacaoDescartadoFinal) { // Se ainda não achar, lança erro definitivo
+                       throw new Error(`Falha crítica ao criar/encontrar situação padrão 'Descartado'.`);
+                   }
+               } else {
+                  throw new Error(`Falha ao configurar a situação 'Descartado' para esta empresa.`);
+               }
+          }
+      }
+      // <<< FIM LÓGICA "FIND OR CREATE" >>>
 
-     return lead;
+      // Agora temos certeza que situacaoDescartadoFinal contém o documento (encontrado ou criado)
+
+      // Atualiza o Lead
+      const lead = await Lead.findOneAndUpdate(
+          { _id: id, company: companyId }, // Filtra por empresa
+          {
+              situacao: situacaoDescartadoFinal._id, // Usa o ID encontrado ou criado
+              motivoDescarte: reasonExists._id,      // Usa o ID do motivo validado
+              comentario: comentario || null,
+          },
+          { new: true }
+      ).populate("situacao", "nome").populate("motivoDescarte", "nome");
+
+      if (!lead) throw new Error("Lead não encontrado nesta empresa (descarte falhou).");
+
+      // Log de Histórico (igual)
+      const details = `Motivo: ${reasonExists.nome}${comentario ? ` | Comentário: ${comentario}` : ''}`;
+      await logHistory(lead._id, userId, 'DESCARTE', details);
+
+      return lead;
+
+  } catch (error) {
+       console.error(`[descartarLead] Erro ao descartar lead ${id} para empresa ${companyId}:`, error);
+       // Repassa a mensagem de erro original
+       throw new Error(error.message || "Erro ao descartar lead.");
+  }
 };
+
 
 // --- EXPORTS ---
 module.exports = {
