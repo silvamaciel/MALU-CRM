@@ -7,6 +7,8 @@ const LeadStage = require("../models/LeadStage");
 const User = require("../models/User");
 const DiscardReason = require("../models/DiscardReason");
 const LeadHistory = require("../models/LeadHistory");
+const origemService = require("./origemService");
+
 const cpfcnpj = require("cpf-cnpj-validator");
 const {
   PhoneNumberUtil,
@@ -250,17 +252,34 @@ const createLead = async (leadData, companyId, userId) => {
   // Origem (Default = null)
   console.log(`[createLead DEBUG] Valor de 'origem' recebido do frontend: ID = ${origem}, Tipo = ${typeof origem}`); // <<< DEBUG LOG 1
   if (origem && mongoose.Types.ObjectId.isValid(origem)) {
-    try {
-        const doc = await Origem.findOne({ _id: origem, company: companyId }).lean(); // Busca na empresa
-        if (!doc) {
-            throw new Error(`Origem fornecida inválida ou não pertence a esta empresa.`);
-        }
-        origemIdFinal = doc._id;
-    } catch(dbError){
-        console.error("[createLead DEBUG] Erro ao buscar Origem no DB:", dbError);
-    }
+    // Se origem foi fornecida E válida, tenta encontrar na empresa
+    const doc = await Origem.findOne({ _id: origem, company: companyId }).lean();
+    if (!doc) throw new Error(`Origem fornecida (ID: ${origem}) inválida ou não pertence a esta empresa.`);
+    origemIdFinal = doc._id;
+    console.log(`[createLead] Usando Origem fornecida: ${origemIdFinal}`);
 } else {
-     origemIdFinal = null; // Define null se não veio ou formato inválido
+    // Origem não fornecida ou inválida, busca/cria default "Sistema Gestor"
+    const nomeDefault = "Sistema Gestor";
+    console.log(`[createLead] Origem não fornecida/inválida. Buscando/Criando default '${nomeDefault}'...`);
+
+    // Tenta encontrar a origem padrão para esta empresa
+    let defaultOrigin = await Origem.findOne({ nome: nomeDefault, company: companyId });
+
+    if (!defaultOrigin) {
+        console.log(`[createLead] Origem '${nomeDefault}' não encontrada para ${companyId}. Tentando criar...`);
+        try {
+            defaultOrigin = await origemService.createOrigem({
+                nome: nomeDefault,
+                descricao: "Lead cadastrado diretamente pelo sistema."
+            }, companyId);
+            console.log(`[createLead] Origem padrão '${nomeDefault}' criada com ID: ${defaultOrigin._id}`);
+        } catch (creationError) {
+            console.error(`[createLead] Falha ao tentar criar origem padrão '${nomeDefault}' para ${companyId}:`, creationError);
+            throw new Error(`Falha ao criar/encontrar origem padrão 'Sistema Gestor'. ${creationError.message}`);
+        }
+    }
+    origemIdFinal = defaultOrigin._id;
+    console.log(`[createLead] Usando Origem padrão '${nomeDefault}': ${origemIdFinal}`);
 }
 
   // 5. Criação do Novo Lead
