@@ -25,13 +25,10 @@ app.use('/api/companies', require('./routes/companyRoutes'));
 app.use('/api/leads', require('./routes/leadRoutes'));
 app.use('/api/leadStage', require('./routes/leadStageRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
-
 app.use('/api/origens', require('./routes/OrigemRoutes'));
-
 app.use('/api/motivosdescarte', require('./routes/discardReasonRoutes'));
-
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
-
+app.use('/api/brokers', require('./routes/brokerContactRoutes'));
 
 
 
