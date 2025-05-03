@@ -6,10 +6,14 @@ import './MainLayout.css'; // CSS para o layout
 
 // Recebe dados do usuário e função de logout do App.js
 function MainLayout({ userData, handleLogout }) {
-    
+
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
+    const toggleMobileSidebar = () => {
+        setIsMobileSidebarOpen(prevState => !prevState);
+    };
 
+    
     return (
         <div className="main-layout">
             {/* Renderiza a Sidebar, passando props necessárias */}
