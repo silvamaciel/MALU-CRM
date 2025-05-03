@@ -22,11 +22,31 @@ const googleCallback = async (req, res) => {
     }
 };
 
-// Adicione aqui controllers para login/registro com senha se implementar no futuro
-// const registerUser = async (req, res) => { ... };
-// const loginUser = async (req, res) => { ... };
+
+/**
+ * 
+ * Controller para login com e-mail/senha
+ */
+
+const loginUser = async (req, res) => {
+    const { email, senha } = req.body; // Pega email e senha do corpo
+    console.log("[AuthController] Recebido POST /api/auth/login");
+
+    if (!email || !senha) {
+        return res.status(400).json({ error: 'Email e senha são obrigatórios.' });
+    }
+
+    try {
+        const result = await authService.loginUser(email, senha); // Chama o serviço
+        res.json(result); // Retorna { token, user }
+    } catch (error) {
+        console.error("[AuthController] Erro no login local:", error.message);
+        res.status(401).json({ error: error.message }); // Retorna 401 para credenciais inválidas ou outros erros
+    }
+};
+
 
 module.exports = {
     googleCallback,
-    // exporte outros controllers
+    loginUser,
 };
