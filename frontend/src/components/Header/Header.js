@@ -12,8 +12,7 @@ function Header({ onToggleSidebar }) {
         <span className="hamburger-icon-line"></span>
         <span className="hamburger-icon-line"></span>
       </button>
-      {/* Você pode adicionar outros elementos ao header aqui, como o título da página atual ou breadcrumbs */}
-      <div className="header-title">Meu CRM</div> {/* Exemplo */}
+      <div className="header-title">Meu CRM</div>
     </header>
   );
 }
