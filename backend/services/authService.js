@@ -163,5 +163,6 @@ const loginUser = async (email, password) => {
 
 
 module.exports = {
-    verifyGoogleTokenAndLogin
+    verifyGoogleTokenAndLogin,
+    loginUser
 };
