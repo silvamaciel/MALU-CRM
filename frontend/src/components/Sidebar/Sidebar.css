@@ -1,15 +1,17 @@
 /* src/components/Sidebar/Sidebar.css */
 .sidebar {
-    width: 240px; /* Largura da sidebar */
-    flex-shrink: 0; /* Impede que encolha */
-    background-color: #343a40; /* Cor escura de fundo */
-    color: #adb5bd; /* Cor do texto padrão */
-    display: flex;
-    flex-direction: column; /* Organiza header, nav, footer verticalmente */
-    height: 100vh; /* Ocupa altura total */
-    position: sticky; /* Mantém visível ao rolar (se .main-content tiver scroll) */
-    top: 0;
-  }
+  width: 240px;
+  flex-shrink: 0;
+  background-color: #343a40;
+  color: #adb5bd;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky; /* Mantém sticky em desktop */
+  top: 0;
+  transition: transform 0.3s ease-in-out, left 0.3s ease-in-out; /* Animação */
+  z-index: 1020; 
+}
   
   .sidebar-header {
     padding: 1.5rem 1rem;
@@ -103,11 +105,17 @@
     background-color: #c82333;
   }
 
-@media (max-width: 991.98px) {
-  .sidebar {
-    display: none; 
-    position: fixed; 
-    left: -240px; 
-    transition:cubic-bezier(1, 0, 0, 1);
+  @media (max-width: 991.98px) {
+    .sidebar {
+      position: fixed; 
+      transform: translateX(-100%);
+      top: 0;
+      bottom: 0;
+      height: 100%;
+    }
+  
+    .main-layout.mobile-sidebar-open .sidebar {
+        transform: translateX(0);
+        box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    }
   }
-}

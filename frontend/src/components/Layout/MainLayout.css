@@ -2,19 +2,24 @@
 .main-layout {
   display: flex;
   min-height: 100vh;
-  /* Ocupa altura total da tela */
 }
 
 .main-content {
   flex-grow: 1;
-  background-color: #f4f7f6;
-  height: 100vh;
   overflow-y: auto;
   padding: 1.5rem 2rem;
   box-sizing: border-box;
 }
 
-/* Ajustes para telas menores (exemplo) */
+.content-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  /* width: calc(100% - 240px);*/
+  position: relative; 
+  background-color: #f4f7f6;
+}
+
 @media (max-width: 768px) {
   .main-layout {
     
@@ -26,4 +31,27 @@
   }
 
  
+}
+
+
+.mobile-sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 1010;
+  display: none;
+  cursor: pointer;
+}
+
+.main-layout.mobile-sidebar-open .mobile-sidebar-overlay {
+  display: block;
+}
+
+@media (min-width: 992px) {
+  .mobile-sidebar-overlay {
+    display: none !important;
+  }
 }

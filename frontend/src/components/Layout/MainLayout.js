@@ -1,35 +1,64 @@
 // src/components/Layout/MainLayout.js
-import React, { useState } from 'react';
-import { Outlet } from "react-router-dom"; // Importa Outlet para renderizar rotas filhas
-import Sidebar from "../Sidebar/Sidebar"; // Importa o componente da Sidebar (a criar)
+import React, { useState, useEffect, useCallback } from 'react'; // <<< Adicionado useEffect, useCallback
+import { Outlet } from 'react-router-dom';
+import Sidebar from '../Sidebar/Sidebar';
 import Header from '../Header/Header';
-import "./MainLayout.css"; // CSS para o layout
+import './MainLayout.css';
 
-// Recebe dados do usuário e função de logout do App.js
+const MOBILE_BREAKPOINT = 992; 
+
 function MainLayout({ userData, handleLogout }) {
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+    const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  const toggleMobileSidebar = () => {
-    setIsMobileSidebarOpen((prevState) => !prevState);
-  };
+    const closeMobileSidebar = useCallback(() => {
+        setIsMobileSidebarOpen(false);
+    }, []); 
 
-  return (
-    <div className={`main-layout ${isMobileSidebarOpen ? 'mobile-sidebar-open' : ''}`}>
-            {/* Sidebar agora sempre renderizada (CSS controla visibilidade) */}
-            <Sidebar userData={userData} handleLogout={handleLogout} />
+    const toggleMobileSidebar = useCallback(() => {
+        setIsMobileSidebarOpen(prevState => !prevState);
+    }, []);
 
-            {/* Container para Header + Conteúdo */}
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth >= MOBILE_BREAKPOINT) {
+                closeMobileSidebar();
+            }
+        };
+        window.addEventListener('resize', handleResize);
+        handleResize();
+        return () => window.removeEventListener('resize', handleResize);
+    }, [closeMobileSidebar]); // Depende de closeMobileSidebar
+
+    return (
+        // Adiciona classe condicional para CSS
+        <div className={`main-layout ${isMobileSidebarOpen ? 'mobile-sidebar-open' : ''}`}>
+
+            {/* <<< NOVO: Overlay para fechar ao clicar fora >>> */}
+            {isMobileSidebarOpen && (
+                <div
+                    className="mobile-sidebar-overlay"
+                    onClick={closeMobileSidebar} // <<< Fecha ao clicar no overlay
+                    aria-hidden="true" // Para acessibilidade
+                ></div>
+            )}
+
+            {/* Passa a função de FECHAR para a Sidebar */}
+            <Sidebar
+                userData={userData}
+                handleLogout={handleLogout}
+                closeMobileSidebar={closeMobileSidebar} // <<< Nova prop
+            />
+
             <div className="content-wrapper">
-                 {/* Renderiza o Header passando a função toggle */}
+                 {/* Passa a função de TOGGLE para o Header */}
                  <Header onToggleSidebar={toggleMobileSidebar} />
 
-                 {/* Área principal onde o conteúdo da página atual será renderizado */}
-                <div className="main-content">
+                 <div className="main-content">
                     <Outlet />
                 </div>
             </div>
         </div>
-  );
+    );
 }
 
 export default MainLayout;
