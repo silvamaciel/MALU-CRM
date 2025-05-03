@@ -18,7 +18,8 @@ import LeadStageAdminPage from './pages/Admin/LeadStageAdminPage';
 import OrigensAdminPage from './pages/Admin/OrigensAdminPage';
 import DiscardReasonAdminPage from './pages/Admin/DiscardReasonAdminPage';
 import UsuariosAdminPage from './pages/Admin/UsuariosAdminPage';
-import MainLayout from './components/Layout/MainLayout'; // Importa Layout
+import MainLayout from './components/Layout/MainLayout';
+import BrokerContactsAdminPage from './pages/Admin/BrokerContactsAdminPage';
 
 // Libs & CSS
 import { ToastContainer } from "react-toastify";
@@ -92,6 +93,7 @@ function App() {
                         <Route path="admin/origens" element={<OrigensAdminPage />} />
                         <Route path="admin/motivosdescarte" element={<DiscardReasonAdminPage />} />
                         <Route path="admin/usuarios" element={<UsuariosAdminPage />} />
+                        <Route path="admin/brokers" element={<BrokerContactsAdminPage />} />
                         {/* Adicione mais rotas admin aqui, sempre com path relativo ao pai "/" */}
                     </>
                 )}
