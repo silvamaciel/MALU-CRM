@@ -55,6 +55,25 @@ userSchema.post('save', function(error, doc, next) {
   }
 });
 
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('senha')) {
+      return next();
+  }
+  if (!this.senha) {
+       return next();
+  }
+
+  console.log(`[User Model] Gerando hash para senha do usuário ${this.email}...`);
+  try {
+      const salt = await bcrypt.genSalt(10);
+      this.senha = await bcrypt.hash(this.senha, salt);
+      next();
+  } catch (error) {
+      next(error); 
+  }
+});
+
+
 const User = mongoose.model('User', userSchema);
 
 module.exports = User;
