@@ -91,10 +91,30 @@ function LoginPage({ onLoginSuccess }) { // Recebe uma função para chamar apó
  };
 
 
- const handleDemoLogin = () => {
-  setEmail(DEMO_EMAIL);
-  setPassword(DEMO_PASSWORD);
-  toast.info(`Credenciais de teste preenchidas. Clique em "Entrar".`, { autoClose: 1500});
+ const handleDemoLogin = async () => { // <<< Transformada em async
+  setError(null); // Limpa erros anteriores
+  setIsLoading(true); // <<< Inicia o loading
+  console.log("Tentando login com credenciais Demo...");
+
+  try {
+      const backendResponse = await loginWithPassword(DEMO_EMAIL, DEMO_PASSWORD);
+      if (backendResponse && backendResponse.token) {
+          localStorage.setItem('userToken', backendResponse.token);
+          localStorage.setItem('userData', JSON.stringify(backendResponse.user || {}));
+          if (typeof onLoginSuccess === 'function') {
+              onLoginSuccess();
+          }
+      } else {
+          throw new Error("Resposta inválida do servidor no login de teste.");
+      }
+   } catch(err) {
+       setError(err.message || "Falha no login de demonstração.");
+       console.error("Erro Login Demo:", err);
+       localStorage.removeItem('userToken');
+       localStorage.removeItem('userData');
+   } finally {
+       setIsLoading(false); 
+   }
 };
 
   // Chamado quando há erro NO PROCESSO de login do Google
