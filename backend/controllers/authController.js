@@ -48,5 +48,5 @@ const loginUser = async (req, res) => {
 
 module.exports = {
     googleCallback,
-    loginUser,
+    loginUser
 };
