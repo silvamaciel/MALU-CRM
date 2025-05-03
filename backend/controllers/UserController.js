@@ -111,6 +111,9 @@ const deleteUser = async (req, res) => {
     }
 };
 
+
+
+
 module.exports = {
     getCompanyUsers, // Renomeado
     getUserById,
