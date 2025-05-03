@@ -1,7 +1,8 @@
 // services/authService.js
 const { OAuth2Client } = require('google-auth-library');
 const jwt = require('jsonwebtoken');
-const User = require('../models/User'); // Modelo de usuário já deve ter o campo 'company'
+const User = require('../models/User');
+const bcrypt = require('bcryptjs');
 
 // Variáveis de ambiente
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
@@ -100,6 +101,66 @@ const verifyGoogleTokenAndLogin = async (idToken) => {
         throw new Error(error.message || "Falha ao autenticar com Google.");
     }
 };
+
+
+/**
+ * Autentica um usuário com email e senha.
+ * @param {string} email - Email do usuário.
+ * @param {string} password - Senha não hasheada fornecida.
+ * @returns {Promise<object>} - Objeto com { token: string, user: object }
+ */
+const loginUser = async (email, password) => {
+    console.log(`[AuthService] Tentativa de login local para email: ${email}`);
+    if (!email || !password) {
+        throw new Error("Email e Senha são obrigatórios.");
+    }
+
+    const emailLower = email.toLowerCase();
+
+    try {
+        // 1. Encontrar usuário pelo email E selecionar o campo senha
+        const user = await User.findOne({ email: emailLower }).select('+senha +company'); // <<< Seleciona senha e company!
+
+        // 2. Verificar se usuário existe E se tem senha cadastrada
+        if (!user || !user.senha) {
+             console.warn(`[AuthService] Usuário não encontrado ou sem senha local: ${emailLower}`);
+             throw new Error("Credenciais inválidas."); // Mensagem genérica por segurança
+        }
+         // 3. Verificar se a empresa existe (importante para multi-tenant)
+         if (!user.company) {
+            console.error(`[AuthService] ERRO DADOS: Usuário ${user.email} não tem empresa associada!`);
+            throw new Error("Erro interno: Usuário sem empresa.");
+         }
+
+        // 4. Comparar a senha fornecida com o hash no banco
+        const isMatch = await user.matchPassword(password);
+
+        if (!isMatch) {
+            console.warn(`[AuthService] Senha incorreta para: ${emailLower}`);
+            throw new Error("Credenciais inválidas."); // Mensagem genérica
+        }
+
+        // 5. Se chegou aqui, senha está correta! Gerar token JWT (igual ao do Google Login)
+        console.log(`[AuthService] Senha correta. Gerando token JWT para user: ${user._id}, company: ${user.company}`);
+        const jwtPayload = {
+            userId: user._id, email: user.email, perfil: user.perfil,
+            nome: user.nome, companyId: user.company
+        };
+        const token = jwt.sign(jwtPayload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+
+        // 6. Retornar token e dados do usuário
+        return {
+            token: token,
+            user: { _id: user._id, nome: user.nome, email: user.email, perfil: user.perfil, companyId: user.company }
+        };
+
+    } catch (error) {
+        // Repassa erros específicos ou lança um genérico
+        console.error("[AuthService] Erro no login local:", error);
+        throw new Error(error.message || "Falha no login.");
+    }
+};
+
 
 module.exports = {
     verifyGoogleTokenAndLogin
