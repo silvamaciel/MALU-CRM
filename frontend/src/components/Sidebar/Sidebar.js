@@ -28,6 +28,7 @@ function Sidebar({ userData, handleLogout }) {
                                 <li><NavLink to="/admin/origens" className={({isActive}) => isActive ? 'active' : ''}>Origens</NavLink></li>
                                 <li><NavLink to="/admin/motivosdescarte" className={({isActive}) => isActive ? 'active' : ''}>Motivos Descarte</NavLink></li>
                                 <li><NavLink to="/admin/usuarios" className={({isActive}) => isActive ? 'active' : ''}>Usuários</NavLink></li>
+                                <li><NavLink to="/admin/brokers" className={({isActive}) => isActive ? 'active' : ''}>Agenda Corretores</NavLink></li>
                                 {/* Adicione links para outras páginas admin aqui */}
                             </ul>
                         </li>
