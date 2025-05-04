@@ -11,7 +11,7 @@ import {
 // Pages & Layout
 import LeadListPage from "./pages/LeadList/LeadListPage";
 import LeadFormPage from "./pages/LeadForm/LeadFormPage";
-import LeadDetailPage from "./pages/LeadDatail/LeadDetailPage"; // <<< Verifique nome da pasta 'LeadDetail'
+import LeadDetailPage from "./pages/LeadDatail/LeadDetailPage";
 import LoginPage from "./pages/Login/LoginPage";
 import DashboardPage from './pages/Dashboard/DashboardPage';
 import LeadStageAdminPage from './pages/Admin/LeadStageAdminPage';
@@ -47,7 +47,6 @@ function App() {
     localStorage.removeItem("userData");
     setUserData({});
     setIsLoggedIn(false);
-    // O Navigate na rota cuidará do redirecionamento
   };
 
   return (
