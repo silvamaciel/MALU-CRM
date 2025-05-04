@@ -20,6 +20,7 @@ import DiscardReasonAdminPage from './pages/Admin/DiscardReasonAdminPage';
 import UsuariosAdminPage from './pages/Admin/UsuariosAdminPage';
 import MainLayout from './components/Layout/MainLayout';
 import BrokerContactsAdminPage from './pages/Admin/BrokerContactsAdminPage';
+import AdminGuard from './components/Auth/AdminGuard';
 
 // Libs & CSS
 import { ToastContainer } from "react-toastify";
@@ -86,27 +87,21 @@ function App() {
                 <Route path="leads/:id/editar" element={<LeadFormPage />} />
 
                 {/* Rotas Admin (Renderizadas condicionalmente DENTRO do Outlet) */}
-                {isAdmin && (
-                    <>
-                        <Route path="admin/situacoes" element={<LeadStageAdminPage />} />
-                        <Route path="admin/origens" element={<OrigensAdminPage />} />
-                        <Route path="admin/motivosdescarte" element={<DiscardReasonAdminPage />} />
-                        <Route path="admin/usuarios" element={<UsuariosAdminPage />} />
-                        <Route path="admin/brokers" element={<BrokerContactsAdminPage />} />
-                        {/* Adicione mais rotas admin aqui, sempre com path relativo ao pai "/" */}
-                    </>
-                )}
+                <Route element={<AdminGuard isAdmin={isAdmin} />}> {/* Pai que aplica a guarda */}
+                                <Route path="admin/situacoes" element={<LeadStageAdminPage />} />
+                                <Route path="admin/origens" element={<OrigensAdminPage />} />
+                                <Route path="admin/motivosdescarte" element={<DiscardReasonAdminPage />} />
+                                <Route path="admin/usuarios" element={<UsuariosAdminPage />} />
+                                <Route path="admin/brokers" element={<BrokerContactsAdminPage />} />
+                </Route>
 
-                {/* Rota para não-admins tentando acessar /admin (opcional) */}
-                {/* Se isAdmin for false E isLoggedIn for true, renderiza um componente de acesso negado */}
-                {/* Nota: Isso pode precisar de lógica mais robusta se houver muitas rotas admin */}
+                            
+
                 {!isAdmin && isLoggedIn && (
                     <Route path="admin/*" element={<div><h2>Acesso Negado</h2><p>Você não tem permissão.</p></div>} />
                 )}
 
-                {/* --- Fim das Rotas Filhas --- */}
           </Route>
-          {/* --- Fim das Rotas Protegidas --- */}
 
 
           {/* Rota 404 (Fora do Layout Principal) */}
