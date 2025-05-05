@@ -1,198 +1,133 @@
 // src/pages/Login/LoginPage.js
-import React, { useState } from 'react';
-import { GoogleLogin } from '@react-oauth/google';
-import { jwtDecode } from "jwt-decode"; 
-import { loginWithGoogle, loginWithPassword } from '../../api/auth';
-import './LoginPage.css'; 
+import React, { useState, useCallback } from 'react'; 
+import { useGoogleLogin } from '@react-oauth/google';
+import { sendGoogleAuthCode, loginWithPassword } from '../../api/auth';
+import './LoginPage.css';
 
-function LoginPage({ onLoginSuccess }) { // Recebe uma função para chamar após login bem-sucedido
+//quem sabe vou usar depois
+//import { toast } from 'react-toastify';
+// import { jwtDecode } from "jwt-decode"; 
+
+
+// Credenciais Demo
+const DEMO_EMAIL = 'teste@crmmalu.com'; 
+const DEMO_PASSWORD = 'senhaSuperSecretaParaTeste';
+
+function LoginPage({ onLoginSuccess }) {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const DEMO_EMAIL = 'teste@crmmalu.com'; 
-  const DEMO_PASSWORD = 'senhaSuperSecretaParaTeste'; 
+  // --- Configuração e Chamada do Hook useGoogleLogin ---
+  const googleLogin = useGoogleLogin({ // <<< 1. Chama o hook e guarda a função de disparo
+      flow: 'auth-code',
+      scope: `openid email profile https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/contacts https://www.googleapis.com/auth/drive.file`,
+      onSuccess: async (codeResponse) => { // <<< Lógica de SUCESSO do Google >>>
+          setError(null); setIsLoading(true);
+          console.log("Google Auth Code Response:", codeResponse);
+          const authCode = codeResponse.code;
 
+          if (authCode) {
+              try {
+                  // Envia o CÓDIGO para o backend
+                  const backendResponse = await sendGoogleAuthCode(authCode);
+                  if (backendResponse && backendResponse.token) {
+                      localStorage.setItem('userToken', backendResponse.token);
+                      localStorage.setItem('userData', JSON.stringify(backendResponse.user || {}));
+                      if (typeof onLoginSuccess === 'function') { onLoginSuccess(); }
+                  } else { throw new Error("Resposta inválida do servidor."); }
+              } catch (err) {
+                  setError(err.message || "Falha na comunicação com o servidor após login Google."); console.error("Erro Login Google:", err);
+                  localStorage.removeItem('userToken'); localStorage.removeItem('userData');
+              } finally { setIsLoading(false); }
+          } else {
+              setError("Não foi possível obter o código de autorização do Google."); setIsLoading(false);
+          }
+      },
+      onError: (errorResponse) => { // <<< Lógica de ERRO do Google >>>
+          console.error("Google Login Flow Error:", errorResponse);
+          setError("Falha ao iniciar login com Google. Verifique pop-ups ou tente novamente.");
+          setIsLoading(false);
+      }
+  });
+  // --- Fim Configuração Hook ---
 
-  // Chamado quando o login com Google é BEM SUCEDIDO no lado do Google
-  const handleLoginSuccess = async (credentialResponse) => {
-    setError(null);
-    setIsLoading(true);
-    console.log("Google Login Success! CredentialResponse:", credentialResponse);
-
-    // O credentialResponse.credential é o ID Token JWT que o Google fornece
-    const idToken = credentialResponse.credential;
-
-    if (idToken) {
-      try {
-        // Opcional: Decodificar para ver as infos (nome, email, etc.)
-        const decodedToken = jwtDecode(idToken);
-        console.log("Decoded ID Token:", decodedToken);
-
-        // <<< Envia o ID Token para o seu backend >>>
-        const backendResponse = await loginWithGoogle(idToken);
-
-        // <<< AQUI: Lógica após receber a resposta do SEU backend >>>
-        // Exemplo: Salvar o token JWT da SUA aplicação no localStorage e chamar onLoginSuccess
+  // --- Handler Login Local (Email/Senha) ---
+  const handleLocalLoginSubmit = useCallback(async (e) => { // Adicionado useCallback
+     e.preventDefault(); setError(null); setIsLoading(true);
+     if (!email || !password) { setError("Email e Senha são obrigatórios."); setIsLoading(false); return; }
+     try {
+        const backendResponse = await loginWithPassword(email, password);
         if (backendResponse && backendResponse.token) {
-          console.log("Login no backend bem-sucedido, recebido token:", backendResponse.token);
-          localStorage.setItem('userToken', backendResponse.token); // Salva o token localmente
-          localStorage.setItem('userData', JSON.stringify(backendResponse.user || {})); // Salva dados do usuário
-          if (typeof onLoginSuccess === 'function') {
-            onLoginSuccess(); // Notifica o App.js que o login foi feito
-          }
-        } else {
-           throw new Error("Resposta inválida do servidor após login.");
-        }
+            localStorage.setItem('userToken', backendResponse.token);
+            localStorage.setItem('userData', JSON.stringify(backendResponse.user || {}));
+            if (typeof onLoginSuccess === 'function') { onLoginSuccess(); }
+        } else { throw new Error("Resposta inválida do servidor."); }
+     } catch(err) {
+         setError(err.message || "Falha no login local."); console.error("Erro Login Local:", err);
+         localStorage.removeItem('userToken'); localStorage.removeItem('userData');
+     } finally { setIsLoading(false); }
+  }, [email, password, onLoginSuccess]);
 
-      } catch (err) {
-        console.error("Erro no processo de login:", err);
-        setError(err.message || "Falha no login. Tente novamente.");
-        // Limpa token se deu erro
-        localStorage.removeItem('userToken');
-        localStorage.removeItem('userData');
-      } finally {
-        setIsLoading(false);
-      }
-    } else {
-      setError("Não foi possível obter as credenciais do Google.");
-      setIsLoading(false);
-    }
-  };
+   // --- Handler Botão Teste ---
+   const handleDemoLogin = useCallback(async () => { // Adicionado useCallback
+       setError(null); setIsLoading(true);
+       console.log("Tentando login com credenciais Demo...");
+       try {
+           const backendResponse = await loginWithPassword(DEMO_EMAIL, DEMO_PASSWORD);
+           if (backendResponse && backendResponse.token) {
+               localStorage.setItem('userToken', backendResponse.token);
+               localStorage.setItem('userData', JSON.stringify(backendResponse.user || {}));
+               if (typeof onLoginSuccess === 'function') { onLoginSuccess(); }
+           } else { throw new Error("Resposta inválida do servidor no login de teste."); }
+        } catch(err) {
+            setError(err.message || "Falha no login de demonstração."); console.error("Erro Login Demo:", err);
+            localStorage.removeItem('userToken'); localStorage.removeItem('userData');
+        } finally { setIsLoading(false); }
+   }, [onLoginSuccess]);
 
-
-  // login local (email/senha)  
-  const handleLocalLoginSubmit = async (e) => {
-    e.preventDefault(); // Previne envio padrão do form
-    setError(null); setIsLoading(true);
-
-    if (!email || !password) {
-         setError("Email e Senha são obrigatórios.");
-         setIsLoading(false);
-         return;
-    }
-
-    try {
-       // Chama a API de login local
-       const backendResponse = await loginWithPassword(email, password);
-       if (backendResponse && backendResponse.token) {
-           localStorage.setItem('userToken', backendResponse.token);
-           localStorage.setItem('userData', JSON.stringify(backendResponse.user || {}));
-           if (typeof onLoginSuccess === 'function') { onLoginSuccess(); }
-       } else { throw new Error("Resposta inválida do servidor."); }
-    } catch(err) {
-        setError(err.message || "Falha no login local."); console.error("Erro Login Local:", err);
-        localStorage.removeItem('userToken'); localStorage.removeItem('userData');
-    } finally {
-        setIsLoading(false);
-    }
- };
-
-
- const handleDemoLogin = async () => { // <<< Transformada em async
-  setError(null); // Limpa erros anteriores
-  setIsLoading(true); // <<< Inicia o loading
-  console.log("Tentando login com credenciais Demo...");
-
-  try {
-      const backendResponse = await loginWithPassword(DEMO_EMAIL, DEMO_PASSWORD);
-      if (backendResponse && backendResponse.token) {
-          localStorage.setItem('userToken', backendResponse.token);
-          localStorage.setItem('userData', JSON.stringify(backendResponse.user || {}));
-          if (typeof onLoginSuccess === 'function') {
-              onLoginSuccess();
-          }
-      } else {
-          throw new Error("Resposta inválida do servidor no login de teste.");
-      }
-   } catch(err) {
-       setError(err.message || "Falha no login de demonstração.");
-       console.error("Erro Login Demo:", err);
-       localStorage.removeItem('userToken');
-       localStorage.removeItem('userData');
-   } finally {
-       setIsLoading(false); 
-   }
-};
-
-  // Chamado quando há erro NO PROCESSO de login do Google
-  const handleLoginError = () => {
-    console.error("Google Login Failed");
-    setError("Falha ao tentar fazer login com o Google. Verifique pop-ups bloqueados ou tente novamente.");
-    setIsLoading(false);
-  };
 
   return (
     <div className="login-page">
       <div className="login-box">
-        <h1>Login - CRM Imobiliário</h1>
+        <h1>Login - CRM</h1>
 
-
-        {/* --- Formulário de Login Local --- */}
+        {/* Formulário de Login Local */}
         <form onSubmit={handleLocalLoginSubmit} className="local-login-form">
            <div className="form-group">
                <label htmlFor="email">Email:</label>
-               <input
-                  type="email"
-                  id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  disabled={isLoading}
-               />
+               <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={isLoading}/>
            </div>
            <div className="form-group">
                <label htmlFor="password">Senha:</label>
-               <input
-                  type="password"
-                  id="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  disabled={isLoading}
-               />
+               <input type="password" id="password" value={password} onChange={(e) => setPassword(e.target.value)} required disabled={isLoading}/>
            </div>
-           {/* Link "Esqueci Senha" (Futuro) */}
-           {/* <a href="/forgot-password">Esqueci minha senha</a> */}
            <button type="submit" className="button login-button" disabled={isLoading}>
                {isLoading ? 'Entrando...' : 'Entrar'}
            </button>
         </form>
-        {/* --- Fim Formulário Local --- */}
 
         <div className="divider"><span>OU</span></div>
 
-        <p>Entre com sua conta Google para continuar.</p>
-
-        {isLoading && <p>Processando login...</p>}
-        {error && <p className="error-message">{error}</p>}
-
+        {/* Botão Google Login */}
         <div className="google-login-button-container">
-          {!isLoading && (
-            <GoogleLogin
-              onSuccess={handleLoginSuccess}
-              onError={handleLoginError}
-              useOneTap // Opcional: tenta login automático se já logado no Google
-              // theme="filled_blue" // Outras opções de tema/aparência
-              // size="large"
-            />
-          )}
+          <button type="button" onClick={() => googleLogin()} className="button google-login-button" disabled={isLoading}>
+              <img src="/icons/google-icon.svg" alt="Google icon" width="20" height="20" style={{marginRight: '10px', verticalAlign: 'middle'}}/>
+              Entrar com Google
+          </button>
         </div>
 
-        {/* --- Botão Login Teste --- */}
-        <div className="demo-login-container">
+         {/* Botão Login Teste */}
+         <div className="demo-login-container">
             <button type="button" onClick={handleDemoLogin} className="button demo-button" disabled={isLoading}>
                Entrar como Teste
             </button>
          </div>
-         {/* --- Fim Botão Teste --- */}
 
-         {/* Mensagem de Erro */}
+        {/* Mensagem de Erro/Loading */}
         {error && <p className="error-message">{error}</p>}
-        {/* Mensagem de Loading Geral */}
-        {isLoading && <p>Processando...</p>}
+        {isLoading && <p style={{ marginTop: '1rem' }}>Processando...</p>}
 
       </div>
     </div>
