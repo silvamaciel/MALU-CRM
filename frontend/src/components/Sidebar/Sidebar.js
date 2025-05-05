@@ -38,6 +38,8 @@ function Sidebar({ userData, handleLogout, closeMobileSidebar }) {
                                 <li><NavLink to="/admin/motivosdescarte" onClick={handleLinkClick} className={({isActive}) => isActive ? 'active' : ''}>Motivos Descarte</NavLink></li>
                                 <li><NavLink to="/admin/usuarios" onClick={handleLinkClick} className={({isActive}) => isActive ? 'active' : ''}>Usuários</NavLink></li>
                                 <li><NavLink to="/admin/brokers" className={({isActive}) => isActive ? 'active' : ''}>Agenda Corretores</NavLink></li>
+                                <li><NavLink to="/integracoes" onClick={handleLinkClick} className={({isActive}) => isActive ? 'active' : ''}>Integrações</NavLink></li>
+
 
                             </ul>
                         </li>
