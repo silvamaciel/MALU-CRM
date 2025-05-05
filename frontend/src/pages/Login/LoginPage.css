@@ -32,7 +32,6 @@
 .google-login-button-container {
   display: flex;
   justify-content: center;
-  /* Centraliza o botão do Google */
   margin-bottom: 1rem;
 }
 
