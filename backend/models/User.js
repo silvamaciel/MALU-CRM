@@ -43,6 +43,11 @@ const userSchema = new Schema({
     ativo: { 
         type: Boolean,
         default: true
+    },
+
+    googleRefreshToken: {
+      type: String,
+      select: false
     }
 
 }, { timestamps: true });
