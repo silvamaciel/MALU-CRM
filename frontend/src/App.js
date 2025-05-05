@@ -21,6 +21,8 @@ import UsuariosAdminPage from './pages/Admin/UsuariosAdminPage';
 import MainLayout from './components/Layout/MainLayout';
 import BrokerContactsAdminPage from './pages/Admin/BrokerContactsAdminPage';
 import AdminGuard from './components/Auth/AdminGuard';
+import IntegrationsPage from './pages/Integrations/IntegrationsPage'; 
+
 
 // Libs & CSS
 import { ToastContainer } from "react-toastify";
@@ -70,7 +72,7 @@ function App() {
               path="/" // Rota pai para o layout
               element={
                   isLoggedIn
-                  ? <MainLayout userData={userData} handleLogout={handleLogout} /> // Renderiza layout
+                  ? <MainLayout userData={userData} handleLogout={handleLogout} /> 
                   : <Navigate replace to="/login" /> // Se não logado, vai para login
               }
           >
@@ -94,6 +96,8 @@ function App() {
                                 <Route path="admin/usuarios" element={<UsuariosAdminPage />} />
                                 <Route path="admin/brokers" element={<BrokerContactsAdminPage />} />
                 </Route>
+
+                <Route path="integracoes" element={<IntegrationsPage />} />
 
                             
 

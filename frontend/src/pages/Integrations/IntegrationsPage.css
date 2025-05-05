@@ -1,0 +1,115 @@
+/* src/pages/Integrations/IntegrationsPage.css */
+.integrations-page {
+    padding: 2rem;
+    max-width: 95vw;
+    /* Largura máxima da área de conteúdo admin */
+    margin: 2rem auto;
+    /* Centraliza na tela */
+    background-color: #ffffff;
+    /* Fundo branco */
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    /* Sombra suave */
+}
+
+.integrations-page h1 {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.integrations-page>p {
+    text-align: center;
+    color: #6c757d;
+    margin-bottom: 3rem;
+}
+
+
+.integrations-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+
+.integration-card {
+    background-color: #fff;
+    padding: 1.5rem 2rem;
+    /* Padding interno dos cards */
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid #eee;
+    display: flex;
+    /* Opcional: Alinhar conteúdo interno */
+    flex-direction: column;
+    /* Organiza conteúdo do card verticalmente */
+    margin-bottom: 0;
+    /* <<< Remove margin-bottom, pois 'gap' do grid controla o espaço >>> */
+}
+
+.integration-card h2 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    color: #343a40;
+}
+
+.integration-card p {
+    color: #495057;
+    margin-bottom: 1rem;
+    font-size: 0.95em;
+}
+
+.integration-card ul {
+    margin-bottom: 1.5rem;
+    padding-left: 1.2rem;
+    font-size: 0.9em;
+    color: #495057;
+}
+
+.integration-card .button {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.95em;
+    cursor: pointer;
+    border-radius: 5px;
+    border: none;
+}
+
+.google-connect-button {
+    background-color: #4285F4;
+    /* Cor Google */
+    color: white;
+}
+
+.google-connect-button:hover:not(:disabled) {
+    background-color: #357ae8;
+}
+
+.facebook-connect-button {
+    background-color: #1877F2;
+    /* Cor Facebook */
+    color: white;
+}
+
+.facebook-connect-button:hover:not(:disabled) {
+    background-color: #166fe5;
+}
+
+.integration-card .button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.integration-card .error-message {
+    color: #dc3545;
+    margin-top: 1rem;
+    font-size: 0.9em;
+}
+
+/* Placeholders */
+.integration-card.placeholder {
+    opacity: 0.6;
+    background-color: #f8f9fa;
+}
+
+.integration-card.placeholder button {
+    background-color: #6c757d;
+}
