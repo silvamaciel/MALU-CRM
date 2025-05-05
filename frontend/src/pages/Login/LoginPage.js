@@ -3,6 +3,7 @@ import React, { useState, useCallback } from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { sendGoogleAuthCode, loginWithPassword } from '../../api/auth';
 import './LoginPage.css';
+import googleIcon from '../../assets/icons-google.svg';
 
 //quem sabe vou usar depois
 //import { toast } from 'react-toastify';
@@ -113,7 +114,7 @@ function LoginPage({ onLoginSuccess }) {
         {/* Botão Google Login */}
         <div className="google-login-button-container">
           <button type="button" onClick={() => googleLogin()} className="button google-login-button" disabled={isLoading}>
-              <img src="./assets/icons-google.svg" alt="Google icon" width="20" height="20" style={{marginRight: '10px', verticalAlign: 'middle'}}/>
+              <img src={googleIcon}  alt="Google icon" width="20" height="20" style={{marginRight: '10px', verticalAlign: 'middle'}}/>
               Entrar com Google
           </button>
         </div>
