@@ -1,5 +1,5 @@
 // controllers/leadStageController.js
-const leadStageService = require('../services/leadStageService');
+const leadStageService = require('../services/LeadStageService');
 const mongoose = require('mongoose');
 
 const checkCompanyId = (req, res, next) => {
