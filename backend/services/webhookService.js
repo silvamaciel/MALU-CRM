@@ -2,7 +2,7 @@
 const LeadService = require('./LeadService');
 const Company = require('../models/Company');
 const User = require('../models/User');
-const Origem = require('../models/origem');
+const Origem = require('../models/Origem');
 const mongoose = require('mongoose'); 
 
 /**
