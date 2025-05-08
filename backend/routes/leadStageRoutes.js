@@ -3,7 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect, authorize } = require('../middlewares/authMiddleware'); 
-const leadStageController = require('../controllers/leadStageController');
+const leadStageController = require('../controllers/LeadStageControlelr');
 
 router.get('/', protect, leadStageController.getAllLeadStages);
 
