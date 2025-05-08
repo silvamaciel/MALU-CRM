@@ -1,5 +1,6 @@
 // src/App.jsx (ou App.js)
-import React, { useState, Link } from "react";
+import React, { useState } from "react";
+import React, { Link } from "from 'react-router-dom'";
 import {
   BrowserRouter as Router,
   Routes,
