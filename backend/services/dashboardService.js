@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const Lead = require('../models/Lead');
 const LeadStage = require('../models/LeadStage');
 const User = require('../models/User');
-const Origem = require('../models/Origem'); 
+const Origem = require('../models/origem'); 
 
 /**
  * Busca dados resumidos para o dashboard de uma empresa específica.
