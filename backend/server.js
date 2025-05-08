@@ -9,7 +9,9 @@ const app = express();
 
 // Middlewares
 app.use(cors());
-app.use(express.json());
+
+app.use(express.json({verify: (req, res, buf) => {req.rawBody = buf;}  }));
+app.use(express.urlencoded({ extended: true }));
 
 // Conectar ao MongoDB
 connectDB();
@@ -29,6 +31,8 @@ app.use('/api/origens', require('./routes/OrigemRoutes'));
 app.use('/api/motivosdescarte', require('./routes/discardReasonRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/brokers', require('./routes/brokerContactRoutes'));
+app.use('/api/integrations', require('./routes/integrationRoutes'));
+app.use('/api/webhooks', require('./routes/webhookRoutes'));
 
 
 
