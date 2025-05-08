@@ -1,12 +1,11 @@
 // src/App.jsx (ou App.js)
 import React, { useState } from "react";
-import React, { Link } from "from 'react-router-dom'";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
-  // Removido useNavigate daqui pois não está sendo chamado nesta versão
+  Link
 } from "react-router-dom";
 
 // Pages & Layout
