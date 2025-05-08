@@ -1,7 +1,7 @@
 // routes/origemRoutes.js
 const express = require('express');
 const router = express.Router();
-const origemController = require('../controllers/origemController');
+const origemController = require('../controllers/OrigemController');
 const { protect, authorize } = require('../middlewares/authMiddleware'); // Usando 'middlewares' como você indicou
 
 router.get('/', protect, origemController.getOrigens);
