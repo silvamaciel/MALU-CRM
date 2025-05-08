@@ -1,6 +1,6 @@
 // services/origemService.js
 const mongoose = require('mongoose');
-const Origem = require('../models/origem');
+const Origem = require('../models/Origem');
 const Lead = require('../models/Lead'); 
 
 /**

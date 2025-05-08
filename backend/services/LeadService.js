@@ -2,7 +2,7 @@
 
 const mongoose = require("mongoose");
 const Lead = require("../models/Lead");
-const Origem = require("../models/origem");
+const Origem = require("../models/Origem");
 const LeadStage = require("../models/LeadStage");
 const User = require("../models/User");
 const DiscardReason = require("../models/DiscardReason");
