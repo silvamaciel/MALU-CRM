@@ -23,6 +23,7 @@ const getAllLeadStages = async (companyId) => {
     }
 };
 
+
 /**
  * Cria uma nova situação para uma empresa específica, calculando a ordem.
  * @param {object} stageData - Dados da situação (ex: { nome: 'Nova' }).
