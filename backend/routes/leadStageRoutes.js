@@ -2,8 +2,8 @@
 // (Se já criou o arquivo antes, substitua. Senão, crie novo)
 const express = require('express');
 const router = express.Router();
-const leadStageController = require('../controllers/leadStageController');
 const { protect, authorize } = require('../middlewares/authMiddleware'); 
+const leadStageController = require('../controllers/leadStageController');
 
 router.get('/', protect, leadStageController.getAllLeadStages);
 
