@@ -37,6 +37,6 @@ origemSchema.post('findOneAndUpdate', function(error, doc, next) {
    } else { next(error); }
  });
 
-const Origem = mongoose.model('Origem', origemSchema); // Verifique se o nome 'Origem' está ok para você
+const Origem = mongoose.model('Origem', origemSchema);
 
 module.exports = Origem;
