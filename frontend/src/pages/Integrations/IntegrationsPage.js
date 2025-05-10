@@ -64,9 +64,8 @@ function IntegrationsPage() {
         setIsLoadingStatus(true);
         try {
             const status = await getFacebookConnectionStatus();
-            console.log("DEBUG: Status recebido de getFacebookConnectionStatus():", JSON.stringify(status, null, 2));
             setPersistedFbConnection(status);
-            console.log("DEBUG: Estado persistedFbConnection APÓS set:", JSON.stringify(status, null, 2));
+            console.log("Status da conexão FB recebido do backend:", status);
         } catch (err) {
             console.error("Erro ao buscar status da integração FB:", err);
             toast.error("Não foi possível verificar o status da integração com Facebook.");
@@ -161,8 +160,6 @@ function IntegrationsPage() {
 
 
     // --- Renderização ---
-
-  
     if (isLoadingStatus) {
         return <div className="integrations-page loading"><p>Verificando status das integrações...</p></div>;
     }
