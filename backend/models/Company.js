@@ -29,21 +29,14 @@ const companySchema = new Schema(
       default: true,
     },
 
-    facebookPageId: {
+    facebookPageId: { 
       type: String,
       trim: true,
-      index: true,
-      sparse: true,
-    },
-    facebookPageAccessToken: {
-      type: String,
-      select: false,
-    },
-    facebookWebhookVerifyToken: {
-      type: String,
-      default: () => crypto.randomBytes(16).toString("hex"),
-      select: false,
-    },
+      index: true,    
+      unique: true,   
+      sparse: true    
+      },
+    
     facebookWebhookSubscriptionId: {
       type: String,
     },
@@ -53,17 +46,17 @@ const companySchema = new Schema(
   }
 );
 
-companySchema.post("save", function (error, doc, next) {
-  if (
-    error.name === "MongoServerError" &&
-    error.code === 11000 &&
-    error.keyPattern?.cnpj
-  ) {
-    next(new Error(`O CNPJ informado já está cadastrado.`));
-  } else {
-    next(error);
-  }
+companySchema.post('save', function(error, doc, next) {
+  if (error.name === 'MongoServerError' && error.code === 11000) {
+    if (error.keyPattern?.cnpj) {
+        next(new Error(`O CNPJ ${doc.cnpj} já está cadastrado.`));
+    } else if (error.keyPattern?.facebookPageId) {
+        next(new Error(`A Página do Facebook ID ${doc.facebookPageId} já está conectada a outra empresa.`));
+    } else { next(error); }
+  } else { next(error); }
 });
+
+
 
 companySchema.post("findOneAndUpdate", function (error, doc, next) {
   if (
