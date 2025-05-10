@@ -26,7 +26,7 @@ if (
 
 /**
  * Finaliza a conexão de uma Página do Facebook, obtém token de página
- * de longa duração, salva no DB e inscreve no webhook de leadgen.
+ * de longa duração, salva no DB e inscreve a página no webhook de leadgen do app.
  */
 const connectFacebookPageIntegration = async (
   pageId,
