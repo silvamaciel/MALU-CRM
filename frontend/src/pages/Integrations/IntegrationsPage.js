@@ -8,7 +8,7 @@ import { connectFacebookPage, getFacebookConnectionStatus } from '../../api/inte
 import './IntegrationsPage.css';
 
 const facebookAppId = process.env.REACT_APP_FACEBOOK_APP_ID || process.env.VITE_FACEBOOK_APP_ID;
-const GRAPH_API_VERSION = 'v19.0';
+const GRAPH_API_VERSION = 'v22.0';
 
 if (!facebookAppId) {
     console.error("ERRO CRÍTICO: Facebook App ID não definido nas variáveis de ambiente!");
