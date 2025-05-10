@@ -30,6 +30,23 @@ const connectFacebookPage = async (req, res) => {
     }
 };
 
+const getFacebookStatus = async (req, res) => {
+    console.log("[IntegCtrl] Recebido GET /api/integrations/facebook/status");
+    const companyId = req.user?.company;
+
+    if (!companyId) {
+        return res.status(401).json({ error: 'Empresa do usuário não identificada.' });
+    }
+    try {
+        const status = await integrationService.getFacebookIntegrationStatus(companyId);
+        res.status(200).json(status);
+    } catch (error) {
+        console.error("[IntegCtrl] Erro ao buscar status da integração FB:", error.message);
+        res.status(500).json({ error: error.message || 'Falha ao buscar status da integração.' });
+    }
+};
+
 module.exports = {
     connectFacebookPage,
+    getFacebookStatus
 };

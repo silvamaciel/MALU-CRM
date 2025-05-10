@@ -9,7 +9,6 @@ const { protect } = require('../middlewares/authMiddleware'); // Apenas protect 
 // para finalizar a conexão e configurar o webhook. Rota protegida.
 router.post('/facebook/connect-page', protect, integrationController.connectFacebookPage);
 
-
-// Adicione outras rotas de integração aqui (ex: GET /api/integrations/status)
+router.get('/facebook/status', protect, integrationController.getFacebookStatus);
 
 module.exports = router;
