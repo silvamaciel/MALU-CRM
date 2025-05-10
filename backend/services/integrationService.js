@@ -157,6 +157,58 @@ const connectFacebookPageIntegration = async (
   }
 };
 
+
+/**
+ * Verifica o status da integração com o Facebook para uma empresa.
+ * @param {string} companyId - ID da empresa CRM.
+ * @returns {Promise<object>} - Objeto com { isConnected: boolean, pageId?: string, pageName?: string }
+ */
+const getFacebookIntegrationStatus = async (companyId) => {
+  if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+      throw new Error('ID da empresa inválido para verificar status da integração.');
+  }
+  console.log(`[IntegSvc] Verificando status da integração FB para Empresa ${companyId}`);
+  try {
+      const company = await Company.findById(companyId)
+          // Seleciona apenas os campos necessários para evitar expor o PageAccessToken
+          .select('nome facebookPageId facebookPageAccessToken') // Inclui token para buscar nome
+          .lean(); // Usa lean para objeto JS puro
+
+      if (!company) {
+          throw new Error("Empresa não encontrada.");
+      }
+
+      if (company.facebookPageId && company.facebookPageAccessToken) {
+          // Tenta buscar o nome da página conectada para melhor UX
+          let pageName = 'Nome da Página Desconhecido';
+          try {
+              console.log(`[IntegSvc] Buscando nome para Page ID ${company.facebookPageId}`);
+              const pageDetailsResponse = await axios.get(
+                  `https://graph.facebook.com/${GRAPH_API_VERSION}/${company.facebookPageId}`,
+                  { params: { access_token: company.facebookPageAccessToken, fields: 'name' } }
+              );
+              pageName = pageDetailsResponse.data.name || pageName;
+              console.log(`[IntegSvc] Nome da Página obtido: ${pageName}`);
+          } catch (fbApiError) {
+              console.error(`[IntegSvc] Falha ao buscar nome da Página ${company.facebookPageId} do Facebook:`, fbApiError.response?.data?.error || fbApiError.message);
+              // Continua, mas sem o nome da página
+          }
+
+          return {
+              isConnected: true,
+              pageId: company.facebookPageId,
+              pageName: pageName
+          };
+      } else {
+          return { isConnected: false };
+      }
+  } catch (error) {
+      console.error(`[IntegSvc] Erro ao verificar status da integração FB para ${companyId}:`, error);
+      throw new Error("Erro ao verificar status da integração com Facebook.");
+  }
+};
+
 module.exports = {
   connectFacebookPageIntegration,
+  getFacebookIntegrationStatus
 };
