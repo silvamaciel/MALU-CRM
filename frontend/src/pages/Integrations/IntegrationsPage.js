@@ -145,23 +145,25 @@ function IntegrationsPage() {
   }, []);
 
   // EFEITO para buscar o status da conexão FB ao carregar a página
-  useEffect(() => {
-    const fetchStatus = async () => {
-      setIsLoadingStatus(true);
-      try {
-        const status = await getFacebookConnectionStatus();
-        setPersistedFbConnection(status);
-        if (status.isConnected && status.pageId) {
-        }
-      } catch (err) {
-        console.error("Erro ao buscar status da integração FB:", err);
-        toast.error(
-          "Não foi possível verificar o status da integração com Facebook."
-        );
-      } finally {
-        setIsLoadingStatus(false);
+
+  const fetchStatus = async () => {
+    setIsLoadingStatus(true);
+    try {
+      const status = await getFacebookConnectionStatus();
+      setPersistedFbConnection(status);
+      if (status.isConnected && status.pageId) {
       }
-    };
+    } catch (err) {
+      console.error("Erro ao buscar status da integração FB:", err);
+      toast.error(
+        "Não foi possível verificar o status da integração com Facebook."
+      );
+    } finally {
+      setIsLoadingStatus(false);
+    }
+  };
+  
+  useEffect(() => {
     fetchStatus();
   }, []);
 
