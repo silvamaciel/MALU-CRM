@@ -26,4 +26,21 @@ export const connectFacebookPage = async (pageId, userAccessToken) => {
     }
 };
 
+
+/**
+ * Busca o status atual da integração com o Facebook para a empresa do usuário.
+ * @returns {Promise<object>} Objeto com { isConnected: boolean, pageId?: string, pageName?: string }
+ */
+export const getFacebookConnectionStatus = async () => {
+    try {
+        const response = await axiosInstance.get(`${API_URL}/facebook/status`);
+        return response.data;
+    } catch (error) {
+        console.error('Erro ao buscar status da conexão Facebook:', error.response?.data || error.message);
+        return { isConnected: false, error: error.response?.data?.error || "Falha ao buscar status." };
+    }
+};
+
+
+
 // Adicione outras funções de API de integração aqui no futuro
