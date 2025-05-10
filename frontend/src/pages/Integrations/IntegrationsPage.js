@@ -162,9 +162,7 @@ function IntegrationsPage() {
 
     // --- Renderização ---
 
-    console.log("DEBUG RENDER: isLoadingStatus:", isLoadingStatus);
-    console.log("DEBUG RENDER: persistedFbConnection:", JSON.stringify(persistedFbConnection, null, 2));
-    console.log("DEBUG RENDER: fbUserData:", JSON.stringify(fbUserData, null, 2));
+  
     if (isLoadingStatus) {
         return <div className="integrations-page loading"><p>Verificando status das integrações...</p></div>;
     }
