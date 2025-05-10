@@ -68,57 +68,68 @@ const validateFacebookSignature = (req) => {
 
 /**
  * Lida com a requisição POST contendo dados de leads do Facebook.
+ * Identifica a empresa pelo PAGE ID no payload do webhook.
  */
 const handleFacebookLeadWebhook = async (req, res) => {
     console.log("[WebhookCtrl] Recebido POST do Facebook Webhook.");
+    console.log("[WebhookCtrl] Body:", JSON.stringify(req.body, null, 2)); // Log para ver estrutura
 
-    // 1. Validar Assinatura (SEGURANÇA ESSENCIAL!)
+    // 1. Validar Assinatura (igual antes)
     if (!validateFacebookSignature(req)) {
-        return res.sendStatus(403); // Forbidden se assinatura for inválida
+        return res.sendStatus(403); // Forbidden
     }
 
-    // 2. Identificar a Empresa pelo token na URL
-    const companyToken = req.query.token; // Pega token da URL: ?token=XYZ
-    if (!companyToken) {
-        console.error("[WebhookCtrl] Token da empresa não encontrado na URL do webhook.");
-        return res.sendStatus(400); // Bad Request
-    }
-
+    // 2. Identificar a Empresa pelo PAGE ID no payload
     let company = null;
+    let companyFound = false;
+
     try {
-         // Busca a empresa pelo token único dela (campo a criar no Model Company)
-         company = await Company.findOne({ facebookWebhookToken: companyToken }).lean();
-         if (!company) {
-             console.error(`[WebhookCtrl] Empresa não encontrada para o token: ${companyToken}`);
-             return res.sendStatus(404); // Not Found
-         }
-         console.log(`[WebhookCtrl] Webhook recebido para Empresa: ${company.nome} (ID: ${company._id})`);
+        // O Facebook envia um array 'entry', geralmente com 1 item para webhooks de lead
+        if (req.body.object === 'page' && req.body.entry && req.body.entry.length > 0) {
+            for (const entry of req.body.entry) {
+                const pageIdFromWebhook = entry.id; // <<< ID DA PÁGINA que gerou o evento
+                if (!pageIdFromWebhook) {
+                    console.warn("[WebhookCtrl] ID da Página não encontrado no entry do webhook:", entry);
+                    continue; // Próximo entry, se houver
+                }
 
-         // 3. Processar o Payload do Webhook
-         // O Facebook pode enviar múltiplos 'entries' ou 'changes'
-         if (req.body.object === 'page') {
-             for (const entry of req.body.entry) {
-                 for (const change of entry.changes) {
-                     if (change.field === 'leadgen') {
-                         // Chama o serviço para processar o lead
-                         await webhookService.processFacebookLead(change.value, company._id);
-                     }
-                 }
-             }
-         }
+                // Busca a empresa CRM que tem este facebookPageId registrado
+                company = await Company.findOne({ facebookPageId: pageIdFromWebhook }).lean();
+                if (!company) {
+                    console.error(`[WebhookCtrl] Nenhuma Empresa CRM encontrada para Page ID: ${pageIdFromWebhook}`);
+                    continue; // Se esta página não está ligada a nenhuma empresa no CRM, ignora
+                }
+                companyFound = true;
+                console.log(`[WebhookCtrl] Webhook recebido para Empresa CRM: ${company.nome} (ID: ${company._id}) via Page ID: ${pageIdFromWebhook}`);
 
-         // 4. Responder 200 OK para o Facebook IMEDIATAMENTE
-         console.log("[WebhookCtrl] Evento processado. Enviando 200 OK para Facebook.");
-         res.sendStatus(200);
+                // Processa as 'changes' dentro do entry
+                for (const change of entry.changes) {
+                    if (change.field === 'leadgen') {
+                        console.log("[WebhookCtrl] Evento leadgen recebido. Processando com webhookService...");
+                        // Passa o 'value' do change (que contém leadgen_id, form_id, field_data, etc.)
+                        // e o company._id encontrado
+                        await webhookService.processFacebookLead(change.value, company._id);
+                    }
+                }
+            }
+        } else {
+            console.warn("[WebhookCtrl] Payload do webhook não tem o formato esperado (object page ou entry).");
+        }
+
+        if (!companyFound && req.body.entry && req.body.entry.length > 0) {
+             console.error("[WebhookCtrl] Nenhum lead processado pois nenhuma empresa CRM correspondeu aos Page IDs recebidos.");
+        }
+
+        // 3. Responder 200 OK para o Facebook IMEDIATAMENTE
+        console.log("[WebhookCtrl] Evento(s) processado(s). Enviando 200 OK para Facebook.");
+        res.sendStatus(200);
 
     } catch (error) {
          // Mesmo se der erro ao processar/criar o lead, respondemos 200 OK para o FB
-         // para ele não ficar reenviando o webhook. Logamos o erro internamente.
-         console.error(`[WebhookCtrl] Erro ao processar webhook para Company ${company?._id || 'desconhecida'} (token: ${companyToken}):`, error);
+         console.error(`[WebhookCtrl] Erro CRÍTICO ao processar webhook:`, error);
          res.sendStatus(200); // Ainda responde 200 OK!
     }
 };
-
 
 module.exports = {
     verifyFacebookWebhook,
