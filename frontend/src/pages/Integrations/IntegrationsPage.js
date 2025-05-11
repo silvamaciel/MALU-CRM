@@ -4,7 +4,7 @@ import { sendGoogleAuthCode } from '../../api/auth';
 import { toast } from 'react-toastify';
 import FacebookLogin from '@greatsumini/react-facebook-login';
 import axios from 'axios';
-import { connectFacebookPage, getFacebookConnectionStatus } from '../../api/integrations'; // Verifique o caminho!
+import { connectFacebookPage, getFacebookConnectionStatus, disconnectFacebookPage } from '../../api/integrations';
 import './IntegrationsPage.css';
 
 const facebookAppId = process.env.REACT_APP_FACEBOOK_APP_ID || process.env.VITE_FACEBOOK_APP_ID;
