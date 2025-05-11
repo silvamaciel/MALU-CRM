@@ -183,6 +183,27 @@ function IntegrationsPage() {
         }
     }, [selectedPageId, fbUserData, fetchFacebookStatus]); // Adiciona fetchFacebookStatus
 
+    // Handler para desconectar a conta do facebook
+    const handleDisconnectFacebookPage = useCallback(async () => {
+        setIsDisconnectingFb(true);
+        setFbError(null); // Limpa erros anteriores
+        try {
+            const result = await disconnectFacebookPage(); // Chama API de desconexão
+            toast.success(result.message || "Página do Facebook desconectada com sucesso!");
+            await fetchFacebookStatus(); // Atualiza o status para refletir a desconexão
+            setFbUserData(null); // Reseta dados de login FB se houver
+            setFacebookPages([]); // Limpa lista de páginas
+            setSelectedPageId('');
+        } catch (err) {
+            const errorMsg = err.message || "Falha ao desconectar página.";
+            setFbError(errorMsg);
+            toast.error(errorMsg);
+            console.error("Erro ao desconectar página FB:", err);
+        } finally {
+            setIsDisconnectingFb(false);
+        }
+    }, [fetchFacebookStatus]);
+
 
     // --- Renderização ---
 
