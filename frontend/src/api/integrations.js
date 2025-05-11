@@ -43,4 +43,17 @@ export const getFacebookConnectionStatus = async () => {
 
 
 
-// Adicione outras funções de API de integração aqui no futuro
+/**
+ * Solicita ao backend para desconectar a página do Facebook atualmente integrada.
+ * @returns {Promise<object>} Resposta do backend (mensagem de sucesso).
+ */
+export const disconnectFacebookPage = async () => {
+    try {
+        const response = await axiosInstance.post(`${API_URL}/facebook/disconnect`);
+        return response.data;
+    } catch (error) {
+        console.error('Erro ao desconectar página do Facebook:', error.response?.data || error.message);
+        throw error.response?.data || new Error('Falha ao desconectar página do Facebook.');
+    }
+};
+
