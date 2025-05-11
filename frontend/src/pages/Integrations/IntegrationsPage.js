@@ -26,6 +26,8 @@ function IntegrationsPage() {
     const [facebookPages, setFacebookPages] = useState([]);
     const [selectedPageId, setSelectedPageId] = useState('');
     const [isFetchingPages, setIsFetchingPages] = useState(false);
+    const [isDisconnectingFb, setIsDisconnectingFb] = useState(false);
+
 
     // Persisted Facebook Connection Status
     const [persistedFbConnection, setPersistedFbConnection] = useState({
@@ -142,7 +144,7 @@ function IntegrationsPage() {
         }
     }, []);
 
-    
+
     // Handler para enviar a página selecionada ao backend
     const handleConnectSelectedPage = useCallback(async () => {
         if (!selectedPageId || !fbUserData?.accessToken) {
