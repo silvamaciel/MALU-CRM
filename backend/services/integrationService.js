@@ -199,9 +199,14 @@ const disconnectFacebookPageIntegration = async (companyId) => {
   try {
     const company = await Company.findById(companyId)
     .select('facebookPageId facebookPageAccessToken');
-    console.log("[IntegSvc disconnect] Documento Company para desconexão:", 
-      company ? JSON.stringify({_id: company._id, fbPageId: company.facebookPageId, hasToken: !!company.facebookPageAccessToken}) : null
-       );
+    console.log("[IntegSvc disconnect] Documento Company para desconexão (após select explícito):",
+      company ? JSON.stringify({
+          _id: company._id,
+          fbPageId: company.facebookPageId,
+          hasToken: !!company.facebookPageAccessToken, // Deve ser true agora
+          tokenValueForDebug: company.facebookPageAccessToken // Cuidado ao logar token inteiro
+      }, null, 2) : null
+  );
 
       if (!company) {
           throw new Error("Empresa não encontrada.");
