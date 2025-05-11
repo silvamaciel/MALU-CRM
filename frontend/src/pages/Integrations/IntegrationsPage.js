@@ -142,19 +142,35 @@ function IntegrationsPage() {
         if (!selectedPageId || !fbUserData?.accessToken) {
             toast.error("Selecione uma página e garanta conexão ao Facebook."); return;
         }
+        console.log("DEBUG HCS: INÍCIO - Definindo isConnectingFb para true.");
         setIsConnectingFb(true); setFbError(null);
+        console.log(`DEBUG HCS: Enviando para backend: PageID=<span class="math-inline">\{selectedPageId\}, UserToken\=</span>{fbUserData.accessToken.substring(0,15)}...`);
         console.log(`Enviando para backend: PageID=${selectedPageId}, UserToken=${fbUserData.accessToken.substring(0,10)}...`);
         try {
+            console.log("DEBUG HCS: Antes da chamada API connectFacebookPage.");
             const result = await connectFacebookPage(selectedPageId, fbUserData.accessToken);
+            console.log("DEBUG HCS: DEPOIS da chamada API connectFacebookPage. Resultado:", result);
+
             toast.success(result.message || `Página conectada e webhook configurado!`);
+            console.log("DEBUG HCS: Antes da chamada fetchFacebookStatus.");
+
             await fetchFacebookStatus(); // <<< ATUALIZA O STATUS GERAL APÓS CONECTAR
+            console.log("DEBUG HCS: DEPOIS da chamada fetchFacebookStatus.");
+            console.log("DEBUG HCS: Resetando fbUserData, facebookPages, selectedPageId.");
+
+
             setFbUserData(null); // <<< RESETA O FLUXO DE LOGIN FB
             setFacebookPages([]); // Limpa lista de seleção
             setSelectedPageId('');
+            console.log("DEBUG HCS: FIM do bloco TRY.");
+
         } catch (err) {
+            console.error("DEBUG HCS: ERRO no bloco TRY:", err);
+
             const errorMsg = err.error || err.message || "Falha ao conectar página no backend.";
             setFbError(errorMsg); toast.error(errorMsg); console.error(err);
         } finally {
+            console.log("DEBUG HCS: Bloco FINALLY - Definindo isConnectingFb para false.");
             setIsConnectingFb(false);
         }
     }, [selectedPageId, fbUserData, fetchFacebookStatus]); // Adiciona fetchFacebookStatus
