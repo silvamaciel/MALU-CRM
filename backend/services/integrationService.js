@@ -235,7 +235,6 @@ const disconnectFacebookPageIntegration = async (companyId) => {
                   `[IntegSvc disconnect] ALERTA: Falha ao desinscrever webhook para Página ${pageIdToDisconnect}. Pode precisar de remoção manual no Facebook. Erro:`,
                   unsubscribeError.response?.data?.error || unsubscribeError.message
               );
-              // Continuar para limpar os dados do CRM mesmo se a desinscrição no FB falhar
           }
       } else {
           console.log(`[IntegSvc disconnect] Não foi possível tentar desinscrever do Facebook (pageId ou pageAccessToken ausentes na leitura inicial).`);
@@ -246,13 +245,12 @@ const disconnectFacebookPageIntegration = async (companyId) => {
       const updatedCompany = await Company.findByIdAndUpdate(companyId, {
           $set: { // Usar $set para garantir que apenas estes campos sejam modificados para null
               facebookPageId: null,
-              facebookPageAccessToken: null
-              // facebookWebhookSubscriptionId: null, // Se você ainda tem este campo no schema
+              facebookPageAccessToken: null,
+              facebookWebhookSubscriptionId: null,
           }
-      }, { new: true }); // Retorna o documento atualizado (sem os campos limpos se select:false neles)
+      }, { new: true });
 
       if (!updatedCompany) {
-           // Isso não deveria acontecer se a empresa existia no início
           throw new Error("Empresa não encontrada durante a tentativa de limpar dados do FB.");
       }
 
