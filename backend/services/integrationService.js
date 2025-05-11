@@ -197,8 +197,8 @@ const disconnectFacebookPageIntegration = async (companyId) => {
   console.log(`[IntegSvc disconnect] Iniciando desconexão da página FB para Empresa ${companyId}`);
 
   try {
-    const company = await Company.findById(companyId)
-    .select('facebookPageId +facebookPageAccessToken');
+    const company = await Company.findById(companyId).select('nome facebookPageId facebookPageAccessToken');
+    
     console.log("[IntegSvc disconnect] Documento Company para desconexão (após select explícito):",
       company ? JSON.stringify({
           _id: company._id,
