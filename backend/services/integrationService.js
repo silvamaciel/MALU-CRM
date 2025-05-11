@@ -15,8 +15,7 @@ if (!FACEBOOK_APP_ID || !FB_APP_SECRET) {
   console.error(
     "ERRO FATAL DE CONFIGURAÇÃO: FACEBOOK_APP_ID ou FB_APP_SECRET não estão definidos nas variáveis de ambiente do backend!"
   );
-  // Em um cenário real, você poderia impedir o app de iniciar aqui
-  // throw new Error("Configuração crítica do Facebook faltando no servidor.");
+  throw new Error("Configuração crítica do Facebook faltando no servidor.");
 }
 if (!WEBHOOK_RECEIVER_URL_FROM_ENV && process.env.NODE_ENV !== "development") {
   console.warn(
@@ -124,7 +123,6 @@ const connectFacebookPageIntegration = async (
                                 (typeof subscribeResponse.data === 'string' && subscribeResponse.data.toLowerCase().includes("success"));
     if (!wasSuccessfulSubscription) {
       console.error("[IntegSvc connect] Falha ao inscrever webhook:", subscribeResponse.data);
-      // Importante: Se a subscrição falhar, pode ser útil desfazer o save do token na Company ou notificar o admin
       throw new Error("Falha ao configurar o recebimento de leads no Facebook.");
     }
     console.log(`[IntegSvc connect] Webhook 'leadgen' configurado com sucesso para Página ${pageId}!`);
