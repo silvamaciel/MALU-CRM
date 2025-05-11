@@ -307,6 +307,17 @@ function IntegrationsPage() {
                                     >
                                         {isConnectingFb ? 'Confirmando...' : 'Confirmar Conexão Desta Página'}
                                     </button>
+
+                                    <button
+                                        onClick={handleDisconnectFacebookPage}
+                                        className="button delete-button"
+                                        disabled={isDisconnectingFb || isConnectingFb}
+                                        style={{backgroundColor: '#dc3545'}} 
+                                    >
+                                        {isDisconnectingFb ? 'Desconectando...' : 'Desconectar Página'}
+                                    </button>
+
+
                                 </div>
                             ) : (
                                 <p style={{marginTop: '1rem', color: '#6c757d'}}>
