@@ -274,8 +274,11 @@ function IntegrationsPage() {
                                 >
                                     {isConnectingFb ? 'Aguarde...' : facebookLoginButtonText}
                                 </button>
+                                
                             )}
                         />
+
+                        
                     ) : (
                         // Se fbUserData existe (usuário acabou de logar/autorizar no FB), mostra seleção de página
                         <div>
@@ -324,6 +327,8 @@ function IntegrationsPage() {
                                     Nenhuma página do Facebook foi encontrada para sua conta ou as permissões necessárias não foram concedidas.
                                 </p>
                             )}
+
+
                         </div>
                     )}
                     {fbError && <p className="error-message" style={{marginTop:'1rem'}}>{fbError}</p>}
