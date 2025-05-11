@@ -182,7 +182,68 @@ const getFacebookIntegrationStatus = async (companyId) => {
   }
 };
 
+
+/**
+ * Desconecta uma Página do Facebook de uma empresa CRM:
+ * - Desinscreve o app dos webhooks 'leadgen' para a página.
+ * - Limpa os campos facebookPageId e facebookPageAccessToken da empresa.
+ * @param {string} companyId - ID da Empresa CRM.
+ * @returns {Promise<object>} - Mensagem de sucesso.
+ */
+const disconnectFacebookPageIntegration = async (companyId) => {
+  if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+      throw new Error("ID da empresa inválido para desconectar página do Facebook.");
+  }
+  console.log(`[IntegSvc disconnect] Iniciando desconexão da página FB para Empresa ${companyId}`);
+
+  try {
+      const company = await Company.findById(companyId).select('+facebookPageAccessToken'); // Precisa do token para desinscrever
+      if (!company) {
+          throw new Error("Empresa não encontrada.");
+      }
+
+      if (!company.facebookPageId || !company.facebookPageAccessToken) {
+          console.log(`[IntegSvc disconnect] Empresa ${companyId} não possui página FB conectada.`);
+          return { message: "Nenhuma página do Facebook estava conectada." };
+      }
+
+      const pageIdToDisconnect = company.facebookPageId;
+      const pageAccessToken = company.facebookPageAccessToken;
+
+      // 1. Tentar desinscrever a Página do Webhook de Leadgen do seu App Meta
+      try {
+          console.log(`[IntegSvc disconnect] Desinscrevendo Página ${pageIdToDisconnect} do webhook leadgen...`);
+        
+          await axios.delete(
+              `https://graph.facebook.com/${GRAPH_API_VERSION}/${pageIdToDisconnect}/subscribed_apps`,
+              { params: { access_token: pageAccessToken } } // USA O TOKEN DA PÁGINA
+          );
+          console.log(`[IntegSvc disconnect] Webhook leadgen desinscrito com sucesso para Página ${pageIdToDisconnect}.`);
+      } catch (unsubscribeError) {
+          console.error(
+              `[IntegSvc disconnect] ALERTA: Falha ao desinscrever webhook para Página ${pageIdToDisconnect}. Pode precisar de remoção manual no Facebook. Erro:`,
+              unsubscribeError.response?.data?.error || unsubscribeError.message
+          );
+      }
+
+      // 2. Limpar os campos no documento Company
+      company.facebookPageId = null;
+      company.facebookPageAccessToken = null;
+      company.facebookWebhookSubscriptionId = null;
+      await company.save();
+
+      console.log(`[IntegSvc disconnect] Dados da Página FB removidos da Empresa ${companyId}.`);
+      return { message: `Página do Facebook (ID: ${pageIdToDisconnect}) desconectada com sucesso.` };
+
+  } catch (error) {
+      console.error(`[IntegSvc disconnect] Erro durante desconexão da página FB para Empresa ${companyId}:`, error);
+      throw new Error(error.message || "Erro ao desconectar página do Facebook.");
+  }
+};
+
+
 module.exports = {
   connectFacebookPageIntegration,
   getFacebookIntegrationStatus,
+  disconnectFacebookPageIntegration
 };
