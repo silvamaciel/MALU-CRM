@@ -197,61 +197,73 @@ const disconnectFacebookPageIntegration = async (companyId) => {
   console.log(`[IntegSvc disconnect] Iniciando desconexão da página FB para Empresa ${companyId}`);
 
   try {
-    const company = await Company.findById(companyId)
-      .select("nome facebookPageId +facebookPageAccessToken") // Importante selecionar o token
+      // Passo 1: Buscar os dados da empresa com .lean() para obter o token e pageId
+      // Usando a mesma lógica de select que funciona no getFacebookIntegrationStatus
+      const companyDataForUnsubscribe = await Company.findById(companyId)
+          .select('facebookPageId facebookPageAccessToken') // Seleciona o que precisamos para desinscrever
+          .lean(); // <<< USA .lean() para esta leitura específica
 
-    console.log("[IntegSvc disconnect] Documento Company para desconexão (após select explícito):",
-      company ? JSON.stringify({
-          _id: company._id,
-          fbPageId: company.facebookPageId,
-          hasToken: !!company.facebookPageAccessToken, // Deve ser true agora
-          tokenValueForDebug: company.facebookPageAccessToken // Cuidado ao logar token inteiro
-      }, null, 2) : null
-  );
+      console.log("[IntegSvc disconnect] Dados da Company para desinscrever (lean):",
+          companyDataForUnsubscribe ? JSON.stringify({
+              _id: companyDataForUnsubscribe._id,
+              fbPageId: companyDataForUnsubscribe.facebookPageId,
+              hasToken: !!companyDataForUnsubscribe.facebookPageAccessToken
+          }) : "Company não encontrada com lean()"
+      );
 
-      if (!company) {
-          throw new Error("Empresa não encontrada.");
+      if (!companyDataForUnsubscribe || !companyDataForUnsubscribe.facebookPageId || !companyDataForUnsubscribe.facebookPageAccessToken) {
+          console.log(`[IntegSvc disconnect] Empresa ${companyId} não tem dados de página FB ou token para desinscrever.`);
+          // Se os campos já estão nulos no DB, podemos considerar a desconexão "bem-sucedida" em termos de estado do DB.
+          // Ou forçar a limpeza para garantir, caso haja apenas um deles.
+          // Vamos prosseguir para a limpeza no DB para garantir.
       }
 
-      if (!company.facebookPageId || !company.facebookPageAccessToken) {
-          console.log(`[IntegSvc disconnect] Empresa ${companyId} não possui página FB conectada.`);
-          return { message: "Nenhuma página do Facebook estava conectada." };
+      const pageIdToDisconnect = companyDataForUnsubscribe?.facebookPageId;
+      const pageAccessToken = companyDataForUnsubscribe?.facebookPageAccessToken;
+
+      // Passo 2: Tentar desinscrever a Página do Webhook se tivermos os dados
+      if (pageIdToDisconnect && pageAccessToken) {
+          try {
+              console.log(`[IntegSvc disconnect] Desinscrevendo Página ${pageIdToDisconnect} do webhook leadgen...`);
+              await axios.delete(
+                  `https://graph.facebook.com/${GRAPH_API_VERSION}/${pageIdToDisconnect}/subscribed_apps`,
+                  { params: { access_token: pageAccessToken } }
+              );
+              console.log(`[IntegSvc disconnect] Webhook leadgen desinscrito com sucesso para Página ${pageIdToDisconnect}.`);
+          } catch (unsubscribeError) {
+              console.error(
+                  `[IntegSvc disconnect] ALERTA: Falha ao desinscrever webhook para Página ${pageIdToDisconnect}. Pode precisar de remoção manual no Facebook. Erro:`,
+                  unsubscribeError.response?.data?.error || unsubscribeError.message
+              );
+              // Continuar para limpar os dados do CRM mesmo se a desinscrição no FB falhar
+          }
+      } else {
+          console.log(`[IntegSvc disconnect] Não foi possível tentar desinscrever do Facebook (pageId ou pageAccessToken ausentes na leitura inicial).`);
       }
 
-      const pageIdToDisconnect = company.facebookPageId;
-      const pageAccessToken = company.facebookPageAccessToken;
+      // Passo 3: Limpar os campos no documento Company usando findByIdAndUpdate
+      console.log(`[IntegSvc disconnect] Limpando dados da Página FB na Empresa ${companyId} via findByIdAndUpdate...`);
+      const updatedCompany = await Company.findByIdAndUpdate(companyId, {
+          $set: { // Usar $set para garantir que apenas estes campos sejam modificados para null
+              facebookPageId: null,
+              facebookPageAccessToken: null
+              // facebookWebhookSubscriptionId: null, // Se você ainda tem este campo no schema
+          }
+      }, { new: true }); // Retorna o documento atualizado (sem os campos limpos se select:false neles)
 
-      // 1. Tentar desinscrever a Página do Webhook de Leadgen do seu App Meta
-      try {
-          console.log(`[IntegSvc disconnect] Desinscrevendo Página ${pageIdToDisconnect} do webhook leadgen...`);
-        
-          await axios.delete(
-              `https://graph.facebook.com/${GRAPH_API_VERSION}/${pageIdToDisconnect}/subscribed_apps`,
-              { params: { access_token: pageAccessToken } } // USA O TOKEN DA PÁGINA
-          );
-          console.log(`[IntegSvc disconnect] Webhook leadgen desinscrito com sucesso para Página ${pageIdToDisconnect}.`);
-      } catch (unsubscribeError) {
-          console.error(
-              `[IntegSvc disconnect] ALERTA: Falha ao desinscrever webhook para Página ${pageIdToDisconnect}. Pode precisar de remoção manual no Facebook. Erro:`,
-              unsubscribeError.response?.data?.error || unsubscribeError.message
-          );
+      if (!updatedCompany) {
+           // Isso não deveria acontecer se a empresa existia no início
+          throw new Error("Empresa não encontrada durante a tentativa de limpar dados do FB.");
       }
 
-      // 2. Limpar os campos no documento Company
-      company.facebookPageId = null;
-      company.facebookPageAccessToken = null;
-      company.facebookWebhookSubscriptionId = null;
-      await company.save();
-
-      console.log(`[IntegSvc disconnect] Dados da Página FB removidos da Empresa ${companyId}.`);
-      return { message: `Página do Facebook (ID: ${pageIdToDisconnect}) desconectada com sucesso.` };
+      console.log(`[IntegSvc disconnect] Dados da Página FB removidos da Empresa ${companyId} (verifique no DB).`);
+      return { message: `Página do Facebook (ID: ${pageIdToDisconnect || 'N/A'}) desconectada e dados limpos no CRM.` };
 
   } catch (error) {
       console.error(`[IntegSvc disconnect] Erro durante desconexão da página FB para Empresa ${companyId}:`, error);
       throw new Error(error.message || "Erro ao desconectar página do Facebook.");
   }
 };
-
 
 module.exports = {
   connectFacebookPageIntegration,
