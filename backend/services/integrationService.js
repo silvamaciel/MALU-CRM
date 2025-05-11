@@ -198,8 +198,7 @@ const disconnectFacebookPageIntegration = async (companyId) => {
 
   try {
     const company = await Company.findById(companyId)
-      .select("nome facebookPageId facebookPageAccessToken") // Importante selecionar o token
-      .lean();
+      .select("nome facebookPageId +facebookPageAccessToken") // Importante selecionar o token
 
     console.log("[IntegSvc disconnect] Documento Company para desconexão (após select explícito):",
       company ? JSON.stringify({
