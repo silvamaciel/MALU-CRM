@@ -46,7 +46,30 @@ const getFacebookStatus = async (req, res) => {
     }
 };
 
+
+/**
+ * Controller para desconectar a página do Facebook atualmente integrada à empresa.
+ */
+const disconnectFacebook = async (req, res) => {
+    console.log("[IntegCtrl] Recebido POST /api/integrations/facebook/disconnect");
+    const companyId = req.user?.company;
+
+    if (!companyId) {
+        return res.status(401).json({ error: 'Empresa do usuário não identificada.' });
+    }
+
+    try {
+        const result = await integrationService.disconnectFacebookPageIntegration(companyId);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("[IntegCtrl] Erro ao desconectar página FB:", error.message);
+        res.status(400).json({ error: error.message || 'Falha ao desconectar página.' });
+    }
+};
+
+
 module.exports = {
     connectFacebookPage,
-    getFacebookStatus
+    getFacebookStatus,
+    disconnectFacebook
 };
