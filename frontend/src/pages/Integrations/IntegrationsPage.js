@@ -92,37 +92,34 @@ function IntegrationsPage() {
     const handleFacebookResponse = useCallback(async (response) => {
         console.log("Facebook Login Response (onSuccess/onProfileSuccess):", response);
         setFbError(null);
-        setIsConnectingFb(true); // Indica processamento após login FB
-
+        // setIsConnectingFb(true); // Já foi setado no onClick do botão do FacebookLogin
+    
         if (response && response.accessToken && response.userID) {
             const userAccessToken = response.accessToken;
-            toast.info("Autorização Facebook OK! Buscando suas páginas...");
+            // Não precisa do toast aqui, o loading já indica
+            // toast.info("Autorização Facebook OK! Buscando suas páginas..."); 
             setFbUserData({
                 accessToken: userAccessToken,
                 userID: response.userID,
                 name: response.name || `Usuário ${response.userID}`
             });
-
+    
             setIsFetchingPages(true);
-            setFacebookPages([]); setSelectedPageId('');
+            setFacebookPages([]); 
+            setSelectedPageId('');
             try {
                 const pagesResponse = await axios.get(
                     `https://graph.facebook.com/${GRAPH_API_VERSION}/me/accounts`,
-                    { params: { access_token: userAccessToken, fields: 'id,name,tasks' } } // Pede 'tasks'
+                    { params: { access_token: userAccessToken, fields: 'id,name,tasks' } }
                 );
                 console.log("Páginas do Facebook encontradas:", pagesResponse.data);
                 const pages = Array.isArray(pagesResponse.data?.data) ? pagesResponse.data.data : [];
-
-                // Filtro opcional por tasks (se o campo 'tasks' vier na resposta)
-                // const manageablePages = pages.filter(page =>
-                //     page.tasks && (page.tasks.includes("MANAGE") || page.tasks.includes("CREATE_CONTENT") || page.tasks.includes("MODERATE"))
-                // );
-                // setFacebookPages(manageablePages.length > 0 ? manageablePages : pages); // Usa filtradas ou todas
                 
-                setFacebookPages(pages); // Por enquanto, mostra todas
-
+                setFacebookPages(pages);
+    
                 if (pages.length > 0) {
-                    setSelectedPageId(pages[0].id); // Pré-seleciona a primeira
+                    setSelectedPageId(pages[0].id);
+                    // Removido toast.info daqui, o aparecimento do dropdown é o feedback
                 } else {
                     toast.warn("Nenhuma Página do Facebook encontrada ou permissível.");
                     setFbError("Nenhuma Página encontrada.");
@@ -131,20 +128,23 @@ function IntegrationsPage() {
                 const errorData = pageError.response?.data?.error;
                 console.error("Erro ao buscar Páginas FB:", errorData || pageError);
                 const errorMsg = errorData?.message || "Falha ao buscar suas Páginas do Facebook.";
-                setFbError(errorMsg); toast.error(errorMsg); setFacebookPages([]);
+                setFbError(errorMsg); 
+                toast.error(errorMsg); 
+                setFacebookPages([]);
             } finally {
                 setIsFetchingPages(false);
-                // Não seta setIsConnectingFb(false) aqui, pois o usuário ainda precisa selecionar a página
+                setIsConnectingFb(false); // <<< ADICIONE/GARANTA ESTA LINHA AQUI! Libera os botões
             }
         } else if (response && response.status === "not_authorized") {
             const errorMsg = "Permissões não concedidas no Facebook.";
-            setFbError(errorMsg); toast.warn(errorMsg); setIsConnectingFb(false);
+            setFbError(errorMsg); toast.warn(errorMsg); 
+            setIsConnectingFb(false); // Libera em caso de erro
         } else {
             const errorMsg = "Falha na autenticação com Facebook: resposta inesperada ou token não recebido.";
-            setFbError(errorMsg); toast.error(errorMsg); setIsConnectingFb(false);
+            setFbError(errorMsg); toast.error(errorMsg); 
+            setIsConnectingFb(false); // Libera em caso de erro
         }
-    }, []); // useCallback
-
+    }, []);
     // Handler para enviar a página selecionada ao backend
     const handleConnectSelectedPage = useCallback(async () => {
         if (!selectedPageId || !fbUserData?.accessToken) {
