@@ -40,8 +40,11 @@ const connectFacebookPageIntegration = async (
   if (!pageId || !shortLivedUserAccessToken || !companyId) {
     throw new Error("Page ID, User Access Token e Company ID são necessários.");
   }
-  if (!FACEBOOK_APP_ID || !FB_APP_SECRET) { // Garante que as credenciais do app foram carregadas
-    throw new Error("Configuração do servidor para Facebook incompleta (App ID ou Secret faltando).");
+  if (!FACEBOOK_APP_ID || !FB_APP_SECRET) {
+    // Garante que as credenciais do app foram carregadas
+    throw new Error(
+      "Configuração do servidor para Facebook incompleta (App ID ou Secret faltando)."
+    );
   }
   console.log(
     `[IntegSvc connect] Iniciando conexão da Página ${pageId} para Empresa ${companyId}`
@@ -49,7 +52,9 @@ const connectFacebookPageIntegration = async (
 
   try {
     // 1. Trocar token de usuário de curta duração por um de longa duração
-    console.log("[IntegSvc connect] Trocando User Token por Long-Lived User Token...");
+    console.log(
+      "[IntegSvc connect] Trocando User Token por Long-Lived User Token..."
+    );
     const longLivedUserTokenResponse = await axios.get(
       `https://graph.facebook.com/${GRAPH_API_VERSION}/oauth/access_token`,
       {
@@ -61,14 +66,17 @@ const connectFacebookPageIntegration = async (
         },
       }
     );
-    const longLivedUserAccessToken = longLivedUserTokenResponse.data.access_token;
+    const longLivedUserAccessToken =
+      longLivedUserTokenResponse.data.access_token;
     if (!longLivedUserAccessToken) {
       throw new Error("Falha ao obter Long-Lived User Token do Facebook.");
     }
     console.log("[IntegSvc connect] Long-Lived User Token obtido.");
 
     // 2. Obter o token de acesso da PÁGINA de longa duração
-    console.log(`[IntegSvc connect] Obtendo Long-Lived Page Token para Página ${pageId}...`);
+    console.log(
+      `[IntegSvc connect] Obtendo Long-Lived Page Token para Página ${pageId}...`
+    );
     const pageTokenResponse = await axios.get(
       `https://graph.facebook.com/${GRAPH_API_VERSION}/${pageId}`,
       {
@@ -82,19 +90,31 @@ const connectFacebookPageIntegration = async (
     if (!longLivedPageAccessToken) {
       throw new Error("Falha ao obter Long-Lived Page Token do Facebook.");
     }
-    console.log(`[IntegSvc connect] Long-Lived Page Token obtido para ${pageId}.`);
+    console.log(
+      `[IntegSvc connect] Long-Lived Page Token obtido para ${pageId}.`
+    );
 
     // 3. Salvar Page ID e Page Access Token na Company
-    console.log(`[IntegSvc connect] Atualizando Company ${companyId} com dados do FB...`);
+
+    console.log(
+      `[IntegSvc DEBUG connect] VALOR DE longLivedPageAccessToken ANTES DE SALVAR NA COMPANY:`,
+      longLivedPageAccessToken
+        ? `${String(longLivedPageAccessToken).substring(0, 20)}... (existe)`
+        : longLivedPageAccessToken
+    );
+
+    console.log(
+      `[IntegSvc connect] Atualizando Company ${companyId} com dados do FB...`
+    );
     // Verifica se a página já está conectada a OUTRA empresa
     const existingCompanyWithPage = await Company.findOne({
-        facebookPageId: pageId,
-        _id: { $ne: companyId }, // $ne = Not Equal (diferente do companyId atual)
+      facebookPageId: pageId,
+      _id: { $ne: companyId }, // $ne = Not Equal (diferente do companyId atual)
     });
     if (existingCompanyWithPage) {
-        throw new Error(
-            `A Página do Facebook ID ${pageId} já está conectada à empresa ${existingCompanyWithPage.nome}. Uma página só pode ser conectada a uma empresa por vez.`
-        );
+      throw new Error(
+        `A Página do Facebook ID ${pageId} já está conectada à empresa ${existingCompanyWithPage.nome}. Uma página só pode ser conectada a uma empresa por vez.`
+      );
     }
 
     const updatedCompany = await Company.findByIdAndUpdate(
@@ -106,14 +126,21 @@ const connectFacebookPageIntegration = async (
       { new: true } // Retorna o documento atualizado
     );
     if (!updatedCompany) {
-      throw new Error("Empresa não encontrada no banco de dados para salvar dados do Facebook.");
+      throw new Error(
+        "Empresa não encontrada no banco de dados para salvar dados do Facebook."
+      );
     }
-    console.log(`[IntegSvc DEBUG connect] Company atualizada no DB: PageID=${updatedCompany.facebookPageId}, PageTokenExists=${!!updatedCompany.facebookPageAccessToken}`);
-
+    console.log(
+      `[IntegSvc DEBUG connect] Company atualizada no DB: PageID=${
+        updatedCompany.facebookPageId
+      }, PageTokenExists=${!!updatedCompany.facebookPageAccessToken}`
+    );
 
     // 4. Inscrever a Página no Webhook de Leadgen do seu App Meta
     // A URL de callback usada aqui é a URL GERAL DO SEU APP configurada no painel da Meta.
-    console.log(`[IntegSvc connect] Inscrevendo Página ${pageId} no webhook 'leadgen' do App...`);
+    console.log(
+      `[IntegSvc connect] Inscrevendo Página ${pageId} no webhook 'leadgen' do App...`
+    );
     const subscribeResponse = await axios.post(
       `https://graph.facebook.com/${GRAPH_API_VERSION}/${pageId}/subscribed_apps`,
       null, // O corpo é nulo para esta requisição
@@ -126,24 +153,41 @@ const connectFacebookPageIntegration = async (
     );
 
     // A API da Meta pode retornar {success:true} ou uma string "Success" em alguns casos
-    const wasSuccessful = subscribeResponse.data.success === true ||
-                          (typeof subscribeResponse.data === 'string' && subscribeResponse.data.toLowerCase().includes("success"));
+    const wasSuccessful =
+      subscribeResponse.data.success === true ||
+      (typeof subscribeResponse.data === "string" &&
+        subscribeResponse.data.toLowerCase().includes("success"));
 
     if (!wasSuccessful) {
-      console.error("[IntegSvc connect] Falha ao inscrever webhook:", subscribeResponse.data);
+      console.error(
+        "[IntegSvc connect] Falha ao inscrever webhook:",
+        subscribeResponse.data
+      );
       // Considerar se deve desfazer o salvamento na Company ou apenas logar e avisar.
       // Por enquanto, lança erro.
-      throw new Error("Falha ao configurar o recebimento automático de leads no Facebook.");
+      throw new Error(
+        "Falha ao configurar o recebimento automático de leads no Facebook."
+      );
     }
-    console.log(`[IntegSvc connect] Webhook 'leadgen' configurado com sucesso para Página ${pageId}!`);
+    console.log(
+      `[IntegSvc connect] Webhook 'leadgen' configurado com sucesso para Página ${pageId}!`
+    );
 
-    return { message: `Página ${pageId} conectada e configurada para receber leads!` };
-
+    return {
+      message: `Página ${pageId} conectada e configurada para receber leads!`,
+    };
   } catch (error) {
-    console.error("[IntegSvc connect] Erro durante conexão da página FB:", error.response?.data?.error || error.message);
+    console.error(
+      "[IntegSvc connect] Erro durante conexão da página FB:",
+      error.response?.data?.error || error.message
+    );
     const fbError = error.response?.data?.error; // Tenta pegar erro específico da API Graph
     // Se fbError.message existir, ele é mais descritivo
-    throw new Error(fbError?.message || error.message || "Erro desconhecido ao conectar página do Facebook.");
+    throw new Error(
+      fbError?.message ||
+        error.message ||
+        "Erro desconhecido ao conectar página do Facebook."
+    );
   }
 };
 
@@ -154,27 +198,41 @@ const connectFacebookPageIntegration = async (
  */
 const getFacebookIntegrationStatus = async (companyId) => {
   if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
-    throw new Error('ID da empresa inválido para verificar status da integração.');
+    throw new Error(
+      "ID da empresa inválido para verificar status da integração."
+    );
   }
-  console.log(`[IntegSvc getStatus] Verificando status da integração FB para Empresa ${companyId}`);
+  console.log(
+    `[IntegSvc getStatus] Verificando status da integração FB para Empresa ${companyId}`
+  );
   try {
     const company = await Company.findById(companyId)
-      .select('nome facebookPageId facebookPageAccessToken') // Seleciona campos
+      .select("nome facebookPageId facebookPageAccessToken") // Seleciona campos
       .lean();
 
-    console.log(`[IntegSvc DEBUG getStatus] Documento Company encontrado no DB:`, JSON.stringify(company, null, 2));
+    console.log(
+      `[IntegSvc DEBUG getStatus] Documento Company encontrado no DB:`,
+      JSON.stringify(company, null, 2)
+    );
 
     if (!company) {
       throw new Error("Empresa não encontrada.");
     }
 
     if (company.facebookPageId && company.facebookPageAccessToken) {
-      let pageName = 'Nome da Página Indisponível'; // Default se não conseguir buscar
+      let pageName = "Nome da Página Indisponível"; // Default se não conseguir buscar
       try {
-        console.log(`[IntegSvc getStatus] Buscando nome para Page ID ${company.facebookPageId}`);
+        console.log(
+          `[IntegSvc getStatus] Buscando nome para Page ID ${company.facebookPageId}`
+        );
         const pageDetailsResponse = await axios.get(
           `https://graph.facebook.com/${GRAPH_API_VERSION}/${company.facebookPageId}`,
-          { params: { access_token: company.facebookPageAccessToken, fields: 'name' } }
+          {
+            params: {
+              access_token: company.facebookPageAccessToken,
+              fields: "name",
+            },
+          }
         );
         pageName = pageDetailsResponse.data.name || pageName;
         console.log(`[IntegSvc getStatus] Nome da Página obtido: ${pageName}`);
@@ -189,19 +247,24 @@ const getFacebookIntegrationStatus = async (companyId) => {
       return {
         isConnected: true,
         pageId: company.facebookPageId,
-        pageName: pageName
+        pageName: pageName,
       };
     } else {
-      console.log(`[IntegSvc getStatus] Empresa ${companyId} não possui facebookPageId ou facebookPageAccessToken.`);
+      console.log(
+        `[IntegSvc getStatus] Empresa ${companyId} não possui facebookPageId ou facebookPageAccessToken.`
+      );
       return { isConnected: false };
     }
   } catch (error) {
-    console.error(`[IntegSvc getStatus] Erro ao verificar status da integração FB para ${companyId}:`, error);
+    console.error(
+      `[IntegSvc getStatus] Erro ao verificar status da integração FB para ${companyId}:`,
+      error
+    );
     throw new Error("Erro ao verificar status da integração com Facebook.");
   }
 };
 
 module.exports = {
   connectFacebookPageIntegration,
-  getFacebookIntegrationStatus
+  getFacebookIntegrationStatus,
 };
