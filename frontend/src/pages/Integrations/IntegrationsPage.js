@@ -79,6 +79,14 @@ function IntegrationsPage() {
     useEffect(() => {
         fetchFacebookStatus();
     }, [fetchFacebookStatus]); 
+    
+
+    useEffect(() => {
+        if (!selectedPageId && facebookPages.length > 0) {
+            setSelectedPageId(facebookPages[0].id); // <- isso garante que sempre tenha algo selecionado
+        }
+    }, [facebookPages, selectedPageId]);
+
 
     // Callback do componente FacebookLogin
     const handleFacebookResponse = useCallback(async (response) => {
