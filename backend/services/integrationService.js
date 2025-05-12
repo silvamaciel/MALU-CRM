@@ -9,7 +9,6 @@ const LeadService = require('./LeadService');
 const Origem = require('../models/origem'); 
 const { PhoneNumberUtil, PhoneNumberFormat: PNF } = require('google-libphonenumber');
 const phoneUtil = PhoneNumberUtil.getInstance();
-const { OAuth2Client } = require('google-auth-library');
 
 
 
