@@ -57,3 +57,20 @@ export const disconnectFacebookPage = async () => {
     }
 };
 
+
+/**
+ * Solicita ao backend para iniciar a sincronização de contatos do Google
+ * e importá-los como leads.
+ * @returns {Promise<object>} Resposta do backend (mensagem de sucesso e resumo da importação).
+ */
+export const syncGoogleContactsApi = async () => {
+    try {
+        // Chama o novo endpoint POST que criamos no backend
+        const response = await axiosInstance.post(`${API_URL}/google/sync-contacts`);
+        return response.data; // Espera { message, summary: { leadsImported, ... } }
+    } catch (error) {
+        console.error('Erro ao sincronizar contatos do Google:', error.response?.data || error.message);
+        throw error.response?.data || new Error('Falha ao sincronizar contatos do Google.');
+    }
+};
+
