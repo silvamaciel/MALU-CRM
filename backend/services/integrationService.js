@@ -468,7 +468,7 @@ const listGoogleContacts = async (userId) => {
   let connections = [];
   let nextPageToken = null;
   // Campos que queremos para exibir na seleção e para posterior importação
-  const personFields = "resourceName,names,emailAddresses,phoneNumbers,biographies,organizations";
+  const personFields = "names,emailAddresses";
   console.log("[IntegSvc GoogleContactsList] Buscando conexões na People API com personFields:", personFields); // Adicione este log para confirmar
 
 
@@ -478,8 +478,6 @@ const listGoogleContacts = async (userId) => {
         if (nextPageToken) params.pageToken = nextPageToken;
 
         console.log("[IntegSvc GoogleContactsList] DEBUG: Configuração da Requisição Axios (params):", JSON.stringify(params, null, 2));
-        console.log("[IntegSvc GoogleContactsList] DEBUG: URL que será chamada (aproximada):", `https://people.googleapis.com/v1/people/me/connections?personFields=<span class="math-inline">\{encodeURIComponent\(personFields\)\}&pageSize\=200</span>{nextPageToken ? '&pageToken='+nextPageToken : ''}`);
-
         const response = await axios.get('https://people.googleapis.com/v1/people/me/connections', {
             headers: { Authorization: `Bearer ${accessToken}` },
             params: params
