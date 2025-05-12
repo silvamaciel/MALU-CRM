@@ -273,9 +273,160 @@ const disconnectFacebookPageIntegration = async (companyId) => {
 };
 
 
+/**
+ * Importa contatos do Google do usuário como Leads para a empresa.
+ * @param {string} userId - ID do usuário CRM realizando a importação.
+ * @param {string} companyId - ID da empresa CRM para associar os leads.
+ * @returns {Promise<object>} - Resumo da importação.
+ */
+const importGoogleContactsAsLeads = async (userId, companyId) => {
+  if (!userId || !companyId) {
+      throw new Error("UserID e CompanyID são obrigatórios para importar contatos.");
+  }
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+       throw new Error("Credenciais Google não configuradas no servidor.");
+  }
+
+  console.log(`[IntegSvc GoogleContacts] Iniciando importação para User ${userId}, Company ${companyId}`);
+
+  // 1. Obter o refresh token do usuário
+  const crmUser = await User.findById(userId).select('+googleRefreshToken');
+  if (!crmUser || !crmUser.googleRefreshToken) {
+      throw new Error("Usuário não conectado ao Google ou sem permissão (refresh token ausente). Conecte/Reconecte o Google Workspace na página de integrações.");
+  }
+
+  // 2. Configurar o cliente OAuth2 e obter um novo Access Token
+  const oauth2Client = new OAuth2Client(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_OAUTH_REDIRECT_URI);
+  oauth2Client.setCredentials({ refresh_token: crmUser.googleRefreshToken });
+
+  let accessToken;
+  try {
+      const tokenResponse = await oauth2Client.getAccessToken(); // Força um refresh
+      accessToken = tokenResponse.token;
+      if (!accessToken) throw new Error("Não foi possível obter Access Token.");
+      console.log("[IntegSvc GoogleContacts] Novo Access Token obtido.");
+  } catch (tokenError) {
+      console.error("[IntegSvc GoogleContacts] Erro ao obter Access Token:", tokenError.response?.data || tokenError.message);
+      throw new Error("Falha ao obter autorização do Google. Tente reconectar sua conta Google na página de integrações.");
+  }
+
+  // 3. Buscar/Criar Origem "Contatos Google" para esta empresa
+  const defaultOriginName = "Contatos Google";
+  let crmOrigin;
+  try {
+      crmOrigin = await Origem.findOneAndUpdate(
+          { company: companyId, nome: { $regex: new RegExp(`^${defaultOriginName}$`, 'i') } },
+          { $setOnInsert: { nome: defaultOriginName, company: companyId, ativo: true, descricao: "Leads importados do Google Contacts." } },
+          { new: true, upsert: true, runValidators: true }
+      ).lean();
+      console.log(`[IntegSvc GoogleContacts] Origem '${defaultOriginName}' pronta: ${crmOrigin._id}`);
+  } catch (originError) {
+      console.error(`[IntegSvc GoogleContacts] Falha ao obter/criar origem '${defaultOriginName}':`, originError);
+      throw new Error(`Falha ao configurar origem padrão '${defaultOriginName}'.`);
+  }
+
+  // 4. Chamar Google People API para listar contatos
+  let connections = [];
+  let nextPageToken = null;
+  const personFields = "names,emailAddresses,phoneNumbers,biographies"; // Campos que queremos
+  console.log("[IntegSvc GoogleContacts] Buscando contatos na People API...");
+
+  try {
+      do {
+          const params = { personFields, pageSize: 200 }; // pageSize alto para menos requests
+          if (nextPageToken) params.pageToken = nextPageToken;
+
+          const response = await axios.get('https://people.googleapis.com/v1/people/me/connections', {
+              headers: { Authorization: `Bearer ${accessToken}` },
+              params: params
+          });
+
+          if (response.data.connections) {
+              connections = connections.concat(response.data.connections);
+          }
+          nextPageToken = response.data.nextPageToken;
+      } while (nextPageToken);
+      console.log(`[IntegSvc GoogleContacts] Total de ${connections.length} conexões encontradas.`);
+  } catch (apiError) {
+      console.error("[IntegSvc GoogleContacts] Erro ao buscar contatos da People API:", apiError.response?.data?.error || apiError.message);
+      throw new Error("Falha ao buscar contatos do Google.");
+  }
+
+  // 5. Processar contatos e criar Leads
+  let importedCount = 0;
+  let duplicateCount = 0;
+  let skippedCount = 0;
+
+  for (const person of connections) {
+      const googleName = person.names?.[0]?.displayName;
+      const googlePhoneObj = person.phoneNumbers?.find(p => p.value); 
+      const googleEmailObj = person.emailAddresses?.find(e => e.value); 
+      const googleNotes = person.biographies?.find(b => b.contentType === 'TEXT_PLAIN')?.value; 
+
+      if (!googleName || !googlePhoneObj?.value) {
+          console.log(`[IntegSvc GoogleContacts] Contato pulado (sem nome ou telefone): ${googleName || 'Sem nome'}`);
+          skippedCount++;
+          continue;
+      }
+
+      let formattedPhone;
+      try {
+          const phoneNumber = phoneUtil.parseAndKeepRawInput(googlePhoneObj.value, null);
+          if (phoneUtil.isValidNumber(phoneNumber)) {
+              formattedPhone = phoneUtil.format(phoneNumber, PNF.E164);
+          } else {
+              console.log(`[IntegSvc GoogleContacts] Telefone inválido ou não formatável para ${googleName}: ${googlePhoneObj.value}. Pulando.`);
+              skippedCount++;
+              continue;
+          }
+      } catch (e) {
+          console.log(`[IntegSvc GoogleContacts] Erro ao formatar telefone para ${googleName}: ${googlePhoneObj.value}. Pulando. Erro: ${e.message}`);
+          skippedCount++;
+          continue;
+      }
+
+      // Verificar duplicidade pelo telefone formatado
+      const existingLead = await Lead.findOne({ contato: formattedPhone, company: companyId }).lean();
+      if (existingLead) {
+          console.log(`[IntegSvc GoogleContacts] Duplicado (telefone ${formattedPhone}) para ${googleName}. Pulando.`);
+          duplicateCount++;
+          continue;
+      }
+
+      // Preparar dados do Lead
+      const leadData = {
+          nome: googleName,
+          contato: formattedPhone,
+          email: googleEmailObj?.value || null,
+          origem: crmOrigin._id, 
+          comentario: googleNotes || null,
+      };
+
+      try {
+          await LeadService.createLead(leadData, companyId, userId);
+          importedCount++;
+      } catch (createError) {
+          console.error(`[IntegSvc GoogleContacts] Erro ao criar Lead para ${googleName}:`, createError);
+          skippedCount++;
+      }
+  }
+
+  const summary = {
+      totalContactsProcessed: connections.length,
+      leadsImported: importedCount,
+      duplicatesSkipped: duplicateCount,
+      othersSkipped: skippedCount
+  };
+  console.log("[IntegSvc GoogleContacts] Importação concluída:", summary);
+  return summary;
+};
+
+
+
 
 module.exports = {
   connectFacebookPageIntegration,
   getFacebookIntegrationStatus,
-  disconnectFacebookPageIntegration
+  disconnectFacebookPageIntegration,
+  importGoogleContactsAsLeads
 };
