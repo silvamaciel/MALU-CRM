@@ -1,5 +1,7 @@
 // controllers/integrationController.js
 const integrationService = require('../services/integrationService');
+const mongoose = require('mongoose');
+
 
 /**
  * Controller para finalizar a conexão da página do Facebook.
@@ -68,8 +70,33 @@ const disconnectFacebook = async (req, res) => {
 };
 
 
+
+/**
+ * Controller para sincronizar contatos do Google
+ */
+const syncGoogleContacts = async (req, res) => {
+    console.log("[IntegCtrl] Recebido POST /api/integrations/google/sync-contacts");
+    const companyId = req.user?.company;
+    const userId = req.user?._id;
+
+    if (!companyId || !userId) {
+        return res.status(401).json({ error: 'Usuário ou Empresa não identificada.' });
+    }
+
+    try {
+        const result = await integrationService.importGoogleContactsAsLeads(userId, companyId);
+        res.status(200).json({ message: "Sincronização de contatos do Google concluída.", summary: result });
+    } catch (error) {
+        console.error("[IntegCtrl] Erro ao sincronizar contatos Google:", error.message);
+        const statusCode = error.message.includes("não conectado ao Google") || error.message.includes("Falha ao obter autorização") ? 401 : 400;
+        res.status(statusCode).json({ error: error.message || 'Falha ao sincronizar contatos.' });
+    }
+};
+
+
 module.exports = {
     connectFacebookPage,
     getFacebookStatus,
-    disconnectFacebook
+    disconnectFacebook,
+    syncGoogleContacts
 };
