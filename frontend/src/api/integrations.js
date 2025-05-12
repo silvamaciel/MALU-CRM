@@ -74,3 +74,21 @@ export const syncGoogleContactsApi = async () => {
     }
 };
 
+
+/**
+ * Busca a lista de contatos do Google do usuário autenticado através do backend.
+ * @returns {Promise<Array>} Um array de objetos de contato simplificados.
+ */
+export const listGoogleContactsApi = async () => {
+    try {
+        // Chama o endpoint GET /api/integrations/google/list-contacts
+        const response = await axiosInstance.get(`${API_URL_BASE}/google/list-contacts`);
+        // O backend retorna um array de contatos ou um erro.
+        return Array.isArray(response.data) ? response.data : []; // Garante que retorna um array
+    } catch (error) {
+        console.error('Erro ao listar contatos do Google via API:', error.response?.data || error.message);
+        // Repassa o erro do backend ou lança um novo
+        throw error.response?.data || new Error('Falha ao buscar lista de contatos do Google.');
+    }
+};
+
