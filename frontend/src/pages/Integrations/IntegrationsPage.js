@@ -9,6 +9,8 @@ import {
   getFacebookConnectionStatus,
   disconnectFacebookPage,
   syncGoogleContactsApi,
+  listGoogleContactsApi,
+  processSelectedGoogleContactsApi
 } from "../../api/integrations";
 import "./IntegrationsPage.css";
 
@@ -27,6 +29,11 @@ function IntegrationsPage() {
   const [isConnectingGoogle, setIsConnectingGoogle] = useState(false);
   const [googleError, setGoogleError] = useState(null);
   const [isSyncingGoogleContacts, setIsSyncingGoogleContacts] = useState(false);
+  const [isGoogleContactsModalOpen, setIsGoogleContactsModalOpen] = useState(false);
+  const [googleContactsList, setGoogleContactsList] = useState([]);
+  const [selectedGoogleContacts, setSelectedGoogleContacts] = useState({});
+  const [isLoadingGoogleContacts, setIsLoadingGoogleContacts] = useState(false);
+
 
 
   // Facebook States
@@ -262,8 +269,7 @@ function IntegrationsPage() {
   }, [fetchFacebookStatus]);
 
 
-
-  const handleSyncGoogleContacts = useCallback(async () => {
+    const handleSyncGoogleContacts = useCallback(async () => {
         setIsSyncingGoogleContacts(true);
         setGoogleError(null); // Limpa erros anteriores do Google
         toast.info("Iniciando sincronização de contatos do Google...");
@@ -286,15 +292,61 @@ function IntegrationsPage() {
     }, []);
 
 
+
+    // modal para abrir e ver contatos para selecionar
+    const handleOpenGoogleContactsModal = useCallback(async () => {
+        setIsLoadingGoogleContacts(true); // Loading para a lista dentro do modal
+        setGoogleError(null);
+        setGoogleContactsList([]); // Limpa lista antiga
+        setSelectedGoogleContacts({}); // Limpa seleção antiga
+        toast.info("Buscando seus contatos do Google...");
+        try {
+            const contacts = await listGoogleContactsApi(); // Chama API para listar
+            if (contacts && contacts.length > 0) {
+                setGoogleContactsList(contacts);
+                setIsGoogleContactsModalOpen(true); // Abre o modal com os contatos
+            } else {
+                toast.info("Nenhum contato encontrado na sua conta Google ou você não concedeu permissão.");
+                setGoogleContactsList([]);
+            }
+        } catch (err) {
+            const errorMsg = err.error || err.message || "Falha ao buscar contatos do Google.";
+            setGoogleError(errorMsg);
+            toast.error(errorMsg);
+            console.error("Erro ao buscar contatos Google para modal:", err);
+        } finally {
+            setIsLoadingGoogleContacts(false);
+        }
+    }, []);
+
+    const handleGoogleContactSelectionChange = (googleContactId) => {
+        setSelectedGoogleContacts(prev => ({
+            ...prev,
+            [googleContactId]: !prev[googleContactId]
+        }));
+    };
+
+    // Handler para importar os contatos SELECIONADOS
+    const handleImportSelectedGoogleContacts = useCallback(async () => {
+        const contactsToImportIds = Object.keys(selectedGoogleContacts).filter(id => selectedGoogleContacts[id]);
+        if (contactsToImportIds.length === 0) {
+            toast.warn("Nenhum contato selecionado para importação.");
+            return;
+        }
+        const contactsDataToImport = googleContactsList.filter(contact => contactsToImportIds.includes(contact.googleContactId));
+
+        console.log("Contatos selecionados para importar:", contactsDataToImport);
+        toast.info(`Simulando importação de ${contactsDataToImport.length} contatos... (Backend pendente)`);
+        setIsGoogleContactsModalOpen(false); 
+    }, [selectedGoogleContacts, googleContactsList]);
+
+
+
+
   // --- Renderização ---
 
-  console.log("DEBUG RENDER: isLoadingStatus:", isLoadingStatus);
-  console.log(
-    "DEBUG RENDER: persistedFbConnection:",
-    JSON.stringify(persistedFbConnection, null, 2)
-  );
-  console.log("DEBUG RENDER: fbUserData:", JSON.stringify(fbUserData, null, 2));
-  if (isLoadingStatus) {
+ 
+  if (isLoadingStatus && isLoadingGoogleContacts) {
     return (
       <div className="integrations-page loading">
         <p>Verificando status das integrações...</p>
@@ -328,6 +380,14 @@ function IntegrationsPage() {
             <li>Salvar/Buscar contatos</li>
             <li>Anexar arquivos (futuro)</li>
           </ul>
+
+          <button
+            onClick={handleOpenGoogleContactsModal} // <<< CHAMA A NOVA FUNÇÃO
+            className="button submit-button"
+            style={{ marginTop: '10px' }}
+            disabled={isConnectingGoogle || isLoadingGoogleContacts || isSyncingGoogleContacts} // Desabilita em vários loadings
+          >
+          {isLoadingGoogleContacts ? 'Buscando Contatos...' : 'Importar Contatos do Google'}            </button>
           <button
             onClick={() => connectGoogle()}
             className="button google-connect-button"
@@ -552,6 +612,59 @@ function IntegrationsPage() {
             <i>(Próximas Versões)</i>
           </p>
         </div>
+
+        {/* <<< NOVO MODAL PARA LISTAR/SELECIONAR CONTATOS GOOGLE >>> */}
+        {isGoogleContactsModalOpen && (
+                <div className="form-modal-overlay" onClick={() => setIsGoogleContactsModalOpen(false)}>
+                    <div className="form-modal-content" onClick={(e) => e.stopPropagation()} style={{maxWidth: '700px'}}>
+                        <h2>Importar Contatos do Google</h2>
+                        {isLoadingGoogleContacts ? (
+                            <p>Carregando contatos...</p>
+                        ) : googleContactsList.length > 0 ? (
+                            <>
+                                <p>Selecione os contatos que deseja importar como leads:</p>
+                                <ul className="contacts-list-modal">
+                                    {googleContactsList.map(contact => (
+                                        <li key={contact.googleContactId}>
+                                            <input
+                                                type="checkbox"
+                                                id={`gc-${contact.googleContactId}`}
+                                                checked={!!selectedGoogleContacts[contact.googleContactId]}
+                                                onChange={() => handleGoogleContactSelectionChange(contact.googleContactId)}
+                                            />
+                                            <label htmlFor={`gc-${contact.googleContactId}`}>
+                                                <strong>{contact.displayName}</strong>
+                                                {contact.email && ` - ${contact.email}`}
+                                                {contact.phone && ` (${contact.phone})`}
+                                                {contact.organization && ` | Empresa: ${contact.organization}`}
+                                                {contact.notes && <><br/><small>Notas: {contact.notes.substring(0,100)}{contact.notes.length > 100 ? '...' : ''}</small></>}
+                                            </label>
+                                        </li>
+                                    ))}
+                                </ul>
+                                <div className="form-actions">
+                                    <button
+                                        onClick={handleImportSelectedGoogleContacts}
+                                        className="button submit-button"
+                                        disabled={Object.keys(selectedGoogleContacts).filter(k => selectedGoogleContacts[k]).length === 0}
+                                    >
+                                        Importar Selecionados ({Object.keys(selectedGoogleContacts).filter(k => selectedGoogleContacts[k]).length})
+                                    </button>
+                                    {/* Poderia ter um botão "Importar Todos" que seleciona todos e chama o handler */}
+                                    <button type="button" className="button cancel-button" onClick={() => setIsGoogleContactsModalOpen(false)}>
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <p>Nenhum contato encontrado ou você não concedeu as permissões necessárias.</p>
+                        )}
+                        {/* TODO: Adicionar paginação se a lista de contatos for muito grande */}
+                    </div>
+                </div>
+            )}
+            {/* <<< FIM NOVO MODAL >>> */}
+
       </div>
     </div>
   );
