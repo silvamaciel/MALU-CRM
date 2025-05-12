@@ -15,5 +15,8 @@ router.post('/facebook/disconnect', protect, integrationController.disconnectFac
 
 router.post('/google/sync-contacts', protect, integrationController.syncGoogleContacts);
 
+router.get('/google/list-contacts', protect, integrationController.listGoogleContactsController);
+
+
 
 module.exports = router;
