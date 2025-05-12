@@ -472,39 +472,54 @@ const listGoogleContacts = async (userId) => {
   console.log("[IntegSvc GoogleContactsList] Buscando conexões na People API com personFields:", personFields); // Adicione este log para confirmar
 
 
-  try {
-    do {
-        const params = { personFields, pageSize: 200 }; 
-        if (nextPageToken) params.pageToken = nextPageToken;
+  // Dentro de services/integrationService.js -> listGoogleContacts
 
-        console.log("[IntegSvc GoogleContactsList] DEBUG: Configuração da Requisição Axios (params):", JSON.stringify(params, null, 2));
-        const response = await axios.get('https://people.googleapis.com/v1/people/me/connections', {
-            headers: { Authorization: `Bearer ${accessToken}` },
-            params: params
-        });
+    // ... (código anterior para obter accessToken) ...
+    const personFields = "names,emailAddresses,resourceName"; // <<< MANTENHA ESTA CORREÇÃO
+    console.log("[IntegSvc GoogleContactsList] Usando personFields:", personFields);
 
-        if (response.data.connections) {
-            connections = connections.concat(response.data.connections);
-        }
-        nextPageToken = response.data.nextPageToken;
-    } while (nextPageToken); 
+    try {
+        do {
+            // VVVVV CONSTRUÇÃO MANUAL DA URL E LOGS VVVVV
+            let apiUrl = `https://people.googleapis.com/v1/people/me/connections?personFields=${encodeURIComponent(personFields)}&pageSize=200`;
+            if (nextPageToken) {
+                apiUrl += `&pageToken=${encodeURIComponent(nextPageToken)}`;
+            }
 
-    console.log(`[IntegSvc GoogleContactsList] Total de ${connections.length} conexões encontradas.`);
+            console.log("[IntegSvc GoogleContactsList] DEBUG: URL FINAL SENDO CHAMADA PELO AXIOS:", apiUrl);
 
-    // 4. Mapear para um formato mais simples para o frontend
-    return connections.map(person => ({
-        googleContactId: person.resourceName,
-        displayName: person.names?.[0]?.displayName || 'Nome não disponível',
-        email: person.emailAddresses?.[0]?.value || null,
-        phone: person.phoneNumbers?.[0]?.value || null,
-        notes: person.biographies?.find(b => b.contentType === 'TEXT_PLAIN')?.value || null,
-        organization: person.organizations?.[0]?.name || null
-    })).filter(contact => contact.displayName !== 'Nome não disponível' || contact.email || contact.phone);
+            const requestConfig = {
+                headers: { Authorization: `Bearer ${accessToken}` }
+                // O objeto 'params' não é mais necessário aqui, pois a URL está completa
+            };
+            // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-} catch (apiError) {
-    console.error("[IntegSvc GoogleContactsList] Erro ao buscar contatos da People API:", apiError.response?.data?.error || apiError.message);
-    throw new Error("Falha ao buscar contatos do Google.");
-}
+            const response = await axios.get(apiUrl, requestConfig); // Chama com a URL construída manualmente
+
+            if (response.data.connections) {
+                connections = connections.concat(response.data.connections);
+            }
+            nextPageToken = response.data.nextPageToken;
+        } while (nextPageToken);
+
+        console.log(`[IntegSvc GoogleContactsList] Total de ${connections.length} conexões encontradas.`);
+
+        // Mapear para um formato mais simples (como antes)
+        return connections.map(person => ({
+            googleContactId: person.resourceName, // Usa resourceName (camelCase) aqui
+            displayName: person.names?.[0]?.displayName || 'Nome não disponível',
+            email: person.emailAddresses?.[0]?.value || null,
+            phone: person.phoneNumbers?.[0]?.value || null,
+            notes: person.biographies?.find(b => b.contentType === 'TEXT_PLAIN')?.value || null,
+            organization: person.organizations?.[0]?.name || null
+        })).filter(contact => contact.displayName !== 'Nome não disponível' || contact.email || contact.phone);
+
+    } catch (apiError) {
+        console.error("[IntegSvc GoogleContactsList] Erro detalhado ao buscar contatos da People API:", 
+            apiError.response ? JSON.stringify(apiError.response.data, null, 2) : apiError.message
+        );
+        throw new Error("Falha ao buscar contatos do Google.");
+    }
 };
 
 
