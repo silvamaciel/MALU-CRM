@@ -261,6 +261,31 @@ function IntegrationsPage() {
     }
   }, [fetchFacebookStatus]);
 
+
+
+  const handleSyncGoogleContacts = useCallback(async () => {
+        setIsSyncingGoogleContacts(true);
+        setGoogleError(null); // Limpa erros anteriores do Google
+        toast.info("Iniciando sincronização de contatos do Google...");
+        try {
+            const result = await syncGoogleContactsApi(); 
+            toast.success(result.message || "Sincronização concluída!");
+            if (result.summary) {
+                toast.info(
+                    `Resumo: ${result.summary.leadsImported} leads importados, ${result.summary.duplicatesSkipped} duplicados pulados, ${result.summary.othersSkipped} outros pulados (de ${result.summary.totalContactsProcessed} contatos processados).`
+                , { autoClose: 7000 });
+            }
+        } catch (err) {
+            const errorMsg = err.error || err.message || "Falha ao sincronizar contatos do Google.";
+            setGoogleError(errorMsg);
+            toast.error(errorMsg);
+            console.error("Erro ao sincronizar contatos Google:", err);
+        } finally {
+            setIsSyncingGoogleContacts(false);
+        }
+    }, []);
+
+
   // --- Renderização ---
 
   console.log("DEBUG RENDER: isLoadingStatus:", isLoadingStatus);
