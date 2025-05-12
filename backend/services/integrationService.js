@@ -9,6 +9,7 @@ const LeadService = require('./LeadService');
 const Origem = require('../models/origem'); 
 const { PhoneNumberUtil, PhoneNumberFormat: PNF } = require('google-libphonenumber');
 const phoneUtil = PhoneNumberUtil.getInstance();
+const { OAuth2Client } = require('google-auth-library');
 
 
 
@@ -429,10 +430,93 @@ const importGoogleContactsAsLeads = async (userId, companyId) => {
 
 
 
+/**
+ * Lista contatos do Google do usuário para seleção no frontend.
+ * @param {string} userId - ID do usuário CRM.
+ * @returns {Promise<Array>} - Array de contatos simplificados.
+ */
+const listGoogleContacts = async (userId) => {
+  if (!userId) {
+      throw new Error("UserID é obrigatório para listar contatos do Google.");
+  }
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) { // Reutilizando constantes globais do módulo
+       throw new Error("Credenciais Google não configuradas no servidor.");
+  }
+  console.log(`[IntegSvc GoogleContactsList] Iniciando listagem para User ${userId}`);
+
+  // 1. Obter o refresh token do usuário
+  const crmUser = await User.findById(userId).select('+googleRefreshToken');
+  if (!crmUser || !crmUser.googleRefreshToken) {
+      throw new Error("Usuário não conectado ao Google ou sem permissão de refresh token. Por favor, conecte/reconecte na página de integrações.");
+  }
+
+  // 2. Configurar o cliente OAuth2 e obter um novo Access Token
+  const oauth2Client = new OAuth2Client(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_OAUTH_REDIRECT_URI);
+  oauth2Client.setCredentials({ refresh_token: crmUser.googleRefreshToken });
+
+  let accessToken;
+  try {
+      const tokenResponse = await oauth2Client.getAccessToken();
+      accessToken = tokenResponse.token;
+      if (!accessToken) throw new Error("Não foi possível obter Access Token do Google.");
+      console.log("[IntegSvc GoogleContactsList] Novo Access Token obtido para listar.");
+  } catch (tokenError) {
+      console.error("[IntegSvc GoogleContactsList] Erro ao obter Access Token:", tokenError.response?.data || tokenError.message);
+      throw new Error("Falha ao obter autorização do Google. Tente reconectar sua conta Google.");
+  }
+
+  // 3. Chamar Google People API para listar contatos
+  let connections = [];
+  let nextPageToken = null;
+  // Campos que queremos para exibir na seleção e para posterior importação
+  const personFields = "resourceName,names,emailAddresses,phoneNumbers,biographies,organizations";
+  console.log("[IntegSvc GoogleContactsList] Buscando conexões na People API...");
+
+  try {
+      do {
+          const params = { personFields, pageSize: 200 }; // pageSize pode ser ajustado
+          if (nextPageToken) params.pageToken = nextPageToken;
+
+          const response = await axios.get('https://people.googleapis.com/v1/people/me/connections', {
+              headers: { Authorization: `Bearer ${accessToken}` },
+              params: params
+          });
+
+          if (response.data.connections) {
+              connections = connections.concat(response.data.connections);
+          }
+          nextPageToken = response.data.nextPageToken;
+      } while (nextPageToken); // Continua se houver mais páginas de resultados
+
+      console.log(`[IntegSvc GoogleContactsList] Total de ${connections.length} conexões encontradas.`);
+
+      // 4. Mapear para um formato mais simples para o frontend
+      return connections.map(person => ({
+          // resourceName é o ID estável do contato na People API
+          googleContactId: person.resourceName,
+          displayName: person.names?.[0]?.displayName || 'Nome não disponível',
+          // Pega o primeiro email e telefone, idealmente o primário (a API pode retornar múltiplos)
+          email: person.emailAddresses?.[0]?.value || null,
+          phone: person.phoneNumbers?.[0]?.value || null,
+          // Pega a primeira nota/biografia
+          notes: person.biographies?.find(b => b.contentType === 'TEXT_PLAIN')?.value || null,
+          // Pega a primeira organização
+          organization: person.organizations?.[0]?.name || null
+      })).filter(contact => contact.displayName !== 'Nome não disponível' || contact.email || contact.phone); // Filtra contatos sem nome, email ou telefone
+
+  } catch (apiError) {
+      console.error("[IntegSvc GoogleContactsList] Erro ao buscar contatos da People API:", apiError.response?.data?.error || apiError.message);
+      throw new Error("Falha ao buscar contatos do Google.");
+  }
+};
+
+
+
 
 module.exports = {
   connectFacebookPageIntegration,
   getFacebookIntegrationStatus,
   disconnectFacebookPageIntegration,
-  importGoogleContactsAsLeads
+  importGoogleContactsAsLeads,
+  listGoogleContacts,
 };
