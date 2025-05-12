@@ -8,6 +8,7 @@ import {
   connectFacebookPage,
   getFacebookConnectionStatus,
   disconnectFacebookPage,
+  syncGoogleContactsApi,
 } from "../../api/integrations";
 import "./IntegrationsPage.css";
 
@@ -25,6 +26,8 @@ function IntegrationsPage() {
   // Google States
   const [isConnectingGoogle, setIsConnectingGoogle] = useState(false);
   const [googleError, setGoogleError] = useState(null);
+  const [isSyncingGoogleContacts, setIsSyncingGoogleContacts] = useState(false);
+
 
   // Facebook States
   const [isConnectingFb, setIsConnectingFb] = useState(false); // Usado para qualquer ação FB
