@@ -477,7 +477,7 @@ const listGoogleContacts = async (userId) => {
         const params = { personFields, pageSize: 200 }; 
         if (nextPageToken) params.pageToken = nextPageToken;
 
-        console.log("[IntegSvc GoogleContactsList] DEBUG: Configuração da Requisição Axios (params):", JSON.stringify(paramsForApi, null, 2));
+        console.log("[IntegSvc GoogleContactsList] DEBUG: Configuração da Requisição Axios (params):", JSON.stringify(params, null, 2));
         console.log("[IntegSvc GoogleContactsList] DEBUG: URL que será chamada (aproximada):", `https://people.googleapis.com/v1/people/me/connections?personFields=<span class="math-inline">\{encodeURIComponent\(personFields\)\}&pageSize\=200</span>{nextPageToken ? '&pageToken='+nextPageToken : ''}`);
 
         const response = await axios.get('https://people.googleapis.com/v1/people/me/connections', {
