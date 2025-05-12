@@ -122,5 +122,6 @@ module.exports = {
     connectFacebookPage,
     getFacebookStatus,
     disconnectFacebook,
-    syncGoogleContacts
+    syncGoogleContacts,
+    listGoogleContactsController
 };
