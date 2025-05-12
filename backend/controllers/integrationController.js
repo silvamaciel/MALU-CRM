@@ -94,6 +94,30 @@ const syncGoogleContacts = async (req, res) => {
 };
 
 
+
+/**
+ * Controller para Listar contatos do Google
+ */
+const listGoogleContactsController = async (req, res) => {
+    console.log("[IntegCtrl] Recebido GET /api/integrations/google/list-contacts");
+    const userId = req.user?._id; // Usuário que iniciou a sincronização
+
+    if (!userId) {
+        return res.status(401).json({ error: 'Usuário não identificado.' });
+    }
+    try {
+        const contacts = await integrationService.listGoogleContacts(userId);
+        res.status(200).json(contacts); // Retorna array de contatos
+    } catch (error) {
+        console.error("[IntegCtrl] Erro ao listar contatos Google:", error.message);
+        const statusCode = error.message.includes("não conectado ao Google") || error.message.includes("Falha ao obter autorização") ? 401 : 400;
+        res.status(statusCode).json({ error: error.message || 'Falha ao listar contatos do Google.' });
+    }
+};
+
+
+
+
 module.exports = {
     connectFacebookPage,
     getFacebookStatus,
