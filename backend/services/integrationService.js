@@ -2,7 +2,16 @@
 const axios = require("axios");
 const Company = require("../models/Company");
 const mongoose = require("mongoose");
-// const crypto = require("crypto"); // Removido pois não estamos mais gerando tokens de webhook por empresa aqui
+const { OAuth2Client } = require('google-auth-library');
+const User = require('../models/User'); 
+const Lead = require('../models/Lead');
+const LeadService = require('./LeadService'); 
+const Origem = require('../models/origem'); 
+const { PhoneNumberUtil, PhoneNumberFormat: PNF } = require('google-libphonenumber');
+const phoneUtil = PhoneNumberUtil.getInstance();
+
+
+
 
 // <<< Lendo variáveis de ambiente do backend diretamente
 const FACEBOOK_APP_ID = process.env.REACT_APP_FACEBOOK_APP_ID;
@@ -262,6 +271,8 @@ const disconnectFacebookPageIntegration = async (companyId) => {
       throw new Error(error.message || "Erro ao desconectar página do Facebook.");
   }
 };
+
+
 
 module.exports = {
   connectFacebookPageIntegration,
