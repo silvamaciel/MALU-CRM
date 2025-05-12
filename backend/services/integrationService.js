@@ -12,12 +12,14 @@ const phoneUtil = PhoneNumberUtil.getInstance();
 
 
 
-
 // <<< Lendo variáveis de ambiente do backend diretamente
 const FACEBOOK_APP_ID = process.env.REACT_APP_FACEBOOK_APP_ID;
 const FB_APP_SECRET = process.env.FB_APP_SECRET;
 const GRAPH_API_VERSION = "v22.0";
 const WEBHOOK_RECEIVER_URL_FROM_ENV = process.env.FB_WEBHOOK_RECEIVER_URL;
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const GOOGLE_OAUTH_REDIRECT_URI = process.env.GOOGLE_OAUTH_REDIRECT_URI || 'https://malucrm.vercel.app'; 
 
 // Verificações de inicialização
 if (!FACEBOOK_APP_ID || !FB_APP_SECRET) {
