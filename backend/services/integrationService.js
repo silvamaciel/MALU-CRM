@@ -372,20 +372,24 @@ const importGoogleContactsAsLeads = async (userId, companyId) => {
       }
 
       let formattedPhone;
+      const rawPhone = googlePhoneObj.value;
       try {
-          const phoneNumber = phoneUtil.parseAndKeepRawInput(googlePhoneObj.value, null);
-          if (phoneUtil.isValidNumber(phoneNumber)) {
-              formattedPhone = phoneUtil.format(phoneNumber, PNF.E164);
-          } else {
-              console.log(`[IntegSvc GoogleContacts] Telefone inválido ou não formatável para ${googleName}: ${googlePhoneObj.value}. Pulando.`);
-              skippedCount++;
-              continue;
-          }
-      } catch (e) {
-          console.log(`[IntegSvc GoogleContacts] Erro ao formatar telefone para ${googleName}: ${googlePhoneObj.value}. Pulando. Erro: ${e.message}`);
-          skippedCount++;
-          continue;
-      }
+        let phoneNumber;
+        phoneNumber = phoneUtil.parseAndKeepRawInput(rawPhone, 'BR');
+
+        if (phoneUtil.isValidNumber(phoneNumber)) {
+            formattedPhone = phoneUtil.format(phoneNumber, PNF.E164); // Formata para +55...
+            console.log(`[IntegSvc GoogleContacts] Telefone formatado para ${googleName || 'Contato Desconhecido'}: ${rawPhone} -> ${formattedPhone}`);
+        } else {
+            console.log(`[IntegSvc GoogleContacts] Telefone do Google Contato não é válido (${rawPhone}) para ${googleName || 'Contato Desconhecido'}. Pulando este contato.`);
+            skippedCount++;
+            continue; 
+        }
+    } catch (e) {
+        console.log(`[IntegSvc GoogleContacts] Erro ao processar/parsear telefone '${rawPhone}' para ${googleName || 'Contato Desconhecido'}. Pulando. Erro: ${e.message}`);
+        skippedCount++;
+        continue; // Pula para o próximo contato do Google
+    }
 
       // Verificar duplicidade pelo telefone formatado
       const existingLead = await Lead.findOne({ contato: formattedPhone, company: companyId }).lean();
