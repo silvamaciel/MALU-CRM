@@ -468,7 +468,7 @@ const listGoogleContacts = async (userId) => {
   let connections = [];
   let nextPageToken = null;
   // Campos que queremos para exibir na seleção e para posterior importação
-  const personFields = "names,emailAddresses";
+  const personFields = "names,emailAddresses,resourceName";
   console.log("[IntegSvc GoogleContactsList] Buscando conexões na People API com personFields:", personFields); // Adicione este log para confirmar
 
 
