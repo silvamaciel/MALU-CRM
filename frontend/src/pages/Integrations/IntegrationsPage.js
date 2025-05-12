@@ -337,6 +337,19 @@ function IntegrationsPage() {
               ? "Conectando..."
               : "Conectar / Atualizar Permissões Google"}
           </button>
+
+            {/* Mostra apenas se o botão de conectar NÃO estiver em loading */}
+            {!isConnectingGoogle && (
+                         <button
+                            onClick={handleSyncGoogleContacts}
+                            className="button submit-button"
+                            style={{ marginTop: '10px' }}
+                            disabled={isSyncingGoogleContacts} 
+                        >
+                            {isSyncingGoogleContacts ? 'Sincronizando Contatos...' : 'Sincronizar Contatos do Google'}
+                        </button>
+            )}
+
           {googleError && (
             <p className="error-message" style={{ marginTop: "1rem" }}>
               {googleError}
