@@ -5,7 +5,7 @@ console.log("--- INÍCIO VERIFICAÇÃO VARIÁVEIS DE AMBIENTE (server.js) ---");
 console.log("GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID);
 console.log("GOOGLE_CLIENT_SECRET EXISTE?:", process.env.GOOGLE_CLIENT_SECRET ? 'Sim, configurado' : 'NÃO CONFIGURADO ou VAZIO');
 console.log("GOOGLE_OAUTH_REDIRECT_URI:", process.env.GOOGLE_OAUTH_REDIRECT_URI);
-console.log("FACEBOOK_APP_ID (do backend):", process.env.REACT_APP_FACEBOOK_APP_I); 
+console.log("FACEBOOK_APP_ID (do backend):", process.env.REACT_APP_FACEBOOK_APP_ID); 
 console.log("FB_APP_SECRET EXISTE?:", process.env.FB_APP_SECRET ? 'Sim, configurado' : 'NÃO CONFIGURADO ou VAZIO');
 console.log("FB_VERIFY_TOKEN:", process.env.FB_VERIFY_TOKEN);
 console.log("FB_WEBHOOK_RECEIVER_URL:", process.env.FB_WEBHOOK_RECEIVER_URL);
