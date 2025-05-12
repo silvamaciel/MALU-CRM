@@ -13,5 +13,7 @@ router.get('/facebook/status', protect, integrationController.getFacebookStatus)
 
 router.post('/facebook/disconnect', protect, integrationController.disconnectFacebook);
 
+router.post('/google/sync-contacts', protect, integrationController.syncGoogleContacts);
+
 
 module.exports = router;
