@@ -295,27 +295,37 @@ function IntegrationsPage() {
 
     // modal para abrir e ver contatos para selecionar
     const handleOpenGoogleContactsModal = useCallback(async () => {
-        setIsLoadingGoogleContacts(true); // Loading para a lista dentro do modal
+        console.log("DEBUG MODAL: handleOpenGoogleContactsModal - INÍCIO"); // Log 1
+        setIsLoadingGoogleContacts(true);
         setGoogleError(null);
         setGoogleContactsList([]); // Limpa lista antiga
         setSelectedGoogleContacts({}); // Limpa seleção antiga
-        toast.info("Buscando seus contatos do Google...");
+        toast.info("Buscando seus contatos do Google..."); // Mantém o toast
+    
         try {
+            console.log("DEBUG MODAL: Antes de chamar listGoogleContactsApi"); // Log 2
             const contacts = await listGoogleContactsApi(); // Chama API para listar
+            // VVVVV LOG DETALHADO DA RESPOSTA DA API VVVVV
+            console.log("DEBUG MODAL: Contatos recebidos de listGoogleContactsApi:", JSON.stringify(contacts, null, 2)); // Log 3
+            // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    
             if (contacts && contacts.length > 0) {
                 setGoogleContactsList(contacts);
+                console.log("DEBUG MODAL: Definindo isGoogleContactsModalOpen para TRUE"); // Log 4
                 setIsGoogleContactsModalOpen(true); // Abre o modal com os contatos
             } else {
                 toast.info("Nenhum contato encontrado na sua conta Google ou você não concedeu permissão.");
-                setGoogleContactsList([]);
+                setGoogleContactsList([]); // Garante que está vazio
+                console.log("DEBUG MODAL: Nenhum contato retornado pela API, modal NÃO será aberto."); // Log 5
             }
         } catch (err) {
             const errorMsg = err.error || err.message || "Falha ao buscar contatos do Google.";
             setGoogleError(errorMsg);
             toast.error(errorMsg);
-            console.error("Erro ao buscar contatos Google para modal:", err);
+            console.error("DEBUG MODAL: ERRO ao buscar contatos Google para modal:", err); // Log ERRO
         } finally {
             setIsLoadingGoogleContacts(false);
+            console.log("DEBUG MODAL: Finalizando handleOpenGoogleContactsModal, isLoadingGoogleContacts=false"); // Log 6
         }
     }, []);
 
