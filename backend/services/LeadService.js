@@ -298,6 +298,8 @@ const createLead = async (leadData, companyId, userId) => {
     company: companyId, // Associa à empresa
   });
 
+  console.log("[createLead DEBUG] Objeto Lead PRESTES A SALVAR:", JSON.stringify(novoLead.toObject(), null, 2));
+
   // 6. Salvar
   try {
     const leadSalvo = await novoLead.save();
