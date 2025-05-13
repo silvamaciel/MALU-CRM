@@ -390,14 +390,7 @@ function IntegrationsPage() {
             <li>Salvar/Buscar contatos</li>
             <li>Anexar arquivos (futuro)</li>
           </ul>
-
-          <button
-            onClick={handleOpenGoogleContactsModal} // <<< CHAMA A NOVA FUNÇÃO
-            className="button submit-button"
-            style={{ marginTop: '10px' }}
-            disabled={isConnectingGoogle || isLoadingGoogleContacts || isSyncingGoogleContacts} // Desabilita em vários loadings
-          >
-          {isLoadingGoogleContacts ? 'Buscando Contatos...' : 'Importar Contatos do Google'}            </button>
+          
           <button
             onClick={() => connectGoogle()}
             className="button google-connect-button"
@@ -407,6 +400,15 @@ function IntegrationsPage() {
               ? "Conectando..."
               : "Conectar / Atualizar Permissões Google"}
           </button>
+
+          <button
+            onClick={handleOpenGoogleContactsModal} // <<< CHAMA A NOVA FUNÇÃO
+            className="button submit-button"
+            style={{ marginTop: '10px' }}
+            disabled={isConnectingGoogle || isLoadingGoogleContacts || isSyncingGoogleContacts} // Desabilita em vários loadings
+          >
+          {isLoadingGoogleContacts ? 'Buscando Contatos...' : 'Importar Contatos do Google'}            </button>
+          
 
             {/* Mostra apenas se o botão de conectar NÃO estiver em loading */}
             {!isConnectingGoogle && (
