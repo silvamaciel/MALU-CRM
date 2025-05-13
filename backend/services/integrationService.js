@@ -460,12 +460,17 @@ const listGoogleContacts = async (userId, companyId) => {
 
   let googleConnections = [];
   let nextPageToken = null;
-  const personFields = "names,emailAddresses,phoneNumbers,biographies,organizations,metadata"; // Adicionado metadata para pegar source do ID
+  const personFields = "names,emailAddresses,phoneNumbers,biographies,organizations";
+   
   console.log("[IntegSvc GoogleContactsList] Buscando conexões na People API com personFields:", personFields);
 
   try {
       do {
-          const params = { personFields, pageSize: 200, sources: ['READ_SOURCE_TYPE_CONTACT'] }; // Pega apenas contatos reais
+        const params = { 
+          personFields: personFields,
+          pageSize: 200,
+          sources: 'READ_SOURCE_TYPE_CONTACT' 
+      };
           if (nextPageToken) params.pageToken = nextPageToken;
           const response = await axios.get('https://people.googleapis.com/v1/people/me/connections', {
               headers: { Authorization: `Bearer ${accessToken}` },
