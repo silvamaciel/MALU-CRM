@@ -82,7 +82,7 @@ export const syncGoogleContactsApi = async () => {
 export const listGoogleContactsApi = async () => {
     try {
         // Chama o endpoint GET /api/integrations/google/list-contacts
-        const response = await axiosInstance.get(`${API_URL_BASE}/google/list-contacts`);
+        const response = await axiosInstance.get(`${API_URL}/google/list-contacts`);
         // O backend retorna um array de contatos ou um erro.
         return Array.isArray(response.data) ? response.data : []; // Garante que retorna um array
     } catch (error) {
