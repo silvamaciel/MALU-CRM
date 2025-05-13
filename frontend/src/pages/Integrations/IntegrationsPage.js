@@ -390,7 +390,7 @@ function IntegrationsPage() {
             <li>Salvar/Buscar contatos</li>
             <li>Anexar arquivos (futuro)</li>
           </ul>
-          
+
           <button
             onClick={() => connectGoogle()}
             className="button google-connect-button"
@@ -418,7 +418,7 @@ function IntegrationsPage() {
                             style={{ marginTop: '10px' }}
                             disabled={isSyncingGoogleContacts} 
                         >
-                            {isSyncingGoogleContacts ? 'Sincronizando Contatos...' : 'Sincronizar Contatos do Google'}
+                            {isSyncingGoogleContacts ? 'Sincronizando Contatos...' : 'Sincronizar TODOS os Contatos do Google'}
                         </button>
             )}
 
