@@ -653,6 +653,48 @@ const processSelectedGoogleContacts = async (userId, companyId, selectedContacts
 
 
 
+/**
+ * Lista os formulários de Lead Ad de uma Página do Facebook conectada.
+ * @param {string} companyId - ID da Empresa CRM.
+ * @param {string} pageId - ID da Página do Facebook.
+ * @returns {Promise<Array>} - Array de objetos de formulário (id, name, status, etc.).
+ */
+const listFormsForFacebookPage = async (companyId, pageId) => {
+  if (!companyId || !pageId) {
+      throw new Error("Company ID e Page ID são necessários para listar formulários.");
+  }
+  if (!FACEBOOK_APP_ID || !FB_APP_SECRET) {
+      throw new Error("Configuração do servidor para Facebook incompleta.");
+  }
+  console.log(`[IntegSvc ListForms] Buscando formulários para Page ${pageId}, Company ${companyId}`);
+
+  try {
+      const company = await Company.findById(companyId).select('+facebookPageAccessToken').lean();
+      if (!company || !company.facebookPageAccessToken || company.facebookPageId !== pageId) {
+          throw new Error("Página não conectada corretamente a esta empresa ou token de acesso da página ausente.");
+      }
+
+      const response = await axios.get(
+          `https://graph.facebook.com/<span class="math-inline">\{GRAPH\_API\_VERSION\}/</span>{pageId}/leadgen_forms`,
+          {
+              params: {
+                  fields: 'id,name,status,locale,created_time', 
+                  access_token: company.facebookPageAccessToken 
+              }
+          }
+      );
+
+      const forms = Array.isArray(response.data?.data) ? response.data.data : [];
+      console.log(`[IntegSvc ListForms] Encontrados ${forms.length} formulários para Page ${pageId}.`);
+      return forms;
+
+  } catch (error) {
+      const fbError = error.response?.data?.error;
+      console.error(`[IntegSvc ListForms] Erro ao buscar formulários para Page ${pageId}:`, fbError || error.message);
+      throw new Error(fbError?.message || "Erro ao buscar formulários da página do Facebook.");
+  }
+};
+
 module.exports = {
   connectFacebookPageIntegration,
   getFacebookIntegrationStatus,
