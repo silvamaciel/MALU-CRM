@@ -31,7 +31,10 @@ async function seedDiscardReasons() {
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(process.env.MONGO_URI, {
+      autoIndex: false,
+    });
+    
     console.log('MongoDB conectado com sucesso!');
 
     // await seedDiscardReasons();
