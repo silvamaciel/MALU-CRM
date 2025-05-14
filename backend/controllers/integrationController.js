@@ -117,6 +117,33 @@ const listGoogleContactsController = async (req, res) => {
 };
 
 
+/**
+ * Controller para PROCESSAR Contatos Google SELECIONADOS
+ */
+const importSelectedGoogleContactsController = async (req, res) => {
+    console.log("[IntegCtrl] Recebido POST /api/integrations/google/import-selected-contacts");
+    const userId = req.user?._id;
+    const companyId = req.user?.company;
+    const { selectedContacts } = req.body; // Espera um array de contatos no corpo
+
+    if (!userId || !companyId) {
+        return res.status(401).json({ error: 'Usuário ou Empresa não identificada.' });
+    }
+    if (!Array.isArray(selectedContacts) || selectedContacts.length === 0) {
+        return res.status(400).json({ error: 'Nenhum contato selecionado para importação.' });
+    }
+
+    try {
+        const summary = await integrationService.processSelectedGoogleContacts(userId, companyId, selectedContacts);
+        res.status(200).json({ message: "Importação de contatos do Google processada.", summary });
+    } catch (error) {
+        console.error("[IntegCtrl] Erro ao processar contatos Google selecionados:", error.message);
+        const statusCode = error.message.includes("não conectado ao Google") || error.message.includes("Falha ao obter autorização") ? 401 : 400;
+        res.status(statusCode).json({ error: error.message || 'Falha ao processar contatos selecionados.' });
+    }
+};
+
+
 
 
 module.exports = {
@@ -124,5 +151,6 @@ module.exports = {
     getFacebookStatus,
     disconnectFacebook,
     syncGoogleContacts,
-    listGoogleContactsController
+    listGoogleContactsController,
+    importSelectedGoogleContactsController
 };
