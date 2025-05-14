@@ -36,6 +36,11 @@ const companySchema = new Schema(
       unique: true,   
       sparse: true    
       },
+
+      linkedFacebookForms: [{ 
+        formId: { type: String, required: true },
+        formName: { type: String } 
+    }],
     
     facebookWebhookSubscriptionId: {
       type: String,
