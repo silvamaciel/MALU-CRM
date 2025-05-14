@@ -17,6 +17,9 @@ router.post('/google/sync-contacts', protect, integrationController.syncGoogleCo
 
 router.get('/google/list-contacts', protect, integrationController.listGoogleContactsController);
 
+router.post('/google/import-selected-contacts', protect, integrationController.importSelectedGoogleContactsController);
+
+
 
 
 module.exports = router;
