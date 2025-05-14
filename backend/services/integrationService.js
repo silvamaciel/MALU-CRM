@@ -701,5 +701,6 @@ module.exports = {
   disconnectFacebookPageIntegration,
   importGoogleContactsAsLeads,
   listGoogleContacts,
-  processSelectedGoogleContacts
+  processSelectedGoogleContacts,
+  listFormsForFacebookPage
 };
