@@ -554,6 +554,104 @@ const listGoogleContacts = async (userId, companyId) => {
 };
 
 
+/**
+ * Processa uma lista de contatos do Google selecionados e tenta criar Leads.
+ * @param {string} userId - ID do usuário CRM realizando a importação.
+ * @param {string} companyId - ID da empresa CRM para associar os leads.
+ * @param {Array<object>} selectedContacts - Array de contatos (com displayName, email, phone, notes, organization).
+ * @returns {Promise<object>} - Resumo da importação.
+ */
+const processSelectedGoogleContacts = async (userId, companyId, selectedContacts) => {
+  if (!userId || !companyId) {
+      throw new Error("UserID e CompanyID são obrigatórios.");
+  }
+  if (!Array.isArray(selectedContacts) || selectedContacts.length === 0) {
+      return { message: "Nenhum contato selecionado para importação.", summary: { leadsImported: 0, duplicatesSkipped: 0, errorsEncountered: 0, totalProcessed: 0 }};
+  }
+  console.log(`[IntegSvc ProcSelect] Iniciando processamento de ${selectedContacts.length} contatos selecionados para User ${userId}, Company ${companyId}`);
+
+  // 1. Buscar/Criar Origem "Contatos Google" (igual ao listGoogleContacts)
+  const defaultOriginName = "Contatos Google";
+  let crmOrigin;
+  try {
+      crmOrigin = await Origem.findOneAndUpdate(
+          { company: companyId, nome: { $regex: new RegExp(`^${defaultOriginName}$`, 'i') } },
+          { $setOnInsert: { nome: defaultOriginName, company: companyId, ativo: true, descricao: "Leads importados do Google Contacts." } },
+          { new: true, upsert: true, runValidators: true }
+      ).lean();
+      if (!crmOrigin) throw new Error("Falha crítica ao obter/criar origem padrão.");
+      console.log(`[IntegSvc ProcSelect] Usando Origem '${defaultOriginName}': ${crmOrigin._id}`);
+  } catch (originError) {
+      console.error(`[IntegSvc ProcSelect] Falha ao obter/criar origem '${defaultOriginName}':`, originError);
+      throw new Error(`Falha ao configurar origem padrão '${defaultOriginName}'.`);
+  }
+
+  let importedCount = 0;
+  let duplicateCount = 0;
+  let errorCount = 0;
+
+  for (const contact of selectedContacts) {
+      if (!contact.displayName || !contact.phone) {
+          console.log(`[IntegSvc ProcSelect] Contato pulado (sem nome ou telefone): ${contact.displayName || 'Sem nome'}`);
+          errorCount++; // Ou um contador de 'skipped_invalid_data'
+          continue;
+      }
+
+      let formattedPhone;
+      try {
+          const phoneNumber = phoneUtil.parseAndKeepRawInput(contact.phone, 'BR');
+          if (phoneUtil.isValidNumber(phoneNumber)) {
+              formattedPhone = phoneUtil.format(phoneNumber, PNF.E164);
+          } else {
+              console.log(`[IntegSvc ProcSelect] Telefone inválido (${contact.phone}) para ${contact.displayName}. Pulando.`);
+              errorCount++;
+              continue;
+          }
+      } catch (e) {
+          console.log(`[IntegSvc ProcSelect] Erro ao formatar telefone '${contact.phone}' para ${contact.displayName}. Pulando. Erro: ${e.message}`);
+          errorCount++;
+          continue;
+      }
+
+      // Verificar duplicidade pelo telefone formatado
+      const existingLead = await Lead.findOne({ contato: formattedPhone, company: companyId }).lean();
+      if (existingLead) {
+          console.log(`[IntegSvc ProcSelect] Duplicado (telefone ${formattedPhone}) para ${contact.displayName}. Pulando.`);
+          duplicateCount++;
+          continue;
+      }
+
+      // Preparar dados do Lead
+      const leadData = {
+          nome: contact.displayName,
+          contato: formattedPhone,
+          email: contact.email || null,
+          origem: crmOrigin._id,
+          comentario: contact.notes || (contact.organization ? `Empresa do Contato: ${contact.organization}` : null),
+          // Situação e Responsável serão definidos pelos defaults do LeadService.createLead
+          // ou podemos definir responsavel: userId aqui explicitamente.
+      };
+
+      try {
+          await LeadService.createLead(leadData, companyId, userId); // Passa userId como criador/responsável padrão
+          importedCount++;
+      } catch (createError) {
+          console.error(`[IntegSvc ProcSelect] Erro ao criar Lead para ${contact.displayName}:`, createError);
+          errorCount++;
+      }
+  }
+
+  const summary = {
+      totalProcessed: selectedContacts.length,
+      leadsImported: importedCount,
+      duplicatesSkipped: duplicateCount,
+      errorsEncountered: errorCount
+  };
+  console.log("[IntegSvc ProcSelect] Processamento de contatos selecionados concluído:", summary);
+  return summary;
+};
+
+
 
 module.exports = {
   connectFacebookPageIntegration,
@@ -561,4 +659,5 @@ module.exports = {
   disconnectFacebookPageIntegration,
   importGoogleContactsAsLeads,
   listGoogleContacts,
+  processSelectedGoogleContacts
 };
