@@ -108,7 +108,7 @@ export const processSelectedGoogleContactsApi = async (selectedContactsData) => 
     try {
         // Chama o endpoint POST /api/integrations/google/import-selected-contacts
         // O backend espera um objeto com uma chave 'selectedContacts' contendo o array
-        const response = await axiosInstance.post(`${API_URL_BASE}/google/import-selected-contacts`, {
+        const response = await axiosInstance.post(`${API_URL}/google/import-selected-contacts`, {
             selectedContacts: selectedContactsData // Envia os dados no corpo da requisição
         });
         return response.data; // Espera { message, summary: { ... } }
