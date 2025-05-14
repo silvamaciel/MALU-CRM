@@ -92,3 +92,28 @@ export const listGoogleContactsApi = async () => {
     }
 };
 
+
+/**
+ * Envia uma lista de contatos do Google selecionados para o backend processar e criar Leads.
+ * @param {Array<object>} selectedContactsData - Array de objetos de contato para importar.
+ * @returns {Promise<object>} Resposta do backend com o resumo da importação.
+ */
+export const processSelectedGoogleContactsApi = async (selectedContactsData) => {
+    if (!Array.isArray(selectedContactsData) || selectedContactsData.length === 0) {
+        // Lança um erro ou retorna um objeto indicando que nada foi enviado
+        // throw new Error("Nenhum contato selecionado fornecido para importação.");
+        console.warn("processSelectedGoogleContactsApi: Nenhum contato selecionado para enviar.");
+        return { message: "Nenhum contato selecionado.", summary: { leadsImported: 0, duplicatesSkipped: 0, errorsEncountered: 0, totalProcessed: 0 }};
+    }
+    try {
+        // Chama o endpoint POST /api/integrations/google/import-selected-contacts
+        // O backend espera um objeto com uma chave 'selectedContacts' contendo o array
+        const response = await axiosInstance.post(`${API_URL_BASE}/google/import-selected-contacts`, {
+            selectedContacts: selectedContactsData // Envia os dados no corpo da requisição
+        });
+        return response.data; // Espera { message, summary: { ... } }
+    } catch (error) {
+        console.error('Erro ao enviar contatos selecionados para importação:', error.response?.data || error.message);
+        throw error.response?.data || new Error('Falha ao processar importação de contatos selecionados.');
+    }
+};
