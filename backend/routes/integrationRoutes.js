@@ -19,6 +19,9 @@ router.get('/google/list-contacts', protect, integrationController.listGoogleCon
 
 router.post('/google/import-selected-contacts', protect, integrationController.importSelectedGoogleContactsController);
 
+router.get('/facebook/pages/:pageId/forms', protect, integrationController.listPageFormsController);
+
+
 
 
 
