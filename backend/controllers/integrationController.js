@@ -145,6 +145,33 @@ const importSelectedGoogleContactsController = async (req, res) => {
 
 
 
+/**
+ * Controller para Listar Formulários do Facebook Ads
+ */
+const listPageFormsController = async (req, res) => {
+    const { pageId } = req.params; // Pega o pageId da URL
+    const companyId = req.user?.company;
+    console.log(`[IntegCtrl ListForms] Recebido GET /api/integrations/facebook/pages/${pageId}/forms para Company ${companyId}`);
+
+    if (!companyId) {
+        return res.status(401).json({ error: 'Empresa do usuário não identificada.' });
+    }
+    if (!pageId) {
+        return res.status(400).json({ error: 'ID da Página do Facebook é obrigatório.' });
+    }
+
+    try {
+        const forms = await integrationService.listFormsForFacebookPage(companyId, pageId);
+        res.status(200).json(forms);
+    } catch (error) {
+        console.error(`[IntegCtrl ListForms] Erro ao listar formulários para Page ${pageId}:`, error.message);
+        const statusCode = error.message.includes("Página não conectada") ? 404 : 400;
+        res.status(statusCode).json({ error: error.message || 'Falha ao listar formulários da página.' });
+    }
+};
+
+
+
 
 module.exports = {
     connectFacebookPage,
@@ -152,5 +179,6 @@ module.exports = {
     disconnectFacebook,
     syncGoogleContacts,
     listGoogleContactsController,
-    importSelectedGoogleContactsController
+    importSelectedGoogleContactsController,
+    listPageFormsController
 };
