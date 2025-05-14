@@ -67,23 +67,7 @@ axiosInstance.interceptors.response.use(
   }
 );
 
-/**
- * Busca a lista de formulários de Lead Ad de uma Página do Facebook específica.
- * @param {string} pageId - O ID da Página do Facebook.
- * @returns {Promise<Array>} Um array de objetos de formulário (ex: {id, name, status}).
- */
-export const listFacebookPageFormsApi = async (pageId) => {
-  if (!pageId) {
-      throw new Error("ID da Página é necessário para listar formulários.");
-  }
-  try {
-      const response = await axiosInstance.get(`${API_URL_BASE}/facebook/pages/${pageId}/forms`);
-      return Array.isArray(response.data) ? response.data : [];
-  } catch (error) {
-      console.error(`Erro ao listar formulários para Page ID ${pageId}:`, error.response?.data || error.message);
-      throw error.response?.data || new Error('Falha ao buscar formulários da página.');
-  }
-};
+
 
 
 export default axiosInstance;
