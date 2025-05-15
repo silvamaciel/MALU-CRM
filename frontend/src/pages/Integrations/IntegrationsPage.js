@@ -109,8 +109,8 @@ function IntegrationsPage() {
         console.log(
           `[IntegrationsPage] Buscando formulários para Page ID: ${pageId}`
         );
-        const forms = await listFacebookPageFormsApi(pageId);
-        setPageForms(forms || []);
+        const formsFromApi = await listFacebookPageFormsApi(pageId);
+        setPageForms(formsFromApi || []);
 
         const initialSelected = {};
         if (
