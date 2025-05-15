@@ -157,7 +157,7 @@ const getFacebookIntegrationStatus = async (companyId) => {
   console.log(`[IntegSvc getStatus] Verificando status FB para Empresa ${companyId}`);
   try {
     const company = await Company.findById(companyId)
-      .select("nome facebookPageId facebookPageAccessToken") // Importante selecionar o token
+      .select("nome facebookPageId facebookPageAccessToken linkedFacebookForms") // Importante selecionar o token
       .lean();
 
     console.log(`[IntegSvc DEBUG getStatus] Company do DB:`, company ? JSON.stringify({_id: company._id, nome: company.nome, fbPageId: company.facebookPageId, hasFbToken: !!company.facebookPageAccessToken}) : null);
