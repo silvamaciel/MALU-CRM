@@ -756,5 +756,6 @@ module.exports = {
   importGoogleContactsAsLeads,
   listGoogleContacts,
   processSelectedGoogleContacts,
-  listFormsForFacebookPage
+  listFormsForFacebookPage,
+  saveLinkedFacebookForms
 };
