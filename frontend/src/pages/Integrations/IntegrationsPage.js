@@ -10,7 +10,9 @@ import {
   disconnectFacebookPage,
   syncGoogleContactsApi,
   listGoogleContactsApi,
-  processSelectedGoogleContactsApi
+  processSelectedGoogleContactsApi,
+  listFacebookPageFormsApi
+  
 } from "../../api/integrations";
 import "./IntegrationsPage.css";
 
@@ -46,6 +48,12 @@ function IntegrationsPage() {
   const [selectedPageId, setSelectedPageId] = useState("");
   const [isFetchingPages, setIsFetchingPages] = useState(false);
   const [isDisconnectingFb, setIsDisconnectingFb] = useState(false);
+
+  // States para Formulários do Facebook
+  const [pageForms, setPageForms] = useState([]);
+  const [isLoadingPageForms, setIsLoadingPageForms] = useState(false);
+  const [selectedFormIds, setSelectedFormIds] = useState({}); // { formId1: true, formId2: false }
+    
 
   // Persisted Facebook Connection Status
   const [persistedFbConnection, setPersistedFbConnection] = useState({
@@ -99,6 +107,11 @@ function IntegrationsPage() {
         "DEBUG: Estado persistedFbConnection APÓS set:",
         JSON.stringify(status, null, 2)
       );
+
+      if (status.isConnected && status.pageId) {
+        fetchPageForms(status.pageId);
+    }
+
     } catch (err) {
       console.error("Erro ao buscar status da integração FB:", err);
       toast.error(
@@ -112,7 +125,27 @@ function IntegrationsPage() {
     } finally {
       setIsLoadingStatus(false);
     }
-  }, []); // Roda uma vez no mount ou quando chamado
+  }, []);
+
+  // funcao para buscar formulários da página
+  const fetchPageForms = useCallback(async (pageId) => {
+    if (!pageId) { setPageForms([]); return; }
+    setIsLoadingPageForms(true);
+    setFbError(null); // Limpa erros anteriores de FB
+    try {
+        console.log(`[IntegrationsPage] Buscando formulários para Page ID: ${pageId}`);
+        const forms = await listFacebookPageFormsApi(pageId);
+        setPageForms(forms || []);
+        setSelectedFormIds({});
+    } catch (err) {
+        console.error(`Erro ao buscar formulários para Page ID ${pageId}:`, err);
+        toast.error(err.message || "Falha ao buscar formulários da página do Facebook.");
+        setPageForms([]);
+    } finally {
+        setIsLoadingPageForms(false);
+    }
+}, []);
+
 
   useEffect(() => {
     fetchFacebookStatus();
@@ -221,14 +254,14 @@ function IntegrationsPage() {
       );
       console.log("DEBUG HCS: Antes da chamada fetchFacebookStatus.");
 
-      await fetchFacebookStatus(); // <<< ATUALIZA O STATUS GERAL APÓS CONECTAR
+      await fetchFacebookStatus(); 
       console.log("DEBUG HCS: DEPOIS da chamada fetchFacebookStatus.");
       console.log(
         "DEBUG HCS: Resetando fbUserData, facebookPages, selectedPageId."
       );
 
-      setFbUserData(null); // <<< RESETA O FLUXO DE LOGIN FB
-      setFacebookPages([]); // Limpa lista de seleção
+      setFbUserData(null); 
+      setFacebookPages([]); 
       setSelectedPageId("");
       console.log("DEBUG HCS: FIM do bloco TRY.");
     } catch (err) {
@@ -271,7 +304,7 @@ function IntegrationsPage() {
   }, [fetchFacebookStatus]);
 
 
-    const handleSyncGoogleContacts = useCallback(async () => {
+  const handleSyncGoogleContacts = useCallback(async () => {
         setIsSyncingGoogleContacts(true);
         setGoogleError(null); // Limpa erros anteriores do Google
         toast.info("Iniciando sincronização de contatos do Google...");
@@ -293,10 +326,8 @@ function IntegrationsPage() {
         }
     }, []);
 
-
-
     // modal para abrir e ver contatos para selecionar
-    const handleOpenGoogleContactsModal = useCallback(async () => {
+  const handleOpenGoogleContactsModal = useCallback(async () => {
         setIsLoadingGoogleContacts(true);
         setGoogleError(null);
         setGoogleContactsList([]); // Limpa lista antiga
@@ -322,7 +353,7 @@ function IntegrationsPage() {
         }
     }, []);
 
-    const handleGoogleContactSelectionChange = (googleContactId) => {
+  const handleGoogleContactSelectionChange = (googleContactId) => {
         setSelectedGoogleContacts(prev => ({
             ...prev,
             [googleContactId]: !prev[googleContactId]
@@ -330,7 +361,7 @@ function IntegrationsPage() {
     };
 
     // Handler para importar os contatos SELECIONADOS
-    const handleImportSelectedGoogleContacts = useCallback(async () => {
+  const handleImportSelectedGoogleContacts = useCallback(async () => {
         const contactsToImportIds = Object.keys(selectedGoogleContacts).filter(id => selectedGoogleContacts[id]);
         if (contactsToImportIds.length === 0) {
             toast.warn("Nenhum contato selecionado para importação.");
@@ -369,6 +400,23 @@ function IntegrationsPage() {
             setIsProcessingImport(false);
         }
     }, [selectedGoogleContacts, googleContactsList]);
+
+
+  // Handler para seleção de formulários
+  const handleFormSelectionChange = (formId) => {
+      setSelectedFormIds(prev => ({ ...prev, [formId]: !prev[formId] }));
+  };
+
+  //Handler para SALVAR seleção de formulários (placeholder) >>>
+  const handleSaveFormSelection = useCallback(async () => {
+    const activeFormIds = Object.keys(selectedFormIds).filter(id => selectedFormIds[id]);
+    console.log("Salvando seleção de formulários:", activeFormIds, "para Page ID:", persistedFbConnection.pageId);
+    toast.info(`Simulando salvamento de ${activeFormIds.length} formulários. (Backend pendente)`);
+    // TODO: Chamar API do backend para salvar company.linkedFacebookForms
+    // Ex: await saveLinkedFormsApi(persistedFbConnection.pageId, activeFormIds);
+    // ... tratar sucesso/erro ...
+}, [selectedFormIds, persistedFbConnection.pageId]);
+
 
   // --- Renderização ---
 
@@ -528,6 +576,35 @@ function IntegrationsPage() {
                       : "Desconectar Página"}
                   </button>
                 </div>
+
+                {isLoadingPageForms ? (
+                                <p style={{marginTop: '1rem'}}>Carregando formulários da página...</p>
+                            ) : pageForms.length > 0 ? (
+                                <div className="form-selection-section" style={{marginTop: '1.5rem'}}>
+                                    <h4>Formulários de Lead Ad Vinculados:</h4>
+                                    <ul className="forms-list-modal"> {/* Reusa estilo se quiser */}
+                                        {pageForms.map(form => (
+                                            <li key={form.id}>
+                                                <input
+                                                    type="checkbox"
+                                                    id={`fbform-${form.id}`}
+                                                    checked={!!selectedFormIds[form.id]}
+                                                    onChange={() => handleFormSelectionChange(form.id)}
+                                                />
+                                                <label htmlFor={`fbform-${form.id}`}>
+                                                    {form.name} (ID: {form.id}) <small>[Status: {form.status}]</small>
+                                                </label>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    <button onClick={handleSaveFormSelection} className="button submit-button" style={{marginTop: '0.5rem'}}>
+                                        Salvar Seleção de Formulários
+                                    </button>
+                                </div>
+                            ) : (
+                                <p style={{marginTop: '1rem', color: '#6c757d'}}>Nenhum formulário de Lead Ad encontrado para esta página ou falha ao buscar.</p>
+                            )}
+
               </div>
             ) : (
               // NÃO CONECTADO AINDA: Mostra botão para conectar pela primeira vez
