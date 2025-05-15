@@ -564,7 +564,7 @@ function IntegrationsPage() {
                     <FacebookLogin
                         appId={facebookAppId || "FB_APP_ID_NOT_CONFIGURED"}
                         autoLoad={false}
-                        scope="pages_show_list,pages_manage_metadata,leads_retrieval,pages_read_engagement" 
+                        scope="pages_show_list,pages_manage_metadata,leads_retrieval,pages_read_engagement,pages_manage_ads" 
                         onSuccess={handleFacebookResponse}
                         onFail={(error) => {
                             console.error('Facebook Reconnect/Change Failed!', error);
