@@ -674,21 +674,26 @@ const listFormsForFacebookPage = async (companyId, pageId) => {
           throw new Error("Página não conectada corretamente a esta empresa ou token de acesso da página ausente.");
       }
       
-      console.log(`[IntegSvc ListForms DEBUG] URL construída para Axios: ${`https://graph.facebook.com/${GRAPH_API_VERSION}/{pageId}/leadgen_forms`}`);
+      const apiversion = GRAPH_API_VERSION;
+      const apiUrl = `https://graph.facebook.com/${apiversion}/${pageId}/leadgen_forms`;
 
-      const response = await axios.get(
-          `https://graph.facebook.com/${GRAPH_API_VERSION}/{pageId}/leadgen_forms`,
-          {
-              params: {
-                  fields: 'id,name,status,locale,created_time', 
-                  access_token: company.facebookPageAccessToken 
-              }
-          }
-      );
+      console.log(`[IntegSvc ListForms DEBUG] Page ID para URL: "${pageId}"`);
+      console.log(`[IntegSvc ListForms DEBUG] GRAPH_API_VERSION para URL: "${apiversion}"`);
+      console.log(`[IntegSvc ListForms DEBUG] URL CONSTRUÍDA PARA AXIOS: ${apiUrl}`);
 
-      const forms = Array.isArray(response.data?.data) ? response.data.data : [];
-      console.log(`[IntegSvc ListForms] Encontrados ${forms.length} formulários para Page ${pageId}.`);
-      return forms;
+      const requestConfig = {
+        params: {
+            fields: 'id,name,status,locale,created_time',
+            access_token: company.facebookPageAccessToken
+        }
+    };
+
+    const response = await axios.get(apiUrl, requestConfig);
+
+
+    const forms = Array.isArray(response.data?.data) ? response.data.data : [];
+    console.log(`[IntegSvc ListForms] Encontrados ${forms.length} formulários para Page ${pageId}.`);
+    return forms;
 
   } catch (error) {
       const fbError = error.response?.data?.error;
