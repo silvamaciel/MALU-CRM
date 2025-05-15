@@ -47,34 +47,40 @@ const processFacebookLead = async (leadPayloadValue, companyId) => {
     }
 
     // === [3] Extração de Dados do Payload ===
+    const camposPrincipaisMap = {
+        nome: ['full_name', 'nome_completo', 'name', 'first_name'],
+        sobrenome: ['last_name'],
+        email: ['email'],
+        contato: ['phone_number', 'telefone', 'contato'],
+        cpf: ['cpf_number', 'cpf']
+    };
+    
     const leadDataFromForm = {};
     const extraFieldsForComment = [];
-    const camposPrincipaisConhecidos = [
-        'full_name', 'nome_completo', 'first_name', 'last_name', 'name',
-        'email',
-        'phone_number', 'telefone', 'contato',
-        'cpf_number', 'cpf'
-    ];
-
+    
     for (const field of leadPayloadValue.field_data) {
         const fieldNameLower = field.name.toLowerCase();
         const fieldValue = field.values?.[0]?.trim() || null;
-
         if (!fieldValue) continue;
-
-        if (['full_name', 'nome_completo', 'name'].includes(fieldNameLower) && !leadDataFromForm.nome) {
-            leadDataFromForm.nome = fieldValue;
-        } else if (fieldNameLower === 'first_name' && !leadDataFromForm.nome) {
-            leadDataFromForm.nome = fieldValue;
-        } else if (fieldNameLower === 'last_name' && leadDataFromForm.nome && !leadDataFromForm.nome.includes(fieldValue)) {
-            leadDataFromForm.nome += ` ${fieldValue}`;
-        } else if (fieldNameLower === 'email' && !leadDataFromForm.email) {
-            leadDataFromForm.email = fieldValue;
-        } else if (['phone_number', 'telefone', 'contato'].includes(fieldNameLower) && !leadDataFromForm.contato) {
-            leadDataFromForm.contato = fieldValue;
-        } else if (['cpf_number', 'cpf'].includes(fieldNameLower) && !leadDataFromForm.cpf) {
-            leadDataFromForm.cpf = fieldValue;
-        } else if (!camposPrincipaisConhecidos.includes(fieldNameLower)) {
+    
+        let mapeado = false;
+    
+        for (const [chave, aliases] of Object.entries(camposPrincipaisMap)) {
+            if (aliases.includes(fieldNameLower)) {
+                // Nome composto (first_name + last_name)
+                if (chave === 'nome' && !leadDataFromForm.nome) {
+                    leadDataFromForm.nome = fieldValue;
+                } else if (chave === 'sobrenome' && leadDataFromForm.nome && !leadDataFromForm.nome.includes(fieldValue)) {
+                    leadDataFromForm.nome += ` ${fieldValue}`;
+                } else if (chave !== 'sobrenome' && !leadDataFromForm[chave]) {
+                    leadDataFromForm[chave] = fieldValue;
+                }
+                mapeado = true;
+                break;
+            }
+        }
+    
+        if (!mapeado) {
             extraFieldsForComment.push(`${field.name}: ${fieldValue}`);
         }
     }
