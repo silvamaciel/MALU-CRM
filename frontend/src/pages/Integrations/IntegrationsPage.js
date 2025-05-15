@@ -94,46 +94,62 @@ function IntegrationsPage() {
   // --- Facebook Logic ---
 
   // funcao para buscar formulários da página
-  const fetchPageForms = useCallback(async (pageId) => {
-    if (!pageId) {
+  const fetchPageForms = useCallback(
+    async (pageId) => {
+      if (!pageId) {
         setPageForms([]);
         return;
-    }
-    setIsLoadingPageForms(true);
-    setFbError(null); 
-    setFbFormPermissionError(null); 
-    try {
-        console.log(`[IntegrationsPage] Buscando formulários para Page ID: ${pageId}`);
+      }
+      setIsLoadingPageForms(true);
+      setFbError(null);
+      setFbFormPermissionError(null);
+      try {
+        console.log(
+          `[IntegrationsPage] Buscando formulários para Page ID: ${pageId}`
+        );
         const forms = await listFacebookPageFormsApi(pageId);
         setPageForms(forms || []);
         if (forms && forms.length > 0) {
-            const linked = persistedFbConnection.linkedFacebookForms || [];
-            const initialSelected = {};
-             forms.forEach(form => {
-               if (linked.find(lf => lf.formId === form.id)) {
-                 initialSelected[form.id] = true;
-               }
-             });
-             setSelectedFormIds(initialSelected);
+          const linked = persistedFbConnection.linkedFacebookForms || [];
+          const initialSelected = {};
+          forms.forEach((form) => {
+            if (linked.find((lf) => lf.formId === form.id)) {
+              initialSelected[form.id] = true;
+            }
+          });
+          setSelectedFormIds(initialSelected);
         } else {
         }
-    } catch (err) {
-        const errorMessage = err.error || err.message || "Falha ao buscar formulários.";
-        console.error(`Erro ao buscar formulários para Page ID ${pageId}:`, err);
+      } catch (err) {
+        const errorMessage =
+          err.error || err.message || "Falha ao buscar formulários.";
+        console.error(
+          `Erro ao buscar formulários para Page ID ${pageId}:`,
+          err
+        );
 
-        if (typeof errorMessage === 'string' && (errorMessage.includes('(#200)') && errorMessage.toLowerCase().includes('permission'))) {
-            const permErrorMsg = "Para listar/gerenciar formulários, são necessárias permissões adicionais. Por favor, reconecte a conta/página e conceda as permissões de 'gerenciar anúncios da página'.";
-            setFbFormPermissionError(permErrorMsg);
-            toast.warn("Permissões adicionais do Facebook são necessárias.", { autoClose: 7000 });
+        if (
+          typeof errorMessage === "string" &&
+          errorMessage.includes("(#200)") &&
+          errorMessage.toLowerCase().includes("permission")
+        ) {
+          const permErrorMsg =
+            "Para listar/gerenciar formulários, são necessárias permissões adicionais. Por favor, reconecte a conta/página e conceda as permissões de 'gerenciar anúncios da página'.";
+          setFbFormPermissionError(permErrorMsg);
+          toast.warn("Permissões adicionais do Facebook são necessárias.", {
+            autoClose: 7000,
+          });
         } else {
-            setFbError(errorMessage); 
-            toast.error(errorMessage);
+          setFbError(errorMessage);
+          toast.error(errorMessage);
         }
         setPageForms([]);
-    } finally {
+      } finally {
         setIsLoadingPageForms(false);
-    }
-}, [persistedFbConnection]);
+      }
+    },
+    [persistedFbConnection]
+  );
 
   // Função para buscar o status da conexão FB no backend
   const fetchFacebookStatus = useCallback(async () => {
@@ -179,67 +195,75 @@ function IntegrationsPage() {
   }, [facebookPages, selectedPageId]);
 
   // Callback do componente FacebookLogin
-  const handleFacebookResponse = useCallback(async (response) => {
-    console.log(
-      "Facebook Login Response (onSuccess/onProfileSuccess):",
-      response
-    );
-    setFbError(null);
+  const handleFacebookResponse = useCallback(
+    async (response) => {
+      console.log(
+        "Facebook Login Response (onSuccess/onProfileSuccess):",
+        response
+      );
+      setFbError(null);
 
-    if (response && response.accessToken && response.userID) {
-      const userAccessToken = response.accessToken;
-      setFbUserData({
-        accessToken: userAccessToken,
-        userID: response.userID,
-        name: response.name || `Usuário ${response.userID}`,
-      });
+      if (response && response.accessToken && response.userID) {
+        const userAccessToken = response.accessToken;
+        setFbUserData({
+          accessToken: userAccessToken,
+          userID: response.userID,
+          name: response.name || `Usuário ${response.userID}`,
+        });
 
-      setIsFetchingPages(true);
-      setFacebookPages([]);
-      setSelectedPageId("");
-      try {
-        const pagesResponse = await axios.get(
-          `https://graph.facebook.com/${GRAPH_API_VERSION}/me/accounts`,
-          { params: { access_token: userAccessToken, fields: "id,name,tasks" } }
-        );
-        console.log("Páginas do Facebook encontradas:", pagesResponse.data);
-        const pages = Array.isArray(pagesResponse.data?.data)
-          ? pagesResponse.data.data
-          : [];
+        setIsFetchingPages(true);
+        setFacebookPages([]);
+        setSelectedPageId("");
+        try {
+          const pagesResponse = await axios.get(
+            `https://graph.facebook.com/${GRAPH_API_VERSION}/me/accounts`,
+            {
+              params: {
+                access_token: userAccessToken,
+                fields: "id,name,tasks",
+              },
+            }
+          );
+          console.log("Páginas do Facebook encontradas:", pagesResponse.data);
+          const pages = Array.isArray(pagesResponse.data?.data)
+            ? pagesResponse.data.data
+            : [];
 
-        setFacebookPages(pages);
+          setFacebookPages(pages);
 
-        if (pages.length > 0) {
-          setSelectedPageId(pages[0].id);
-        } else {
-          toast.warn("Nenhuma Página do Facebook encontrada ou permissível.");
-          setFbError("Nenhuma Página encontrada.");
+          if (pages.length > 0) {
+            setSelectedPageId(pages[0].id);
+          } else {
+            toast.warn("Nenhuma Página do Facebook encontrada ou permissível.");
+            setFbError("Nenhuma Página encontrada.");
+          }
+        } catch (pageError) {
+          const errorData = pageError.response?.data?.error;
+          console.error("Erro ao buscar Páginas FB:", errorData || pageError);
+          const errorMsg =
+            errorData?.message || "Falha ao buscar suas Páginas do Facebook.";
+          setFbError(errorMsg);
+          toast.error(errorMsg);
+          setFacebookPages([]);
+        } finally {
+          setIsFetchingPages(false);
+          setIsConnectingFb(false);
         }
-      } catch (pageError) {
-        const errorData = pageError.response?.data?.error;
-        console.error("Erro ao buscar Páginas FB:", errorData || pageError);
+      } else if (response && response.status === "not_authorized") {
+        const errorMsg = "Permissões não concedidas no Facebook.";
+        setFbError(errorMsg);
+        toast.warn(errorMsg);
+        setIsConnectingFb(false);
+      } else {
         const errorMsg =
-          errorData?.message || "Falha ao buscar suas Páginas do Facebook.";
+          "Falha na autenticação com Facebook: resposta inesperada ou token não recebido.";
         setFbError(errorMsg);
         toast.error(errorMsg);
-        setFacebookPages([]);
-      } finally {
-        setIsFetchingPages(false);
         setIsConnectingFb(false);
       }
-    } else if (response && response.status === "not_authorized") {
-      const errorMsg = "Permissões não concedidas no Facebook.";
-      setFbError(errorMsg);
-      toast.warn(errorMsg);
-      setIsConnectingFb(false);
-    } else {
-      const errorMsg =
-        "Falha na autenticação com Facebook: resposta inesperada ou token não recebido.";
-      setFbError(errorMsg);
-      toast.error(errorMsg);
-      setIsConnectingFb(false);
-    }
-  }, [fetchPageForms]);
+    },
+    [fetchPageForms]
+  );
 
   // Handler para enviar a página selecionada ao backend
   const handleConnectSelectedPage = useCallback(async () => {
@@ -439,29 +463,47 @@ function IntegrationsPage() {
   //Handler para SALVAR seleção de formulários (placeholder) >>>
   const handleSaveFormSelection = useCallback(async () => {
     if (!persistedFbConnection.isConnected || !persistedFbConnection.pageId) {
-        toast.error("Nenhuma página do Facebook está conectada para salvar formulários.");
-        return;
+      toast.error(
+        "Nenhuma página do Facebook está conectada para salvar formulários."
+      );
+      return;
     }
-    const activeFormsData = pageForms.filter(form => selectedFormIds[form.id])
-                                    .map(form => ({ formId: form.id, formName: form.name })); // Envia ID e Nome
+    const activeFormsData = pageForms
+      .filter((form) => selectedFormIds[form.id])
+      .map((form) => ({ formId: form.id, formName: form.name })); // Envia ID e Nome
 
     if (activeFormsData.length === 0) {
-        toast.info("Nenhum formulário selecionado. A lista de formulários vinculados será limpa.");
+      toast.info(
+        "Nenhum formulário selecionado. A lista de formulários vinculados será limpa."
+      );
     }
 
-    console.log("Salvando seleção de formulários:", activeFormsData, "para Page ID:", persistedFbConnection.pageId);
+    console.log(
+      "Salvando seleção de formulários:",
+      activeFormsData,
+      "para Page ID:",
+      persistedFbConnection.pageId
+    );
     setIsSavingForms(true); // <<< Ativa loading
     setFbError(null);
     try {
-        const result = await saveLinkedFacebookFormsApi(persistedFbConnection.pageId, activeFormsData);
-        toast.success(result.message || "Seleção de formulários salva com sucesso!");
+      const result = await saveLinkedFacebookFormsApi(
+        persistedFbConnection.pageId,
+        activeFormsData
+      );
+      toast.success(
+        result.message || "Seleção de formulários salva com sucesso!"
+      );
     } catch (err) {
-        const errorMsg = err.error || err.message || "Falha ao salvar seleção de formulários.";
-        setFbError(errorMsg); toast.error(errorMsg); console.error(err);
+      const errorMsg =
+        err.error || err.message || "Falha ao salvar seleção de formulários.";
+      setFbError(errorMsg);
+      toast.error(errorMsg);
+      console.error(err);
     } finally {
-        setIsSavingForms(false); // <<< Desativa loading
+      setIsSavingForms(false); // <<< Desativa loading
     }
-}, [selectedFormIds, pageForms, persistedFbConnection.pageId]);
+  }, [selectedFormIds, pageForms, persistedFbConnection.pageId]);
 
   // --- Renderização ---
 
@@ -548,7 +590,7 @@ function IntegrationsPage() {
         </div>
 
         {/* Card Meta (Facebook/Instagram) */}
-        <div className="integration-card">
+<div className="integration-card">
     <h2>Meta (Facebook/Instagram) Lead Ads</h2>
     <p>Conecte sua Página do Facebook para receber automaticamente leads gerados por seus anúncios de cadastro.</p>
 
@@ -563,26 +605,26 @@ function IntegrationsPage() {
                 <p style={{ color: 'green', fontWeight: 'bold', marginBottom: '0.5rem' }}>
                     ✓ Conectado à Página: {persistedFbConnection.pageName || persistedFbConnection.pageId}
                 </p>
-                <p><small>Configure abaixo quais formulários desta página devem gerar leads no CRM, ou altere a conexão.</small></p>
+                <p><small>Para alterar a página, reconectar sua conta ou configurar formulários, use as opções abaixo.</small></p>
                 
                 <div style={{marginTop: '1rem', display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
                     <FacebookLogin
                         appId={facebookAppId || "FB_APP_ID_NOT_CONFIGURED"}
                         autoLoad={false}
-                        scope="pages_show_list,pages_manage_metadata,leads_retrieval,pages_read_engagement,pages_manage_ads" 
-                        onSuccess={handleFacebookResponse}
+                        scope="pages_show_list,pages_manage_metadata,leads_retrieval,pages_read_engagement,ads_management,pages_manage_ads"
+                        onSuccess={handleFacebookResponse} // Mesmo handler para iniciar fluxo
                         onFail={(error) => {
                             console.error('Facebook Reconnect/Change Failed!', error);
                             setFbError(error?.status || "Falha ao tentar reconectar com Facebook.");
-                            setIsConnectingFb(false);
+                            setIsConnectingFb(false); 
                         }}
                         render={renderProps => (
                             <button
                                 onClick={() => { setIsConnectingFb(true); renderProps.onClick(); }}
-                                disabled={isConnectingFb || isDisconnectingFb || isSavingForms}
+                                disabled={isConnectingFb || isDisconnectingFb || isSavingForms} 
                                 className="button facebook-connect-button"
                             >
-                                {isConnectingFb ? 'Aguarde...' : 'Reconectar / Alterar Página'}
+                                {isConnectingFb && !isFetchingPages ? 'Aguarde...' : 'Reconectar / Alterar Página'}
                             </button>
                         )}
                     />
@@ -596,16 +638,15 @@ function IntegrationsPage() {
                     </button>
                 </div>
 
-                {/* LISTA DE FORMULÁRIOS E BOTÃO SALVAR (mostra se página conectada) */}
-                { fbFormPermissionError ? (
-                  <p style={{ marginTop: '1rem', color: '#FFA500', fontWeight: 'bold' }}>{fbFormPermissionError}</p>
-
+                {/* LISTA DE FORMULÁRIOS E BOTÃO SALVAR */}
+                {fbFormPermissionError ? (
+                    <p style={{ marginTop: '1rem', color: '#FFA500', fontWeight: 'bold' }}>{fbFormPermissionError}</p>
                 ) : isLoadingPageForms ? (
                     <p style={{marginTop: '1rem'}}>Carregando formulários da página...</p>
                 ) : pageForms.length > 0 ? (
                     <div className="form-selection-section">
                         <h4>Vincular Formulários de Lead Ad Ativos:</h4>
-                        <ul className="forms-list-modal"> {/* Reutilizando a classe do modal para a lista */}
+                        <ul className="forms-list-modal">
                             {pageForms.map(form => (
                                 <li key={form.id}>
                                     <input type="checkbox" id={`fbform-${form.id}`}
@@ -616,12 +657,17 @@ function IntegrationsPage() {
                                 </li>
                             ))}
                         </ul>
-                        <button onClick={handleSaveFormSelection} className="button submit-button" style={{marginTop: '0.5rem'}} disabled={isSavingForms || Object.keys(selectedFormIds).length === 0}>
+                        <button 
+                            onClick={handleSaveFormSelection} 
+                            className="button submit-button" 
+                            style={{marginTop: '0.5rem'}} 
+                            disabled={isSavingForms || Object.values(selectedFormIds).filter(Boolean).length === 0}
+                        >
                             {isSavingForms ? 'Salvando...' : `Salvar Seleção (${Object.values(selectedFormIds).filter(Boolean).length})`}
                         </button>
                     </div>
                 ) : (
-                     persistedFbConnection.isConnected && <p style={{marginTop: '1rem', color: '#6c757d'}}>Nenhum formulário de Lead Ad ativo encontrado para esta página ou falha ao buscar.</p>
+                     persistedFbConnection.isConnected && <p style={{marginTop: '1rem', color: '#6c757d'}}>Nenhum formulário de Lead Ad encontrado para esta página.</p>
                 )}
             </div>
         ) : (
@@ -629,7 +675,7 @@ function IntegrationsPage() {
             <FacebookLogin
                 appId={facebookAppId || "FB_APP_ID_NOT_CONFIGURED"}
                 autoLoad={false}
-                scope="pages_show_list,pages_manage_metadata,leads_retrieval,pages_read_engagement"
+                scope="pages_show_list,pages_manage_metadata,leads_retrieval,pages_read_engagement,ads_management,pages_manage_ads"
                 onSuccess={handleFacebookResponse}
                 onFail={(error) => {
                     console.error('Facebook Login Failed!', error);
@@ -664,7 +710,7 @@ function IntegrationsPage() {
                         id="facebookPageSelect"
                         value={selectedPageId}
                         onChange={(e) => setSelectedPageId(e.target.value)}
-                        disabled={isConnectingFb} // Desabilita enquanto confirma a conexão da página
+                        disabled={isConnectingFb} 
                         style={{width: '100%', padding:'0.6rem', marginTop:'0.5rem', marginBottom:'1rem', borderRadius:'4px', border:'1px solid #ccc'}}
                     >
                         {facebookPages.map(page => (
@@ -688,8 +734,8 @@ function IntegrationsPage() {
             )}
         </div>
     )}
-    {/* Exibe erro específico do Facebook, se houver */}
-    {fbError && <p className="error-message" style={{marginTop:'1rem'}}>{fbError}</p>}
+    {/* Exibe erro geral do Facebook, se houver (não o de permissão de formulário que já é tratado acima) */}
+    {fbError && !fbFormPermissionError && <p className="error-message" style={{marginTop:'1rem'}}>{fbError}</p>}
 </div>
 
         {/* Placeholder Cards */}
