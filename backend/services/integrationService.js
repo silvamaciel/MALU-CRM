@@ -674,8 +674,9 @@ const listFormsForFacebookPage = async (companyId, pageId) => {
           throw new Error("Página não conectada corretamente a esta empresa ou token de acesso da página ausente.");
       }
 
+      const apiversion = "v19.0";
       const response = await axios.get(
-          `https://graph.facebook.com/${GRAPH_API_VERSION}{pageId}/leadgen_forms`,
+          `https://graph.facebook.com/${apiversion}{pageId}/leadgen_forms`,
           {
               params: {
                   fields: 'id,name,status,locale,created_time', 
