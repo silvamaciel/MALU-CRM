@@ -153,3 +153,44 @@
     font-size: 0.85em;
     margin-top: 3px;
   }
+
+
+
+  .forms-list-modal {
+    list-style: none;
+    padding: 0;
+    max-height: 400px; /* Ou a altura que preferir */
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+  }
+  .forms-list-modall li {
+    padding: 10px 15px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    align-items: flex-start; /* Alinha checkbox e label no topo */
+    gap: 10px; /* Espaço entre checkbox e label */
+  }
+  .forms-list-modal li:last-child {
+    border-bottom: none;
+  }
+  .forms-list-modal input[type="checkbox"] {
+    margin-top: 3px; /* Ajuste fino vertical do checkbox */
+    flex-shrink: 0;
+  }
+  .forms-list-modal label {
+    font-size: 0.95em;
+    cursor: pointer;
+    line-height: 1.4;
+  }
+  .forms-list-modal label strong {
+    display: block;
+    color: #333;
+  }
+  .forms-list-modal label small {
+    display: block;
+    color: #777;
+    font-size: 0.85em;
+    margin-top: 3px;
+  }
