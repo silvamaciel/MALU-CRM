@@ -675,7 +675,7 @@ const listFormsForFacebookPage = async (companyId, pageId) => {
       }
 
       const response = await axios.get(
-          `https://graph.facebook.com/<span class="math-inline">\{GRAPH\_API\_VERSION\}/</span>{pageId}/leadgen_forms`,
+          `https://graph.facebook.com/${GRAPH_API_VERSION}{pageId}/leadgen_forms`,
           {
               params: {
                   fields: 'id,name,status,locale,created_time', 
