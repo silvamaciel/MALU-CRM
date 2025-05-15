@@ -129,7 +129,7 @@ export const listFacebookPageFormsApi = async (pageId) => {
         throw new Error("ID da Página é necessário para listar formulários.");
     }
     try {
-        const response = await axiosInstance.get(`${API_URL_BASE}/facebook/pages/${pageId}/forms`);
+        const response = await axiosInstance.get(`${API_URL}/facebook/pages/${pageId}/forms`);
         return Array.isArray(response.data) ? response.data : [];
     } catch (error) {
         console.error(`Erro ao listar formulários para Page ID ${pageId}:`, error.response?.data || error.message);
