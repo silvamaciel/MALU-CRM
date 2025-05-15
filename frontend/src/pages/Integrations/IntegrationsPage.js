@@ -544,228 +544,71 @@ function IntegrationsPage() {
 
         {/* Card Meta (Facebook/Instagram) */}
         <div className="integration-card">
-          <h2>Meta (Facebook/Instagram) Lead Ads</h2>
-          <p>
-            Conecte sua Página do Facebook para receber automaticamente leads
-            gerados por seus anúncios de cadastro.
-          </p>
+                    <h2>Meta (Facebook/Instagram) Lead Ads</h2>
+                    <p>Conecte sua Página do Facebook...</p>
 
-          {/* Se estiver carregando o status inicial da conexão FB */}
-          {isLoadingStatus ? (
-            <p>Verificando status da conexão...</p>
-          ) : 
-          !fbUserData ? (
-            persistedFbConnection.isConnected ? (
-              // JÁ CONECTADO: Mostra status e opções de Reconnectar/Desconectar
-              <div>
-                <p
-                  style={{
-                    color: "green",
-                    fontWeight: "bold",
-                    marginBottom: "0.5rem",
-                  }}
-                >
-                  ✓ Conectado à Página:{" "}
-                  {persistedFbConnection.pageName ||
-                    persistedFbConnection.pageId}
-                </p>
-                <p>
-                  <small>
-                    Para alterar a página ou reconectar sua conta Facebook,
-                    clique abaixo.
-                  </small>
-                </p>
-                <div
-                  style={{
-                    marginTop: "1rem",
-                    display: "flex",
-                    gap: "10px",
-                    flexWrap: "wrap",
-                  }}
-                >
-                  {" "}
-                  {/* Container para botões */}
-                  <FacebookLogin
-                    appId={facebookAppId || "FB_APP_ID_NOT_CONFIGURED"}
-                    autoLoad={false}
-                    scope="pages_show_list,pages_manage_metadata,leads_retrieval,pages_read_engagement,ads_management"
-                    onSuccess={handleFacebookResponse}
-                    onFail={(error) => {
-                      console.error("Facebook Login/Reconnect Failed!", error);
-                      setFbError(
-                        error?.status ||
-                          "Falha ao tentar reconectar com Facebook."
-                      );
-                      setIsConnectingFb(false);
-                    }}
-                    render={(renderProps) => (
-                      <button
-                        onClick={() => {
-                          setIsConnectingFb(true);
-                          renderProps.onClick();
-                        }}
-                        disabled={isConnectingFb || isDisconnectingFb}
-                        className="button facebook-connect-button"
-                      >
-                        {isConnectingFb
-                          ? "Aguarde..."
-                          : "Reconectar / Alterar Página"}
-                      </button>
-                    )}
-                  />
-                  <button
-                    onClick={handleDisconnectFacebookPage}
-                    className="button delete-button"
-                    disabled={isDisconnectingFb || isConnectingFb}
-                    style={{ backgroundColor: "#dc3545" }}
-                  >
-                    {isDisconnectingFb
-                      ? "Desconectando..."
-                      : "Desconectar Página"}
-                  </button>
-                </div>
+                    {isLoadingStatus ? (<p>Verificando status...</p>) :
+                     !fbUserData && persistedFbConnection.isConnected ? ( /* JÁ CONECTADO */
+                        <div>
+                            <p style={{ color: 'green', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                                ✓ Conectado à Página: {persistedFbConnection.pageName || persistedFbConnection.pageId}
+                            </p>
+                            <p><small>Configure abaixo quais formulários desta página devem gerar leads no CRM.</small></p>
+                            <div style={{marginTop: '1rem', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                <FacebookLogin /* Botão RECONECTAR/MUDAR */
+                                    appId={facebookAppId || "FB_APP_ID_NOT_CONFIGURED"} scope="..." onSuccess={handleFacebookResponse} onFail={(err)=>{/*...*/}}
+                                    render={renderProps => (<button onClick={() => {setIsConnectingFb(true); renderProps.onClick();}} disabled={isConnectingFb || isDisconnectingFb || isSavingForms} className="button facebook-connect-button">{isConnectingFb ? 'Aguarde...' : 'Reconectar / Alterar Conta/Página'}</button>)}
+                                />
+                                <button onClick={handleDisconnectFacebookPage} disabled={isDisconnectingFb || isConnectingFb || isSavingForms} className="button delete-button">Desconectar Página</button>
+                            </div>
 
-                {isLoadingPageForms ? (
-                  <p style={{ marginTop: "1rem" }}>
-                    Carregando formulários da página...
-                  </p>
-                ) : pageForms.length > 0 ? (
-                  <div
-                    className="form-selection-section"
-                    style={{ marginTop: "1.5rem" }}
-                  >
-                    <h4>Formulários de Lead Ad Vinculados:</h4>
-                    <ul className="forms-list-modal">
-                      {" "}
-                      {/* Reusa estilo se quiser */}
-                      {pageForms.map((form) => (
-                        <li key={form.id}>
-                          <input
-                            type="checkbox"
-                            id={`fbform-${form.id}`}
-                            checked={!!selectedFormIds[form.id]}
-                            onChange={() => handleFormSelectionChange(form.id)}
-                          />
-                          <label htmlFor={`fbform-${form.id}`}>
-                            {form.name} (ID: {form.id}){" "}
-                            <small>[Status: {form.status}]</small>
-                          </label>
-                        </li>
-                      ))}
-                    </ul>
-                    <button
-                      onClick={handleSaveFormSelection}
-                      className="button submit-button"
-                      style={{ marginTop: "0.5rem" }}
-                    >
-                      Salvar Seleção de Formulários
-                    </button>
-                  </div>
-                ) : (
-                  <p style={{ marginTop: "1rem", color: "#6c757d" }}>
-                    Nenhum formulário de Lead Ad encontrado para esta página ou
-                    falha ao buscar.
-                  </p>
-                )}
-              </div>
-            ) : (
-              // NÃO CONECTADO AINDA: Mostra botão para conectar pela primeira vez
-              <FacebookLogin
-                appId={facebookAppId || "FB_APP_ID_NOT_CONFIGURED"}
-                autoLoad={false}
-                scope="pages_show_list,pages_manage_metadata,leads_retrieval"
-                onSuccess={handleFacebookResponse}
-                onFail={(error) => {
-                  console.error("Facebook Login Failed!", error);
-                  setFbError(error?.status || "Falha no login com Facebook.");
-                  setIsConnectingFb(false);
-                }}
-                render={(renderProps) => (
-                  <button
-                    onClick={() => {
-                      setIsConnectingFb(true);
-                      renderProps.onClick();
-                    }}
-                    disabled={isConnectingFb || !facebookAppId}
-                    className="button facebook-connect-button"
-                  >
-                    {isConnectingFb
-                      ? "Aguarde..."
-                      : "Conectar Conta do Facebook"}
-                  </button>
-                )}
-              />
-            )
-          ) : (
-            // SE fbUserData EXISTE (usuário acabou de logar/autorizar no FB e estamos no fluxo de seleção de página)
-            <div>
-              <p
-                style={{
-                  color: "#333",
-                  fontWeight: "500",
-                  marginBottom: "0.5rem",
-                }}
-              >
-                Logado no Facebook como: {fbUserData.name}!
-              </p>
-              {isFetchingPages ? (
-                <p>Buscando suas Páginas do Facebook...</p>
-              ) : facebookPages.length > 0 ? (
-                <div className="form-group" style={{ marginTop: "1rem" }}>
-                  <label
-                    htmlFor="facebookPageSelect"
-                    style={{
-                      fontWeight: "600",
-                      display: "block",
-                      marginBottom: "0.5rem",
-                    }}
-                  >
-                    Selecione a Página para integrar:
-                  </label>
-                  <select
-                    id="facebookPageSelect"
-                    value={selectedPageId}
-                    onChange={(e) => setSelectedPageId(e.target.value)}
-                    disabled={isConnectingFb}
-                    style={{
-                      width: "100%",
-                      padding: "0.6rem",
-                      marginBottom: "1rem",
-                      borderRadius: "4px",
-                      border: "1px solid #ccc",
-                    }}
-                  >
-                    {facebookPages.map((page) => (
-                      <option key={page.id} value={page.id}>
-                        {page.name} (ID: {page.id})
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={handleConnectSelectedPage}
-                    className="button submit-button"
-                    disabled={isConnectingFb || !selectedPageId}
-                  >
-                    {isConnectingFb
-                      ? "Confirmando..."
-                      : "Confirmar Conexão Desta Página"}
-                  </button>
+                            {/* LISTA DE FORMULÁRIOS E BOTÃO SALVAR */}
+                            {isLoadingPageForms ? (
+                                <p style={{marginTop: '1rem'}}>Carregando formulários...</p>
+                            ) : pageForms.length > 0 ? (
+                                <div className="form-selection-section" style={{marginTop: '1.5rem'}}>
+                                    <h4>Vincular Formulários de Lead Ad:</h4>
+                                    <ul className="forms-list-modal">
+                                        {pageForms.map(form => (
+                                            <li key={form.id}>
+                                                <input type="checkbox" id={`fbform-${form.id}`}
+                                                    checked={!!selectedFormIds[form.id]}
+                                                    onChange={() => handleFormSelectionChange(form.id)}
+                                                    disabled={isSavingForms} />
+                                                <label htmlFor={`fbform-${form.id}`}>{form.name} <small>(ID: {form.id} | Status: {form.status})</small></label>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    <button onClick={handleSaveFormSelection} className="button submit-button" style={{marginTop: '0.5rem'}} disabled={isSavingForms}>
+                                        {isSavingForms ? 'Salvando...' : 'Salvar Seleção de Formulários'}
+                                    </button>
+                                </div>
+                            ) : ( <p style={{marginTop: '1rem'}}>Nenhum formulário de lead encontrado para esta página.</p> )}
+                        </div>
+                    ) : !fbUserData && !persistedFbConnection.isConnected ? ( /* NÃO CONECTADO */
+                        <FacebookLogin /* Botão CONECTAR */
+                            appId={facebookAppId || "FB_APP_ID_NOT_CONFIGURED"} scope="..." onSuccess={handleFacebookResponse} onFail={(err)=>{/*...*/}}
+                            render={renderProps => (<button onClick={() => {setIsConnectingFb(true); renderProps.onClick();}} disabled={isConnectingFb || !facebookAppId} className="button facebook-connect-button">{isConnectingFb ? 'Aguarde...' : 'Conectar Conta do Facebook'}</button>)}
+                        />
+                    ) : fbUserData ? ( /* EM FLUXO DE CONEXÃO/SELEÇÃO DE PÁGINA */
+                        <div>
+                            <p style={{ color: '#333', fontWeight: '500' }}>Logado no Facebook como: {fbUserData.name}!</p>
+                            {isFetchingPages ? <p>Buscando Páginas...</p>
+                             : facebookPages.length > 0 ? ( /* Mostra Dropdown de Páginas */
+                                <div className="form-group" style={{marginTop: '1rem'}}>
+                                    <label htmlFor="facebookPageSelect" style={{fontWeight: '600'}}>Selecione a Página:</label>
+                                    <select id="facebookPageSelect" value={selectedPageId} onChange={(e) => setSelectedPageId(e.target.value)} disabled={isConnectingFb}>
+                                        {facebookPages.map(page => <option key={page.id} value={page.id}>{page.name} (ID: {page.id})</option>)}
+                                    </select>
+                                    <button onClick={handleConnectSelectedPage} className="button submit-button" disabled={isConnectingFb || !selectedPageId}>
+                                        {isConnectingFb ? 'Confirmando...' : 'Confirmar Conexão Desta Página'}
+                                    </button>
+                                </div>
+                             ) : <p>Nenhuma página encontrada.</p> }
+                        </div>
+                    ) : null } {/* Fallback caso algum estado seja inesperado */}
+                    {fbError && <p className="error-message">{fbError}</p>}
                 </div>
-              ) : (
-                <p style={{ marginTop: "1rem", color: "#6c757d" }}>
-                  Nenhuma página do Facebook foi encontrada para sua conta ou as
-                  permissões necessárias não foram concedidas.
-                </p>
-              )}
-            </div>
-          )}
-          {/* Exibe erro específico do Facebook, se houver */}
-          {fbError && (
-            <p className="error-message" style={{ marginTop: "1rem" }}>
-              {fbError}
-            </p>
-          )}
-        </div>
 
         {/* Placeholder Cards */}
         <div className="integration-card placeholder">
