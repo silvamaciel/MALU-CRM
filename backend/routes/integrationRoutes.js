@@ -21,6 +21,8 @@ router.post('/google/import-selected-contacts', protect, integrationController.i
 
 router.get('/facebook/pages/:pageId/forms', protect, integrationController.listPageFormsController);
 
+router.post('/facebook/pages/:pageId/linked-forms', protect, integrationController.saveLinkedFormsController);
+
 
 
 
