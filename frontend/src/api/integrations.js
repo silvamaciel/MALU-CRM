@@ -136,3 +136,32 @@ export const listFacebookPageFormsApi = async (pageId) => {
         throw error.response?.data || new Error('Falha ao buscar formulários da página.');
     }
   };
+
+
+  /**
+ * Envia a lista de formulários do Facebook selecionados para serem vinculados a uma página/empresa.
+ * @param {string} pageId - O ID da Página do Facebook.
+ * @param {Array<{formId: string, formName: string}>} linkedFormsArray - Array de objetos de formulário.
+ * @returns {Promise<object>} Resposta do backend.
+ */
+export const saveLinkedFacebookFormsApi = async (pageId, linkedFormsArray) => {
+    if (!pageId) {
+        throw new Error("ID da Página é obrigatório para salvar formulários vinculados.");
+    }
+    if (!Array.isArray(linkedFormsArray)) {
+        console.warn("saveLinkedFacebookFormsApi: linkedFormsArray não é um array. Enviando array vazio.");
+        // Trata o caso de nenhum formulário selecionado ou dado inválido como um array vazio
+        // O backend pode ter uma lógica para limpar os formulários se receber um array vazio.
+        linkedFormsArray = []; 
+    }
+    try {
+        // Chama o endpoint POST /api/integrations/facebook/pages/:pageId/linked-forms
+        const response = await axiosInstance.post(`${API_URL}/facebook/pages/${pageId}/linked-forms`, {
+            linkedForms: linkedFormsArray // Envia os dados no corpo da requisição
+        });
+        return response.data; // Espera { message, linkedFormsCount }
+    } catch (error) {
+        console.error(`Erro ao salvar formulários vinculados para Page ID ${pageId}:`, error.response?.data || error.message);
+        throw error.response?.data || new Error('Falha ao salvar seleção de formulários.');
+    }
+};
