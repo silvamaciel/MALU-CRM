@@ -148,7 +148,7 @@ function IntegrationsPage() {
         setIsLoadingPageForms(false);
       }
     },
-    [persistedFbConnection]
+    []
   );
 
   // Função para buscar o status da conexão FB no backend
