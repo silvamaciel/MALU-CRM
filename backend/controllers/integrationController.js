@@ -171,7 +171,36 @@ const listPageFormsController = async (req, res) => {
 };
 
 
+/**
+ * Controller para SALVAR Formulários FB Selecionados
+ */
+const saveLinkedFormsController = async (req, res) => {
+    const { pageId } = req.params; // ID da Página do Facebook da URL
+    const companyId = req.user?.company;
+    // Esperamos um array de objetos {formId, formName} no corpo da requisição
+    const { linkedForms } = req.body; 
 
+    console.log(`[IntegCtrl SaveForms] Recebido POST /api/integrations/facebook/pages/${pageId}/linked-forms para Company ${companyId}`);
+
+    if (!companyId) {
+        return res.status(401).json({ error: 'Empresa do usuário não identificada.' });
+    }
+    if (!pageId) {
+        return res.status(400).json({ error: 'ID da Página do Facebook é obrigatório na URL.' });
+    }
+    if (!Array.isArray(linkedForms)) { // Validação básica do payload
+        return res.status(400).json({ error: 'Payload inválido: linkedForms deve ser um array.' });
+    }
+
+    try {
+        const result = await integrationService.saveLinkedFacebookForms(companyId, pageId, linkedForms);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error(`[IntegCtrl SaveForms] Erro ao salvar formulários para Page ${pageId}:`, error.message);
+        // O serviço pode lançar erros com mensagens específicas
+        res.status(400).json({ error: error.message || 'Falha ao salvar seleção de formulários.' });
+    }
+};
 
 module.exports = {
     connectFacebookPage,
@@ -180,5 +209,6 @@ module.exports = {
     syncGoogleContacts,
     listGoogleContactsController,
     importSelectedGoogleContactsController,
-    listPageFormsController
+    listPageFormsController,
+    saveLinkedFormsController
 };
