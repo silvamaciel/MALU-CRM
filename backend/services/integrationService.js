@@ -182,7 +182,7 @@ const getFacebookIntegrationStatus = async (companyId) => {
         // Ou poderia retornar isConnected: false se o token não funcionar mais para buscar nome.
         // Por enquanto, se o ID está lá, consideramos conectado.
       }
-      return { isConnected: true, pageId: company.facebookPageId, pageName: pageName };
+      return { isConnected: true, pageId: company.facebookPageId, pageName: pageName, linkedForms: company.linkedFacebookForms || [] };
     } else {
       console.log(`[IntegSvc getStatus] Empresa ${companyId} não tem facebookPageId ou facebookPageAccessToken.`);
       return { isConnected: false };
