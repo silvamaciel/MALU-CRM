@@ -695,6 +695,60 @@ const listFormsForFacebookPage = async (companyId, pageId) => {
   }
 };
 
+
+/**
+ * Salva a lista de formulários do Facebook selecionados para uma empresa.
+ * @param {string} companyId - ID da Empresa CRM.
+ * @param {string} pageId - ID da Página do Facebook à qual os formulários pertencem.
+ * @param {Array<{formId: string, formName: string}>} selectedForms - Array de objetos de formulário selecionados.
+ * @returns {Promise<object>} - A empresa atualizada com os formulários vinculados.
+ */
+const saveLinkedFacebookForms = async (companyId, pageId, selectedForms) => {
+  if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+      throw new Error("ID da empresa inválido.");
+  }
+  if (!pageId) { // O ID da página é crucial para validar a consistência
+      throw new Error("ID da Página do Facebook é obrigatório.");
+  }
+  if (!Array.isArray(selectedForms)) { // Valida se é um array
+      throw new Error("Dados de formulários selecionados inválidos.");
+  }
+
+  console.log(`[IntegSvc SaveForms] Salvando ${selectedForms.length} formulários para Page ${pageId}, Company ${companyId}`);
+
+  try {
+      const company = await Company.findById(companyId);
+      if (!company) {
+          throw new Error("Empresa não encontrada.");
+      }
+
+      // Valida se a pageId fornecida corresponde à página conectada à empresa
+      if (company.facebookPageId !== pageId) {
+          throw new Error("A página fornecida não corresponde à página atualmente conectada a esta empresa.");
+      }
+
+      // Garante que os dados dos formulários tenham o formato esperado
+      const formsToLink = selectedForms.map(form => {
+          if (!form.formId || !form.formName) { // Verifica se cada objeto form tem os campos necessários
+              console.warn("[IntegSvc SaveForms] Objeto de formulário inválido encontrado:", form);
+              throw new Error("Formato de dados de formulário inválido. 'formId' e 'formName' são obrigatórios.");
+          }
+          return { formId: String(form.formId), formName: String(form.formName) };
+      });
+
+      company.linkedFacebookForms = formsToLink; // Substitui a lista existente
+      await company.save();
+
+      console.log(`[IntegSvc SaveForms] Seleção de ${formsToLink.length} formulários salva para Company ${companyId}.`);
+      return { message: "Seleção de formulários salva com sucesso!", linkedFormsCount: formsToLink.length };
+
+  } catch (error) {
+      console.error(`[IntegSvc SaveForms] Erro ao salvar seleção de formulários para Company ${companyId}:`, error);
+      throw new Error(error.message || "Erro ao salvar seleção de formulários.");
+  }
+};
+
+
 module.exports = {
   connectFacebookPageIntegration,
   getFacebookIntegrationStatus,
