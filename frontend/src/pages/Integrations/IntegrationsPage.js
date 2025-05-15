@@ -46,6 +46,7 @@ function IntegrationsPage() {
   const [selectedPageId, setSelectedPageId] = useState("");
   const [isFetchingPages, setIsFetchingPages] = useState(false);
   const [isDisconnectingFb, setIsDisconnectingFb] = useState(false);
+  const [fbFormPermissionError, setFbFormPermissionError] = useState(null);
 
   // States para Formulários do Facebook
   const [pageForms, setPageForms] = useState([]);
@@ -95,40 +96,44 @@ function IntegrationsPage() {
   // funcao para buscar formulários da página
   const fetchPageForms = useCallback(async (pageId) => {
     if (!pageId) {
-      setPageForms([]);
-      return;
+        setPageForms([]);
+        return;
     }
     setIsLoadingPageForms(true);
-    setFbError(null); // Limpa erros anteriores de FB
+    setFbError(null); 
+    setFbFormPermissionError(null); 
     try {
-      console.log(
-        `[IntegrationsPage] Buscando formulários para Page ID: ${pageId}`
-      );
-      const forms = await listFacebookPageFormsApi(pageId);
-      setPageForms(forms || []);
-      const initialSelected = {};
-      if (
-        persistedFbConnection.linkedFormIds &&
-        Array.isArray(persistedFbConnection.linkedFormIds)
-      ) {
-        forms.forEach((form) => {
-          if (persistedFbConnection.linkedFormIds.includes(form.id)) {
-            initialSelected[form.id] = true;
-          }
-        });
-      }
-      setSelectedFormIds(initialSelected);
-      setSelectedFormIds({});
+        console.log(`[IntegrationsPage] Buscando formulários para Page ID: ${pageId}`);
+        const forms = await listFacebookPageFormsApi(pageId);
+        setPageForms(forms || []);
+        if (forms && forms.length > 0) {
+            const linked = persistedFbConnection.linkedFacebookForms || [];
+            const initialSelected = {};
+             forms.forEach(form => {
+               if (linked.find(lf => lf.formId === form.id)) {
+                 initialSelected[form.id] = true;
+               }
+             });
+             setSelectedFormIds(initialSelected);
+        } else {
+        }
     } catch (err) {
-      console.error(`Erro ao buscar formulários para Page ID ${pageId}:`, err);
-      toast.error(
-        err.message || "Falha ao buscar formulários da página do Facebook."
-      );
-      setPageForms([]);
+        const errorMessage = err.error || err.message || "Falha ao buscar formulários.";
+        console.error(`Erro ao buscar formulários para Page ID ${pageId}:`, err);
+
+        if (typeof errorMessage === 'string' && (errorMessage.includes('(#200)') && errorMessage.toLowerCase().includes('permission'))) {
+            const permErrorMsg = "Para listar/gerenciar formulários, são necessárias permissões adicionais. Por favor, reconecte a conta/página e conceda as permissões de 'gerenciar anúncios da página'.";
+            setFbFormPermissionError(permErrorMsg);
+            toast.warn("Permissões adicionais do Facebook são necessárias.", { autoClose: 7000 });
+        } else {
+            setFbError(errorMessage); 
+            toast.error(errorMessage);
+        }
+        setPageForms([]);
     } finally {
-      setIsLoadingPageForms(false);
+        setIsLoadingPageForms(false);
     }
-  }, [persistedFbConnection]);
+}, [persistedFbConnection]);
 
   // Função para buscar o status da conexão FB no backend
   const fetchFacebookStatus = useCallback(async () => {
@@ -592,7 +597,10 @@ function IntegrationsPage() {
                 </div>
 
                 {/* LISTA DE FORMULÁRIOS E BOTÃO SALVAR (mostra se página conectada) */}
-                {isLoadingPageForms ? (
+                { fbFormPermissionError ? (
+                  <p style={{ marginTop: '1rem', color: '#FFA500', fontWeight: 'bold' }}>{fbFormPermissionError}</p>
+
+                ) : isLoadingPageForms ? (
                     <p style={{marginTop: '1rem'}}>Carregando formulários da página...</p>
                 ) : pageForms.length > 0 ? (
                     <div className="form-selection-section">
