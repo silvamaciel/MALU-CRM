@@ -108,5 +108,4 @@ const processFacebookLead = async (leadPayloadValue, companyId) => {
 };
 
 
-// Mantenha o module.exports
 module.exports = { processFacebookLead };
