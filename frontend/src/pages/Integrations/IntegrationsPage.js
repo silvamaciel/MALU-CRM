@@ -109,8 +109,19 @@ function IntegrationsPage() {
         console.log(
           `[IntegrationsPage] Buscando formulários para Page ID: ${pageId}`
         );
+
+        console.log(
+          "[IntegrationsPage FETCHFORMS] InitiallyLinkedForms recebidos:",
+          JSON.stringify(initiallyLinkedForms, null, 2)
+        );
+
         const formsFromApi = await listFacebookPageFormsApi(pageId);
         setPageForms(formsFromApi || []);
+
+        console.log(
+          "[IntegrationsPage FETCHFORMS] Forms da API do Facebook:",
+          JSON.stringify(formsFromApi, null, 2)
+        );
 
         const initialSelected = {};
         if (
@@ -119,17 +130,34 @@ function IntegrationsPage() {
           initiallyLinkedForms &&
           initiallyLinkedForms.length > 0
         ) {
+          console.log(
+            "[IntegrationsPage FETCHFORMS] Entrou no IF para pré-selecionar checkboxes."
+          ); // DEBUG
           formsFromApi.forEach((form) => {
-            if (
-              initiallyLinkedForms.find(
-                (linkedForm) => linkedForm.formId === form.id
-              )
-            ) {
+            const foundLinkedForm = initiallyLinkedForms.find(
+              (linkedForm) => linkedForm.formId === form.id
+            );
+            console.log(
+              `[IntegrationsPage FETCHFORMS] Checando form da API (ID: ${form.id}, Nome: ${form.name}). Encontrado na lista de vinculados?`,
+              !!foundLinkedForm
+            );
+            if (foundLinkedForm) {
               initialSelected[form.id] = true;
+              console.log(
+                `[IntegrationsPage FETCHFORMS] MARCANDO checkbox para form ID: ${form.id}`
+              ); // DEBUG
             }
           });
+        } else {
+          console.log(
+            "[IntegrationsPage FETCHFORMS] NÃO entrou no IF para pré-selecionar (alguma lista vazia ou não definida)."
+          ); // DEBUG
         }
         setSelectedFormIds(initialSelected);
+        console.log(
+          "[IntegrationsPage FETCHFORMS] Estado final de initialSelected/setSelectedFormIds:",
+          JSON.stringify(initialSelected, null, 2)
+        ); // DEBUG
 
         if (
           !(formsFromApi && formsFromApi.length > 0) &&
@@ -362,7 +390,13 @@ function IntegrationsPage() {
       setFbUserData(null); // Reseta dados de login FB se houver
       setFacebookPages([]); // Limpa lista de páginas
       setSelectedPageId("");
-      setPersistedFbConnection(prev => ({ ...prev, isConnected: false, pageId: null, pageName: null, linkedForms: [] }));
+      setPersistedFbConnection((prev) => ({
+        ...prev,
+        isConnected: false,
+        pageId: null,
+        pageName: null,
+        linkedForms: [],
+      }));
     } catch (err) {
       const errorMsg = err.message || "Falha ao desconectar página.";
       setFbError(errorMsg);
