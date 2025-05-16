@@ -153,7 +153,7 @@ const getLeadById = async (id, companyId) => {
 const createLead = async (leadData, companyId, userId) => {
 
   console.log("[createLead DEBUG] Dados recebidos em leadData:", JSON.stringify(leadData, null, 2));
-  console.log(`[createLead DEBUG] companyId: ${companyId}, actorUserId: ${actorUserId}`);
+  console.log(`[createLead DEBUG] companyId: ${companyId}, userId: ${userId}`);
 
   if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
     throw new Error("ID da Empresa inválido.");
