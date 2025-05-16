@@ -4,6 +4,12 @@ const Company = require('../models/Company');
 const User = require('../models/User');
 const Origem = require('../models/origem');
 const mongoose = require('mongoose'); 
+const cpfcnpj = require("cpf-cnpj-validator");
+const {
+  PhoneNumberUtil,
+  PhoneNumberFormat: PNF,
+} = require("google-libphonenumber");
+const phoneUtil = PhoneNumberUtil.getInstance();
 
 /**
  * Processa o payload de um webhook de leadgen do Facebook,
