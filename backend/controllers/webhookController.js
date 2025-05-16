@@ -43,7 +43,14 @@ const validateFacebookSignature = (req) => {
         console.warn("[WebhookCtrl] Assinatura 'x-hub-signature-256' não encontrada no header.");
         return false;
     }
-
+ 
+    if (req.rawBody) {
+        console.log("DEBUG SIGNATURE: req.rawBody recebido pelo backend (como string UTF-8):\n---\n" + req.rawBody.toString('utf8') + "\n---");
+    } else {
+        console.error("DEBUG SIGNATURE: req.rawBody está UNDEFINED! Verifique o middleware express.json({ verify: ... }) em server.js");
+        return false; 
+    }
+    
     const signatureHash = signature.split('=')[1];
     if (!signatureHash) {
          console.warn("[WebhookCtrl] Formato inválido da assinatura no header.");
