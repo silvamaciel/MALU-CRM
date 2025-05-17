@@ -19,7 +19,7 @@ const phoneUtil = PhoneNumberUtil.getInstance();
  * @param {object} leadPayloadValue - O objeto 'value' do webhook (contém leadgen_id, form_id, field_data, page_id).
  * @param {string} companyId - O ID da empresa CRM para associar o lead (já identificado pelo controller).
  */
-const processFacebookLead = async (leadPayloadValue, companyId) => {
+const processFacebookLead = async (leadPayloadValue, companyId, creatorOrResponsibleUserId) => {
     console.log(`[WebhookSvc FBLead] Iniciando processamento de lead para Empresa ${companyId}`);
 
     // === [1] Validações Iniciais ===
@@ -129,6 +129,21 @@ const processFacebookLead = async (leadPayloadValue, companyId) => {
         throw new Error("Falha ao obter/criar origem 'Facebook Ads'.");
     }
 
+    let finalResponsibleId = creatorOrResponsibleUserId;
+    if (!finalResponsibleId) {
+        console.warn(`[WebhookSvc FBLead] Nenhum connectingUserId encontrado na Company. Buscando admin padrão para Company ${companyId}.`);
+        const defaultAdmin = await User.findOne({ company: companyId, perfil: 'admin', ativo: true }).lean();
+        finalResponsibleId = defaultAdmin?._id || null;
+        if (finalResponsibleId) {
+             console.log(`[WebhookSvc FBLead] Responsável definido como admin padrão: ${finalResponsibleId}`);
+        } else {
+             console.warn(`[WebhookSvc FBLead] Nenhum admin padrão encontrado. Lead ficará sem responsável.`);
+        }
+    } else {
+        console.log(`[WebhookSvc FBLead] Usando usuário que conectou a página como responsável: ${finalResponsibleId}`);
+    }
+
+
     const defaultResponsible = await User.findOne({ company: companyId, perfil: 'admin', ativo: true }).lean();
 
     // === [6] Montar Lead e Criar ===
@@ -143,12 +158,12 @@ const processFacebookLead = async (leadPayloadValue, companyId) => {
         email: leadDataFromForm.email || null,
         cpf: leadDataFromForm.cpf || null,
         origem: crmOrigin._id,
-        responsavel: defaultResponsible?._id || null,
+        responsavel: finalResponsibleId,
         comentario: comentarioFinal.trim()
     };
 
     try {
-        const newLead = await LeadService.createLead(leadParaSalvar, companyId, null);
+        const newLead = await LeadService.createLead(leadParaSalvar, companyId, finalResponsibleId);
         console.log(`[WebhookSvc FBLead] Lead criado com sucesso via webhook: ${newLead._id}`);
         return newLead;
     } catch (createError) {
