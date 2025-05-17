@@ -11,9 +11,10 @@ const connectFacebookPage = async (req, res) => {
     const { pageId, accessToken } = req.body; // Recebe Page ID e User Access Token do frontend
     const companyId = req.user?.company; // Pega do usuário logado pelo 'protect'
     const userId = req.user?._id;
+    const connectingUserId = req.user?._id;
 
-    if (!pageId || !accessToken || !companyId || !userId) {
-        return res.status(400).json({ error: 'Dados insuficientes para conectar página.' });
+    if (!pageId || !accessToken || !companyId || !userId || !connectingUserId) {
+        return res.status(400).json({ error: 'Dados insuficientes para conectar página (pageId, accessToken, companyId, connectingUserId).' });
     }
 
     try {
@@ -21,6 +22,7 @@ const connectFacebookPage = async (req, res) => {
             pageId,
             accessToken,
             companyId,
+            connectingUserId
             // userId é útil se o serviço precisar dele para algo, mas não diretamente aqui
         );
         res.status(200).json(result); // Retorna mensagem de sucesso do serviço
