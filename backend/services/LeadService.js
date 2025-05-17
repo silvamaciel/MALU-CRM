@@ -16,6 +16,13 @@ const {
 } = require("google-libphonenumber");
 const phoneUtil = PhoneNumberUtil.getInstance();
 
+const getDefaultAdminUserIdForCompany = async (companyId) => {
+  if (!companyId) return null;
+  const adminUser = await User.findOne({ company: companyId, perfil: 'admin', ativo: true }).select('_id').lean();
+  return adminUser?._id || null;
+};
+
+
 // --- Função Auxiliar logHistory ---
 const logHistory = async (leadId, userId, action, details) => {
   try {
