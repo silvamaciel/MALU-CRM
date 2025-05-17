@@ -205,10 +205,11 @@ const createLead = async (leadData, companyId, userId) => {
   // 4. Determinar/Validar IDs de Referência (Dentro da Empresa)
   let situacaoIdFinal = null;
   let origemIdFinal = null;
-  let responsavelIdFinal = null;
+  let responsavelIdFinal = leadData.responsavel || userId || (await getDefaultAdminUserIdForCompany(companyId));
+  
 
   // Responsável (Default = LoggedIn User)
-  if (responsavel && mongoose.Types.ObjectId.isValid(responsavel)) {
+  if (responsavel && mongoose.Types.ObjectId.isValid(responsavelIdFinal)) {
     const doc = await User.findOne({
       _id: responsavel,
       company: companyId,
