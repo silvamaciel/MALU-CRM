@@ -41,6 +41,12 @@ const companySchema = new Schema(
         formId: { type: String, required: true },
         formName: { type: String } 
     }],
+
+    facebookConnectedByUserId: { 
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: false
+  },
     
     facebookWebhookSubscriptionId: {
       type: String,
