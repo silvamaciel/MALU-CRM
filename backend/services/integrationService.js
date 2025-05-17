@@ -41,16 +41,18 @@ if (!WEBHOOK_RECEIVER_URL_FROM_ENV && process.env.NODE_ENV !== "development") {
 const connectFacebookPageIntegration = async (
   pageId,
   shortLivedUserAccessToken,
-  companyId
+  companyId,
+  connectingUserId
+
 ) => {
-  if (!pageId || !shortLivedUserAccessToken || !companyId) {
+  if (!pageId || !shortLivedUserAccessToken || !companyId || connectingUserId) {
     throw new Error("Page ID, User Access Token e Company ID são necessários.");
   }
   if (!FACEBOOK_APP_ID || !FB_APP_SECRET) {
     throw new Error("Configuração do servidor para Facebook incompleta.");
   }
   console.log(
-    `[IntegSvc connect] Iniciando conexão da Página ${pageId} para Empresa ${companyId}`
+    `[IntegSvc connect] Iniciando conexão da Página ${pageId} para Empresa ${companyId} por Usuário ${connectingUserId}`
   );
 
   try {
@@ -110,13 +112,14 @@ const connectFacebookPageIntegration = async (
       {
         facebookPageId: pageId,
         facebookPageAccessToken: longLivedPageAccessToken,
+        facebookConnectedByUserId: connectingUserId
       },
-      { new: true, runValidators: true } // Adicionado runValidators
+      { new: true, runValidators: true }
     );
     if (!updatedCompany) {
       throw new Error("Empresa não encontrada no banco de dados.");
     }
-    console.log(`[IntegSvc DEBUG connect] Company atualizada: PageID=${updatedCompany.facebookPageId}, Token Salvo=${!!updatedCompany.facebookPageAccessToken}`);
+    console.log(`[IntegSvc DEBUG connect] Company atualizada: PageID=<span class="math-inline">\{updatedCompany\.facebookPageId\}, Token Salvo\=</span>{!!updatedCompany.facebookPageAccessToken}, ConectadoPor=${updatedCompany.facebookConnectedByUserId}`);
 
 
     // 4. Inscrever a Página no Webhook de Leadgen do seu App Meta
