@@ -89,6 +89,7 @@ const handleFacebookLeadWebhook = async (req, res) => {
     // 2. Identificar a Empresa pelo PAGE ID no payload
     let company = null;
     let companyFound = false;
+    let creatorOrResponsibleUserId = null;
 
     try {
         // O Facebook envia um array 'entry', geralmente com 1 item para webhooks de lead
@@ -101,13 +102,17 @@ const handleFacebookLeadWebhook = async (req, res) => {
                 }
 
                 // Busca a empresa CRM que tem este facebookPageId registrado
-                company = await Company.findOne({ facebookPageId: pageIdFromWebhook }).lean();
+                company = await Company.findOne({ facebookPageId: pageIdFromWebhook })
+                                        .select('nome linkedFacebookForms facebookConnectedByUserId')
+                                        .lean();
+
                 if (!company) {
                     console.error(`[WebhookCtrl] Nenhuma Empresa CRM encontrada para Page ID: ${pageIdFromWebhook}`);
                     continue; // Se esta página não está ligada a nenhuma empresa no CRM, ignora
                 }
                 companyFound = true;
-                console.log(`[WebhookCtrl] Webhook recebido para Empresa CRM: ${company.nome} (ID: ${company._id}) via Page ID: ${pageIdFromWebhook}`);
+                creatorOrResponsibleUserId = company.facebookConnectedByUserId || null;
+                console.log(`[WebhookCtrl] Webhook para Empresa: ${company.nome} (ID: ${company._id}), PageID: ${pageIdFromWebhook}, ConectadoPor: ${creatorOrResponsibleUserId}`);
 
                 // Processa as 'changes' dentro do entry
                 for (const change of entry.changes) {
@@ -115,8 +120,7 @@ const handleFacebookLeadWebhook = async (req, res) => {
                         console.log("[WebhookCtrl] Evento leadgen recebido. Processando com webhookService...");
                         // Passa o 'value' do change (que contém leadgen_id, form_id, field_data, etc.)
                         // e o company._id encontrado
-                        await webhookService.processFacebookLead(change.value, company._id);
-                    }
+                        await webhookService.processFacebookLead(change.value, company._id, creatorOrResponsibleUserId);                    }
                 }
             }
         } else {
