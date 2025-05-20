@@ -69,6 +69,8 @@ const empreendimentoSchema = new Schema({
     },
 }, {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
 });
 
 empreendimentoSchema.index({ nome: 1, company: 1 }, { unique: true });
