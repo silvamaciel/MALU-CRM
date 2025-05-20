@@ -119,10 +119,110 @@ const getEmpreendimentoByIdAndCompany = async (empreendimentoId, companyId) => {
 };
 
 
+/**
+ * Atualiza um empreendimento existente.
+ * @param {string} empreendimentoId - ID do empreendimento a ser atualizado.
+ * @param {object} updateData - Dados para atualizar.
+ * @param {string} companyId - ID da empresa proprietária.
+ * @returns {Promise<Empreendimento>} O empreendimento atualizado.
+ */
+const updateEmpreendimento = async (empreendimentoId, updateData, companyId) => {
+    if (!empreendimentoId || !mongoose.Types.ObjectId.isValid(empreendimentoId) ||
+        !companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+        throw new Error('IDs de empreendimento ou empresa inválidos para atualização.');
+    }
+    console.log(`[EmpreendimentoService] Atualizando empreendimento ID: ${empreendimentoId} para Company: ${companyId}`);
+
+    delete updateData.company;
+    delete updateData.ativo; // 'ativo' é controlado pelo deleteEmpreendimento
+    delete updateData._id;
+
+    try {
+        // Verifica se o nome do empreendimento está sendo alterado e se já existe outro com o novo nome na mesma empresa
+        if (updateData.nome) {
+            const existingEmpreendimentoWithName = await Empreendimento.findOne({
+                _id: { $ne: empreendimentoId }, // Exclui o próprio documento da checagem
+                nome: updateData.nome,
+                company: companyId,
+                ativo: true
+            });
+            if (existingEmpreendimentoWithName) {
+                throw new Error(`Já existe um empreendimento com o nome "${updateData.nome}" nesta empresa.`);
+            }
+        }
+
+        // Encontra e atualiza
+        // Usar { new: true } para retornar o documento modificado
+        // Usar { runValidators: true } para rodar as validações do schema na atualização
+        const empreendimentoAtualizado = await Empreendimento.findOneAndUpdate(
+            { _id: empreendimentoId, company: companyId, ativo: true }, // Condição para encontrar
+            { $set: updateData }, // Dados a serem atualizados
+            { new: true, runValidators: true }
+        );
+
+        if (!empreendimentoAtualizado) {
+            throw new Error("Empreendimento não encontrado, não pertence à empresa ou está inativo.");
+        }
+        console.log(`[EmpreendimentoService] Empreendimento ID: ${empreendimentoId} atualizado.`);
+        return empreendimentoAtualizado;
+    } catch (error) {
+        if (error.code === 11000) { // Erro de índice único (caso a checagem acima falhe por alguma race condition)
+            throw new Error(`Já existe um empreendimento com o nome "${updateData.nome}" nesta empresa.`);
+        }
+        console.error(`[EmpreendimentoService] Erro ao atualizar empreendimento ${empreendimentoId}:`, error);
+        throw new Error(error.message || "Erro ao atualizar empreendimento.");
+    }
+};
+
+/**
+ * Desativa (soft delete) um empreendimento.
+ * @param {string} empreendimentoId - ID do empreendimento a ser desativado.
+ * @param {string} companyId - ID da empresa proprietária.
+ * @returns {Promise<object>} Mensagem de sucesso.
+ */
+const deleteEmpreendimento = async (empreendimentoId, companyId) => {
+    if (!empreendimentoId || !mongoose.Types.ObjectId.isValid(empreendimentoId) ||
+        !companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+        throw new Error('IDs de empreendimento ou empresa inválidos para desativação.');
+    }
+    console.log(`[EmpreendimentoService] Desativando empreendimento ID: ${empreendimentoId} para Company: ${companyId}`);
+
+    // Verificar se há unidades ativas/reservadas/vendidas antes de desativar o empreendimento
+    const unidadesAtivas = await Unidade.countDocuments({ empreendimento: empreendimentoId, ativo: true, statusUnidade: { $ne: 'Vendido' } });
+     if (unidadesAtivas > 0) {
+         throw new Error('Não é possível desativar um empreendimento que possui unidades não vendidas ou ativas.');
+     }
+
+    try {
+        const empreendimento = await Empreendimento.findOneAndUpdate(
+            { _id: empreendimentoId, company: companyId, ativo: true },
+            { $set: { ativo: false } },
+            { new: true } // Retorna o documento modificado
+        );
+
+        if (!empreendimento) {
+            throw new Error("Empreendimento não encontrado, já está inativo ou não pertence à empresa.");
+        }
+
+        // Desativar todas as unidades associadas a este empreendimento também.
+        await Unidade.updateMany({ empreendimento: empreendimentoId, company: companyId }, { $set: { ativo: false } });
+        console.log(`[EmpreendimentoService] Unidades do empreendimento ${empreendimentoId} também foram desativadas.`);
+
+        console.log(`[EmpreendimentoService] Empreendimento ID: ${empreendimentoId} desativado.`);
+        return { message: "Empreendimento desativado com sucesso." };
+    } catch (error) {
+        console.error(`[EmpreendimentoService] Erro ao desativar empreendimento ${empreendimentoId}:`, error);
+        throw new Error(error.message || "Erro ao desativar empreendimento.");
+    }
+};
+
+
+
+
 module.exports = {
     createEmpreendimento,
     getEmpreendimentosByCompany,
-    getEmpreendimentoByIdAndCompany
-    // updateEmpreendimento,
-    // deleteEmpreendimento
+    getEmpreendimentoByIdAndCompany,
+    updateEmpreendimento,
+    deleteEmpreendimento
 };
