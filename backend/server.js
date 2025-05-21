@@ -50,6 +50,9 @@ app.use('/api/brokers', require('./routes/brokerContactRoutes'));
 app.use('/api/integrations', require('./routes/integrationRoutes'));
 app.use('/api/webhooks', require('./routes/webhookRoutes'));
 
+app.use('/api/empreendimentos', require('./routes/empreendimentoRoutes'));
+
+
 
 
 const PORT = process.env.PORT || 5000;
