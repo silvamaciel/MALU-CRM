@@ -84,12 +84,17 @@ function App() {
 
                 {/* Rotas Comuns */}
                 <Route path="dashboard" element={<DashboardPage />} />
+                
                 <Route path="leads" element={<LeadListPage />} />
                 <Route path="leads/novo" element={<LeadFormPage />} />
                 <Route path="leads/:id" element={<LeadDetailPage />} />
                 <Route path="leads/:id/editar" element={<LeadFormPage />} />
-                <Route path="/empreendimentos" element={<EmpreendimentoListPage />} />
                 
+                <Route path="/empreendimentos" element={<EmpreendimentoListPage />} />
+                <Route path="/empreendimentos/novo" element={<EmpreendimentoFormPage />} />
+                <Route path="/empreendimentos/:id/editar" element={<EmpreendimentoFormPage />} />
+
+
                 {/* Rotas Admin (Renderizadas condicionalmente DENTRO do Outlet) */}
                 <Route element={<AdminGuard isAdmin={isAdmin} />}> {/* Pai que aplica a guarda */}
                                 <Route path="admin/situacoes" element={<LeadStageAdminPage />} />
