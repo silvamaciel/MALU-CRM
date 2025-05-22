@@ -8,20 +8,23 @@ const {
     updateEmpreendimentoController,
     deleteEmpreendimentoController
 } = require('../controllers/empreendimentoController');
-const { protect, authorize } = require('../middlewares/authMiddleware'); // Assumindo que 'authorize' pode ser usado no futuro
+const { protect } = require('../middlewares/authMiddleware');
 
-router.use(protect); 
+// <<< Importar as rotas de unidade >>>
+const unidadeRoutes = require('./unidadeRoutes');
 
+// Aplicar middleware de proteção a todas as rotas de empreendimentos
+router.use(protect);
+
+router.use('/:empreendimentoId/unidades', unidadeRoutes);
 
 router.route('/')
-    .post(createEmpreendimentoController)   // Criar novo empreendimento
-    .get(getEmpreendimentosController);    // Listar todos os empreendimentos da empresa
+    .post(createEmpreendimentoController)
+    .get(getEmpreendimentosController);
 
-router.route('/:id')
-    .get(getEmpreendimentoByIdController)      // Buscar empreendimento por ID
-    .put(updateEmpreendimentoController)       // Atualizar empreendimento
-    .delete(deleteEmpreendimentoController);   // Desativar (soft delete) empreendimento
+router.route('/:id') 
+    .get(getEmpreendimentoByIdController)
+    .put(updateEmpreendimentoController)
+    .delete(deleteEmpreendimentoController);
 
 module.exports = router;
-
-
