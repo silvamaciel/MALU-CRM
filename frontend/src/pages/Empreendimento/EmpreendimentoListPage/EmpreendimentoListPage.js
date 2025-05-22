@@ -50,7 +50,6 @@ function EmpreendimentoListPage() {
         }
     };
 
-    // Renderização do "HTML" via JSX
     if (loading) {
         return <div className="admin-page loading"><p>Carregando empreendimentos...</p></div>;
     }
