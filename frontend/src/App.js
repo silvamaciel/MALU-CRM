@@ -23,6 +23,8 @@ import BrokerContactsAdminPage from './pages/Admin/BrokerContactsAdminPage';
 import AdminGuard from './components/Auth/AdminGuard';
 import IntegrationsPage from './pages/Integrations/IntegrationsPage'; 
 import EmpreendimentoListPage from './pages/Empreendimento/EmpreendimentoListPage/EmpreendimentoListPage';
+import EmpreendimentoListPage from './pages/Empreendimento/EmpreendimentoFormPage/EmpreendimentoFormPage';
+
 
 
 // Libs & CSS
