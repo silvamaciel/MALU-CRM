@@ -22,6 +22,7 @@ import MainLayout from './components/Layout/MainLayout';
 import BrokerContactsAdminPage from './pages/Admin/BrokerContactsAdminPage';
 import AdminGuard from './components/Auth/AdminGuard';
 import IntegrationsPage from './pages/Integrations/IntegrationsPage'; 
+import EmpreendimentoListPage from './pages/Empreendimento/EmpreendimentoListPage/EmpreendimentoListPage';
 
 
 // Libs & CSS
@@ -87,7 +88,8 @@ function App() {
                 <Route path="leads/novo" element={<LeadFormPage />} />
                 <Route path="leads/:id" element={<LeadDetailPage />} />
                 <Route path="leads/:id/editar" element={<LeadFormPage />} />
-
+                <Route path="/empreendimentos" element={<EmpreendimentoListPage />} />
+                
                 {/* Rotas Admin (Renderizadas condicionalmente DENTRO do Outlet) */}
                 <Route element={<AdminGuard isAdmin={isAdmin} />}> {/* Pai que aplica a guarda */}
                                 <Route path="admin/situacoes" element={<LeadStageAdminPage />} />
