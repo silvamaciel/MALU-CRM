@@ -1,11 +1,12 @@
 // src/components/Sidebar/Sidebar.js
 import React from 'react';
-import { NavLink } from 'react-router-dom'; // Só precisa de NavLink
+import { NavLink, useLocation } from 'react-router-dom'; // Só precisa de NavLink
 import './Sidebar.css';
 
 // <<< Recebe closeMobileSidebar como prop >>>
 function Sidebar({ userData, handleLogout, closeMobileSidebar }) {
     const isAdmin = userData?.perfil === 'admin';
+    const location = useLocation();
 
     // <<< Função para lidar com clique no link >>>
     const handleLinkClick = () => {
@@ -26,6 +27,7 @@ function Sidebar({ userData, handleLogout, closeMobileSidebar }) {
                     {/* <<< Adicionado onClick={handleLinkClick} >>> */}
                     <li><NavLink to="/dashboard" onClick={handleLinkClick} className={({isActive}) => isActive ? 'active' : ''}>Dashboard</NavLink></li>
                     <li><NavLink to="/leads" onClick={handleLinkClick} className={({isActive}) => isActive ? 'active' : ''}>Leads</NavLink></li>
+                    <li><NavLink to="/empreendimentos" onClick={handleLinkClick} className={({isActive}) => isActive || location.pathname.startsWith('/empreendimentos') ? 'active' : ''}>Empreendimentos</NavLink></li>
 
                     {/* Links de Administração */}
                     {isAdmin && (
