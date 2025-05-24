@@ -36,6 +36,8 @@ const createReserva = async (reservaData, leadId, unidadeId, empreendimentoId, c
         throw new Error("Data de Validade da Reserva inválida ou anterior à data atual.");
     }
 
+    const nomeEstagioReserva = "Em Reserva"; // Nome padrão
+
 
     // Iniciar uma sessão para transação (IMPORTANTE para garantir atomicidade)
     const session = await mongoose.startSession();
