@@ -15,7 +15,7 @@ import { getLeadStages } from "../../api/leadStages";
 // Modal Components
 import DiscardLeadModal from "../../components/DiscardLeadModal/DiscardLeadModal";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
-// import ReservaFormModal from "./ReservaFormModal";
+import ReservaFormModal from "./ReservaFormModal";
 
 import "./LeadDetailPage.css";
 
@@ -488,52 +488,15 @@ function LeadDetailPage() {
         errorMessage={deleteError}
       />
 
-      {/* Modal para Criar Reserva (Placeholder por enquanto) */}
-      {isReservaModalOpen && leadDetails && (
-        <div
-          className="form-modal-overlay"
-          onClick={() => handleCloseReservaModal(false)}
-          style={{ zIndex: 1051 }}
-        >
-          {" "}
-          {/* z-index maior que outros modais */}
-          <div
-            className="form-modal-content"
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: "600px" }}
-          >
-            <h2>Criar Reserva para: {leadDetails.nome}</h2>
-            <p>Lead ID: {leadDetails._id}</p>
-            <p>Empresa ID: {leadDetails.company}</p>{" "}
-            {/* Ou de userData.company */}
-            <p>
-              Formulário de seleção de Empreendimento/Unidade e dados da reserva
-              aparecerá aqui.
-            </p>
-            <div className="form-actions" style={{ marginTop: "20px" }}>
-              <button
-                type="button"
-                className="button cancel-button"
-                onClick={() => handleCloseReservaModal(false)}
-              >
-                Cancelar Reserva
-              </button>
-              <button
-                type="button"
-                className="button submit-button"
-                onClick={() => {
-                  // Aqui futuramente chamaremos a API para criar a reserva
-                  toast.info("TODO: Chamar API para criar reserva.");
-                  handleCloseReservaModal(true); // Simula sucesso e fecha o modal
-                }}
-                style={{ marginLeft: "10px" }}
-              >
-                Salvar Reserva (Simulação)
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* MODAL DE RESERVA REAL */}
+        {isReservaModalOpen && leadDetails && (
+            <ReservaFormModal
+                leadId={leadDetails._id}
+                leadNome={leadDetails.nome}
+                companyId={leadDetails.company?._id || leadDetails.company} // Passa o companyId do lead
+                onClose={handleCloseReservaModal} // Passa a função para fechar e atualizar
+            />
+        )}
     </div> // Fim .lead-detail-page
   );
 } // <<< FIM DO COMPONENTE
