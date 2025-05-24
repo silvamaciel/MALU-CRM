@@ -3,12 +3,13 @@ const mongoose = require('mongoose');
 const Reserva = require('../models/Reserva');
 const Lead = require('../models/Lead');
 const Unidade = require('../models/Unidade');
-const LeadStage = require('../models/LeadStage'); // Para buscar o ID do estágio "Em Reserva"
-const { logHistory } = require('./historyService'); // Para registrar no histórico do Lead
+const Empreendimento = require('../models/Empreendimento');
+const LeadStage = require('../models/LeadStage');
+const { logHistory } = require('./historyService');
 
 /**
  * Cria uma nova reserva, atualiza o status do Lead e da Unidade.
- * @param {object} reservaData - Dados da reserva (validadeReserva, valorSinal, observacoesReserva).
+ * @param {object} reservaData - Dados da reserva (ex: { validadeReserva, valorSinal, observacoesReserva }).
  * @param {string} leadId - ID do Lead.
  * @param {string} unidadeId - ID da Unidade a ser reservada.
  * @param {string} empreendimentoId - ID do Empreendimento da unidade.
@@ -17,124 +18,133 @@ const { logHistory } = require('./historyService'); // Para registrar no histór
  * @returns {Promise<Reserva>} A reserva criada.
  */
 const createReserva = async (reservaData, leadId, unidadeId, empreendimentoId, companyId, creatingUserId) => {
-    console.log(`[ReservaService] Iniciando criação de reserva para Lead ${leadId}, Unidade ${unidadeId}, Empresa ${companyId}`);
+    console.log(`[ReservaService] Iniciando criação de reserva para Lead ${leadId}, Unidade ${unidadeId} (Emp: ${empreendimentoId}), Company ${companyId} por User ${creatingUserId}`);
 
     // Validações de IDs
-    if (!mongoose.Types.ObjectId.isValid(leadId) ||
-        !mongoose.Types.ObjectId.isValid(unidadeId) ||
-        !mongoose.Types.ObjectId.isValid(empreendimentoId) ||
-        !mongoose.Types.ObjectId.isValid(companyId) ||
-        !mongoose.Types.ObjectId.isValid(creatingUserId)) {
-        throw new Error("IDs inválidos fornecidos para criar reserva.");
+    const idsToValidate = { leadId, unidadeId, empreendimentoId, companyId, creatingUserId };
+    for (const key in idsToValidate) {
+        if (!idsToValidate[key] || !mongoose.Types.ObjectId.isValid(idsToValidate[key])) {
+            throw new Error(`ID inválido fornecido para ${key} ao criar reserva.`);
+        }
     }
 
-    if (!reservaData.validadeReserva) {
-        throw new Error("Data de validade da reserva é obrigatória.");
+    if (!reservaData || !reservaData.validadeReserva) {
+        throw new Error("Dados da reserva incompletos. A Data de Validade da Reserva é obrigatória.");
     }
-
-    // 1. Verificar se o Lead existe, pertence à empresa e não está em um status final (Vendido, Descartado)
-    const lead = await Lead.findOne({ _id: leadId, company: companyId });
-    if (!lead) {
-        throw new Error(`Lead ${leadId} não encontrado ou não pertence à empresa.`);
-    }
-    // Adicionar verificação de status do lead se necessário (ex: não permitir reservar se já vendido)
-    const leadStatusAtual = await LeadStage.findById(lead.situacao).lean();
-    if (leadStatusAtual && (leadStatusAtual.nome === "Vendido" || leadStatusAtual.nome === "Descartado")) {
-         throw new Error(`Lead ${lead.nome} já está com status ${leadStatusAtual.nome} e não pode ser reservado.`);
+    const validadeReservaDate = new Date(reservaData.validadeReserva);
+    if (isNaN(validadeReservaDate.getTime()) || validadeReservaDate <= new Date()) {
+        throw new Error("Data de Validade da Reserva inválida ou anterior à data atual.");
     }
 
 
-    // 2. Verificar se a Unidade existe, pertence ao empreendimento/empresa e está "Disponível"
-    const unidade = await Unidade.findOne({
-        _id: unidadeId,
-        empreendimento: empreendimentoId,
-        company: companyId,
-        // statusUnidade: "Disponível", // A checagem de statusUnidade já está no pre-save da Reserva e o índice parcial também.
-                                       // Mas é bom reconfirmar aqui antes de mudar outros docs.
-        ativo: true
-    });
-
-    if (!unidade) {
-        throw new Error(`Unidade ${unidadeId} não encontrada, não pertence ao empreendimento/empresa ou está inativa.`);
-    }
-    if (unidade.statusUnidade !== "Disponível") {
-        throw new Error(`Unidade ${unidade.identificador} não está Disponível. Status atual: ${unidade.statusUnidade}.`);
-    }
-
-    // 3. Encontrar o ID do estágio "Em Reserva" para a empresa
-    const situacaoEmReserva = await LeadStage.findOne({
-        company: companyId,
-        nome: { $regex: new RegExp("^Em Reserva$", "i") } // Case-insensitive
-    }).lean();
-
-    if (!situacaoEmReserva) {
-        // Opção: Criar o estágio "Em Reserva" se não existir, ou lançar erro.
-        // Por agora, vamos lançar erro para que o admin crie o estágio.
-        throw new Error(`Estágio de Lead "Em Reserva" não encontrado para a empresa ${companyId}. Por favor, cadastre-o na área de administração.`);
-    }
-
-    // 4. Criar o documento Reserva
-    const novaReserva = new Reserva({
-        ...reservaData, // Contém validadeReserva, valorSinal, observacoesReserva
-        lead: leadId,
-        unidade: unidadeId,
-        empreendimento: empreendimentoId,
-        company: companyId,
-        createdBy: creatingUserId,
-        statusReserva: "Ativa" // Default já é "Ativa", mas explícito aqui.
-    });
-
-    // Iniciar uma sessão para transação, se possível/desejado, para garantir atomicidade
-    // const session = await mongoose.startSession();
-    // session.startTransaction();
+    // Iniciar uma sessão para transação (IMPORTANTE para garantir atomicidade)
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
     try {
-        const reservaSalva = await novaReserva.save(/*{ session }*/);
+        // 1. Verificar o Lead
+        const lead = await Lead.findOne({ _id: leadId, company: companyId }).session(session);
+        if (!lead) {
+            throw new Error(`Lead ${leadId} não encontrado ou não pertence à empresa.`);
+        }
+        const leadStatusAtualDoc = await LeadStage.findById(lead.situacao).lean(); // Não precisa de session para leitura simples
+        const leadStatusAtualNome = leadStatusAtualDoc?.nome || 'N/A';
+        if (leadStatusAtualNome === "Vendido" || leadStatusAtualNome === "Descartado") {
+             throw new Error(`Lead ${lead.nome} já está com status ${leadStatusAtualNome} e não pode ter nova reserva.`);
+        }
+        if (lead.unidadeInteresse && !lead.unidadeInteresse.equals(unidadeId) && leadStatusAtualNome === "Em Reserva") {
+            // Se já tem uma reserva ativa para outra unidade, pode ser necessário um tratamento especial
+            // Por ora, permitimos, mas isso pode ser uma regra de negócio a ser revista.
+            console.warn(`[ReservaService] Lead ${leadId} já está "Em Reserva", mas para uma unidade diferente. Prosseguindo com nova reserva.`);
+        }
+
+
+        // 2. Verificar a Unidade e o Empreendimento
+        const unidade = await Unidade.findOne({
+            _id: unidadeId,
+            empreendimento: empreendimentoId,
+            company: companyId,
+            ativo: true
+        }).session(session);
+
+        if (!unidade) {
+            throw new Error(`Unidade ${unidadeId} não encontrada, inativa, ou não pertence ao empreendimento/empresa especificado.`);
+        }
+        if (unidade.statusUnidade !== "Disponível") {
+            throw new Error(`A Unidade ${unidade.identificador} não está Disponível. Status atual: ${unidade.statusUnidade}.`);
+        }
+        
+        const empreendimento = await Empreendimento.findById(empreendimentoId).select('nome').lean(); // Não precisa de session
+        if (!empreendimento) {
+            throw new Error(`Empreendimento ${empreendimentoId} não encontrado.`);
+        }
+
+
+        // 3. Encontrar o ID do estágio "Em Reserva"
+        const situacaoEmReserva = await LeadStage.findOne({
+            company: companyId,
+            nome: { $regex: new RegExp("^Em Reserva$", "i") }
+        }).select('_id').lean(); // Não precisa de session
+
+        if (!situacaoEmReserva) {
+            throw new Error(`Estágio de Lead "Em Reserva" não encontrado para a empresa. Por favor, cadastre-o.`);
+        }
+
+        // 4. Criar o documento Reserva
+        const novaReserva = new Reserva({
+            lead: leadId,
+            unidade: unidadeId,
+            empreendimento: empreendimentoId,
+            company: companyId,
+            createdBy: creatingUserId,
+            dataReserva: reservaData.dataReserva || new Date(), // Default se não vier
+            validadeReserva: validadeReservaDate,
+            valorSinal: reservaData.valorSinal || null,
+            observacoesReserva: reservaData.observacoesReserva || null,
+            statusReserva: "Ativa"
+        });
+        const reservaSalva = await novaReserva.save({ session });
 
         // 5. Atualizar Status do Lead
-        const oldLeadStatus = lead.situacao;
+        const oldLeadStatusId = lead.situacao;
         lead.situacao = situacaoEmReserva._id;
-        await lead.save(/*{ session }*/);
+        lead.unidadeInteresse = unidadeId; // Atualiza a unidade de interesse principal do lead
+        await lead.save({ session });
 
         // 6. Atualizar Status da Unidade e vincular Lead/Reserva
         unidade.statusUnidade = "Reservada";
         unidade.currentLeadId = leadId;
         unidade.currentReservaId = reservaSalva._id;
-        await unidade.save(/*{ session }*/);
+        await unidade.save({ session });
 
         // 7. Registrar no Histórico do Lead
         await logHistory(
             leadId,
             creatingUserId,
-            "RESERVA_CRIADA", // Ou um tipo de ação mais específico
-            `Reserva para unidade ${unidade.identificador} (Empreendimento: ${reservaData.empreendimentoNome || empreendimentoId}) criada. Status anterior: ${leadStatusAtual?.nome || 'N/A'}. Nova situação: Em Reserva.`,
-            { reservaId: reservaSalva._id, unidadeId: unidadeId, oldLeadStatusId: oldLeadStatus, newLeadStatusId: situacaoEmReserva._id }
+            "RESERVA_CRIADA",
+            `Unidade ${unidade.identificador} (Empreendimento: ${empreendimento.nome}) reservada. Validade: ${validadeReservaDate.toLocaleDateString('pt-BR')}. Situação anterior do lead: ${leadStatusAtualNome}.`,
+            { reservaId: reservaSalva._id, unidadeId: unidadeId, oldLeadStatusId: oldLeadStatusId, newLeadStatusId: situacaoEmReserva._id },
+            // A sessão não é automaticamente propagada para o logHistory, a menos que o modelo History também seja parte da transação.
+            // Para simplificar, o logHistory pode rodar fora da transação ou ser adaptado.
+            // Por agora, rodará após o commit se a transação for bem-sucedida.
         );
 
-        // await session.commitTransaction();
-        console.log(`[ReservaService] Reserva ${reservaSalva._id} criada com sucesso. Lead ${leadId} e Unidade ${unidadeId} atualizados.`);
+        await session.commitTransaction();
+        console.log(`[ReservaService] Reserva ${reservaSalva._id} criada. Lead ${leadId} e Unidade ${unidadeId} atualizados.`);
         return reservaSalva;
 
     } catch (error) {
-        // await session.abortTransaction();
-        console.error("[ReservaService] Erro ao criar reserva e atualizar entidades:", error);
+        await session.abortTransaction();
+        console.error("[ReservaService] Erro ao criar reserva:", error);
         if (error.code === 11000 && error.message.includes("unidade_statusReserva_ativa_unique_idx")) {
              throw new Error(`A unidade ${unidadeId} já possui uma reserva ativa.`);
         }
-        throw new Error(error.message || "Erro ao criar a reserva.");
+        throw new Error(error.message || "Erro interno ao criar a reserva.");
     } finally {
-        // session.endSession();
+        session.endSession();
     }
 };
 
-
-// Futuras funções:
-// const getReservaById = async (...) => {};
-// const listReservasByLead = async (...) => {};
-// const listReservasByEmpreendimento = async (...) => {};
-// const updateReservaStatus = async (reservaId, novoStatus, userId) => {}; // Para Cancelar, Expirar, Converter...
-
 module.exports = {
     createReserva
-    // ... outras funções
 };
