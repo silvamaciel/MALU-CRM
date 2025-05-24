@@ -28,7 +28,9 @@ const leadHistorySchema = new Schema(
         "RESERVA_CRIADA",
         "RESERVA_CANCELADA", 
         "RESERVA_EXPIRADA",  
-        "PROPOSTA_CRIADA"   
+        "PROPOSTA_CRIADA",
+        "RESERVA_CANCELADA_STATUS_LEAD",
+        "UNIDADE_LIBERADA"
       ],
     },
     details: {
