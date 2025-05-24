@@ -39,6 +39,8 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/companies', require('./routes/companyRoutes')); 
 
 
+
+
 // --rotas protegidas -- // 
 app.use('/api/leads', require('./routes/leadRoutes'));
 app.use('/api/leadStage', require('./routes/leadStageRoutes'));
@@ -51,6 +53,11 @@ app.use('/api/integrations', require('./routes/integrationRoutes'));
 app.use('/api/webhooks', require('./routes/webhookRoutes'));
 
 app.use('/api/empreendimentos', require('./routes/empreendimentoRoutes'));
+
+app.use('/api/reservas', require('./routes/ReservaRoutes'));
+
+
+
 
 
 
