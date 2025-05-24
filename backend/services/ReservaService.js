@@ -5,7 +5,7 @@ const Lead = require('../models/Lead');
 const Unidade = require('../models/Unidade');
 const Empreendimento = require('../models/Empreendimento');
 const LeadStage = require('../models/LeadStage');
-const { getLeadHistory } = require('./leadHistoryService');
+const { logHistory } = require('./LeadService');
 
 /**
  * Cria uma nova reserva, atualiza o status do Lead e da Unidade.
@@ -136,14 +136,14 @@ const createReserva = async (reservaData, leadId, unidadeId, empreendimentoId, c
         await unidade.save({ session });
 
         // 7. Registrar no Histórico do Lead
-        await getLeadHistory(
+        await logHistory(
             leadId,
             creatingUserId,
             "RESERVA_CRIADA",
             `Unidade ${unidade.identificador} (Empreendimento: ${empreendimento.nome}) reservada. Validade: ${validadeReservaDate.toLocaleDateString('pt-BR')}. Situação anterior do lead: ${leadStatusAtualNome}.`,
             { reservaId: reservaSalva._id, unidadeId: unidadeId, oldLeadStatusId: oldLeadStatusId, newLeadStatusId: situacaoEmReserva._id },
-            // A sessão não é automaticamente propagada para o getLeadHistory, a menos que o modelo History também seja parte da transação.
-            // Para simplificar, o getLeadHistory pode rodar fora da transação ou ser adaptado.
+            // A sessão não é automaticamente propagada para o logHistory, a menos que o modelo History também seja parte da transação.
+            // Para simplificar, o logHistory pode rodar fora da transação ou ser adaptado.
             // Por agora, rodará após o commit se a transação for bem-sucedida.
         );
 
