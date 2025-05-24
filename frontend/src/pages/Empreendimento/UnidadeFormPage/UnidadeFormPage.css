@@ -1,0 +1,93 @@
+/* src/pages/Empreendimento/UnidadeFormPage/UnidadeFormPage.css */
+.unidade-form-page .form-container {
+    max-width: 800px; /* Ajuste conforme necessário */
+    margin: 0 auto;
+}
+
+.unidade-form-page .form-section {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 25px;
+}
+
+.unidade-form-page .form-section h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    font-size: 1.3em;
+    color: #333;
+}
+
+.unidade-form-page .form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px; /* Espaço entre os form-groups na mesma linha */
+    margin-bottom: 15px;
+}
+
+.unidade-form-page .form-group {
+    flex: 1 1 calc(50% - 10px); /* Ocupa 50% menos o gap, permitindo 2 por linha */
+    min-width: 200px; /* Largura mínima para responsividade */
+    display: flex;
+    flex-direction: column;
+}
+
+.unidade-form-page .form-group.full-width {
+    flex-basis: 100%;
+}
+
+.unidade-form-page .form-group label {
+    margin-bottom: 6px;
+    font-weight: 500;
+    font-size: 0.9em;
+    color: #555;
+}
+
+.unidade-form-page .form-group input[type="text"],
+.unidade-form-page .form-group input[type="number"],
+.unidade-form-page .form-group input[type="url"],
+.unidade-form-page .form-group select,
+.unidade-form-page .form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box; /* Importante para padding não aumentar largura total */
+    font-size: 1em;
+}
+
+.unidade-form-page .form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.unidade-form-page .form-group-checkbox {
+    flex-direction: row;
+    align-items: center;
+    flex-basis: 100%; /* Ocupa a linha toda */
+}
+
+.unidade-form-page .form-group-checkbox input[type="checkbox"] {
+    width: auto;
+    margin-right: 8px;
+}
+.unidade-form-page .form-group-checkbox .checkbox-label {
+    margin-bottom: 0; /* Remove margem inferior da label do checkbox */
+    font-weight: normal; /* Ou mantenha 500 se preferir */
+}
+
+.unidade-form-page .form-actions {
+    margin-top: 25px;
+    text-align: right;
+}
+
+.unidade-form-page .form-actions .button {
+    margin-left: 10px;
+}
+
+.unidade-form-page .form-actions .button:first-child {
+    margin-left: 0;
+}
