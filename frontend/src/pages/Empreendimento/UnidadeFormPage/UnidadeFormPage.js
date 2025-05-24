@@ -27,6 +27,8 @@ function UnidadeFormPage() {
     const [pageTitle, setPageTitle] = useState('Nova Unidade');
     const [formError, setFormError] = useState(''); 
 
+    const empData = getEmpreendimentoById(empreendimentoId);
+    console.log(empData.name);
     
 
     const fetchUnidadeData = useCallback(async () => {
@@ -52,8 +54,7 @@ function UnidadeFormPage() {
                 setLoading(false);
             }
         } else {
-            const empData = await getEmpreendimentoById(empreendimentoId);
-            setPageTitle(`Nova Unidade (Empreendimento: ${empData.name})`);
+            setPageTitle(`Nova Unidade (Empreendimento: ${empreendimentoId})`);
             // Reseta para valores padrão de criação
             setFormData({
                 identificador: '',
