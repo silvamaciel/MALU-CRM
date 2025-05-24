@@ -22,6 +22,10 @@ function UnidadeFormPage() {
         observacoesInternas: '',
         destaque: false,
     });
+
+    const [empreendimentoNome, setEmpreendimentoNome] = useState('');
+
+
     const [loading, setLoading] = useState(false);
     const [pageTitle, setPageTitle] = useState('Nova Unidade');
     const [formError, setFormError] = useState(''); // Para erros de validação do formulário
@@ -49,7 +53,7 @@ function UnidadeFormPage() {
                 setLoading(false);
             }
         } else {
-            setPageTitle(`Nova Unidade (Empreendimento: ${empreendimentoId.name})`); 
+            setPageTitle(`Nova Unidade (Empreendimento: ${empreendimentoNome})`); 
             // Reseta para valores padrão de criação
             setFormData({
                 identificador: '',
