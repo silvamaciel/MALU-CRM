@@ -26,6 +26,8 @@ function UnidadeFormPage() {
     const [loading, setLoading] = useState(false);
     const [pageTitle, setPageTitle] = useState('Nova Unidade');
     const [formError, setFormError] = useState('');     
+    const [empreendimentoNome, setEmpreendimentoNome] = useState('');
+
 
     const fetchUnidadeData = useCallback(async () => {
         if (isEditMode && unidadeId && empreendimentoId) {
