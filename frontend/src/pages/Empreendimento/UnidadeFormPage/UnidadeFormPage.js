@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { createUnidadeApi, getUnidadeByIdApi, updateUnidadeApi } from '../../../api/unidadeApi';
+import { getEmpreendimentoById } from '../../../api/empreendimentoApi';
 import './UnidadeFormPage.css'; 
 
 const STATUS_UNIDADE_OPCOES = ["Disponível", "Reservada", "Proposta Aceita", "Vendido", "Bloqueado"];
@@ -24,7 +25,9 @@ function UnidadeFormPage() {
     });
     const [loading, setLoading] = useState(false);
     const [pageTitle, setPageTitle] = useState('Nova Unidade');
-    const [formError, setFormError] = useState(''); // Para erros de validação do formulário
+    const [formError, setFormError] = useState(''); 
+
+    
 
     const fetchUnidadeData = useCallback(async () => {
         if (isEditMode && unidadeId && empreendimentoId) {
@@ -49,7 +52,8 @@ function UnidadeFormPage() {
                 setLoading(false);
             }
         } else {
-            setPageTitle(`Nova Unidade (Empreendimento: ${empreendimentoId})`);
+            const empData = await getEmpreendimentoById(empreendimentoId);
+            setPageTitle(`Nova Unidade (Empreendimento: ${empData.name})`);
             // Reseta para valores padrão de criação
             setFormData({
                 identificador: '',
