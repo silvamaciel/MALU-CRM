@@ -49,7 +49,7 @@ function UnidadeFormPage() {
                 setLoading(false);
             }
         } else {
-            setPageTitle(`Nova Unidade (Empreendimento: ${empreendimentoId})`); // Simplesmente define o título para nova unidade
+            setPageTitle(`Nova Unidade (Empreendimento: ${empreedimento.name})`); 
             // Reseta para valores padrão de criação
             setFormData({
                 identificador: '',
