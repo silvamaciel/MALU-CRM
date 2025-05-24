@@ -5,7 +5,7 @@ const Lead = require('../models/Lead');
 const Unidade = require('../models/Unidade');
 const Empreendimento = require('../models/Empreendimento');
 const LeadStage = require('../models/LeadStage');
-const { logHistory } = require('./historyService');
+const { logHistory } = require('./leadHistoryService');
 
 /**
  * Cria uma nova reserva, atualiza o status do Lead e da Unidade.
