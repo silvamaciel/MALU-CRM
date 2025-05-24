@@ -362,24 +362,9 @@ const createLead = async (leadData, companyId, userId) => {
 };
 
 const updateLead = async (id, leadData, companyId, userId) => {
-  console.log(
-    `--- [updateLead] Iniciando para ID: ${id}, Empresa: ${companyId}, User: ${userId} ---`
-  );
-  console.log(
-    "[updateLead] leadData recebido:",
-    JSON.stringify(leadData, null, 2)
-  );
-
-  // Validações Iniciais
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new Error("ID de Lead inválido.");
-  }
-  if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
-    throw new Error("ID da empresa inválido.");
-  }
-  if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-    throw new Error("ID do usuário inválido.");
-  }
+  if (!mongoose.Types.ObjectId.isValid(id)) throw new Error("ID de Lead inválido.");
+  if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) throw new Error("ID da empresa inválido.");
+  if (!userId || !mongoose.Types.ObjectId.isValid(userId)) throw new Error("ID do usuário inválido.");
 
   const {
     nome,
@@ -388,288 +373,142 @@ const updateLead = async (id, leadData, companyId, userId) => {
     nascimento,
     endereco,
     cpf,
-    responsavel, // ID
-    situacao, // ID
-    motivoDescarte, // ID
+    responsavel,
+    situacao,
+    motivoDescarte,
     comentario,
-    origem, // ID
+    origem,
   } = leadData;
 
-  const updateFields = {}; // Objeto para acumular alterações
+  const updateFields = {};
 
-  // --- Processa Campos Simples ---
   if (nome !== undefined) updateFields.nome = nome.trim();
-  if (email !== undefined)
-    updateFields.email = email ? email.trim().toLowerCase() : null;
+  if (email !== undefined) updateFields.email = email ? email.trim().toLowerCase() : null;
   if (nascimento !== undefined) updateFields.nascimento = nascimento || null;
   if (endereco !== undefined) updateFields.endereco = endereco;
   if (comentario !== undefined) updateFields.comentario = comentario;
-  // motivoDescarte é tratado na lógica da situação
 
-  // --- Processa Contato ---
   if (contato !== undefined) {
     if (contato === null || String(contato).trim() === "") {
       updateFields.contato = null;
     } else {
-      try {
-        const phoneNumber = phoneUtil.parseAndKeepRawInput(contato, null);
-        if (phoneUtil.isValidNumber(phoneNumber)) {
-          updateFields.contato = phoneUtil.format(phoneNumber, PNF.E164);
-        } else {
-          throw new Error(`Número de contato inválido: ${contato}`);
-        }
-      } catch (e) {
-        throw new Error(`Formato de contato não reconhecido: ${contato}`);
-      }
+      const phoneNumber = phoneUtil.parseAndKeepRawInput(contato, null);
+      if (!phoneUtil.isValidNumber(phoneNumber)) throw new Error(`Número de contato inválido: ${contato}`);
+      updateFields.contato = phoneUtil.format(phoneNumber, PNF.E164);
     }
   }
 
-  // --- Processa CPF ---
   if (cpf !== undefined) {
     if (cpf === null || cpf === "") {
       updateFields.cpf = null;
     } else {
       const cpfLimpo = cpf.replace(/\D/g, "");
-      if (!cpfcnpj.cpf.isValid(cpfLimpo)) {
-        throw new Error(`CPF inválido: ${cpf}`);
-      }
+      if (!cpfcnpj.cpf.isValid(cpfLimpo)) throw new Error(`CPF inválido: ${cpf}`);
       updateFields.cpf = cpfLimpo;
     }
   }
 
-  // --- Validação e Lógica de Referências e Descarte ---
+  let nomeSituacaoAntiga = "", nomeSituacaoNova = "";
+
   try {
-    // Situação e Limpeza/Atualização de Descarte
+    const leadOriginal = await Lead.findOne({ _id: id, company: companyId }).select("situacao").populate("situacao", "nome").lean();
+    if (leadOriginal?.situacao?.nome) nomeSituacaoAntiga = leadOriginal.situacao.nome;
+
+    const [situacaoDoc, motivoDoc, origemDoc, responsavelDoc] = await Promise.all([
+      situacao !== undefined && mongoose.Types.ObjectId.isValid(situacao)
+        ? LeadStage.findOne({ _id: situacao, company: companyId })
+        : null,
+      motivoDescarte !== undefined && mongoose.Types.ObjectId.isValid(motivoDescarte)
+        ? DiscardReason.findById(motivoDescarte).lean()
+        : null,
+      origem !== undefined && mongoose.Types.ObjectId.isValid(origem)
+        ? Origem.findOne({ _id: origem, company: companyId }).lean()
+        : null,
+      responsavel !== undefined && mongoose.Types.ObjectId.isValid(responsavel)
+        ? User.findOne({ _id: responsavel, company: companyId }).lean()
+        : null,
+    ]);
+
     if (situacao !== undefined) {
-      if (!mongoose.Types.ObjectId.isValid(situacao))
-        throw new Error("ID Situação inválido.");
-      const situacaoDoc = await LeadStage.findOne({
-        _id: situacao,
-        company: companyId,
-      }); // Valida na empresa
-      if (!situacaoDoc)
-        throw new Error("Situação inválida ou não pertence a esta empresa.");
+      if (!situacaoDoc) throw new Error("Situação inválida ou não pertence à empresa.");
       updateFields.situacao = situacaoDoc._id;
-      console.log(`[updateLead] Nova situação definida: ${situacaoDoc.nome}`);
+      nomeSituacaoNova = situacaoDoc.nome;
 
       if (situacaoDoc.nome !== "Descartado") {
-        // <-- Nome Exato!
-        console.log(
-          "[updateLead] Nova situação não é 'Descartado'. Limpando motivoDescarte e comentario."
-        );
         updateFields.motivoDescarte = null;
         updateFields.comentario = null;
       } else {
-        // Mudando PARA Descartado: valida e usa motivoDescarte (ID) se veio
-        console.log(
-          "[updateLead] Nova situação é 'Descartado'. Verificando motivo/comentário fornecidos."
-        );
-        if (motivoDescarte !== undefined) {
-          if (
-            !motivoDescarte ||
-            !mongoose.Types.ObjectId.isValid(motivoDescarte)
-          )
-            throw new Error("ID de Motivo de Descarte inválido.");
-          // Assumindo Motivos de Descarte são globais ou por empresa - Ajustar findOne se for por empresa
-          const reasonExists = await DiscardReason.findById(
-            motivoDescarte
-          ).lean();
-          if (!reasonExists)
-            throw new Error(
-              `Motivo de Descarte ID ${motivoDescarte} inválido.`
-            );
-          updateFields.motivoDescarte = reasonExists._id;
-        } else {
-          // Regra: Se mudar para Descartado, motivo é obrigatório
-          throw new Error(
-            "Motivo do descarte (ID) é obrigatório ao mover para 'Descartado'."
-          );
-        }
-        // Permite atualizar/definir comentário junto com o descarte
+        if (!motivoDoc) throw new Error("Motivo de descarte inválido.");
+        updateFields.motivoDescarte = motivoDoc._id;
         if (comentario !== undefined) updateFields.comentario = comentario;
       }
     } else {
-      // Se Situação NÃO mudou, permite atualizar motivo/comentário SE vieram
-      // (Aqui motivoDescarte deve ser ID)
-      if (motivoDescarte !== undefined) {
-        if (!motivoDescarte || !mongoose.Types.ObjectId.isValid(motivoDescarte))
-          throw new Error("ID de Motivo de Descarte inválido.");
-        const reasonExists = await DiscardReason.findById(
-          motivoDescarte
-        ).lean(); // Assume global
-        if (!reasonExists)
-          throw new Error(`Motivo de Descarte ID ${motivoDescarte} inválido.`);
-        updateFields.motivoDescarte = reasonExists._id;
-      }
+      if (motivoDescarte !== undefined && !motivoDoc) throw new Error("Motivo de descarte inválido.");
+      if (motivoDoc) updateFields.motivoDescarte = motivoDoc._id;
       if (comentario !== undefined) updateFields.comentario = comentario;
     }
 
-    // Origem
-    if (origem !== undefined) {
-      if (!mongoose.Types.ObjectId.isValid(origem))
-        throw new Error("ID Origem inválido.");
-      const origemDoc = await Origem.findOne({
-        _id: origem,
-        company: companyId,
-      }).lean(); // Valida na empresa
-      if (!origemDoc)
-        throw new Error("Origem inválida ou não pertence a esta empresa.");
-      updateFields.origem = origemDoc._id;
-    }
-
-    // Responsável
-    if (responsavel !== undefined) {
-      if (!mongoose.Types.ObjectId.isValid(responsavel))
-        throw new Error("ID Responsável inválido.");
-      const responsavelDoc = await User.findOne({
-        _id: responsavel,
-        company: companyId,
-      }).lean(); // Valida na empresa
-      if (!responsavelDoc)
-        throw new Error("Responsável inválido ou não pertence a esta empresa.");
-      updateFields.responsavel = responsavelDoc._id;
-    }
-  } catch (validationError) {
-    console.error(
-      "[updateLead] Erro durante validação de dados:",
-      validationError
-    );
-    throw validationError; // Re-lança o erro para o controller tratar
+    if (origem !== undefined && origemDoc) updateFields.origem = origemDoc._id;
+    if (responsavel !== undefined && responsavelDoc) updateFields.responsavel = responsavelDoc._id;
+  } catch (e) {
+    throw new Error(e.message);
   }
 
-  // --- Executa Update ---
-  if (Object.keys(updateFields).length === 0) {
-    console.warn(`[updateLead] Nenhum campo para atualizar ID: ${id}`);
-    // Busca com companyId para garantir que pertence à empresa antes de retornar
-    return await getLeadById(id, companyId);
-  }
+  if (Object.keys(updateFields).length === 0) return await getLeadById(id, companyId);
 
-  console.log(
-    "[updateLead] Objeto final para $set:",
-    JSON.stringify(updateFields, null, 2)
-  );
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
-    // <<< MULTI-TENANCY: Filtro por ID e Empresa >>>
     const updatedLead = await Lead.findOneAndUpdate(
-      { _id: id, company: companyId }, // Garante que só atualiza lead da empresa correta
+      { _id: id, company: companyId },
       { $set: updateFields },
-      { new: true, runValidators: true } // Opções
+      { new: true, runValidators: true, session }
     );
 
-    if (!updatedLead) {
-      throw new Error("Lead não encontrado nesta empresa (update falhou).");
-    }
-    console.log(
-      "[updateLead] Documento atualizado no DB (raw):",
-      JSON.stringify(updatedLead, null, 2)
-    );
+    if (!updatedLead) throw new Error("Lead não encontrado nesta empresa.");
 
     if (nomeSituacaoAntiga.toLowerCase().includes("em reserva")) {
-      const proximosEstagiosPermitidos = [
-        "proposta",
-        "proposta aceita",
-        "vendido",
-      ]; // Estágios que mantêm a unidade "ocupada"
-
-      if (
-        !proximosEstagiosPermitidos.some((s) =>
-          nomeSituacaoNova.toLowerCase().includes(s)
-        )
-      ) {
-        console.log(
-          `[updateLead] Lead ${id} saiu do status de reserva para '${nomeSituacaoNova}'. Cancelando reserva associada.`
-        );
-
-        const reservaAtiva = await Reserva.findOne({
-          lead: id,
-          statusReserva: "Ativa",
-          company: companyId,
-        });
-
+      const proximosEstagiosPermitidos = ["proposta", "proposta aceita", "vendido"];
+      if (!proximosEstagiosPermitidos.some(s => nomeSituacaoNova.toLowerCase().includes(s))) {
+        const reservaAtiva = await Reserva.findOne({ lead: id, statusReserva: "Ativa", company: companyId });
         if (reservaAtiva) {
-          const unidadeIdDaReserva = reservaAtiva.unidade;
-          reservaAtiva.statusReserva = "Cancelada"; // Ou outro status como "CanceladaPorMudancaDeStatusLead"
-
-          const unidade = await Unidade.findById(unidadeIdDaReserva);
-          if (unidade && unidade.company.equals(companyId)) {
-            if (
-              unidade.currentReservaId &&
-              unidade.currentReservaId.equals(reservaAtiva._id)
-            ) {
+          const unidade = await Unidade.findById(reservaAtiva.unidade);
+          if (unidade?.company?.equals(companyId)) {
+            if (unidade.currentReservaId?.equals(reservaAtiva._id)) {
               unidade.statusUnidade = "Disponível";
               unidade.currentLeadId = null;
               unidade.currentReservaId = null;
-              await unidade.save(); // Idealmente com { session } se estiver em transação
-              console.log(
-                `[updateLead] Unidade ${unidadeIdDaReserva} status alterado para Disponível.`
-              );
-
-              await logHistory(
-                id,
-                userId, // Usuário que alterou o status do lead
-                "UNIDADE_LIBERADA",
-                `Unidade ${unidade.identificador} (ID: ${unidadeIdDaReserva}) liberada devido à mudança de status do lead.`,
-                { reservaId: reservaAtiva._id, unidadeId: unidadeIdDaReserva }
-              );
+              await unidade.save({ session });
+              await logHistory(id, userId, "UNIDADE_LIBERADA", `Unidade ${unidade.identificador} liberada.`, { reservaId: reservaAtiva._id, unidadeId: unidade._id });
             }
           }
-          await reservaAtiva.save(); // Idealmente com { session }
-          console.log(
-            `[updateLead] Reserva ${reservaAtiva._id} status alterado para Cancelada.`
-          );
-
-          await logHistory(
-            id,
-            userId,
-            "RESERVA_CANCELADA_STATUS_LEAD",
-            `Reserva (ID: ${reservaAtiva._id}) cancelada. Lead movido para "${nomeSituacaoNova}".`,
-            { oldReservaStatus: "Ativa", newReservaStatus: "Cancelada" }
-          );
-        } else {
-          console.log(
-            `[updateLead] Nenhuma reserva ATIVA encontrada para o lead ${id} ao mudar de status 'Em Reserva'.`
-          );
+          reservaAtiva.statusReserva = "Cancelada";
+          await reservaAtiva.save({ session });
+          await logHistory(id, userId, "RESERVA_CANCELADA_STATUS_LEAD", `Reserva cancelada devido mudança de status para '${nomeSituacaoNova}'.`, { oldReservaStatus: "Ativa", newReservaStatus: "Cancelada" });
         }
-      } else {
-        console.log(
-          `[updateLead] Lead ${id} movido de 'Em Reserva' para um estágio subsequente permitido ('${nomeSituacaoNova}'). Reserva mantida (ou será convertida).`
-        );
       }
     }
-    // --- Log de Histórico AJUSTADO ---
-    try {
-      // Envolve em try/catch para não quebrar a resposta principal
-      const changedFieldsList =
-        Object.keys(updateFields).join(", ") || "Nenhum";
-      const actionType = "ATUALIZACAO"; // <<< Sempre ATUALIZACAO por agora
-      const details = `Campos processados na atualização: ${changedFieldsList}`; // <<< Mensagem mais precisa
 
-      await logHistory(updatedLead._id, userId, actionType, details);
-    } catch (historyError) {
-      console.error(
-        `[updateLead] Falha ao gravar histórico para Lead ${updatedLead._id}:`,
-        historyError
-      );
-    }
-    // --- FIM Log de Histórico ---
+    await logHistory(updatedLead._id, userId, "ATUALIZACAO", `Campos atualizados: ${Object.keys(updateFields).join(", ")}`);
 
-    // Re-populate para retornar dados completos ao frontend
+    await session.commitTransaction();
+    session.endSession();
+
     await updatedLead.populate([
       { path: "situacao", select: "nome ordem" },
       { path: "origem", select: "nome" },
       { path: "responsavel", select: "nome perfil" },
-      { path: "motivoDescarte", select: "nome" }, // Popula motivo (ID)
+      { path: "motivoDescarte", select: "nome" },
     ]);
-    return updatedLead; // Retorna o lead atualizado e populado
+
+    return updatedLead;
   } catch (error) {
-    console.error(
-      "[updateLead] Erro durante findByIdAndUpdate/populate:",
-      error
-    );
-    // Hook do model pode tratar duplicidade de CPF/Email
-    throw new Error(error.message || "Erro interno ao atualizar.");
+    await session.abortTransaction();
+    session.endSession();
+    throw new Error(error.message);
   }
 };
+
 
 // --- DELETE Lead (com Multi-Empresa) ---
 const deleteLead = async (id, companyId, userId) => {
