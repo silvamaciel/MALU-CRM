@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { createUnidadeApi, getUnidadeByIdApi, updateUnidadeApi } from '../../../api/unidadeApi';
 import { getEmpreendimentoById } from '../../../api/empreendimentoApi';
-import './UnidadeFormPage.css'; 
+import './UnidadeFormPage.css';
 
 const STATUS_UNIDADE_OPCOES = ["Disponível", "Reservada", "Proposta Aceita", "Vendido", "Bloqueado"];
 
@@ -19,73 +19,64 @@ function UnidadeFormPage() {
         areaUtil: '',
         areaTotal: '',
         precoTabela: '',
-        statusUnidade: 'Disponível', // Default para criação
+        statusUnidade: 'Disponível',
         observacoesInternas: '',
         destaque: false,
     });
+
     const [loading, setLoading] = useState(false);
-    const [pageTitle, setPageTitle] = useState('Nova Unidade');
-    const [formError, setFormError] = useState('');     
+    const [pageTitle, setPageTitle] = useState('');
+    const [titleLoading, setTitleLoading] = useState(true);
+    const [formError, setFormError] = useState('');
     const [empreendimentoNome, setEmpreendimentoNome] = useState('');
 
-    
-
     const fetchUnidadeData = useCallback(async () => {
-    setLoading(true); // Ativa loading no início, centralizado
+        setLoading(true);
+        try {
+            const empData = await getEmpreendimentoById(empreendimentoId);
+            if (!empData) throw new Error("Empreendimento não encontrado.");
 
-    try {
-        const empData = await getEmpreendimentoById(empreendimentoId);
+            setEmpreendimentoNome(empData.nome);
 
-        if (!empData) {
-            throw new Error("Empreendimento não encontrado.");
+            if (isEditMode && unidadeId) {
+                const data = await getUnidadeByIdApi(empreendimentoId, unidadeId);
+                setFormData({
+                    identificador: data.identificador || '',
+                    tipologia: data.tipologia || '',
+                    areaUtil: data.areaUtil || '',
+                    areaTotal: data.areaTotal || '',
+                    precoTabela: data.precoTabela || '',
+                    statusUnidade: data.statusUnidade || 'Disponível',
+                    observacoesInternas: data.observacoesInternas || '',
+                    destaque: data.destaque || false,
+                });
+                setPageTitle(`Editar Unidade: ${data.identificador}`);
+            } else {
+                setFormData({
+                    identificador: '',
+                    tipologia: '',
+                    areaUtil: '',
+                    areaTotal: '',
+                    precoTabela: '',
+                    statusUnidade: 'Disponível',
+                    observacoesInternas: '',
+                    destaque: false,
+                });
+                setPageTitle(`Nova Unidade para: ${empData.nome}`);
+            }
+        } catch (err) {
+            console.error("Erro ao carregar dados:", err);
+            toast.error("Erro ao carregar dados: " + (err.error || err.message));
+            if (isEditMode) navigate(`/empreendimentos/${empreendimentoId}`);
+        } finally {
+            setLoading(false);
+            setTitleLoading(false); // Agora o título está pronto
         }
-
-        setEmpreendimentoNome(empData.nome); // Definido 1x
-
-        if (isEditMode && unidadeId) {
-            // Modo edição
-            const data = await getUnidadeByIdApi(empreendimentoId, unidadeId);
-
-            setFormData({
-                identificador: data.identificador || '',
-                tipologia: data.tipologia || '',
-                areaUtil: data.areaUtil || '',
-                areaTotal: data.areaTotal || '',
-                precoTabela: data.precoTabela || '',
-                statusUnidade: data.statusUnidade || 'Disponível',
-                observacoesInternas: data.observacoesInternas || '',
-                destaque: data.destaque || false,
-            });
-
-            setPageTitle(`Editar Unidade: ${data.identificador}`);
-        } else {
-            // Modo criação
-            setFormData({
-                identificador: '',
-                tipologia: '',
-                areaUtil: '',
-                areaTotal: '',
-                precoTabela: '',
-                statusUnidade: 'Disponível',
-                observacoesInternas: '',
-                destaque: false,
-            });
-
-            setPageTitle(`Nova Unidade para: ${empData.nome}`);
-        }
-
-    } catch (err) {
-        console.error("Erro ao carregar dados:", err);
-        toast.error("Erro ao carregar dados: " + (err.error || err.message));
-        if (isEditMode) navigate(`/empreendimentos/${empreendimentoId}`);
-    } finally {
-        setLoading(false);
-    }
-}, [empreendimentoId, unidadeId, isEditMode, navigate]);
+    }, [empreendimentoId, unidadeId, isEditMode, navigate]);
 
     useEffect(() => {
         fetchUnidadeData();
-    }, [fetchUnidadeData]); // Dependência correta
+    }, [fetchUnidadeData]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -106,17 +97,16 @@ function UnidadeFormPage() {
             toast.error("Preencha os campos obrigatórios.");
             return;
         }
-        
-        // Prepara os dados para enviar (converte números, remove vazios opcionais se backend não os aceita bem)
+
         const dataToSubmit = {
             ...formData,
             areaUtil: formData.areaUtil ? parseFloat(formData.areaUtil) : null,
             areaTotal: formData.areaTotal ? parseFloat(formData.areaTotal) : null,
             precoTabela: formData.precoTabela ? parseFloat(formData.precoTabela) : null,
         };
+
         if (!dataToSubmit.areaTotal) delete dataToSubmit.areaTotal;
         if (!dataToSubmit.observacoesInternas) delete dataToSubmit.observacoesInternas;
-
 
         try {
             if (isEditMode) {
@@ -126,7 +116,7 @@ function UnidadeFormPage() {
                 await createUnidadeApi(empreendimentoId, dataToSubmit);
                 toast.success("Unidade criada com sucesso!");
             }
-            navigate(`/empreendimentos/${empreendimentoId}`); // Volta para detalhes do empreendimento
+            navigate(`/empreendimentos/${empreendimentoId}`);
         } catch (err) {
             const errMsg = err.error || err.message || (isEditMode ? "Erro ao atualizar unidade." : "Erro ao criar unidade.");
             setFormError(errMsg);
@@ -135,20 +125,19 @@ function UnidadeFormPage() {
             setLoading(false);
         }
     };
-    
-    // Mostra loading principal se estiver em modo de edição e buscando dados iniciais
-    if (isEditMode && loading && !formData.identificador) { 
+
+    if (isEditMode && loading && !formData.identificador) {
         return <div className="admin-page loading"><p>Carregando dados da unidade...</p></div>;
     }
 
     return (
         <div className="admin-page unidade-form-page">
             <header className="page-header">
-                <h1>{pageTitle}</h1>
+                <h1>{titleLoading ? 'Carregando título...' : pageTitle}</h1>
             </header>
             <div className="page-content">
                 <form onSubmit={handleSubmit} className="form-container">
-                    {formError && <p className="error-message" style={{marginBottom: '1rem'}}>{formError}</p>}
+                    {formError && <p className="error-message" style={{ marginBottom: '1rem' }}>{formError}</p>}
 
                     <div className="form-section">
                         <h3>Detalhes da Unidade</h3>
@@ -165,17 +154,17 @@ function UnidadeFormPage() {
                         <div className="form-row">
                             <div className="form-group">
                                 <label htmlFor="areaUtil">Área Útil (m²)</label>
-                                <input type="number" id="areaUtil" name="areaUtil" value={formData.areaUtil} onChange={handleChange} step="0.01" min="0"/>
+                                <input type="number" id="areaUtil" name="areaUtil" value={formData.areaUtil} onChange={handleChange} step="0.01" min="0" />
                             </div>
                             <div className="form-group">
                                 <label htmlFor="areaTotal">Área Total (m²) (Opcional)</label>
-                                <input type="number" id="areaTotal" name="areaTotal" value={formData.areaTotal} onChange={handleChange} step="0.01" min="0"/>
+                                <input type="number" id="areaTotal" name="areaTotal" value={formData.areaTotal} onChange={handleChange} step="0.01" min="0" />
                             </div>
                         </div>
                         <div className="form-row">
                             <div className="form-group">
                                 <label htmlFor="precoTabela">Preço de Tabela (R$)</label>
-                                <input type="number" id="precoTabela" name="precoTabela" value={formData.precoTabela} onChange={handleChange} step="0.01" min="0"/>
+                                <input type="number" id="precoTabela" name="precoTabela" value={formData.precoTabela} onChange={handleChange} step="0.01" min="0" />
                             </div>
                             <div className="form-group">
                                 <label htmlFor="statusUnidade">Status da Unidade*</label>
@@ -190,7 +179,7 @@ function UnidadeFormPage() {
                                 <textarea id="observacoesInternas" name="observacoesInternas" value={formData.observacoesInternas} onChange={handleChange} rows="3"></textarea>
                             </div>
                         </div>
-                         <div className="form-row">
+                        <div className="form-row">
                             <div className="form-group form-group-checkbox">
                                 <input type="checkbox" id="destaque" name="destaque" checked={formData.destaque} onChange={handleChange} />
                                 <label htmlFor="destaque" className="checkbox-label">Unidade em Destaque?</label>
