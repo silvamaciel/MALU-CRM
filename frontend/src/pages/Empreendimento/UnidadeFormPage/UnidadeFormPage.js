@@ -32,7 +32,6 @@ function UnidadeFormPage() {
 
     const fetchUnidadeData = useCallback(async () => {
         const empData = await getEmpreendimentoById(empreendimentoId);
-
         if (isEditMode && unidadeId && empreendimentoId) {
             setLoading(true);
             try {
@@ -56,8 +55,7 @@ function UnidadeFormPage() {
             }
         } else if (empData) {
             setLoading(true);
-            setEmpreendimentoNome(empData.nome);
-            setPageTitle(`Nova Unidade para: ${empData.nome}`);
+            setPageTitle(`Nova Unidade para: ${empData.nome})`);
             // Reseta para valores padrão de criação
             setFormData({
                 identificador: '',
@@ -70,12 +68,15 @@ function UnidadeFormPage() {
                 destaque: false,
             });
             try {
-            if (empreendimentoId) {
-                setPageTitle(`Nova Unidade (Empreendimento: ${empreendimentoId})`);
+            // Busca o nome do empreendimento para usar no título
+            if (empData) {
+                setEmpreendimentoNome(empData.nome);
+                setPageTitle(`Nova Unidade para: ${empData.nome}`);
             }
         } catch (err) {
             console.error("Erro ao buscar nome do empreendimento para o título:", err);
             toast.error("Não foi possível carregar o nome do empreendimento.");
+            // Mantém o título com o ID se falhar
         } finally {
             setLoading(false);
 
