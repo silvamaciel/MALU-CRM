@@ -25,6 +25,7 @@ const leadHistorySchema = new Schema(
         "ATUALIZACAO",
         "DESCARTE",
         "REATIVACAO",
+        "RESERVA_CRIADA"
       ],
     },
     details: {
