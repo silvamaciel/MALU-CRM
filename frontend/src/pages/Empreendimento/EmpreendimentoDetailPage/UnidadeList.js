@@ -82,7 +82,7 @@ function UnidadeList({ empreendimentoId, empreendimentoNome }) { // Recebe o ID 
                                 </td>
                                 <td>{un.precoTabela ? `R$ ${un.precoTabela.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'N/A'}</td>
                                 <td className="actions-cell">
-                                    <Link to={`/empreendimentos/<span class="math-inline">\{empreendimentoId\}/unidades/</span>{un._id}/editar`} className="button-link edit-link">Editar</Link>
+                                    <Link to={`/empreendimentos/${empreendimentoId}/unidades/${un._id}/editar`} className="button-link edit-link">Editar</Link>
                                     {/* Botão Reservar/Vender virá aqui no futuro, ligado ao Lead */}
                                     {/* Botão Desativar virá aqui */}
                                 </td>
