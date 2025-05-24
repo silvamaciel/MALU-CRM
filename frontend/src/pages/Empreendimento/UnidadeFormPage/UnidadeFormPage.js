@@ -31,32 +31,35 @@ function UnidadeFormPage() {
     
 
     const fetchUnidadeData = useCallback(async () => {
-        const empData = getEmpreendimentoById(empreendimentoId);
-        if (isEditMode && unidadeId && empreendimentoId) {
-            setLoading(true);
-            try {
-                const data = await getUnidadeByIdApi(empreendimentoId, unidadeId);
-                setFormData({
-                    identificador: data.identificador || '',
-                    tipologia: data.tipologia || '',
-                    areaUtil: data.areaUtil || '',
-                    areaTotal: data.areaTotal || '',
-                    precoTabela: data.precoTabela || '',
-                    statusUnidade: data.statusUnidade || 'Disponível',
-                    observacoesInternas: data.observacoesInternas || '',
-                    destaque: data.destaque || false,
-                });
-                setPageTitle(`Editar Unidade: ${data.identificador}`);
-            } catch (err) {
-                toast.error("Erro ao carregar dados da unidade: " + (err.error || err.message));
-                navigate(`/empreendimentos/${empreendimentoId}`); // Volta para detalhes do empreendimento
-            } finally {
-                setLoading(false);
-            }
-        } else if (empData) {
-            setLoading(true);
-            setPageTitle(`Nova Unidade para: ${empData.nome})`);
-            // Reseta para valores padrão de criação
+    setLoading(true); // Ativa loading no início, centralizado
+
+    try {
+        const empData = await getEmpreendimentoById(empreendimentoId);
+
+        if (!empData) {
+            throw new Error("Empreendimento não encontrado.");
+        }
+
+        setEmpreendimentoNome(empData.nome); // Definido 1x
+
+        if (isEditMode && unidadeId) {
+            // Modo edição
+            const data = await getUnidadeByIdApi(empreendimentoId, unidadeId);
+
+            setFormData({
+                identificador: data.identificador || '',
+                tipologia: data.tipologia || '',
+                areaUtil: data.areaUtil || '',
+                areaTotal: data.areaTotal || '',
+                precoTabela: data.precoTabela || '',
+                statusUnidade: data.statusUnidade || 'Disponível',
+                observacoesInternas: data.observacoesInternas || '',
+                destaque: data.destaque || false,
+            });
+
+            setPageTitle(`Editar Unidade: ${data.identificador}`);
+        } else {
+            // Modo criação
             setFormData({
                 identificador: '',
                 tipologia: '',
@@ -67,22 +70,18 @@ function UnidadeFormPage() {
                 observacoesInternas: '',
                 destaque: false,
             });
-            try {
-            // Busca o nome do empreendimento para usar no título
-            if (empData) {
-                setEmpreendimentoNome(empData.nome);
-                setPageTitle(`Nova Unidade para: ${empData.nome}`);
-            }
-        } catch (err) {
-            console.error("Erro ao buscar nome do empreendimento para o título:", err);
-            toast.error("Não foi possível carregar o nome do empreendimento.");
-            // Mantém o título com o ID se falhar
-        } finally {
-            setLoading(false);
 
+            setPageTitle(`Nova Unidade para: ${empData.nome}`);
         }
-     }
-    }, [empreendimentoId, unidadeId, isEditMode, navigate]);
+
+    } catch (err) {
+        console.error("Erro ao carregar dados:", err);
+        toast.error("Erro ao carregar dados: " + (err.error || err.message));
+        if (isEditMode) navigate(`/empreendimentos/${empreendimentoId}`);
+    } finally {
+        setLoading(false);
+    }
+}, [empreendimentoId, unidadeId, isEditMode, navigate]);
 
     useEffect(() => {
         fetchUnidadeData();
