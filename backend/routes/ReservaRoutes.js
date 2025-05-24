@@ -10,8 +10,8 @@ router.use(protect);
 router.route('/')
     .post(createReservaController);
 
-router.route('/:id').get(getReservaByIdController);
-router.route('/lead/:leadId').get(listReservasByLeadController);
-router.route('/:id/status').put(updateReservaStatusController);
+//router.route('/:id').get(getReservaByIdController);
+//router.route('/lead/:leadId').get(listReservasByLeadController);
+//router.route('/:id/status').put(updateReservaStatusController);
 
 module.exports = router;
