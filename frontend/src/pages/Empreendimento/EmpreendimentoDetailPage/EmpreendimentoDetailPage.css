@@ -1,0 +1,37 @@
+/* src/pages/Empreendimento/EmpreendimentoDetailPage/EmpreendimentoDetailPage.css */
+.empreendimento-detail-page .details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Layout responsivo */
+    gap: 20px;
+    margin-top: 20px;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.empreendimento-detail-page .detail-item {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+.empreendimento-detail-page .detail-item:last-child {
+    border-bottom: none;
+}
+.empreendimento-detail-page .detail-item strong {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #555;
+}
+.empreendimento-detail-page .detail-item p {
+    margin: 0 0 5px 0;
+    color: #333;
+    line-height: 1.6;
+}
+.empreendimento-detail-page .detail-item.full-span {
+    grid-column: 1 / -1; /* Faz o item ocupar todas as colunas */
+}
+.empreendimento-detail-page .unidades-section {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px dashed #ccc;
+}

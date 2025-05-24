@@ -24,6 +24,7 @@ import AdminGuard from './components/Auth/AdminGuard';
 import IntegrationsPage from './pages/Integrations/IntegrationsPage'; 
 import EmpreendimentoListPage from './pages/Empreendimento/EmpreendimentoListPage/EmpreendimentoListPage';
 import EmpreendimentoFormPage from './pages/Empreendimento/EmpreendimentoFormPage/EmpreendimentoFormPage';
+import EmpreendimentoDetailPage from './pages/Empreendimento/EmpreendimentoDetailPage/EmpreendimentoDetailPage';
 
 
 
@@ -94,7 +95,9 @@ function App() {
                 
                 <Route path="/empreendimentos" element={<EmpreendimentoListPage />} />
                 <Route path="/empreendimentos/novo" element={<EmpreendimentoFormPage />} />
+                <Route path="/empreendimentos/:id" element={<EmpreendimentoDetailPage />} /> 
                 <Route path="/empreendimentos/:id/editar" element={<EmpreendimentoFormPage />} />
+
 
 
                 {/* Rotas Admin (Renderizadas condicionalmente DENTRO do Outlet) */}
