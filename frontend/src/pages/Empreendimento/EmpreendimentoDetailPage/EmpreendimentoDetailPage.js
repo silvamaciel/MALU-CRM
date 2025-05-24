@@ -1,8 +1,9 @@
 // src/pages/Empreendimento/EmpreendimentoDetailPage/EmpreendimentoDetailPage.js
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { getEmpreendimentoById } from '../../../api/empreendimentoApi'; // Ajuste o caminho se necessário
+import { getEmpreendimentoById } from '../../../api/empreendimentoApi'; 
 import { toast } from 'react-toastify';
+import UnidadeList from './UnidadeList';
 import './EmpreendimentoDetailPage.css';
 
 function EmpreendimentoDetailPage() {
@@ -153,7 +154,10 @@ function EmpreendimentoDetailPage() {
                         Adicionar Nova Unidade
                     </button>
                     <p><i>A lista de unidades e o CRUD de unidades virão aqui...</i></p>
-                    {/* Aqui chamaremos um componente <UnidadeListPage empreendimentoId={empreendimento._id} /> */}
+                    <div className="unidades-section" style={{marginTop: '30px'}}>
+                    {/* O componente UnidadeList agora gerencia seu próprio botão "Adicionar Nova Unidade" e a lista */}
+                    <UnidadeList empreendimentoId={empreendimento._id} empreendimentoNome={empreendimento.nome} />
+                </div>
                 </div>
             </div>
         </div>

@@ -25,6 +25,7 @@ import IntegrationsPage from './pages/Integrations/IntegrationsPage';
 import EmpreendimentoListPage from './pages/Empreendimento/EmpreendimentoListPage/EmpreendimentoListPage';
 import EmpreendimentoFormPage from './pages/Empreendimento/EmpreendimentoFormPage/EmpreendimentoFormPage';
 import EmpreendimentoDetailPage from './pages/Empreendimento/EmpreendimentoDetailPage/EmpreendimentoDetailPage';
+import UnidadeFormPage from './pages/Empreendimento/UnidadeFormPage/UnidadeFormPage';
 
 
 
@@ -98,6 +99,9 @@ function App() {
                 <Route path="/empreendimentos/:id" element={<EmpreendimentoDetailPage />} /> 
                 <Route path="/empreendimentos/:id/editar" element={<EmpreendimentoFormPage />} />
 
+
+                <Route path="/empreendimentos/:empreendimentoId/unidades/novo" element={<UnidadeFormPage />} />
+                <Route path="/empreendimentos/:empreendimentoId/unidades/:unidadeId/editar" element={<UnidadeFormPage />} />
 
 
                 {/* Rotas Admin (Renderizadas condicionalmente DENTRO do Outlet) */}
