@@ -1,9 +1,9 @@
 // src/pages/LeadDetail/ReservaFormModal.js (ou seu caminho preferido)
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
-import { getEmpreendimentos } from '../../../api/empreendimentoApi'; // API para listar empreendimentos
-import { getUnidades } from '../../../api/unidadeApi'; // API para listar unidades
-import { createReservaApi } from '../../../api/reservaApi'; // API para criar reserva
+import { getEmpreendimentos } from '../../api/empreendimentoApi'; // API para listar empreendimentos
+import { getUnidades } from '../../api/unidadeApi'; // API para listar unidades
+import { createReservaApi } from '../../api/reservaApi'; // API para criar reserva
 import './ReservaFormModal.css'; // Crie este CSS depois
 
 // Helper para formatar data para input YYYY-MM-DD
