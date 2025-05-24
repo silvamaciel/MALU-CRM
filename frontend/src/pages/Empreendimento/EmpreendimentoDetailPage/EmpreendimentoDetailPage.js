@@ -145,15 +145,6 @@ function EmpreendimentoDetailPage() {
 
                 {/* SEÇÃO DE UNIDADES - Será implementada aqui */}
                 <div className="unidades-section" style={{marginTop: '30px'}}>
-                    <h2>Unidades do Empreendimento</h2>
-                    <button 
-                        onClick={() => navigate(`/empreendimentos/${empreendimento._id}/unidades/novo`)} 
-                        className="button primary-button"
-                        style={{marginBottom: '15px'}}
-                    >
-                        Adicionar Nova Unidade
-                    </button>
-                    <p><i>A lista de unidades e o CRUD de unidades virão aqui...</i></p>
                     <div className="unidades-section" style={{marginTop: '30px'}}>
                     {/* O componente UnidadeList agora gerencia seu próprio botão "Adicionar Nova Unidade" e a lista */}
                     <UnidadeList empreendimentoId={empreendimento._id} empreendimentoNome={empreendimento.nome} />
