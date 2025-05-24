@@ -31,7 +31,7 @@ function UnidadeFormPage() {
     
 
     const fetchUnidadeData = useCallback(async () => {
-        const empData = await getEmpreendimentoById(empreendimentoId);
+        const empData = getEmpreendimentoById(empreendimentoId);
         if (isEditMode && unidadeId && empreendimentoId) {
             setLoading(true);
             try {
