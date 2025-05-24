@@ -1,0 +1,125 @@
+/* Estilos para o Modal de Reserva e seu Overlay */
+.form-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6); /* Fundo escurecido */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050; /* Garante que fique sobre outros elementos */
+  padding: 20px;
+}
+
+.form-modal-content {
+  background-color: #fff;
+  padding: 25px 30px;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 650px; /* Largura máxima do modal */
+  max-height: 90vh; /* Altura máxima, permite scroll interno */
+  overflow-y: auto; /* Adiciona scroll se o conteúdo for maior */
+  display: flex;
+  flex-direction: column;
+}
+
+.form-modal-content h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 1.6em;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 15px;
+}
+
+/* Estilos para os grupos de formulário dentro do modal */
+.form-modal-content .form-group {
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-modal-content .form-group label {
+  margin-bottom: 6px;
+  font-weight: 500;
+  font-size: 0.9em;
+  color: #555;
+}
+
+.form-modal-content .form-group input[type="text"],
+.form-modal-content .form-group input[type="number"],
+.form-modal-content .form-group input[type="date"],
+.form-modal-content .form-group select,
+.form-modal-content .form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 1em;
+  transition: border-color 0.2s ease-in-out;
+}
+
+.form-modal-content .form-group input:focus,
+.form-modal-content .form-group select:focus,
+.form-modal-content .form-group textarea:focus {
+  border-color: #007bff; /* Cor de destaque ao focar */
+  outline: none;
+}
+
+.form-modal-content .form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Para organizar campos lado a lado, se necessário */
+.form-modal-content .form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px; /* Espaço entre os campos na mesma linha */
+  margin-bottom: 18px; /* Margem inferior da linha */
+}
+
+.form-modal-content .form-row .form-group {
+  flex: 1 1 calc(50% - 10px); /* Tenta colocar 2 por linha */
+  min-width: 200px; /* Largura mínima antes de quebrar */
+  margin-bottom: 0; /* Remove margem inferior individual pois a linha já tem */
+}
+
+
+/* Ações do formulário (botões) */
+.form-modal-content .form-actions {
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: flex-end; /* Alinha botões à direita */
+  gap: 10px;
+}
+
+.form-modal-content .form-actions .button {
+  padding: 10px 20px;
+  font-size: 0.95em;
+  min-width: 100px;
+}
+
+/* Mensagem de erro dentro do modal */
+.form-modal-content .error-message {
+  color: #dc3545; /* Vermelho para erros */
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  font-size: 0.9em;
+}
+
+/* Pequenos textos de ajuda ou status */
+.form-modal-content .form-group small {
+    font-size: 0.8em;
+    color: #6c757d;
+    margin-top: 4px;
+}
