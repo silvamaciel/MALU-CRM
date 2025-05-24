@@ -87,8 +87,24 @@ const createReserva = async (reservaData, leadId, unidadeId, empreendimentoId, c
         }).select('_id').lean(); // Não precisa de session
 
         if (!situacaoEmReserva) {
-            throw new Error(`Estágio de Lead "Em Reserva" não encontrado para a empresa. Por favor, cadastre-o.`);
+        console.log(`[ReservaService] Estágio '${nomeEstagioReserva}' não encontrado para Company ${companyId}. Criando...`);
+        try {
+            // Precisamos do modelo não-lean para criar um novo estágio se formos usar um serviço
+            // ou criamos diretamente com o modelo LeadStage.
+            const novoEstagio = new LeadStage({
+                nome: nomeEstagioReserva,
+                descricao: "Lead com unidade de empreendimento reservada.",
+                company: companyId,
+                ativo: true,
+            });
+            situacaoEmReserva = await novoEstagio.save(); // Salva e retorna o documento completo
+            console.log(`[ReservaService] Estágio '${nomeEstagioReserva}' criado com ID: ${situacaoEmReserva._id}`);
+            situacaoEmReserva = situacaoEmReserva.toObject(); 
+        } catch (stageCreationError) {
+            console.error(`[ReservaService] Falha crítica ao tentar criar estágio padrão '${nomeEstagioReserva}' para Company ${companyId}:`, stageCreationError);
+            throw new Error(`Falha ao criar/encontrar estágio de lead '${nomeEstagioReserva}'. Verifique as configurações de estágios ou tente novamente.`);
         }
+    }
 
         // 4. Criar o documento Reserva
         const novaReserva = new Reserva({
