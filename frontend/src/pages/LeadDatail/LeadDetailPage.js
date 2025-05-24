@@ -15,7 +15,7 @@ import { getLeadStages } from "../../api/leadStages";
 // Modal Components
 import DiscardLeadModal from "../../components/DiscardLeadModal/DiscardLeadModal";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
-import ReservaFormModal from "./ReservaFormModal";
+// import ReservaFormModal from "./ReservaFormModal";
 
 import "./LeadDetailPage.css";
 
