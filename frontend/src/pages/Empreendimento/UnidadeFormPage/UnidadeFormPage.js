@@ -25,11 +25,7 @@ function UnidadeFormPage() {
     });
     const [loading, setLoading] = useState(false);
     const [pageTitle, setPageTitle] = useState('Nova Unidade');
-    const [formError, setFormError] = useState(''); 
-
-    const empData = getEmpreendimentoById(empreendimentoId);
-    console.log(empData.name);
-    
+    const [formError, setFormError] = useState('');     
 
     const fetchUnidadeData = useCallback(async () => {
         if (isEditMode && unidadeId && empreendimentoId) {
@@ -53,7 +49,8 @@ function UnidadeFormPage() {
             } finally {
                 setLoading(false);
             }
-        } else {
+        } else if (empreendimentoId) {
+            setLoading(true);
             setPageTitle(`Nova Unidade (Empreendimento: ${empreendimentoId})`);
             // Reseta para valores padrão de criação
             setFormData({
@@ -66,7 +63,22 @@ function UnidadeFormPage() {
                 observacoesInternas: '',
                 destaque: false,
             });
+            try {
+            // Busca o nome do empreendimento para usar no título
+            const empData = await getEmpreendimentoById(empreendimentoId); // Usa a API que já temos!
+            if (empData) {
+                setEmpreendimentoNome(empData.nome);
+                setPageTitle(`Nova Unidade para: ${empData.nome}`); // Atualiza título com NOME
+            }
+        } catch (err) {
+            console.error("Erro ao buscar nome do empreendimento para o título:", err);
+            toast.error("Não foi possível carregar o nome do empreendimento.");
+            // Mantém o título com o ID se falhar
+        } finally {
+            setLoading(false);
+
         }
+     }
     }, [empreendimentoId, unidadeId, isEditMode, navigate]);
 
     useEffect(() => {
