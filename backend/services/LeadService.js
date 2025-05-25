@@ -546,6 +546,10 @@ const updateLead = async (id, leadData, companyId, userId) => {
     return await getLeadById(id, companyId);
   }
 
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+
   console.log(
     "[updateLead] Objeto final para $set:",
     JSON.stringify(updateFields, null, 2)
