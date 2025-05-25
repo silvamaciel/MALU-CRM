@@ -163,6 +163,68 @@ const createReserva = async (reservaData, leadId, unidadeId, empreendimentoId, c
     }
 };
 
+/**
+ * Lista todas as reservas de uma empresa com paginação e filtros.
+ * @param {string} companyId - ID da empresa.
+ * @param {object} filters - Objeto com filtros (ex: { statusReserva: 'Ativa', empreendimentoId: '...' }).
+ * @param {object} paginationOptions - Opções de paginação (page, limit).
+ * @returns {Promise<{reservas: Array<Reserva>, total: number, page: number, pages: number}>}
+ */
+const getReservasByCompany = async (companyId, filters = {}, paginationOptions = { page: 1, limit: 10 }) => {
+    if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+        throw new Error('ID da empresa inválido.');
+    }
+
+    const page = parseInt(paginationOptions.page, 10) || 1;
+    const limit = parseInt(paginationOptions.limit, 10) || 10;
+    const skip = (page - 1) * limit;
+
+    // Começa com as condições base
+    const queryConditions = { company: companyId, ...filters };
+
+    // Remove filtros com valores vazios ou nulos para não interferir na query
+    for (const key in queryConditions) {
+        if (queryConditions[key] === null || queryConditions[key] === undefined || queryConditions[key] === '') {
+            delete queryConditions[key];
+        }
+        // Converte IDs de filtro para ObjectId se forem strings válidas
+        if (['lead', 'empreendimento', 'unidade', 'createdBy'].includes(key) && 
+            queryConditions[key] && 
+            mongoose.Types.ObjectId.isValid(queryConditions[key])) {
+            queryConditions[key] = new mongoose.Types.ObjectId(queryConditions[key]);
+        }
+    }
+    
+    console.log(`[ReservaService] Buscando reservas para Company: ${companyId}, Condições:`, queryConditions);
+
+    try {
+        const reservas = await Reserva.find(queryConditions)
+            .populate({ path: 'lead', select: 'nome email contato' }) // Popula nome do lead
+            .populate({ path: 'unidade', select: 'identificador tipologia' }) // Popula identificador da unidade
+            .populate({ path: 'empreendimento', select: 'nome' }) // Popula nome do empreendimento
+            .populate({ path: 'createdBy', select: 'nome' }) // Popula nome do usuário que criou
+            .sort({ dataReserva: -1 }) // Ordena pelas mais recentes primeiro
+            .skip(skip)
+            .limit(limit)
+            .lean();
+
+        const totalReservas = await Reserva.countDocuments(queryConditions);
+
+        console.log(`[ReservaService] ${totalReservas} reservas encontradas para Company: ${companyId}`);
+        return {
+            reservas,
+            total: totalReservas,
+            page,
+            pages: Math.ceil(totalReservas / limit) || 1
+        };
+    } catch (error) {
+        console.error("[ReservaService] Erro ao buscar reservas:", error);
+        throw new Error("Erro ao buscar reservas.");
+    }
+};
+
+
 module.exports = {
-    createReserva
+    createReserva,
+    getReservasByCompany
 };
