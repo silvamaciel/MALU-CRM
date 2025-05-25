@@ -469,21 +469,39 @@ const updateLead = async (id, leadData, companyId, userId) => {
 
     if (nomeSituacaoAntiga.toLowerCase().includes("em reserva")) {
       const proximosEstagiosPermitidos = ["proposta", "proposta aceita", "vendido"];
+
+
       if (!proximosEstagiosPermitidos.some(s => nomeSituacaoNova.toLowerCase().includes(s))) {
+        console.log(`[updateLead DEBUG] Lead <span class="math-inline">\{id\} saiu de 'Em Reserva' para '</span>{nomeSituacaoNovaEfetiva}'. Tentando cancelar reserva.`);
+      
         const reservaAtiva = await Reserva.findOne({ lead: id, statusReserva: "Ativa", company: companyId });
+
         if (reservaAtiva) {
-          const unidade = await Unidade.findById(reservaAtiva.unidade);
-          if (unidade?.company?.equals(companyId)) {
-            if (unidade.currentReservaId?.equals(reservaAtiva._id)) {
+
+          console.log(`[updateLead DEBUG] Reserva ATIVA encontrada: ${reservaAtiva._id}`);
+          const unidadeIdDaReserva = reservaAtiva.unidade;
+          reservaAtiva.statusReserva = "Cancelada";
+
+          const unidade = await Unidade.findById(unidadeIdDaReserva).session(session);
+
+          if (unidade && unidade?.company?.equals(companyId)) {
+            console.log(`[updateLead DEBUG] Unidade ${unidadeIdDaReserva} encontrada. currentReservaId: ${unidade.currentReservaId}, reservaAtiva._id: ${reservaAtiva._id}`);
+
+            if (unidade.currentReservaId && unidade.currentReservaId?.equals(reservaAtiva._id)) {
+              console.log(`[updateLead DEBUG] Condição para liberar unidade ATENDIDA. Alterando status da unidade...`);
               unidade.statusUnidade = "Disponível";
               unidade.currentLeadId = null;
               unidade.currentReservaId = null;
               await unidade.save({ session });
+              console.log(`[updateLead] Unidade ${unidadeIdDaReserva} status alterado para Disponível.`);
+
               await logHistory(id, userId, "UNIDADE_LIBERADA", `Unidade ${unidade.identificador} liberada.`, { reservaId: reservaAtiva._id, unidadeId: unidade._id });
             }
           }
           reservaAtiva.statusReserva = "Cancelada";
           await reservaAtiva.save({ session });
+          console.log(`[updateLead] Reserva ${reservaAtiva._id} status alterado para Cancelada.`);
+
           await logHistory(id, userId, "RESERVA_CANCELADA_STATUS_LEAD", `Reserva cancelada devido mudança de status para '${nomeSituacaoNova}'.`, { oldReservaStatus: "Ativa", newReservaStatus: "Cancelada" });
         }
       }
