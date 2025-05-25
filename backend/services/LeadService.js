@@ -881,4 +881,5 @@ module.exports = {
   deleteLead,
   descartarLead,
   logHistory,
+  getDefaultAdminUserIdForCompany
 };
