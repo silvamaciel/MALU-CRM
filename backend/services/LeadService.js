@@ -473,7 +473,7 @@ const updateLead = async (id, leadData, companyId, userId) => {
 
     console.log(`[updateLead DEBUG] nomeSituacaoNova: '${nomeSituacaoNovaEfetiva}'`);
 
-    const palavrasChaveReserva = ["reserva", "em reserva"];
+    const palavrasChaveReserva = ["reserva", "em reserva", "reservada"];
     const saiuDeReserva = palavrasChaveReserva.some(s => nomeSituacaoAntiga.toLowerCase().includes(s));
 
     if (saiuDeReserva) {
