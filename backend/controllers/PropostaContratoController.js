@@ -1,0 +1,50 @@
+// backend/controllers/PropostaContratoController.js
+const asyncHandler = require('../middlewares/asyncHandler');
+const PropostaContratoService = require('../services/PropostaContratoService');
+const ErrorResponse = require('../utils/errorResponse');
+const mongoose = require('mongoose');
+
+/**  @desc    Criar uma nova Proposta/Contrato a partir de uma Reserva
+* @route   POST /api/propostas-contratos/reserva/:reservaId 
+* POST /api/propostas-contratos (se reservaId vier no body)
+* @access  Privado
+*/
+const createPropostaContratoController = asyncHandler(async (req, res, next) => {
+    const { reservaId } = req.params; // Se reservaId vier da URL
+    // Se reservaId vier do corpo da requisição: const { reservaId, ...propostaContratoData } = req.body;
+    const propostaContratoData = req.body; // Assume que o resto dos dados da proposta vêm no corpo
+
+    const companyId = req.user.company;
+    const creatingUserId = req.user._id;
+
+    console.log(`[PropContCtrl] Recebido POST para criar Proposta/Contrato a partir da Reserva ID: ${reservaId || propostaContratoData.reservaId} para Company: ${companyId}`);
+
+    const idReserva = reservaId || propostaContratoData.reservaId; // Pega o reservaId da URL ou do corpo
+
+    if (!idReserva || !mongoose.Types.ObjectId.isValid(idReserva)) {
+        return next(new ErrorResponse('ID da Reserva válido é obrigatório.', 400));
+    }
+
+    // Remove reservaId de propostaContratoData se ele veio do params para não duplicar
+    if (reservaId && propostaContratoData.reservaId) {
+        delete propostaContratoData.reservaId;
+    }
+
+    if (!propostaContratoData.valorPropostaContrato || !propostaContratoData.responsavelNegociacao) {
+        return next(new ErrorResponse('Valor da Proposta e Responsável pela Negociação são obrigatórios.', 400));
+    }
+
+    const novaPropostaContrato = await PropostaContratoService.createPropostaContrato(
+        idReserva,
+        propostaContratoData,
+        companyId,
+        creatingUserId
+    );
+    res.status(201).json({ success: true, data: novaPropostaContrato });
+});
+
+// Outros controllers para PropostaContrato (listar, buscar por ID, atualizar status) virão aqui.
+
+module.exports = {
+    createPropostaContratoController
+};

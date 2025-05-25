@@ -56,7 +56,7 @@ app.use('/api/empreendimentos', require('./routes/empreendimentoRoutes'));
 
 app.use('/api/reservas', require('./routes/ReservaRoutes'));
 
-
+app.use('/api/propostas-contratos', require('./routes/propostaContratoRoutes'));
 
 
 
