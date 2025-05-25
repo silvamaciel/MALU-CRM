@@ -31,7 +31,18 @@ const leadStageSchema = new Schema(
 
 leadStageSchema.index({ company: 1, nome: 1 }, { unique: true });
 
-
+leadStageSchema.post("save", function (error, doc, next) {
+  if (
+    error.name === "MongoServerError" &&
+    error.code === 11000 &&
+    error.keyPattern?.company &&
+    error.keyPattern?.nome
+  ) {
+    next(new Error(`A situação '${doc.nome}' já existe nesta empresa.`));
+  } else {
+    next(error);
+  }
+});
 leadStageSchema.post("findOneAndUpdate", function (error, doc, next) {
   if (
     error.name === "MongoServerError" &&
