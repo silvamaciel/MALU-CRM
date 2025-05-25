@@ -470,46 +470,73 @@ const updateLead = async (id, leadData, companyId, userId) => {
     if (nomeSituacaoAntiga.toLowerCase().includes("em reserva")) {
       const proximosEstagiosPermitidos = ["proposta", "proposta aceita", "vendido"];
 
+      console.log(`[DEBUG] Situação antiga era 'Em Reserva'. Nova situação: '${nomeSituacaoNova}'`);
 
       if (!proximosEstagiosPermitidos.some(s => nomeSituacaoNova.toLowerCase().includes(s))) {
-        console.log(`[updateLead DEBUG] Lead <span class="math-inline">\{id\} saiu de 'Em Reserva' para '</span>{nomeSituacaoNovaEfetiva}'. Tentando cancelar reserva.`);
-      
+        console.log(`[DEBUG] Nova situação NÃO está entre os estágios permitidos (${proximosEstagiosPermitidos.join(", ")}). Verificando reserva ativa...`);
+
         const reservaAtiva = await Reserva.findOne({ lead: id, statusReserva: "Ativa", company: companyId });
 
         if (reservaAtiva) {
+          console.log(`[DEBUG] Reserva ativa encontrada: ${reservaAtiva._id}`);
 
-          console.log(`[updateLead DEBUG] Reserva ATIVA encontrada: ${reservaAtiva._id}`);
           const unidadeIdDaReserva = reservaAtiva.unidade;
           reservaAtiva.statusReserva = "Cancelada";
 
-          const unidadeParaLiberar = await Unidade.findById(unidadeIdDaReserva).session(session); 
-                        
-                        if (unidadeParaLiberar && unidadeParaLiberar.company.equals(companyId)) {
-                            console.log(`[updateLead DEBUG] Unidade ${unidadeIdDaReserva} encontrada para liberação. Status atual: ${unidadeParaLiberar.statusUnidade}. CurrentLeadId: ${unidadeParaLiberar.currentLeadId}`);
-                            // Condição para liberar: A unidade está realmente reservada E está reservada para ESTE lead.
-                            if (unidadeParaLiberar.statusUnidade === "Reservada" && 
-                                unidadeParaLiberar.currentLeadId && 
-                                unidadeParaLiberar.currentLeadId.equals(leadId)) { // Compara com o leadId atual
-                                
-                                console.log(`[updateLead DEBUG] Condição para liberar unidade ATENDIDA. Alterando status da unidade...`);
-                                unidadeParaLiberar.statusUnidade = "Disponível";
-                                unidadeParaLiberar.currentLeadId = null;
-                                unidadeParaLiberar.currentReservaId = null; // Limpa a referência à reserva
-                                await unidadeParaLiberar.save({ session });
-                                console.log(`[updateLead] Unidade ${unidadeIdDaReserva} status alterado para Disponível.`);
-                                
-                                await logHistory(id, userId, "UNIDADE_LIBERADA", `Unidade ${unidadeParaLiberar.identificador} (ID: ${unidadeIdDaReserva}) liberada.`, { reservaId: reservaAtiva._id, unidadeId: unidadeParaLiberar._id }, null, 'Unidade', unidadeParaLiberar._id, session);
-                            } else {
-                                console.warn(`[updateLead DEBUG] NÃO liberou unidade: Status da unidade não é 'Reservada' ou currentLeadId não corresponde. Status: ${unidadeParaLiberar.statusUnidade}, currentLeadId: ${unidadeParaLiberar.currentLeadId}, leadId esperado: ${leadId}`);
-                            }
-                        } else {
-                             console.warn(`[updateLead DEBUG] Unidade ${unidadeIdDaReserva} da reserva não encontrada ou não pertence à empresa.`);
-                        }
-                        await reservaAtiva.save({ session });
-          console.log(`[updateLead] Reserva ${reservaAtiva._id} status alterado para Cancelada.`);
+          const unidadeParaLiberar = await Unidade.findById(unidadeIdDaReserva).session(session);
 
-          await logHistory(id, userId, "RESERVA_CANCELADA_STATUS_LEAD", `Reserva cancelada devido mudança de status para '${nomeSituacaoNova}'.`, { oldReservaStatus: "Ativa", newReservaStatus: "Cancelada" });
+          if (unidadeParaLiberar && unidadeParaLiberar.company.equals(companyId)) {
+            console.log(`[DEBUG] Unidade ${unidadeIdDaReserva} pertence à empresa. Status atual: ${unidadeParaLiberar.statusUnidade}, currentLeadId: ${unidadeParaLiberar.currentLeadId}`);
+
+            if (
+              unidadeParaLiberar.statusUnidade === "Reservada" &&
+              unidadeParaLiberar.currentLeadId &&
+              unidadeParaLiberar.currentLeadId.equals(leadId)
+            ) {
+              console.log(`[DEBUG] Condições para liberação da unidade atendidas. Liberando unidade...`);
+
+              unidadeParaLiberar.statusUnidade = "Disponível";
+              unidadeParaLiberar.currentLeadId = null;
+              unidadeParaLiberar.currentReservaId = null;
+
+              await unidadeParaLiberar.save({ session });
+
+              console.log(`[DEBUG] Unidade ${unidadeIdDaReserva} liberada com sucesso.`);
+
+              await logHistory(
+                id,
+                userId,
+                "UNIDADE_LIBERADA",
+                `Unidade ${unidadeParaLiberar.identificador} (ID: ${unidadeIdDaReserva}) liberada.`,
+                { reservaId: reservaAtiva._id, unidadeId: unidadeParaLiberar._id },
+                null,
+                "Unidade",
+                unidadeParaLiberar._id,
+                session
+              );
+            } else {
+              console.warn(`[DEBUG] NÃO liberou unidade: status inválido ou leadId não confere.`);
+            }
+          } else {
+            console.warn(`[DEBUG] Unidade da reserva não encontrada ou não pertence à empresa.`);
+          }
+
+          await reservaAtiva.save({ session });
+
+          console.log(`[DEBUG] Reserva ${reservaAtiva._id} marcada como cancelada.`);
+
+          await logHistory(
+            id,
+            userId,
+            "RESERVA_CANCELADA_STATUS_LEAD",
+            `Reserva cancelada devido mudança de status para '${nomeSituacaoNova}'.`,
+            { oldReservaStatus: "Ativa", newReservaStatus: "Cancelada" }
+          );
+        } else {
+          console.log(`[DEBUG] Nenhuma reserva ativa encontrada para este lead.`);
         }
+      } else {
+        console.log(`[DEBUG] Nova situação faz parte da progressão de venda. Nenhuma ação de reserva necessária.`);
       }
     }
 
@@ -532,6 +559,7 @@ const updateLead = async (id, leadData, companyId, userId) => {
     throw new Error(error.message);
   }
 };
+
 
 
 // --- DELETE Lead (com Multi-Empresa) ---
