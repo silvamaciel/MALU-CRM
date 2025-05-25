@@ -42,8 +42,24 @@ const createReservaController = asyncHandler(async (req, res, next) => {
     res.status(201).json({ success: true, data: novaReserva });
 });
 
+/**
+ * Controller para listar todas as reservas da empresa, com filtros e paginação.
+ */
+const getReservasController = asyncHandler(async (req, res, next) => {
+    const companyId = req.user.company;
+    const { page = 1, limit = 10, ...filters } = req.query; // Pega page, limit e outros filtros da query
+        
+    const paginationOptions = { page: parseInt(page, 10), limit: parseInt(limit, 10) };
+    delete filters.page;
+    delete filters.limit;
 
+    console.log(`[ReservaCtrl] Recebido GET /api/reservas para Company ${companyId} com filtros:`, filters, `e paginação:`, paginationOptions);
+
+    const result = await ReservaService.getReservasByCompany(companyId, filters, paginationOptions);
+    res.status(200).json({ success: true, ...result });
+});
 
 module.exports = {
-    createReservaController
+    createReservaController,
+    getReservasController
 };
