@@ -1,14 +1,18 @@
 // backend/routes/reservaRoutes.js
 const express = require('express');
 const router = express.Router();
-const { createReservaController } = require('../controllers/ReservaController'); // Ajuste o nome para corresponder ao seu arquivo
+const { 
+    createReservaController,
+    getReservasController
+ } = require('../controllers/ReservaController'); // Ajuste o nome para corresponder ao seu arquivo
 const { protect } = require('../middlewares/authMiddleware');
 
 router.use(protect);
 
 
 router.route('/')
-    .post(createReservaController);
+    .post(createReservaController)
+    .get(getReservasController);
 
 //router.route('/:id').get(getReservaByIdController);
 //router.route('/lead/:leadId').get(listReservasByLeadController);
