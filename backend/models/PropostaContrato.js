@@ -41,65 +41,44 @@ const corretagemSchema = new Schema({
 
 
 const propostaContratoSchema = new Schema({
-    // --- Vínculos Principais ---
+    // --- Vínculos ---
     lead: { type: Schema.Types.ObjectId, ref: 'Lead', required: true, index: true },
-    reserva: { type: Schema.Types.ObjectId, ref: 'Reserva', required: true, unique:true, index: true }, 
+    reserva: { type: Schema.Types.ObjectId, ref: 'Reserva', required: true, unique: true, index: true },
     unidade: { type: Schema.Types.ObjectId, ref: 'Unidade', required: true, index: true },
     empreendimento: { type: Schema.Types.ObjectId, ref: 'Empreendimento', required: true, index: true },
     company: { type: Schema.Types.ObjectId, ref: 'Company', required: true, index: true },
-    
-    // --- Dados da Empresa Vendedora (Sua Company) ---
-    vendedorNomeFantasia: { type: String },
-    vendedorRazaoSocial: { type: String },
-    vendedorCnpj: { type: String },
-    vendedorEndereco: { type: String }, 
-    vendedorRepresentanteNome: { type: String },
-    vendedorRepresentanteCpf: { type: String },
+    modeloContratoUsado: { type: Schema.Types.ObjectId, ref: 'ModeloContrato', required: false }, // O template que foi usado como base
 
-
-    empreendimentoNomeSnapshot: { type: String },
-    unidadeIdentificadorSnapshot: { type: String },
-    unidadeTipologiaSnapshot: { type: String },
-    unidadeAreaUtilSnapshot: Number,
-
-    // --- Preço e Condições (Seu item 5 e parte do 2) ---
+    // --- Dados Financeiros e Condições ---
     precoTabelaUnidadeNoMomento: { type: Number, required: true },
-    valorPropostaContrato: { type: Number, required: true },     
-    valorDescontoConcedido: { 
-        type: Number, 
-        default: 0
-    }, 
-    valorEntrada: { type: Number, required: false }, 
-    condicoesPagamentoGerais: { type: String, trim: true }, 
+    valorPropostaContrato: { type: Number, required: true },
+    valorDescontoConcedido: { type: Number, default: 0 },
+    valorEntrada: { type: Number, required: false },
+    condicoesPagamentoGerais: { type: String, trim: true }, // Resumo ou observações
     dadosBancariosParaPagamento: dadosBancariosSchema,
-    
-    planoDePagamento: [parcelaSchema], 
+    planoDePagamento: [parcelaSchema],
 
-    // --- Corretagem (Seu item 7) ---
+    // --- Corretagem ---
     corretagem: corretagemSchema,
 
-    // --- Corpo do Contrato e Documentos ---
-    corpoContratoHTML: { type: String },
-    linkDocumentoPDFGerado: String,
-    anexos: [{ nomeArquivo: String, urlArquivo: String }],
+    // --- Conteúdo do Contrato ---
+    corpoContratoHTMLGerado: { type: String, required: true }, // HTML final, após substituição de variáveis e edição do usuário
 
-    // --- Metadados da Proposta/Contrato ---
+    // --- Metadados ---
     dataProposta: { type: Date, default: Date.now },
     dataAssinaturaCliente: { type: Date },
-    dataVendaEfetivada: { type: Date }, 
+    dataVendaEfetivada: { type: Date },
     statusPropostaContrato: {
         type: String,
         required: true,
-        enum: ["Em Elaboração", "Aguardando Assinatura", "Assinado", "Vendido", "Recusado", "Cancelado"],
+        enum: ["Em Elaboração", "Aguardando Aprovações", "Aguardando Assinatura Cliente", "Assinado", "Vendido", "Recusado", "Cancelado"],
         default: "Em Elaboração",
         index: true
     },
-    responsavelNegociacao: { type: Schema.Types.ObjectId, ref: 'User', required: true }, // Usuário do CRM
+    responsavelNegociacao: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     observacoesInternasProposta: { type: String, trim: true }
-}, {
-    timestamps: true
-});
+}, { timestamps: true });
 
 // Hook para calcular o desconto
 propostaContratoSchema.pre('save', function(next) {
