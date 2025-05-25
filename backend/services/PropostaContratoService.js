@@ -7,7 +7,7 @@ const Unidade = require('../models/Unidade');
 const Empreendimento = require('../models/Empreendimento');
 const Company = require('../models/Company'); 
 const LeadStage = require('../models/LeadStage');
-const { logHistory } = require('./historyService');
+const { logHistory } = require('./LeadService');
 const User = require('../models/User'); 
 
 /**
