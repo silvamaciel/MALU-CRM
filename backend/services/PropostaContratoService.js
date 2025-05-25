@@ -111,24 +111,51 @@ const createPropostaContrato = async (reservaId, propostaContratoData, companyId
         await reserva.save({ session });
 
         // 6. Atualizar Status do Lead
-        const nomeEstagioProposta = "Proposta Emitida"; // Ou o nome do seu estágio
-        const situacaoProposta = await LeadStage.findOneAndUpdate(
-            { company: companyId, nome: { $regex: new RegExp(`^<span class="math-inline">\{nomeEstagioProposta\}</span>`, "i") } },
-            { $setOnInsert: { nome: nomeEstagioProposta, company: companyId, ativo: true, descricao: "Proposta comercial/contrato gerado para o lead." } },
-            { new: true, upsert: true, runValidators: true, session: session }
-        );
-        if (!situacaoProposta) throw new Error (`Estágio '${nomeEstagioProposta}' não pôde ser encontrado ou criado.`);
+        const nomeEstagioProposta = "Proposta Emitida"; // Ou o nome que você definiu
+        let situacaoProposta = await LeadStage.findOne(
+            { company: companyId, nome: { $regex: new RegExp(`^${nomeEstagioProposta}$`, "i") } }
+        ).session(session).lean(); // Busca primeiro, usando a sessão e .lean() para performance
 
-        const oldLeadStatusId = reserva.lead.situacao;
-        reserva.lead.situacao = situacaoProposta._id;
-        // Se o modelo Lead foi populado, precisamos salvar o documento Lead completo
-        const leadDoc = await Lead.findById(reserva.lead._id).session(session);
-        if(leadDoc){
-            leadDoc.situacao = situacaoProposta._id;
-            await leadDoc.save({session});
-        } else {
-            throw new Error("Lead da reserva não encontrado para atualização de status.");
+        if (!situacaoProposta) {
+            console.log(`[PropContSvc] Estágio '${nomeEstagioProposta}' não encontrado para Company ${companyId}. Criando...`);
+            try {
+                const novoEstagioProposta = new LeadStage({
+                    nome: nomeEstagioProposta,
+                    company: companyId,
+                    ativo: true,
+                    descricao: "Proposta comercial/contrato gerado para o lead."
+                });
+                situacaoProposta = await novoEstagioProposta.save({ session });
+                console.log(`[PropContSvc] Estágio '${nomeEstagioProposta}' criado com ID: ${situacaoProposta._id}`);
+            } catch (creationError) {
+                
+                console.error(`[PropContSvc] Falha ao tentar criar estágio padrão '${nomeEstagioProposta}':`, creationError);
+        
+                throw new Error(`Falha ao criar/encontrar estágio de lead '${nomeEstagioProposta}'. ${creationError.message}`);
+            }
         }
+        
+        if (!situacaoProposta || !situacaoProposta._id) { // Checagem extra de segurança
+            throw new Error (`Estágio '${nomeEstagioProposta}' não pôde ser encontrado ou criado para a empresa.`);
+        }
+        
+        console.log(`[PropContSvc] Usando Estágio '${nomeEstagioProposta}' (ID: ${situacaoProposta._id}) para o Lead.`);
+
+        const oldLeadStatusId = reserva.lead.situacao; // Supondo que reserva.lead foi populado
+        
+        if (reserva.lead && typeof reserva.lead.save === 'function') {
+             reserva.lead.situacao = situacaoProposta._id;
+             await reserva.lead.save({session});
+        } else { // Se reserva.lead é um objeto lean, ou para garantir, buscamos e salvamos
+            const leadDocParaAtualizar = await Lead.findById(reserva.lead._id || reserva.lead).session(session);
+            if(leadDocParaAtualizar){
+                leadDocParaAtualizar.situacao = situacaoProposta._id;
+                await leadDocParaAtualizar.save({session});
+            } else {
+                throw new Error("Lead da reserva não encontrado para atualização de status.");
+            }
+        }
+
 
 
         // 7. Atualizar Status da Unidade (opcional, pode manter "Reservada" ou mudar para "Com Proposta")
