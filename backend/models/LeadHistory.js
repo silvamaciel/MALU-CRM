@@ -30,7 +30,10 @@ const leadHistorySchema = new Schema(
         "RESERVA_EXPIRADA",  
         "PROPOSTA_CRIADA",
         "RESERVA_CANCELADA_STATUS_LEAD",
-        "UNIDADE_LIBERADA"
+        "UNIDADE_LIBERADA",
+        "PROPOSTA_CONTRATO_CRIADA",
+        "PROPOSTA_STATUS_ALTERADO", 
+        "VENDA_CONCRETIZADA",
       ],
     },
     details: {
