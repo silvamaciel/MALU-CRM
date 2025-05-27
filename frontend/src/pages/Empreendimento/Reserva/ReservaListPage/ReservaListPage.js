@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 // Importe a função da API de reservas que lista (criaremos em src/api/reservaApi.js)
-import { getReservasByCompanyApi } from '../../../api/reservaApi'; // Ajuste o caminho se necessário
+import { getReservasByCompanyApi } from '../../../../api/reservaApi'; // Ajuste o caminho se necessário
 import { toast } from 'react-toastify';
 // import './ReservaListPage.css'; // Crie este arquivo CSS depois
 
