@@ -26,6 +26,7 @@ import EmpreendimentoListPage from './pages/Empreendimento/EmpreendimentoListPag
 import EmpreendimentoFormPage from './pages/Empreendimento/EmpreendimentoFormPage/EmpreendimentoFormPage';
 import EmpreendimentoDetailPage from './pages/Empreendimento/EmpreendimentoDetailPage/EmpreendimentoDetailPage';
 import UnidadeFormPage from './pages/Empreendimento/UnidadeFormPage/UnidadeFormPage';
+import ReservaListPage from './pages/Empreendimento/Reserva/ReservaListPage/ReservaListPage';
 
 
 
@@ -102,6 +103,8 @@ function App() {
 
                 <Route path="/empreendimentos/:empreendimentoId/unidades/novo" element={<UnidadeFormPage />} />
                 <Route path="/empreendimentos/:empreendimentoId/unidades/:unidadeId/editar" element={<UnidadeFormPage />} />
+
+                <Route path="/reservas" element={<ReservaListPage />} />
 
 
                 {/* Rotas Admin (Renderizadas condicionalmente DENTRO do Outlet) */}
