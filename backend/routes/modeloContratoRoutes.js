@@ -16,12 +16,12 @@ router.use(protect);
 // Rotas CRUD para Modelos de Contrato
 // Apenas admins da empresa podem criar, atualizar ou deletar modelos
 router.route('/')
-    .post(authorize(['admin']), createModeloContratoController) // Só admin
+    .post(authorize('admin'), createModeloContratoController) // Só admin
     .get(getModelosContratoController); 
 
 router.route('/:id')
     .get(getModeloContratoByIdController) // Todos os usuários logados da empresa podem ver um modelo
-    .put(authorize(['admin']), updateModeloContratoController) // Só admin atualiza
-    .delete(authorize(['admin']), deleteModeloContratoController); // Só admin desativa
+    .put(authorize('admin'), updateModeloContratoController) // Só admin atualiza
+    .delete(authorize('admin'), deleteModeloContratoController); // Só admin desativa
 
 module.exports = router;
