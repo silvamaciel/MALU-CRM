@@ -47,7 +47,11 @@ const propostaContratoSchema = new Schema({
     unidade: { type: Schema.Types.ObjectId, ref: 'Unidade', required: true, index: true },
     empreendimento: { type: Schema.Types.ObjectId, ref: 'Empreendimento', required: true, index: true },
     company: { type: Schema.Types.ObjectId, ref: 'Company', required: true, index: true },
-    modeloContratoUsado: { type: Schema.Types.ObjectId, ref: 'ModeloContrato', required: false }, // O template que foi usado como base
+    modeloContratoUtilizado: {
+        type: Schema.Types.ObjectId,
+        ref: 'ModeloContrato',
+        required: true 
+    },
 
     // --- Dados Financeiros e Condições ---
     precoTabelaUnidadeNoMomento: { type: Number, required: true },
@@ -60,6 +64,8 @@ const propostaContratoSchema = new Schema({
 
     // --- Corretagem ---
     corretagem: corretagemSchema,
+
+    
 
     // --- Conteúdo do Contrato ---
     corpoContratoHTMLGerado: { type: String, required: true }, // HTML final, após substituição de variáveis e edição do usuário

@@ -19,7 +19,7 @@ const User = require('../models/User');
  * @returns {Promise<PropostaContrato>} A Proposta/Contrato criada.
  */
 const createPropostaContrato = async (reservaId, propostaContratoData, companyId, creatingUserId) => {
-    console.log(`[PropContSvc] Criando Proposta/Contrato a partir da Reserva ID: ${reservaId} para Company: ${companyId} por User: ${creatingUserId}`);
+    console.log(`[PropContSvc] Criando Proposta/Contrato da Reserva ${reservaId} usando Modelo ID ${propostaContratoData.modeloContratoId}`);
 
     // Validações básicas
     if (!mongoose.Types.ObjectId.isValid(reservaId) ||
@@ -62,55 +62,129 @@ const createPropostaContrato = async (reservaId, propostaContratoData, companyId
             throw new Error("Empresa vendedora não encontrada.");
         }
 
-        // 3. Verificar se já existe uma Proposta/Contrato para esta reserva
-        const propostaExistente = await PropostaContrato.findOne({ reserva: reservaId }).session(session);
-        if (propostaExistente) {
-            throw new Error(`Já existe uma proposta/contrato (ID: ${propostaExistente._id}, Status: ${propostaExistente.statusPropostaContrato}) para esta reserva.`);
+        // 3. Buscar o Modelo de Contrato selecionado
+        const modeloContrato = await ModeloContrato.findOne({ _id: propostaContratoData.modeloContratoId, company: companyId, ativo: true }).lean();
+        if (!modeloContrato) {
+            throw new Error("Modelo de Contrato selecionado não encontrado, inativo ou não pertence a esta empresa.");
+        }
+        // 4. Montar o objeto de dados para substituir os placeholders no template
+        // Este objeto precisa conter todas as chaves que seus placeholders esperam (ex: {{lead_nome}})
+        const dadosParaTemplate = {
+            // Dados do Vendedor (Empresa do CRM)
+            vendedor_nome_fantasia: empresaVendedora.nome,
+            vendedor_razao_social: empresaVendedora.razaoSocial || empresaVendedora.nome,
+            vendedor_cnpj: empresaVendedora.cnpj, // Adicionar formatação se necessário
+            vendedor_endereco_completo: `${empresaVendedora.endereco?.logradouro || ''}, ${empresaVendedora.endereco?.numero || ''} - ${empresaVendedora.endereco?.bairro || ''}, ${empresaVendedora.endereco?.cidade || ''}/${empresaVendedora.endereco?.uf || ''} - CEP: ${empresaVendedora.endereco?.cep || ''}`,
+            vendedor_representante_nome: empresaVendedora.representanteLegalNome || '', // Adicionar ao Company Model
+            vendedor_representante_cpf: empresaVendedora.representanteLegalCPF || '',   // Adicionar ao Company Model
+
+            // Dados do Comprador (Lead)
+            lead_nome: reserva.lead.nome,
+            lead_cpf: reserva.lead.cpf || '', // Adicionar formatação se necessário
+            lead_rg: reserva.lead.rg || '', // Adicionar 'rg' ao Lead Model
+            lead_endereco_completo: reserva.lead.endereco || '',
+            lead_estado_civil: reserva.lead.estadoCivil || '', // Adicionar 'estadoCivil' ao Lead Model
+            lead_profissao: reserva.lead.profissao || '',     // Adicionar 'profissao' ao Lead Model
+            lead_nacionalidade: reserva.lead.nacionalidade || 'Brasileiro(a)', // Adicionar 'nacionalidade' ao Lead Model
+            lead_email: reserva.lead.email || '',
+            lead_telefone: reserva.lead.contato || '', // Já formatado
+
+            // Dados do Imóvel (Empreendimento e Unidade)
+            empreendimento_nome: reserva.empreendimento.nome,
+            unidade_identificador: reserva.unidade.identificador,
+            unidade_tipologia: reserva.unidade.tipologia,
+            unidade_area_privativa: reserva.unidade.areaUtil ? `${reserva.unidade.areaUtil}m²` : '_m²',
+            empreendimento_endereco_completo: `${reserva.empreendimento.localizacao?.logradouro || ''}, ${reserva.empreendimento.localizacao?.numero || ''} - ${reserva.empreendimento.localizacao?.bairro || ''}, ${reserva.empreendimento.localizacao?.cidade || ''}/${reserva.empreendimento.localizacao?.uf || ''}`,
+            unidade_memorial_incorporacao: reserva.empreendimento.memorialIncorporacao || 'Não Registrado', // Adicionar ao Empreendimento Model
+            unidade_matricula: reserva.unidade.matriculaImovel || 'Não Registrado', // Adicionar ao Unidade Model
+
+            // Dados da Transação (da propostaContratoData)
+            proposta_valor_total_formatado: `R$ ${propostaContratoData.valorPropostaContrato.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+            proposta_valor_entrada_formatado: propostaContratoData.valorEntrada ? `R$ ${propostaContratoData.valorEntrada.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'N/A',
+            proposta_condicoes_pagamento_gerais: propostaContratoData.condicoesPagamentoGerais || '',
+            
+            // Dados Bancários para Pagamento (do propostaContratoData)
+            pagamento_banco_nome: propostaContratoData.dadosBancariosParaPagamento?.bancoNome || '_',
+            pagamento_agencia: propostaContratoData.dadosBancariosParaPagamento?.agencia || '_',
+            pagamento_conta_corrente: propostaContratoData.dadosBancariosParaPagamento?.contaCorrente || '_',
+            pagamento_cnpj_favorecido: propostaContratoData.dadosBancariosParaPagamento?.cnpjPagamento || '_',
+            pagamento_pix: propostaContratoData.dadosBancariosParaPagamento?.pix || '_',
+
+            // Plano de Pagamento (transformar em uma tabela HTML ou string formatada)
+            plano_pagamento_string_formatada: (propostaContratoData.planoDePagamento || [])
+                .map(p => `${p.quantidade}x ${p.tipoParcela} de R$ ${p.valorUnitario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (1º Venc: ${new Date(p.vencimentoPrimeira).toLocaleDateString('pt-BR')}) ${p.observacao || ''}`)
+                .join('\n'),
+            
+            // Corretagem
+            corretagem_valor_formatado: propostaContratoData.corretagem?.valorCorretagem ? `R$ ${propostaContratoData.corretagem.valorCorretagem.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'N/A',
+            // Para corretor_nome, etc., precisaria buscar o BrokerContact
+            corretagem_condicoes: propostaContratoData.corretagem?.condicoesPagamentoCorretagem || '_',
+
+            // Outros
+            data_proposta_extenso: new Date(propostaContratoData.dataProposta || Date.now()).toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' }),
+            cidade_contrato: empresaVendedora.endereco?.cidade || '_',
+        };
+        
+        // Se precisar de dados do BrokerContact, buscar aqui:
+        if (propostaContratoData.corretagem?.corretorPrincipal) {
+            const BrokerContactModel = mongoose.model('BrokerContact'); // Assumindo que o modelo é 'BrokerContact'
+            const corretor = await BrokerContactModel.findById(propostaContratoData.corretagem.corretorPrincipal).lean();
+            if (corretor) {
+                dadosParaTemplate.corretor_principal_nome = corretor.nome;
+                dadosParaTemplate.corretor_principal_cpf_cnpj = corretor.cpfCnpj; // Assumindo campo
+                dadosParaTemplate.corretor_principal_creci = corretor.registroProfissional; // Assumindo campo
+            }
+        }
+
+        // 5
+        let corpoContratoProcessado = modeloContrato.conteudoHTMLTemplate;
+        for (const key in dadosParaTemplate) {
+            const placeholder = `{{${key}}}`;
+            // Use uma regex global para substituir todas as ocorrências
+            corpoContratoProcessado = corpoContratoProcessado.replace(new RegExp(placeholder.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), dadosParaTemplate[key] || '');
         }
 
 
-        // 4. Preparar dados para o novo PropostaContrato
+        //6. Preparar dados para o novo PropostaContrato
         const dadosParaNovaProposta = {
-            ...propostaContratoData, // Contém valorPropostaContrato, planoDePagamento, corretagem, corpoContratoHTML, etc.
+            ...propostaContratoData,
             lead: reserva.lead._id,
             reserva: reserva._id,
             unidade: reserva.unidade._id,
             empreendimento: reserva.empreendimento._id,
             company: companyId,
             createdBy: creatingUserId,
-            // Dados Snapshot (Pegar do momento da criação da proposta)
+            modeloContratoUtilizado: propostaContratoData.modeloContratoId,
+            corpoContratoHTMLGerado: corpoContratoProcessado, // <<< HTML COM DADOS PREENCHIDOS
+
             empreendimentoNomeSnapshot: reserva.empreendimento.nome,
             unidadeIdentificadorSnapshot: reserva.unidade.identificador,
             unidadeTipologiaSnapshot: reserva.unidade.tipologia,
             unidadeAreaUtilSnapshot: reserva.unidade.areaUtil,
-            precoTabelaUnidadeNoMomento: reserva.unidade.precoTabela, // Preço da unidade no momento da reserva/proposta
-            // Dados da Empresa Vendedora (Snapshot)
-            vendedorNomeFantasia: empresaVendedora.nome, // Assumindo que 'nome' é o nome fantasia
-            vendedorRazaoSocial: empresaVendedora.razaoSocial || empresaVendedora.nome, // Se tiver razaoSocial
+            precoTabelaUnidadeNoMomento: reserva.unidade.precoTabela,
+            
+            vendedorNomeFantasia: empresaVendedora.nome,
+            vendedorRazaoSocial: empresaVendedora.razaoSocial || empresaVendedora.nome,
             vendedorCnpj: empresaVendedora.cnpj,
-            vendedorEndereco: `${empresaVendedora.endereco?.logradouro || ''}, ${empresaVendedora.endereco?.numero || ''} - ${empresaVendedora.endereco?.bairro || ''}, <span class="math-inline">\{empresaVendedora\.endereco?\.cidade \|\| ''\}/</span>{empresaVendedora.endereco?.uf || ''}`, // Formatar endereço
-            vendedorRepresentanteNome: empresaVendedora.representanteLegalNome || null, // Campos a serem adicionados no model Company
-            vendedorRepresentanteCpf: empresaVendedora.representanteLegalCPF || null,  // Campos a serem adicionados no model Company
+            vendedorEndereco: `${empresaVendedora.endereco?.logradouro || ''}, ${empresaVendedora.endereco?.numero || ''} - ${empresaVendedora.endereco?.bairro || ''}, ${empresaVendedora.endereco?.cidade || ''}/${empresaVendedora.endereco?.uf || ''}`,
+            vendedorRepresentanteNome: empresaVendedora.representanteLegalNome || null,
+            vendedorRepresentanteCpf: empresaVendedora.representanteLegalCPF || null,
 
-            statusPropostaContrato: propostaContratoData.statusPropostaContrato || "Em Elaboração", // Default
+            statusPropostaContrato: propostaContratoData.statusPropostaContrato || "Em Elaboração",
             dataProposta: propostaContratoData.dataProposta || new Date(),
         };
 
-        // Calcula desconto se valorPropostaContrato e precoTabelaUnidadeNoMomento estiverem presentes
-        if (dadosParaNovaProposta.precoTabelaUnidadeNoMomento && dadosParaNovaProposta.valorPropostaContrato) {
-            dadosParaNovaProposta.valorDescontoConcedido = dadosParaNovaProposta.precoTabelaUnidadeNoMomento - dadosParaNovaProposta.valorPropostaContrato;
-        }
 
 
         const novaPropostaContrato = new PropostaContrato(dadosParaNovaProposta);
         const propostaSalva = await novaPropostaContrato.save({ session });
 
-        // 5. Atualizar Status da Reserva
+        // 7. Atualizar Status da Reserva
         reserva.statusReserva = "ConvertidaEmProposta";
-        reserva.propostaId = propostaSalva._id; // Vincula a proposta à reserva
+        reserva.propostaId = propostaSalva._id;
         await reserva.save({ session });
 
-        // 6. Atualizar Status do Lead
+        // 8. Atualizar Status do Lead
         const nomeEstagioProposta = "Proposta Emitida"; // Ou o nome que você definiu
         let situacaoProposta = await LeadStage.findOne(
             { company: companyId, nome: { $regex: new RegExp(`^${nomeEstagioProposta}$`, "i") } }
@@ -158,7 +232,7 @@ const createPropostaContrato = async (reservaId, propostaContratoData, companyId
 
 
 
-        // 7. Atualizar Status da Unidade (opcional, pode manter "Reservada" ou mudar para "Com Proposta")
+        // 9. Atualizar Status da Unidade (opcional, pode manter "Reservada" ou mudar para "Com Proposta")
         // reserva.unidade.statusUnidade = "Com Proposta"; // Exemplo
         // await reserva.unidade.save({ session }); 
         // ^^^ Se unidade foi populada e não lean, senão:
@@ -169,7 +243,7 @@ const createPropostaContrato = async (reservaId, propostaContratoData, companyId
         }
 
 
-        // 8. Registrar no Histórico do Lead
+        // 10. Registrar no Histórico do Lead
         const leadStatusAntigoNome = await LeadStage.findById(oldLeadStatusId).select('nome').lean();
         await logHistory(
             reserva.lead._id,
