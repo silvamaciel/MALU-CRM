@@ -326,7 +326,7 @@ function PropostaContratoFormPage() {
               >
                 <option value="">
                   {usuariosCRM.length === 0
-                    ? isLoadingInitialData
+                    ? loadingInitialData
                       ? "Carregando usuários..."
                       : "Nenhum usuário CRM"
                     : usuariosCRM.length === 0 ? 'Nenhum usuário CRM' : 'Selecione um responsável...'}
