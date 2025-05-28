@@ -96,9 +96,10 @@ function ModeloContratoFormPage() {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleConteudoChange = (htmlContent) => { // Handler específico para o editor
+    const handleConteudoHTMLChange = (htmlContent) => { // Handler específico para o editor
         setFormData(prev => ({ ...prev, conteudoHTMLTemplate: htmlContent }));
     };
+
 
     // Para placeholders (se for uma lista editável mais complexa, precisará de mais lógica)
     // Por agora, vamos assumir que placeholders é um campo de texto simples ou não editável aqui.
