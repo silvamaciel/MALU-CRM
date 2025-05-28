@@ -53,7 +53,7 @@ const LISTA_PLACEHOLDERS_DISPONIVEIS = [
 ];
 
 function ModeloContratoFormPage() {
-    const { id } = useParams(); // Para pegar o ID da URL (no caso de edição)
+    const { id } = useParams();
     const navigate = useNavigate();
     const isEditMode = Boolean(id);
 
