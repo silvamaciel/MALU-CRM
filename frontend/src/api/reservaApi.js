@@ -31,3 +31,13 @@ export const getReservasByCompanyApi = async (page = 1, limit = 10, filters = {}
         throw error.response?.data || new Error("Falha ao buscar reservas.");
     }
 };
+
+export const getReservaByIdApi = async (reservaId) => {
+    try {
+        const response = await axiosInstance.get(`<span class="math-inline">\{API\_URL\}/</span>{reservaId}`); // Assumindo API_URL = '/reservas'
+        return response.data.data; // Se o backend retornar { success: true, data: reserva }
+    } catch (error) {
+        console.error(`Erro ao buscar reserva ${reservaId}:`, error.response?.data || error.message);
+        throw error.response?.data || new Error("Falha ao buscar a reserva.");
+    }
+};
