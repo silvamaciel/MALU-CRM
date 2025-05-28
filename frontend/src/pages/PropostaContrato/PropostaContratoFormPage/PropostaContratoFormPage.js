@@ -111,7 +111,7 @@ function PropostaContratoFormPage() {
 
         setReservaBase(reservaData);
         setModelosContrato(modelosData.modelos || []);
-        setUsuariosCRM(usuariosData.nome || []);
+        setUsuariosCRM(usuariosData || []);
 
         if (reservaData) {
           setPageTitle(
