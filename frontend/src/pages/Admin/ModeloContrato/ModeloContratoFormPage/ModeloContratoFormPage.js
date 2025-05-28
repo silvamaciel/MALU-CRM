@@ -7,6 +7,7 @@ import './ModeloContratoFormPage.css';
 
 const TIPO_DOCUMENTO_OPCOES = ["Proposta", "Contrato de Reserva", "Contrato de Compra e Venda", "Outro"];
 
+//dadosParaTemplate dentro do PropostaContratoService.js
 const LISTA_PLACEHOLDERS_DISPONIVEIS = [
     { ph: "{{vendedor_nome_fantasia}}", desc: "Nome Fantasia da Empresa Vendedora (do CRM)" },
     { ph: "{{vendedor_razao_social}}", desc: "Razão Social da Empresa Vendedora" },
