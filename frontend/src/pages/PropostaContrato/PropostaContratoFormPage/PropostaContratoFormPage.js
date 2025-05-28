@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 // APIs Reais (Crie/Verifique se existem com estes nomes e funcionalidades)
 import { getReservaByIdApi, createPropostaContratoApi } from '../../../api/propostaContratoApi'; // Ajuste para ter getReservaByIdApi aqui ou no reservaApi.js
 import { getModelosContrato } from '../../../api/modeloContratoApi';
-import { getUsers } from '../../../api/users';
+import { getUsuarios } from '../../../api/users';
 
 import ReactQuill from 'react-quill'; 
 import 'react-quill/dist/quill.snow.css';
@@ -60,7 +60,7 @@ function PropostaContratoFormPage() {
                 // Esta função deve buscar a reserva e popular lead, unidade, empreendimento e company
                 const reservaData = await getReservaByIdApi(reservaId); 
                 const modelosData = await getModelosContrato(); // Lista modelos da empresa
-                const usuariosData = await getUsers({ ativo: true }); // Lista usuários ativos da empresa
+                const usuariosData = await getUsuarios({ ativo: true }); // Lista usuários ativos da empresa
 
                 setReservaBase(reservaData);
                 setModelosContrato(modelosData.modelos || []);
