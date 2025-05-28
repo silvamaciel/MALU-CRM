@@ -52,10 +52,9 @@ function ReservaListPage() {
     }, [fetchReservas, page]);
 
     const handleGerarProposta = (reservaId) => {
-        // Navegar para a página/modal de criação de Proposta/Contrato, passando o reservaId
         console.log("Navegar para criar proposta/contrato para Reserva ID:", reservaId);
         toast.info(`TODO: Navegar para formulário de Proposta/Contrato da Reserva ${reservaId}`);
-        // Ex: navigate(`/reservas/${reservaId}/proposta-contrato/novo`); (Criaremos essa rota depois)
+        navigate(`/reservas/${reservaId}/proposta-contrato/novo`);
     };
 
     // Função para mudar de página (paginação)

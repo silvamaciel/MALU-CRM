@@ -29,6 +29,7 @@ import UnidadeFormPage from './pages/Empreendimento/UnidadeFormPage/UnidadeFormP
 import ReservaListPage from './pages/Empreendimento/Reserva/ReservaListPage/ReservaListPage';
 import ModeloContratoListPage from './pages/Admin/ModeloContrato/ModeloContratoListPage/ModeloContratoListPage';
 import ModeloContratoFormPage from './pages/Admin/ModeloContrato/ModeloContratoFormPage/ModeloContratoFormPage';
+import PropostaContratoFormPage from './pages/PropostaContrato/PropostaContratoFormPage/PropostaContratoFormPage';
 
 
 
@@ -107,6 +108,9 @@ function App() {
                 <Route path="/empreendimentos/:empreendimentoId/unidades/:unidadeId/editar" element={<UnidadeFormPage />} />
 
                 <Route path="/reservas" element={<ReservaListPage />} />
+
+                <Route path="/reservas/:reservaId/proposta-contrato/novo" element={<PropostaContratoFormPage />} />
+
 
 
                 {/* Rotas Admin (Renderizadas condicionalmente DENTRO do Outlet) */}
