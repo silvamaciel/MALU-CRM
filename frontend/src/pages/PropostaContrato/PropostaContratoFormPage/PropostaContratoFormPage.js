@@ -1,40 +1,30 @@
-// src/pages/PropostaContrato/PropostaContratoFormPage/PropostaContratoFormPage.js
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom'; // <<< IMPORTAR Link
 import { toast } from 'react-toastify';
-// APIs que precisaremos:
-// import { getReservaByIdApi } from '../../../api/reservaApi'; // Para buscar dados da reserva, lead, unidade, emp.
-// import { getModelosContrato } from '../../../api/modeloContratoApi'; // Para listar modelos de contrato
-// import { createPropostaContratoApi } from '../../../api/propostaContratoApi'; // Criaremos esta API
-// import './PropostaContratoFormPage.css'; // Crie este CSS depois
 
-// Exemplo de como buscar dados da reserva e modelos (precisará criar getReservaByIdApi)
-// const mockGetReservaByIdApi = async (reservaId) => {
-//     console.log("API MOCK: Buscando reserva com ID:", reservaId);
-//     // Simula o retorno da API com dados populados
-//     return {
-//         _id: reservaId,
-//         lead: { _id: "lead123", nome: "Lead Exemplo da Reserva", email: "lead@example.com", contato: "+5500988887777", cpf: "111.222.333-44", endereco: "Rua do Lead, 123", estadoCivil: "Solteiro(a)", profissao: "Engenheiro(a)", nacionalidade: "Brasileiro(a)" },
-//         unidade: { _id: "unidade123", identificador: "Apto 101", tipologia: "2Q Suíte", areaUtil: 70, precoTabela: 300000 },
-//         empreendimento: { _id: "emp123", nome: "Residencial Flores", localizacao: {cidade: "João Pessoa", uf: "PB", logradouro: "Rua das Flores", numero: "100", bairro: "Centro" } },
-//         company: { _id: "company123", nome: "Construtora Exemplo", cnpj: "11.222.333/0001-44", endereco: {logradouro: "Av Principal", numero:"1", bairro:"Centro", cidade:"Jampa", uf:"PB", cep:"58000-000"}, representanteLegalNome: "Sr. Exemplo", representanteLegalCPF: "999.888.777-66" },
-//         // ... outros dados da reserva
-//     };
-// };
-// const mockGetModelosContratoApi = async () => {
-//     console.log("API MOCK: Buscando modelos de contrato");
-//     return { modelos: [{ _id: "modelo123", nomeModelo: "Contrato Padrão Reserva Apto", conteudoHTMLTemplate: "<h1>Contrato para {{lead_nome}}</h1><p>Unidade: {{unidade_identificador}}</p>" }] };
-// };
+// APIs Reais (Crie/Verifique se existem com estes nomes e funcionalidades)
+import { getReservaByIdApi, createPropostaContratoApi } from '../../../api/propostaContratoApi'; // Ajuste para ter getReservaByIdApi aqui ou no reservaApi.js
+import { getModelosContrato } from '../../../api/modeloContratoApi';
+import { getUsers } from '../../../api/userApi'; // Para listar usuários como responsáveis
+
+import ReactQuill from 'react-quill'; 
+import 'react-quill/dist/quill.snow.css';
+
+import './PropostaContratoFormPage.css'; 
+
+const TIPO_FINANCIAMENTO_OPCOES = ["Direto Construtora", "Financiamento Bancário", "À Vista", "Outro"];
+const STATUS_PROPOSTA_OPCOES = ["Em Elaboração", "Aguardando Aprovações", "Aguardando Assinatura Cliente", "Assinado", "Vendido", "Recusado", "Cancelado"];
+const TIPO_PARCELA_OPCOES = ["ATO", "PARCELA MENSAL", "PARCELA BIMESTRAL", "PARCELA TRIMESTRAL", "PARCELA SEMESTRAL", "INTERCALADA", "ENTREGA DE CHAVES", "FINANCIAMENTO", "OUTRA"];
 
 
 function PropostaContratoFormPage() {
     const { reservaId } = useParams();
     const navigate = useNavigate();
-    const isEditMode = false; // Este formulário é sempre para CRIAR uma proposta a partir de uma reserva
+    // const isEditMode = false; // Este form é para criar Proposta a partir de Reserva
 
-    // States para dados pré-carregados
-    const [reservaDetalhes, setReservaDetalhes] = useState(null);
+    const [reservaBase, setReservaBase] = useState(null);
     const [modelosContrato, setModelosContrato] = useState([]);
+    const [usuariosCRM, setUsuariosCRM] = useState([]); // Para o campo responsavelNegociacao
 
     const [formData, setFormData] = useState({
         modeloContratoUtilizado: '',
@@ -42,19 +32,21 @@ function PropostaContratoFormPage() {
         valorEntrada: '',
         condicoesPagamentoGerais: '',
         dadosBancariosParaPagamento: { bancoNome: '', agencia: '', contaCorrente: '', cnpjPagamento: '', pix: '' },
-        planoDePagamento: [{ tipoParcela: 'ATO', quantidade: 1, valorUnitario: '', vencimentoPrimeira: '', observacao: '' }], // Começa com uma parcela de ATO
+        planoDePagamento: [{ tipoParcela: TIPO_PARCELA_OPCOES[0], quantidade: 1, valorUnitario: '', vencimentoPrimeira: '', observacao: '' }],
         corretagem: { valorCorretagem: '', corretorPrincipal: '', condicoesPagamentoCorretagem: '', observacoesCorretagem: '' },
-        corpoContratoHTMLGerado: '', // Será preenchido/editado
-        responsavelNegociacao: '', // ID de um User do CRM
+        corpoContratoHTMLGerado: '<p>Selecione um modelo de contrato para começar.</p>',
+        responsavelNegociacao: '',
         observacoesInternasProposta: '',
-        statusPropostaContrato: 'Em Elaboração',
+        statusPropostaContrato: STATUS_PROPOSTA_OPCOES[0], // Default "Em Elaboração"
+        dataProposta: new Date().toISOString().split('T')[0], // Default hoje
     });
 
-    const [loading, setLoading] = useState(true);
+    const [loadingInitialData, setLoadingInitialData] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [formError, setFormError] = useState('');
+    const [pageTitle, setPageTitle] = useState('Nova Proposta/Contrato');
 
-    // Carregar dados da Reserva e Modelos de Contrato
+    // Carregar dados da Reserva, Modelos de Contrato e Usuários
     useEffect(() => {
         const loadInitialData = async () => {
             if (!reservaId) {
@@ -62,47 +54,51 @@ function PropostaContratoFormPage() {
                 navigate('/reservas');
                 return;
             }
-            setLoading(true);
+            setLoadingInitialData(true);
             try {
-                // TODO: Descomentar quando as APIs reais existirem e funcionarem
-                // const reservaData = await getReservaByIdApi(reservaId); // API para buscar reserva com dados populados
-                // const modelosData = await getModelosContrato(); // API para listar modelos
+                // TODO: Crie getReservaByIdApi em propostaContratoApi.js ou reservaApi.js
+                // Esta função deve buscar a reserva e popular lead, unidade, empreendimento e company
+                const reservaData = await getReservaByIdApi(reservaId); 
+                const modelosData = await getModelosContrato(); // Lista modelos da empresa
+                const usuariosData = await getUsers({ ativo: true }); // Lista usuários ativos da empresa
 
-                // Mock Data por enquanto:
-                const reservaData = await mockGetReservaByIdApi(reservaId);
-                const modelosData = await mockGetModelosContratoApi();
-
-                setReservaDetalhes(reservaData);
+                setReservaBase(reservaData);
                 setModelosContrato(modelosData.modelos || []);
+                setUsuariosCRM(usuariosData.users || []);
 
-                // Pré-preencher alguns campos do formulário com dados da reserva/unidade
-                setFormData(prev => ({
-                    ...prev,
-                    valorPropostaContrato: reservaData.unidade?.precoTabela || '',
-                    precoTabelaUnidadeNoMomento: reservaData.unidade?.precoTabela || 0, // Campo do backend
-                    // Se tiver um modelo padrão, pode selecioná-lo
-                    modeloContratoUtilizado: (modelosData.modelos && modelosData.modelos.length > 0) ? modelosData.modelos[0]._id : '',
-                    corpoContratoHTMLGerado: (modelosData.modelos && modelosData.modelos.length > 0) ? modelosData.modelos[0].conteudoHTMLTemplate : '<p>Selecione um modelo para carregar o template.</p>',
-                }));
+                if (reservaData) {
+                    setPageTitle(`Nova Proposta para Lead: ${reservaData.lead?.nome} | Unidade: ${reservaData.unidade?.identificador}`);
+                    setFormData(prev => ({
+                        ...prev,
+                        valorPropostaContrato: reservaData.unidade?.precoTabela || '',
+                        // Pré-seleciona o primeiro modelo, se houver
+                        modeloContratoUtilizado: (modelosData.modelos && modelosData.modelos.length > 0) ? modelosData.modelos[0]._id : '',
+                        corpoContratoHTMLGerado: (modelosData.modelos && modelosData.modelos.length > 0) ? modelosData.modelos[0].conteudoHTMLTemplate : '<p>Selecione um modelo para carregar o template.</p>',
+                    }));
+                }
 
             } catch (err) {
                 toast.error("Erro ao carregar dados para nova proposta: " + (err.error || err.message));
-                navigate('/reservas');
+                // navigate('/reservas');
             } finally {
-                setLoading(false);
+                setLoadingInitialData(false);
             }
         };
         loadInitialData();
     }, [reservaId, navigate]);
 
-
-    // Handlers para planoDePagamento e corretagem serão mais complexos
-    // Por enquanto, um handleChange genérico para os campos de primeiro nível
+    // Handler para mudança de inputs normais
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    // Handler para mudança no ReactQuill (corpoContratoHTMLGerado)
+    const handleConteudoHTMLChange = (html) => {
+        setFormData(prev => ({ ...prev, corpoContratoHTMLGerado: html }));
+    };
+
+    // Handler para mudança no select de Modelo de Contrato
     const handleModeloChange = (e) => {
         const modeloId = e.target.value;
         const modeloSelecionado = modelosContrato.find(m => m._id === modeloId);
@@ -112,79 +108,147 @@ function PropostaContratoFormPage() {
             corpoContratoHTMLGerado: modeloSelecionado ? modeloSelecionado.conteudoHTMLTemplate : '<p>Selecione um modelo para carregar o template.</p>'
         }));
     };
-
-    // Placeholder para o editor Rich Text
-    const handleConteudoHTMLChange = (html) => {
-        setFormData(prev => ({ ...prev, corpoContratoHTMLGerado: html }));
-    };
-
+    
+    // TODO: Adicionar handlers para sub-objetos (dadosBancarios, planoDePagamento, corretagem)
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSaving(true);
         setFormError('');
-        console.log("Dados da Proposta/Contrato para enviar:", formData);
-        toast.info("Simulando criação de Proposta/Contrato... (Backend já está pronto!)");
 
-        // TODO: Chamar a API real createPropostaContratoApi(reservaId, formData)
-        // (Lembre-se que o controller espera o reservaId no params, e o resto no body)
-        // Ex: const result = await createPropostaContratoApi(reservaId, formData);
-
-        setTimeout(() => { // Simula chamada API
+        if (!formData.modeloContratoUtilizado || !formData.valorPropostaContrato || !formData.responsavelNegociacao) {
+            toast.error("Modelo de Contrato, Valor da Proposta e Responsável pela Negociação são obrigatórios.");
             setIsSaving(false);
-            toast.success("Proposta/Contrato criada (simulação)!");
-            navigate(`/reservas`); // Ou para a página de detalhes da proposta/contrato
-        }, 1500);
+            return;
+        }
+
+        // Preparar dados para enviar ao backend
+        const dataToSubmit = {
+            ...formData, // Inclui todos os campos do formulário
+            valorPropostaContrato: parseFloat(formData.valorPropostaContrato) || 0,
+            valorEntrada: formData.valorEntrada ? parseFloat(formData.valorEntrada) : undefined, // Envia undefined se vazio
+        };
+        delete dataToSubmit.precoTabelaUnidadeNoMomento;
+
+        console.log("Enviando para API createPropostaContratoApi, Reserva ID:", reservaId, "Dados:", dataToSubmit);
+
+        try {
+            await createPropostaContratoApi(reservaId, dataToSubmit);
+            toast.success("Proposta/Contrato criada com sucesso!");
+            navigate(`/reservas`); // Ou para detalhes da reserva/proposta
+        } catch (err) {
+            const errMsg = err.error || err.message || "Erro ao criar Proposta/Contrato.";
+            setFormError(errMsg);
+            toast.error(errMsg);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
-    if (loading) {
-        return <div className="admin-page loading"><p>Carregando dados para Proposta/Contrato...</p></div>;
+    if (loadingInitialData) {
+        return <div className="admin-page loading"><p>Carregando dados...</p></div>;
     }
-    if (!reservaDetalhes) {
-        return <div className="admin-page"><p>Não foi possível carregar os detalhes da reserva.</p><Link to="/reservas">Voltar</Link></div>;
+    if (!reservaBase && !loadingInitialData) { // Se terminou de carregar e não achou a reserva base
+        return <div className="admin-page error-page"><p>Detalhes da reserva não encontrados. <Link to="/reservas">Voltar para Reservas</Link></p></div>;
     }
+
 
     return (
         <div className="admin-page proposta-contrato-form-page">
             <header className="page-header">
-                <h1>Nova Proposta/Contrato para Reserva</h1>
-                <p>Lead: <strong>{reservaDetalhes.lead?.nome}</strong> | Unidade: <strong>{reservaDetalhes.unidade?.identificador}</strong> ({reservaDetalhes.empreendimento?.nome})</p>
+                <h1>{pageTitle}</h1>
             </header>
             <div className="page-content">
                 <form onSubmit={handleSubmit} className="form-container">
-                    {formError && <p className="error-message">{formError}</p>}
+                    {formError && <p className="error-message" style={{marginBottom: '1rem'}}>{formError}</p>}
 
-                    <div className="form-group">
-                        <label htmlFor="modeloContratoUtilizado">Modelo de Contrato*</label>
-                        <select id="modeloContratoUtilizado" name="modeloContratoUtilizado" value={formData.modeloContratoUtilizado} onChange={handleModeloChange} required disabled={isSaving || modelosContrato.length === 0}>
-                            <option value="">{modelosContrato.length === 0 ? 'Nenhum modelo cadastrado' : 'Selecione um modelo...'}</option>
-                            {modelosContrato.map(mod => <option key={mod._id} value={mod._id}>{mod.nomeModelo} ({mod.tipoDocumento})</option>)}
-                        </select>
+                    <div className="form-section">
+                        <h3>Detalhes da Proposta/Contrato</h3>
+                        <div className="form-group">
+                            <label htmlFor="modeloContratoUtilizado">Modelo de Contrato*</label>
+                            <select id="modeloContratoUtilizado" name="modeloContratoUtilizado" value={formData.modeloContratoUtilizado} onChange={handleModeloChange} required disabled={isSaving || modelosContrato.length === 0}>
+                                <option value="">{modelosContrato.length === 0 ? 'Nenhum modelo cadastrado' : 'Selecione um modelo...'}</option>
+                                {modelosContrato.map(mod => <option key={mod._id} value={mod._id}>{mod.nomeModelo} ({mod.tipoDocumento})</option>)}
+                            </select>
+                        </div>
+
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label htmlFor="valorPropostaContrato">Valor da Proposta (R$)*</label>
+                                <input type="number" id="valorPropostaContrato" name="valorPropostaContrato" value={formData.valorPropostaContrato} onChange={handleChange} required step="0.01" min="0" disabled={isSaving}/>
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="valorEntrada">Valor da Entrada (R$) (Opcional)</label>
+                                <input type="number" id="valorEntrada" name="valorEntrada" value={formData.valorEntrada} onChange={handleChange} step="0.01" min="0" disabled={isSaving}/>
+                            </div>
+                        </div>
+
+                        <div className="form-group">
+                             <label htmlFor="responsavelNegociacao">Responsável pela Negociação (CRM)*</label>
+                             <select id="responsavelNegociacao" name="responsavelNegociacao" value={formData.responsavelNegociacao} onChange={handleChange} required disabled={isSaving || usuariosCRM.length === 0}>
+                                <option value="">{usuariosCRM.length === 0 ? 'Nenhum usuário CRM' : 'Selecione um responsável...'}</option>
+                                {usuariosCRM.map(user => <option key={user._id} value={user._id}>{user.nome} ({user.perfil})</option>)}
+                            </select>
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="dataProposta">Data da Proposta*</label>
+                            <input type="date" id="dataProposta" name="dataProposta" value={formData.dataProposta} onChange={handleChange} required disabled={isSaving}/>
+                        </div>
+                        
+                        <div className="form-group">
+                            <label htmlFor="statusPropostaContrato">Status da Proposta*</label>
+                            <select id="statusPropostaContrato" name="statusPropostaContrato" value={formData.statusPropostaContrato} onChange={handleChange} required disabled={isSaving}>
+                                {STATUS_PROPOSTA_OPCOES.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                            </select>
+                        </div>
                     </div>
 
-                    {/* Placeholder para os campos da PropostaContrato que o usuário preencherá */}
-                    {/* Ex: Valor, Condições, Responsável Negociação, etc. */}
-                    {/* E o editor Rich Text para corpoContratoHTMLGerado */}
-
-                    <div className="form-group">
-                         <label>Conteúdo do Contrato (HTML Gerado a partir do Modelo)</label>
-                         <p><small>Este conteúdo será pré-preenchido com o modelo e dados. Você poderá editá-lo abaixo.</small></p>
-                         <textarea 
+                    {/* Seção para Condições Gerais, Plano de Pagamento, Corretagem (Simplificado por agora) */}
+                    <div className="form-section">
+                        <h3>Condições e Termos</h3>
+                        <div className="form-group">
+                            <label htmlFor="condicoesPagamentoGerais">Condições Gerais de Pagamento</label>
+                            <textarea name="condicoesPagamentoGerais" value={formData.condicoesPagamentoGerais} onChange={handleChange} rows="4" disabled={isSaving}></textarea>
+                        </div>
+                        {/* TODO: Interface para Plano de Pagamento (array de parcelas) */}
+                        {/* TODO: Interface para Corretagem */}
+                         <div className="form-group">
+                            <label>Plano de Pagamento (Detalhado)</label>
+                            <p><small><i>(Interface avançada para adicionar/editar parcelas virá em breve. Por enquanto, detalhe no corpo do contrato ou nas condições gerais.)</i></small></p>
+                        </div>
+                         <div className="form-group">
+                            <label>Corretagem (Detalhes)</label>
+                            <p><small><i>(Interface avançada para detalhes da corretagem virá em breve. Por enquanto, detalhe no corpo do contrato ou nas observações.)</i></small></p>
+                        </div>
+                    </div>
+                    
+                    <div className="form-section">
+                        <h3>Conteúdo do Contrato (Baseado no Modelo)</h3>
+                        <p><small>O conteúdo abaixo foi gerado a partir do modelo selecionado e será pré-preenchido com os dados da negociação no backend. Você pode ajustá-lo aqui antes de salvar.</small></p>
+                        {/* VVVVV Substituir por ReactQuill no PRÓXIMO PASSO VVVVV */}
+                        <textarea
                             name="corpoContratoHTMLGerado"
                             value={formData.corpoContratoHTMLGerado}
-                            onChange={(e) => handleConteudoHTMLChange(e.target.value)} // Simples, idealmente um RTE
-                            rows="20"
-                            style={{fontFamily: 'monospace', width: '100%'}}
+                            onChange={(e) => handleConteudoHTMLChange(e.target.value)}
+                            rows="25"
+                            style={{fontFamily: 'monospace', width: '100%', fontSize: '0.9em', lineHeight: '1.5'}}
                             disabled={isSaving}
-                         />
+                        />
+                        {/* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */}
+                    </div>
+                    
+                    <div className="form-group">
+                        <label htmlFor="observacoesInternasProposta">Observações Internas da Proposta</label>
+                        <textarea name="observacoesInternasProposta" value={formData.observacoesInternasProposta} onChange={handleChange} rows="3" disabled={isSaving}></textarea>
                     </div>
 
 
                     <div className="form-actions">
-                        <button type="button" className="button cancel-button" onClick={() => navigate(`/reservas`)} disabled={isSaving}>
+                        <button type="button" className="button cancel-button" onClick={() => navigate('/reservas')} disabled={isSaving}>
                             Cancelar
                         </button>
-                        <button type="submit" className="button submit-button" disabled={isSaving}>
+                        <button type="submit" className="button submit-button" disabled={isSaving || loadingInitialData}>
                             {isSaving ? 'Salvando...' : 'Criar Proposta/Contrato'}
                         </button>
                     </div>
