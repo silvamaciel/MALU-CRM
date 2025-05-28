@@ -42,8 +42,7 @@ function Sidebar({ userData, handleLogout, closeMobileSidebar }) {
                                 <li><NavLink to="/admin/usuarios" onClick={handleLinkClick} className={({isActive}) => isActive ? 'active' : ''}>Usuários</NavLink></li>
                                 <li><NavLink to="/admin/brokers" className={({isActive}) => isActive ? 'active' : ''}>Agenda Corretores</NavLink></li>
                                 <li><NavLink to="/integracoes" onClick={handleLinkClick} className={({isActive}) => isActive ? 'active' : ''}>Integrações</NavLink></li>
-
-
+                                <li><NavLink to="/admin/modelos-contrato" onClick={handleLinkClick} className={({isActive}) => isActive || location.pathname.startsWith('/admin/modelos-contrato') ? 'active' : ''}>Modelos de Contrato</NavLink></li>
                             </ul>
                         </li>
                     )}

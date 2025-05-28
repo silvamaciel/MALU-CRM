@@ -27,6 +27,8 @@ import EmpreendimentoFormPage from './pages/Empreendimento/EmpreendimentoFormPag
 import EmpreendimentoDetailPage from './pages/Empreendimento/EmpreendimentoDetailPage/EmpreendimentoDetailPage';
 import UnidadeFormPage from './pages/Empreendimento/UnidadeFormPage/UnidadeFormPage';
 import ReservaListPage from './pages/Empreendimento/Reserva/ReservaListPage/ReservaListPage';
+import ModeloContratoListPage from './pages/Admin/ModeloContrato/ModeloContratoListPage/ModeloContratoListPage';
+
 
 
 
@@ -114,6 +116,7 @@ function App() {
                                 <Route path="admin/motivosdescarte" element={<DiscardReasonAdminPage />} />
                                 <Route path="admin/usuarios" element={<UsuariosAdminPage />} />
                                 <Route path="admin/brokers" element={<BrokerContactsAdminPage />} />
+                                <Route path="admin/modelos-contrato" element={<ModeloContratoListPage />} />
                 </Route>
 
                 <Route path="integracoes" element={<IntegrationsPage />} />
