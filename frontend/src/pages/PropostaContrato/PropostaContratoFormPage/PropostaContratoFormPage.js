@@ -322,14 +322,14 @@ function PropostaContratoFormPage() {
                 value={formData.responsavelNegociacao}
                 onChange={handleChange}
                 required
-                disabled={isSaving || usuariosCRM.length === 0}
+                disabled={isSaving || usuariosCRM.length === 0 || loadingInitialData}
               >
                 <option value="">
                   {usuariosCRM.length === 0
                     ? isLoadingInitialData
                       ? "Carregando usuários..."
                       : "Nenhum usuário CRM"
-                    : "Selecione um responsável..."}
+                    : usuariosCRM.length === 0 ? 'Nenhum usuário CRM' : 'Selecione um responsável...'}
                 </option>
                 {usuariosCRM.map((user) => (
                   <option key={user._id} value={user._id}>
