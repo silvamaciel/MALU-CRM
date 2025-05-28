@@ -112,6 +112,7 @@ function PropostaContratoFormPage() {
 
         setReservaBase(reservaData);
         setModelosContrato(modelosData.modelos || []);
+        setUsuariosCRM(usuariosData.users || []);
 
         if (reservaData) {
           setPageTitle(
@@ -321,26 +322,20 @@ function PropostaContratoFormPage() {
                 value={formData.responsavelNegociacao}
                 onChange={handleChange}
                 required
-                disabled={
-                  isSaving ||
-                  (loadingInitialData && usuariosCRM.length === 0) ||
-                  (!loadingInitialData && usuariosCRM.length === 0)
-                }
+                disabled={isSaving || usuariosCRM.length === 0 || loadingInitialData}
               >
                 <option value="">
-                  {loadingInitialData
-                    ? "Carregando usuários..."
-                    : usuariosCRM.length === 0
-                    ? "Nenhum usuário CRM encontrado"
-                    : "Selecione um responsável..."}
+                  {usuariosCRM.length === 0
+                    ? loadingInitialData
+                      ? "Carregando usuários..."
+                      : "Nenhum usuário CRM"
+                    : usuariosCRM.length === 0 ? 'Nenhum usuário CRM' : 'Selecione um responsável...'}
                 </option>
-                {/* Só tenta mapear se usuariosCRM tiver itens E não estiver carregando */}
-                {!loadingInitialData &&
-                  usuariosCRM.map((user) => (
-                    <option key={user._id} value={user._id}>
-                      {user.nome} ({user.perfil})
-                    </option>
-                  ))}
+                {usuariosCRM.map((user) => (
+                  <option key={user._id} value={user._id}>
+                    {user.nome} ({user.perfil})
+                  </option>
+                ))}
               </select>
             </div>
 
