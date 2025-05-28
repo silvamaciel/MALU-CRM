@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 // APIs Reais (Crie/Verifique se existem com estes nomes e funcionalidades)
 import { getReservaByIdApi, createPropostaContratoApi } from '../../../api/propostaContratoApi'; // Ajuste para ter getReservaByIdApi aqui ou no reservaApi.js
 import { getModelosContrato } from '../../../api/modeloContratoApi';
-import { getUsers } from '../../../api/userApi'; // Para listar usuários como responsáveis
+import { getUsers } from '../../../api/users';
 
 import ReactQuill from 'react-quill'; 
 import 'react-quill/dist/quill.snow.css';
