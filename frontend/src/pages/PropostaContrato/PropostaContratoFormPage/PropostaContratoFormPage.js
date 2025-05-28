@@ -108,11 +108,10 @@ function PropostaContratoFormPage() {
         const usuariosData = await getUsuarios({ ativo: true }); // Lista usuários ativos da empresa
 
         console.log("Usuários CRM carregados:", usuariosData);
-        setUsuariosCRM(usuariosData.users || usuariosData.data || []);
 
         setReservaBase(reservaData);
         setModelosContrato(modelosData.modelos || []);
-        setUsuariosCRM(usuariosData.users || []);
+        setUsuariosCRM(usuariosData.nome || []);
 
         if (reservaData) {
           setPageTitle(
