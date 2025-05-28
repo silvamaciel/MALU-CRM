@@ -223,8 +223,23 @@ const getReservasByCompany = async (companyId, filters = {}, paginationOptions =
     }
 };
 
+const getReservaById = async (reservaId, companyId) => {
+
+    const reserva = await Reserva.findOne({ _id: reservaId, company: companyId })
+        .populate('lead', 'nome email contato cpf endereco estadoCivil profissao nacionalidade company') // Popula mais campos do lead
+        .populate({ 
+            path: 'unidade', 
+            select: 'identificador tipologia areaUtil precoTabela statusUnidade empreendimento',
+            populate: { path: 'empreendimento', select: 'nome localizacao' } // Popula o empreendimento dentro da unidade
+        })
+        .lean();
+    return reserva;
+};
+
+
 
 module.exports = {
     createReserva,
-    getReservasByCompany
+    getReservasByCompany,
+    getReservaById
 };

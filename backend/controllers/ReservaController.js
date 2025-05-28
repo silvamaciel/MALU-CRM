@@ -59,7 +59,17 @@ const getReservasController = asyncHandler(async (req, res, next) => {
     res.status(200).json({ success: true, ...result });
 });
 
+const getReservaByIdController = asyncHandler(async (req, res, next) => {
+    const companyId = req.user.company; // Ou verificar se a reserva pertence à company
+    const reserva = await ReservaService.getReservaById(req.params.id, companyId); // Crie esta função no ReservaService
+    if (!reserva) {
+        return next(new ErrorResponse(`Reserva com ID ${req.params.id} não encontrada.`, 404));
+    }
+    res.status(200).json({ success: true, data: reserva });
+});
+
 module.exports = {
     createReservaController,
-    getReservasController
+    getReservasController,
+    getReservaByIdController
 };
