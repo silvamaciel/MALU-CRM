@@ -112,7 +112,7 @@ function PropostaContratoFormPage() {
 
         setReservaBase(reservaData);
         setModelosContrato(modelosData.modelos || []);
-        
+
         if (reservaData) {
           setPageTitle(
             `Nova Proposta para Lead: ${reservaData.lead?.nome} | Unidade: ${reservaData.unidade?.identificador}`
@@ -321,14 +321,14 @@ function PropostaContratoFormPage() {
                 value={formData.responsavelNegociacao}
                 onChange={handleChange}
                 required
-                disabled={isSaving || usuariosCRM.length === 0 || loadingInitialData}
+                disabled={isSaving || loadingInitialData}
               >
                 <option value="">
-                  {usuariosCRM.length === 0
-                    ? loadingInitialData
-                      ? "Carregando usuários..."
-                      : "Nenhum usuário CRM"
-                    : usuariosCRM.length === 0 ? 'Nenhum usuário CRM' : 'Selecione um responsável...'}
+                  {loadingInitialData
+                    ? "Carregando usuários..."
+                    : usuariosCRM.length === 0
+                    ? "Nenhum usuário CRM"
+                    : "Selecione um responsável..."}
                 </option>
                 {usuariosCRM.map((user) => (
                   <option key={user._id} value={user._id}>
