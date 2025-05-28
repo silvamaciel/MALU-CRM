@@ -1,7 +1,7 @@
 // src/pages/Admin/ModeloContrato/ModeloContratoListPage/ModeloContratoListPage.js
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getModelosContrato } from '../../../../api/modeloContratoApi'; // Ajuste o caminho conforme sua estrutura
+import { getModelosContrato } from '../../../../api/modeloContratoApi';
 import { toast } from 'react-toastify';
 import './ModeloContratoListPage.css';
 

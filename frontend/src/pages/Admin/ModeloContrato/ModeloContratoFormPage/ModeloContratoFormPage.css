@@ -1,0 +1,98 @@
+/* src/pages/Admin/ModeloContrato/ModeloContratoFormPage/ModeloContratoFormPage.css */
+
+.modelo-contrato-form-page .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.modelo-contrato-form-page .page-header h1 {
+  margin: 0;
+  font-size: 1.8em;
+  color: #333;
+}
+
+.modelo-contrato-form-page .form-container {
+  max-width: 800px; /* Ou a largura que preferir para o formulário */
+  margin: 0 auto; /* Centraliza o formulário na página */
+  background-color: #fff;
+  padding: 25px 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.modelo-contrato-form-page .form-group {
+  margin-bottom: 20px; /* Aumenta um pouco o espaçamento entre os grupos */
+  display: flex;
+  flex-direction: column;
+}
+
+.modelo-contrato-form-page .form-group label {
+  margin-bottom: 8px; /* Mais espaço entre label e input */
+  font-weight: 600; /* Labels um pouco mais fortes */
+  font-size: 0.9em;
+  color: #454545;
+}
+
+.modelo-contrato-form-page .form-group input[type="text"],
+.modelo-contrato-form-page .form-group select,
+.modelo-contrato-form-page .form-group textarea {
+  width: 100%;
+  padding: 12px 15px; /* Padding um pouco maior para inputs */
+  border: 1px solid #ced4da; /* Borda um pouco mais suave */
+  border-radius: 5px; /* Bordas mais arredondadas */
+  box-sizing: border-box;
+  font-size: 1em;
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.modelo-contrato-form-page .form-group input:focus,
+.modelo-contrato-form-page .form-group select:focus,
+.modelo-contrato-form-page .form-group textarea:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); /* Sombra de foco do Bootstrap */
+  outline: none;
+}
+
+.modelo-contrato-form-page .form-group textarea {
+  resize: vertical;
+  min-height: 250px; /* Altura maior para o template HTML */
+  font-family: 'Courier New', Courier, monospace; /* Fonte monoespaçada para HTML */
+  font-size: 0.95em;
+  line-height: 1.5;
+}
+
+.modelo-contrato-form-page .form-group small {
+    font-size: 0.85em;
+    color: #6c757d;
+    margin-top: 5px;
+    display: block;
+}
+
+.modelo-contrato-form-page .form-actions {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.modelo-contrato-form-page .form-actions .button {
+  padding: 10px 22px; /* Botões um pouco maiores */
+  font-size: 1em;
+}
+
+/* Estilo para mensagem de erro do formulário */
+.modelo-contrato-form-page .error-message {
+  color: #721c24;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 10px 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  font-size: 0.9em;
+}
