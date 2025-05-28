@@ -24,7 +24,7 @@ export const getModelosContrato = async (page = 1, limit = 10, filters = {}) => 
  */
 export const getModeloContratoById = async (id) => {
     try {
-        const response = await axiosInstance.get(`<span class="math-inline">\{API\_URL\}/</span>{id}`);
+        const response = await axiosInstance.get(`${API_URL}/${id}`);
         return response.data.data;
     } catch (error) {
         console.error(`Erro ao buscar modelo de contrato ${id}:`, error.response?.data || error.message);
@@ -50,7 +50,7 @@ export const createModeloContrato = async (modeloData) => {
  */
 export const updateModeloContrato = async (id, modeloData) => {
     try {
-        const response = await axiosInstance.put(`<span class="math-inline">\{API\_URL\}/</span>{id}`, modeloData);
+        const response = await axiosInstance.put(`${API_URL}/${id}`, modeloData);
         return response.data.data;
     } catch (error) {
         console.error(`Erro ao atualizar modelo de contrato ${id}:`, error.response?.data || error.message);
@@ -63,7 +63,7 @@ export const updateModeloContrato = async (id, modeloData) => {
  */
 export const deleteModeloContrato = async (id) => {
     try {
-        const response = await axiosInstance.delete(`<span class="math-inline">\{API\_URL\}/</span>{id}`);
+        const response = await axiosInstance.delete(`${API_URL}/${id}`);
         return response.data;
     } catch (error) {
         console.error(`Erro ao desativar modelo de contrato ${id}:`, error.response?.data || error.message);
