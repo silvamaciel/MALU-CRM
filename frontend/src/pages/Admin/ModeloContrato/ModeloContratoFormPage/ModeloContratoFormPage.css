@@ -96,3 +96,66 @@
   margin-bottom: 20px;
   font-size: 0.9em;
 }
+
+
+.modelo-contrato-form-page .tabs-container {
+  display: flex;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.modelo-contrato-form-page .tab-button {
+  padding: 10px 15px;
+  cursor: pointer;
+  border: none;
+  background-color: transparent;
+  border-bottom: 3px solid transparent; /* Para o efeito de aba ativa */
+  margin-bottom: -1px; /* Alinha com a borda inferior do container */
+  font-size: 1em;
+  color: #007bff;
+}
+
+.modelo-contrato-form-page .tab-button:hover {
+  background-color: #f8f9fa;
+}
+
+.modelo-contrato-form-page .tab-button.active {
+  border-bottom-color: #007bff;
+  color: #0056b3;
+  font-weight: 600;
+}
+
+.modelo-contrato-form-page .html-preview {
+  border: 1px solid #ccc;
+  padding: 15px;
+  min-height: 300px; /* Mesma altura do textarea */
+  background: #fff; /* Fundo branco para melhor visualização */
+  overflow: auto;
+  line-height: 1.6; /* Melhora a legibilidade do texto renderizado */
+}
+
+.modelo-contrato-form-page .placeholders-list {
+  list-style: none;
+  padding: 0;
+  max-height: 200px; /* Altura máxima para a lista de placeholders */
+  overflow-y: auto;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 10px;
+  font-size: 0.85em;
+}
+
+.modelo-contrato-form-page .placeholders-list li {
+  padding: 5px 0;
+  border-bottom: 1px solid #e9ecef;
+}
+.modelo-contrato-form-page .placeholders-list li:last-child {
+  border-bottom: none;
+}
+.modelo-contrato-form-page .placeholders-list code {
+  background-color: #e9ecef;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: 'Courier New', Courier, monospace;
+}
