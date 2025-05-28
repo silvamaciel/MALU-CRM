@@ -322,20 +322,27 @@ function PropostaContratoFormPage() {
                 value={formData.responsavelNegociacao}
                 onChange={handleChange}
                 required
-                disabled={isSaving || usuariosCRM.length === 0 || loadingInitialData}
+                // Desabilita se estiver salvando, ou se estiver carregando E AINDA NÃO HÁ USUÁRIOS, ou se não houver usuários após carregar
+                disabled={
+                  isSaving ||
+                  (loadingInitialData && usuariosCRM.length === 0) ||
+                  (!loadingInitialData && usuariosCRM.length === 0)
+                }
               >
                 <option value="">
-                  {usuariosCRM.length === 0
-                    ? loadingInitialData
-                      ? "Carregando usuários..."
-                      : "Nenhum usuário CRM"
-                    : usuariosCRM.length === 0 ? 'Nenhum usuário CRM' : 'Selecione um responsável...'}
+                  {loadingInitialData
+                    ? "Carregando usuários..."
+                    : usuariosCRM.length === 0
+                    ? "Nenhum usuário CRM encontrado"
+                    : "Selecione um responsável..."}
                 </option>
-                {usuariosCRM.map((user) => (
-                  <option key={user._id} value={user._id}>
-                    {user.nome} ({user.perfil})
-                  </option>
-                ))}
+                {/* Só tenta mapear se usuariosCRM tiver itens E não estiver carregando */}
+                {!loadingInitialData &&
+                  usuariosCRM.map((user) => (
+                    <option key={user._id} value={user._id}>
+                      {user.nome} ({user.perfil})
+                    </option>
+                  ))}
               </select>
             </div>
 
