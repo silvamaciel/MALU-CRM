@@ -1,0 +1,160 @@
+/* src/pages/PropostaContrato/PropostaContratoFormPage/PropostaContratoFormPage.css */
+
+.proposta-contrato-form-page .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px; /* Reduzido um pouco */
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.proposta-contrato-form-page .page-header h1 {
+  margin: 0;
+  font-size: 1.7em; /* Um pouco menor para caber mais info */
+  color: #333;
+}
+.proposta-contrato-form-page .page-header p {
+  margin: 5px 0 0 0;
+  font-size: 0.9em;
+  color: #555;
+}
+
+.proposta-contrato-form-page .form-container {
+  max-width: 900px; /* Um pouco maior para acomodar mais campos */
+  margin: 0 auto;
+  background-color: #fff;
+  padding: 20px 25px; /* Ajustado */
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.proposta-contrato-form-page .form-section {
+  background-color: #fdfdfd; /* Fundo levemente diferente para seções */
+  padding: 20px;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  margin-bottom: 25px;
+}
+
+.proposta-contrato-form-page .form-section h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 10px;
+  font-size: 1.3em;
+  color: #007bff; /* Cor de destaque para títulos de seção */
+}
+
+.proposta-contrato-form-page .form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px; /* Espaço entre os form-groups na mesma linha */
+  margin-bottom: 15px;
+}
+
+.proposta-contrato-form-page .form-group {
+  flex: 1 1 calc(50% - 10px); /* Tenta 2 por linha */
+  min-width: 250px; /* Largura mínima */
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0; /* Remove margem se já tem no form-row */
+}
+
+.proposta-contrato-form-page .form-group.full-width {
+  flex-basis: 100%;
+}
+
+.proposta-contrato-form-page .form-group label {
+  margin-bottom: 6px;
+  font-weight: 500;
+  font-size: 0.9em;
+  color: #495057;
+}
+
+.proposta-contrato-form-page .form-group input[type="text"],
+.proposta-contrato-form-page .form-group input[type="number"],
+.proposta-contrato-form-page .form-group input[type="date"],
+.proposta-contrato-form-page .form-group input[type="email"],
+.proposta-contrato-form-page .form-group select,
+.proposta-contrato-form-page .form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 0.95em;
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.proposta-contrato-form-page .form-group input:focus,
+.proposta-contrato-form-page .form-group select:focus,
+.proposta-contrato-form-page .form-group textarea:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  outline: none;
+}
+
+.proposta-contrato-form-page .form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.proposta-contrato-form-page .form-group textarea[name="corpoContratoHTMLGerado"] {
+  min-height: 300px; /* Altura maior para o HTML do contrato */
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9em;
+  line-height: 1.5;
+}
+
+.proposta-contrato-form-page .form-group small {
+    font-size: 0.85em;
+    color: #6c757d;
+    margin-top: 5px;
+    display: block;
+}
+
+/* Sub-formulários para Plano de Pagamento e Corretagem (placeholders) */
+.proposta-contrato-form-page .sub-form-section {
+    border: 1px dashed #ccc;
+    padding: 15px;
+    margin-top: 10px;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+}
+
+.proposta-contrato-form-page .form-actions {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.proposta-contrato-form-page .error-message {
+  color: #721c24;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 10px 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+/* Estilos para ReactQuill (se você adicionar depois) */
+.proposta-contrato-form-page .quill-editor-container .ql-toolbar.ql-snow {
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  border-color: #ced4da;
+}
+.proposta-contrato-form-page .quill-editor-container .ql-container.ql-snow {
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+  border-color: #ced4da;
+  min-height: 300px;
+  font-size: 1rem;
+}
+.proposta-contrato-form-page .quill-editor-container .ql-editor {
+  min-height: 280px; /* Ajuste conforme necessário */
+  background-color: #fff;
+}
