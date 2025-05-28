@@ -3,7 +3,8 @@ const express = require('express');
 const router = express.Router();
 const { 
     createReservaController,
-    getReservasController
+    getReservasController,
+    getReservaByIdController,
  } = require('../controllers/ReservaController'); // Ajuste o nome para corresponder ao seu arquivo
 const { protect } = require('../middlewares/authMiddleware');
 

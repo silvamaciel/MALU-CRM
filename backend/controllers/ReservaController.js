@@ -59,6 +59,10 @@ const getReservasController = asyncHandler(async (req, res, next) => {
     res.status(200).json({ success: true, ...result });
 });
 
+
+/**
+ * Controller para listar reservas por id, com filtros e paginação.
+ */
 const getReservaByIdController = asyncHandler(async (req, res, next) => {
     const companyId = req.user.company; // Ou verificar se a reserva pertence à company
     const reserva = await ReservaService.getReservaById(req.params.id, companyId); // Crie esta função no ReservaService
