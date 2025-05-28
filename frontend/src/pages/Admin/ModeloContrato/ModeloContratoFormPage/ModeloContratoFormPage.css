@@ -159,3 +159,61 @@
   border-radius: 3px;
   font-family: 'Courier New', Courier, monospace;
 }
+
+.modelo-contrato-form-page .quill-editor-container .ql-toolbar.ql-snow {
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  border-color: #ced4da;
+}
+
+.modelo-contrato-form-page .quill-editor-container .ql-container.ql-snow {
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+  border-color: #ced4da;
+  min-height: 350px; /* Garante que o editor tenha uma boa altura */
+  font-size: 1rem; /* Ajusta o tamanho da fonte dentro do editor */
+  line-height: 1.6;
+}
+
+.modelo-contrato-form-page .quill-editor-container .ql-editor {
+  min-height: 330px; /* Menor que o container para dar espaço */
+  background-color: #fff;
+}
+
+.modelo-contrato-form-page .quill-editor-container .ql-editor p,
+.modelo-contrato-form-page .quill-editor-container .ql-editor ol,
+.modelo-contrato-form-page .quill-editor-container .ql-editor ul,
+.modelo-contrato-form-page .quill-editor-container .ql-editor pre,
+.modelo-contrato-form-page .quill-editor-container .ql-editor h1,
+.modelo-contrato-form-page .quill-editor-container .ql-editor h2,
+.modelo-contrato-form-page .quill-editor-container .ql-editor h3 {
+  margin-bottom: 0.75rem; /* Espaçamento padrão entre parágrafos/títulos no editor */
+}
+
+/* Estilos para a lista de placeholders (como antes, pode ajustar) */
+.modelo-contrato-form-page .placeholders-list {
+  list-style: none;
+  padding: 10px;
+  max-height: 150px;
+  overflow-y: auto;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  font-size: 0.85em;
+  margin-top: 10px; /* Espaço acima da lista */
+}
+
+.modelo-contrato-form-page .placeholders-list li {
+  padding: 5px 0;
+  border-bottom: 1px solid #e9ecef;
+}
+.modelo-contrato-form-page .placeholders-list li:last-child {
+  border-bottom: none;
+}
+.modelo-contrato-form-page .placeholders-list code {
+  background-color: #e0e0e0; /* Fundo um pouco mais escuro para o placeholder */
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-family: 'Courier New', Courier, monospace;
+  color: #c7254e; /* Cor para o placeholder */
+}

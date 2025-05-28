@@ -5,6 +5,9 @@ import { toast } from 'react-toastify';
 import { createModeloContrato, getModeloContratoById, updateModeloContrato } from '../../../../api/modeloContratoApi';
 import './ModeloContratoFormPage.css';
 
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css'; 
+
 const TIPO_DOCUMENTO_OPCOES = ["Proposta", "Contrato de Reserva", "Contrato de Compra e Venda", "Outro"];
 
 //dadosParaTemplate dentro do PropostaContratoService.js
@@ -93,6 +96,10 @@ function ModeloContratoFormPage() {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleConteudoChange = (htmlContent) => { // Handler específico para o editor
+        setFormData(prev => ({ ...prev, conteudoHTMLTemplate: htmlContent }));
+    };
+
     // Para placeholders (se for uma lista editável mais complexa, precisará de mais lógica)
     // Por agora, vamos assumir que placeholders é um campo de texto simples ou não editável aqui.
     // Se for um array de objetos, você precisará de handlers para adicionar/remover/editar placeholders.
@@ -133,6 +140,28 @@ function ModeloContratoFormPage() {
         }
     };
 
+    // Configurações para a barra de ferramentas do ReactQuill (opcional, mas recomendado)
+    const quillModules = {
+        toolbar: [
+            [{ 'header': [1, 2, 3, false] }],
+            ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+            [{'list': 'ordered'}, {'list': 'bullet'}, {'indent': '-1'}, {'indent': '+1'}],
+            ['link', /*'image'*/], // Removi 'image' por simplicidade, pode adicionar se precisar de upload de imagem no contrato
+            [{ 'align': [] }],
+            [{ 'font': [] }],
+            [{ 'color': [] }, { 'background': [] }],
+            ['clean']
+        ],
+    };
+
+    const quillFormats = [ // Lista dos formatos que a toolbar acima suporta
+        'header', 'font',
+        'bold', 'italic', 'underline', 'strike', 'blockquote',
+        'list', 'bullet', 'indent',
+        'link', 'image','color', 'background', 'align'
+    ];
+
+
     if (loading && isEditMode && !formData.nomeModelo) {
          return <div className="admin-page loading"><p>Carregando modelo...</p></div>;
     }
@@ -172,17 +201,17 @@ function ModeloContratoFormPage() {
                         <div className="form-group">
                             <label htmlFor="conteudoHTMLTemplate">Conteúdo HTML do Modelo*</label>
                             <p><small>Use placeholders da lista abaixo. Ex: {"{{lead_nome}}"}, {"{{unidade_identificador}}"}</small></p>
-                            <textarea
-                                id="conteudoHTMLTemplate"
-                                name="conteudoHTMLTemplate"
+                            <div className="quill-editor-container"> 
+                            <ReactQuill
+                                theme="snow"
                                 value={formData.conteudoHTMLTemplate}
-                                onChange={handleChange}
-                                rows="25"
-                                required
-                                disabled={loading}
-                                placeholder="Cole ou digite o HTML do seu modelo de contrato aqui..."
-                                style={{ fontFamily: 'monospace', fontSize: '0.9em', lineHeight: '1.5' }}
+                                onChange={handleConteudoHTMLChange}
+                                modules={quillModules}
+                                formats={quillFormats}
+                                readOnly={loading}
+                                style={{ minHeight: '350px' }}
                             />
+                        </div>
                         </div>
                     )}
 
