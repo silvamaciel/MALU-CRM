@@ -61,8 +61,22 @@ const createPropostaContratoController = asyncHandler(async (req, res, next) => 
     res.status(201).json({ success: true, data: novaPropostaContrato });
 });
 
-// Outros controllers para PropostaContrato (listar, buscar por ID, atualizar status) virão aqui.
+const getPropostaContratoByIdController = asyncHandler(async (req, res, next) => {
+    const companyId = req.user.company;
+    const { id: propostaContratoId } = req.params; // Pega 'id' da rota /api/propostas-contratos/:id
+
+    console.log(`[PropContCtrl] Recebido GET /api/propostas-contratos/${propostaContratoId} para Company ${companyId}`);
+
+    const propostaContrato = await PropostaContratoService.getPropostaContratoById(propostaContratoId, companyId);
+
+    if (!propostaContrato) {
+        return next(new ErrorResponse(`Proposta/Contrato com ID ${propostaContratoId} não encontrada.`, 404));
+    }
+    res.status(200).json({ success: true, data: propostaContrato });
+});
+
 
 module.exports = {
-    createPropostaContratoController
+    createPropostaContratoController,
+    getPropostaContratoByIdController
 };

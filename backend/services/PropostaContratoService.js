@@ -174,6 +174,7 @@ const createPropostaContrato = async (reservaId, propostaContratoData, companyId
             corpoContratoProcessado = corpoContratoProcessado.replace(new RegExp(placeholder.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), dadosParaTemplate[key] || '');
         }
 
+        
 
         //6. Preparar dados para o novo PropostaContrato
         const dadosParaNovaProposta = {
