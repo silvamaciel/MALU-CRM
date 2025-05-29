@@ -367,8 +367,24 @@ function PropostaContratoFormPage() {
   };
 
   // Renderização
-  if (loadingInitialData) { /* ... */ }
-  if (!reservaBase && !loadingInitialData) { /* ... */ }
+  if (loadingInitialData) {
+    return (
+      <div className="admin-page loading">
+        <p>Carregando dados...</p>
+      </div>
+    );
+  }
+  
+  if (!reservaBase && !loadingInitialData) {
+    return (
+      <div className="admin-page error-page">
+        <p>
+          Detalhes da reserva não encontrados.{" "}
+          <Link to="/reservas">Voltar para Reservas</Link>
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-page proposta-contrato-form-page">
