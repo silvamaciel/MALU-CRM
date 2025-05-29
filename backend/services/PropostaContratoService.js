@@ -22,7 +22,7 @@ const BrokerContact = require('../models/BrokerContact');
  * @returns {Promise<PropostaContrato>} A Proposta/Contrato criada.
  */
 const createPropostaContrato = async (reservaId, propostaContratoData, companyId, creatingUserId) => {
-    console.log(`[PropContSvc] Criando Proposta/Contrato da Reserva ${reservaId} usando Modelo ID ${propostaContratoData.modeloContratoId}`);
+    console.log(`[PropContSvc] Criando Proposta/Contrato da Reserva ${reservaId} usando Modelo ID ${propostaContratoData.modeloContratoUtilizado}`);
 
     console.log(`[PropContSvc] Iniciando createPropostaContrato.`);
     console.log(`[PropContSvc] Reserva ID: ${reservaId}`);
