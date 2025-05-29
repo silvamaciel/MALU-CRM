@@ -169,7 +169,7 @@ const createPropostaContrato = async (reservaId, propostaContratoData, companyId
             empreendimento: reserva.empreendimento._id,
             company: companyId,
             createdBy: creatingUserId,
-            modeloContratoUtilizado: propostaContratoData.modeloContratoId,
+            modeloContratoUtilizado: propostaContratoData.modeloContratoUtilizado,
             corpoContratoHTMLGerado: corpoContratoProcessado, // <<< HTML COM DADOS PREENCHIDOS
 
             empreendimentoNomeSnapshot: reserva.empreendimento.nome,
