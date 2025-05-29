@@ -195,6 +195,8 @@ function PropostaContratoFormPage() {
         setModelosContrato(modelosData.modelos || []);
         setUsuariosCRM(usuariosDataResult || []); // Ajustado conforme sua correção
 
+        console.log(usuariosDataResult)
+
         if (reservaData) {
           setPageTitle(
             `Nova Proposta para Lead: ${reservaData.lead?.nome} | Unidade: ${reservaData.unidade?.identificador}`
