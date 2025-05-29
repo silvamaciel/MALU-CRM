@@ -40,3 +40,19 @@ export const createPropostaContratoApi = async (reservaId, propostaData) => {
     }
 };
 
+/**
+ * Busca uma Proposta/Contrato específica pelo seu ID.
+ * @param {string} propostaContratoId - ID da Proposta/Contrato.
+ * @returns {Promise<object>} A Proposta/Contrato encontrada.
+ */
+export const getPropostaContratoByIdApi = async (propostaContratoId) => {
+    if (!propostaContratoId) throw new Error("ID da Proposta/Contrato é obrigatório.");
+    try {
+        // Endpoint para buscar Proposta/Contrato por ID no backend
+        const response = await axiosInstance.get(`${API_URL_BASE}/${propostaContratoId}`);
+        return response.data.data; // Assumindo que o backend retorna { success: true, data: propostaContrato }
+    } catch (error) {
+        console.error(`Erro ao buscar Proposta/Contrato ${propostaContratoId}:`, error.response?.data || error.message);
+        throw error.response?.data || new Error("Falha ao buscar a Proposta/Contrato.");
+    }
+};
