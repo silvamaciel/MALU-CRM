@@ -42,15 +42,14 @@ const TIPO_PARCELA_OPCOES = [
   "OUTRA",
 ];
 
-
 const preencherTemplateContrato = (templateHtml, dados) => {
-  if (!templateHtml) return '';
+  if (!templateHtml) return "";
   let corpoProcessado = templateHtml;
   for (const key in dados) {
     const placeholder = `{{${key}}}`;
     corpoProcessado = corpoProcessado.replace(
-      new RegExp(placeholder.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'),
-      dados[key] || '' 
+      new RegExp(placeholder.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&"), "g"),
+      dados[key] || ""
     );
   }
   return corpoProcessado;
@@ -105,45 +104,64 @@ function PropostaContratoFormPage() {
   const [formError, setFormError] = useState("");
   const [pageTitle, setPageTitle] = useState("Nova Proposta/Contrato");
 
-
   const montarDadosParaTemplate = useCallback(() => {
     if (!reservaBase) return {};
     // Adapte os placeholders para corresponder EXATAMENTE aos que você definiu em LISTA_PLACEHOLDERS_DISPONIVEIS
     // no ModeloContratoFormPage e que seu backend PropostaContratoService espera.
     return {
-        vendedor_nome_fantasia: reservaBase.company?.nome || '',
-        vendedor_razao_social: reservaBase.company?.razaoSocial || reservaBase.company?.nome || '',
-        vendedor_cnpj: reservaBase.company?.cnpj || '',
-        vendedor_endereco_completo: `${reservaBase.company?.endereco?.logradouro || ''}, ${reservaBase.company?.endereco?.numero || ''} ...`, // Formatar
-        vendedor_representante_nome: reservaBase.company?.representanteLegalNome || '',
-        vendedor_representante_cpf: reservaBase.company?.representanteLegalCPF || '',
+      vendedor_nome_fantasia: reservaBase.company?.nome || "",
+      vendedor_razao_social:
+        reservaBase.company?.razaoSocial || reservaBase.company?.nome || "",
+      vendedor_cnpj: reservaBase.company?.cnpj || "",
+      vendedor_endereco_completo: `${
+        reservaBase.company?.endereco?.logradouro || ""
+      }, ${reservaBase.company?.endereco?.numero || ""} ...`, // Formatar
+      vendedor_representante_nome:
+        reservaBase.company?.representanteLegalNome || "",
+      vendedor_representante_cpf:
+        reservaBase.company?.representanteLegalCPF || "",
 
-        lead_nome: reservaBase.lead?.nome || '',
-        lead_cpf: reservaBase.lead?.cpf || '',
-        lead_rg: reservaBase.lead?.rg || '', // Adicionar ao modelo Lead
-        lead_endereco_completo: reservaBase.lead?.endereco || '',
-        lead_estado_civil: reservaBase.lead?.estadoCivil || '', // Adicionar ao modelo Lead
-        lead_profissao: reservaBase.lead?.profissao || '', // Adicionar ao modelo Lead
-        lead_nacionalidade: reservaBase.lead?.nacionalidade || 'Brasileiro(a)', // Adicionar ao modelo Lead
-        lead_email: reservaBase.lead?.email || '',
-        lead_telefone: reservaBase.lead?.contato || '',
+      lead_nome: reservaBase.lead?.nome || "",
+      lead_cpf: reservaBase.lead?.cpf || "",
+      lead_rg: reservaBase.lead?.rg || "", // Adicionar ao modelo Lead
+      lead_endereco_completo: reservaBase.lead?.endereco || "",
+      lead_estado_civil: reservaBase.lead?.estadoCivil || "", // Adicionar ao modelo Lead
+      lead_profissao: reservaBase.lead?.profissao || "", // Adicionar ao modelo Lead
+      lead_nacionalidade: reservaBase.lead?.nacionalidade || "Brasileiro(a)", // Adicionar ao modelo Lead
+      lead_email: reservaBase.lead?.email || "",
+      lead_telefone: reservaBase.lead?.contato || "",
 
-        empreendimento_nome: reservaBase.empreendimento?.nome || '',
-        unidade_identificador: reservaBase.unidade?.identificador || '',
-        unidade_tipologia: reservaBase.unidade?.tipologia || '',
-        unidade_area_privativa: reservaBase.unidade?.areaUtil ? `${reservaBase.unidade.areaUtil}m²` : '',
-        empreendimento_endereco_completo: `${reservaBase.empreendimento?.localizacao?.logradouro || ''}, ...`, // Formatar
+      empreendimento_nome: reservaBase.empreendimento?.nome || "",
+      unidade_identificador: reservaBase.unidade?.identificador || "",
+      unidade_tipologia: reservaBase.unidade?.tipologia || "",
+      unidade_area_privativa: reservaBase.unidade?.areaUtil
+        ? `${reservaBase.unidade.areaUtil}m²`
+        : "",
+      empreendimento_endereco_completo: `${
+        reservaBase.empreendimento?.localizacao?.logradouro || ""
+      }, ...`, // Formatar
 
-        // Dados da transação vêm do formData ATUAL
-        proposta_valor_total_formatado: parseFloat(formData.valorPropostaContrato || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
-        proposta_valor_entrada_formatado: formData.valorEntrada ? parseFloat(formData.valorEntrada).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'N/A',
-        proposta_condicoes_pagamento_gerais: formData.condicoesPagamentoGerais || '',
-      
-        // Data da proposta formatada
-        data_proposta_extenso: formData.dataProposta ? new Date(formData.dataProposta + 'T00:00:00').toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' }) : '', // Adiciona T00:00:00 para evitar problemas de fuso ao converter só data
-        cidade_contrato: reservaBase.company?.endereco?.cidade || '____________',
+      // Dados da transação vêm do formData ATUAL
+      proposta_valor_total_formatado: parseFloat(
+        formData.valorPropostaContrato || 0
+      ).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
+      proposta_valor_entrada_formatado: formData.valorEntrada
+        ? parseFloat(formData.valorEntrada).toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          })
+        : "N/A",
+      proposta_condicoes_pagamento_gerais:
+        formData.condicoesPagamentoGerais || "",
 
-      
+      // Data da proposta formatada
+      data_proposta_extenso: formData.dataProposta
+        ? new Date(formData.dataProposta + "T00:00:00").toLocaleDateString(
+            "pt-BR",
+            { year: "numeric", month: "long", day: "numeric" }
+          )
+        : "", // Adiciona T00:00:00 para evitar problemas de fuso ao converter só data
+      cidade_contrato: reservaBase.company?.endereco?.cidade || "____________",
     };
   }, [reservaBase, formData]);
 
@@ -154,9 +172,9 @@ function PropostaContratoFormPage() {
       setLoadingInitialData(true);
       try {
         const [reservaData, modelosData, usuariosData] = await Promise.all([
-            getReservaByIdApi(reservaId),
-            getModelosContrato(),
-            getUsuarios({ ativo: true })
+          getReservaByIdApi(reservaId),
+          getModelosContrato(),
+          getUsuarios({ ativo: true }),
         ]);
 
         setReservaBase(reservaData);
@@ -164,26 +182,45 @@ function PropostaContratoFormPage() {
         setUsuariosCRM(usuariosData.data || []);
 
         if (reservaData) {
-            setPageTitle(`Nova Proposta para Lead: ${reservaData.lead?.nome} | Unidade: ${reservaData.unidade?.identificador}`);
-            
-            const primeiroModelo = (modelosData.modelos && modelosData.modelos.length > 0) ? modelosData.modelos[0] : null;
-            const htmlTemplateInicial = primeiroModelo ? primeiroModelo.conteudoHTMLTemplate : '<p>Selecione um modelo de contrato.</p>';
-            
-            // Atualiza o formData inicial, incluindo o HTML processado
-            setFormData(prev => {
-                const dadosParaPreencher = montarDadosParaTemplate(); // Pega os dados atuais para template
-                 // Atualiza valor da proposta com base na tabela da unidade da reserva
-                dadosParaPreencher.proposta_valor_total_formatado = parseFloat(reservaData.unidade?.precoTabela || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+          setPageTitle(
+            `Nova Proposta para Lead: ${reservaData.lead?.nome} | Unidade: ${reservaData.unidade?.identificador}`
+          );
 
-                return {
-                    ...prev,
-                    valorPropostaContrato: reservaData.unidade?.precoTabela || '',
-                    modeloContratoUtilizado: primeiroModelo ? primeiroModelo._id : '',
-                    corpoContratoHTMLGerado: preencherTemplateContrato(htmlTemplateInicial, dadosParaPreencher) // Processa com os dados atuais
-                };
-            });
+          const primeiroModelo =
+            modelosData.modelos && modelosData.modelos.length > 0
+              ? modelosData.modelos[0]
+              : null;
+          const htmlTemplateInicial = primeiroModelo
+            ? primeiroModelo.conteudoHTMLTemplate
+            : "<p>Selecione um modelo de contrato.</p>";
+
+          // Atualiza o formData inicial, incluindo o HTML processado
+          setFormData((prev) => {
+            const dadosParaPreencher = montarDadosParaTemplate(); // Pega os dados atuais para template
+            // Atualiza valor da proposta com base na tabela da unidade da reserva
+            dadosParaPreencher.proposta_valor_total_formatado = parseFloat(
+              reservaData.unidade?.precoTabela || 0
+            ).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+            return {
+              ...prev,
+              valorPropostaContrato: reservaData.unidade?.precoTabela || "",
+              modeloContratoUtilizado: primeiroModelo ? primeiroModelo._id : "",
+              corpoContratoHTMLGerado: preencherTemplateContrato(
+                htmlTemplateInicial,
+                dadosParaPreencher
+              ), // Processa com os dados atuais
+            };
+          });
         }
-      }catch (err) {toast.error("Erro ao carregar dados para nova proposta: " +(err.error || err.message)); } finally { setLoadingInitialData(false);}
+      } catch (err) {
+        toast.error(
+          "Erro ao carregar dados para nova proposta: " +
+            (err.error || err.message)
+        );
+      } finally {
+        setLoadingInitialData(false);
+      }
     };
     if (reservaId) loadInitialData();
   }, [reservaId, navigate, montarDadosParaTemplate]);
@@ -203,14 +240,28 @@ function PropostaContratoFormPage() {
   const handleModeloChange = (e) => {
     const modeloId = e.target.value;
     const modeloSelecionado = modelosContrato.find((m) => m._id === modeloId);
+    const htmlTemplate = modeloSelecionado ? modeloSelecionado.conteudoHTMLTemplate : '<p>Selecione um modelo de contrato.</p>';
+    
     setFormData((prev) => ({
       ...prev,
       modeloContratoUtilizado: modeloId,
-      corpoContratoHTMLGerado: modeloSelecionado
-        ? modeloSelecionado.conteudoHTMLTemplate
-        : "<p>Selecione um modelo para carregar o template.</p>",
+      corpoContratoHTMLGerado: preencherTemplateContrato(htmlTemplate, montarDadosParaTemplate()) // Processa com dados atuais
     }));
   };
+
+
+  useEffect(() => {
+    if (formData.modeloContratoUtilizado && modelosContrato.length > 0) {
+        const modeloSelecionado = modelosContrato.find(m => m._id === formData.modeloContratoUtilizado);
+        if (modeloSelecionado) {
+            setFormData(prev => ({
+                ...prev,
+                corpoContratoHTMLGerado: preencherTemplateContrato(modeloSelecionado.conteudoHTMLTemplate, montarDadosParaTemplate())
+            }));
+        }
+    }
+  }, [formData.valorPropostaContrato, formData.valorEntrada, /* outros campos de formData que são placeholders */ montarDadosParaTemplate, formData.modeloContratoUtilizado, modelosContrato]);
+
 
   // TODO: Adicionar handlers para sub-objetos (dadosBancarios, planoDePagamento, corretagem)
 
@@ -269,6 +320,8 @@ function PropostaContratoFormPage() {
       </div>
     );
   }
+
+
   if (!reservaBase && !loadingInitialData) {
     // Se terminou de carregar e não achou a reserva base
     return (
@@ -475,21 +528,23 @@ function PropostaContratoFormPage() {
                 pode ajustá-lo aqui antes de salvar.
               </small>
             </p>
-            {/* VVVVV Substituir por ReactQuill no PRÓXIMO PASSO VVVVV */}
-            <textarea
-              name="corpoContratoHTMLGerado"
-              value={formData.corpoContratoHTMLGerado}
-              onChange={(e) => handleConteudoHTMLChange(e.target.value)}
-              rows="25"
-              style={{
-                fontFamily: "monospace",
-                width: "100%",
-                fontSize: "0.9em",
-                lineHeight: "1.5",
-              }}
-              disabled={isSaving}
-            />
-            {/* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */}
+            <div className="form-section">
+              <h3>Conteúdo do Contrato (Baseado no Modelo)</h3>
+              {/* ... */}
+              <ReactQuill
+                theme="snow"
+                value={formData.corpoContratoHTMLGerado}
+                onChange={handleConteudoHTMLChange}
+                modules={quillModules}
+                formats={quillFormats}
+                readOnly={isSaving}
+                style={{
+                  minHeight: "400px",
+                  backgroundColor: "#fff",
+                  marginBottom: "20px",
+                }}
+              />
+            </div>
           </div>
 
           <div className="form-group">
