@@ -11,12 +11,12 @@ const mongoose = require('mongoose');
 */
 const createPropostaContratoController = asyncHandler(async (req, res, next) => {
 
-     // VVVVV LOG INICIAL DO CONTROLLER VVVVV
+    
     console.log("[PropContCtrl] INÍCIO createPropostaContratoController");
     console.log("[PropContCtrl] req.user:", req.user ? { id: req.user._id, company: req.user.company } : "req.user não definido");
     console.log("[PropContCtrl] req.params:", JSON.stringify(req.params, null, 2));
     console.log("[PropContCtrl] req.body (antes de processar):", JSON.stringify(req.body, null, 2));
-    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    
 
     const { reservaId } = req.params; // Se reservaId vier da URL
     // Se reservaId vier do corpo da requisição: const { reservaId, ...propostaContratoData } = req.body;

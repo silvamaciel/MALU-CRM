@@ -64,7 +64,14 @@ const createPropostaContrato = async (reservaId, propostaContratoData, companyId
         }
 
         // 3. Buscar o Modelo de Contrato selecionado
-        const modeloContrato = await ModeloContrato.findOne({ _id: propostaContratoData.modeloContratoUtilizado, company: companyId, ativo: true }).lean();
+        if (!propostaContratoData.modeloContratoUtilizado || !mongoose.Types.ObjectId.isValid(propostaContratoData.modeloContratoUtilizado)) {
+            throw new Error("ID do Modelo de Contrato válido é obrigatório.");
+        }
+        const modeloContrato = await ModeloContrato.findOne({ 
+            _id: propostaContratoData.modeloContratoUtilizado, // <<< USE O NOME CORRETO AQUI
+            company: companyId, 
+            ativo: true 
+        }).lean();
         if (!modeloContrato) {
             throw new Error("Modelo de Contrato selecionado não encontrado, inativo ou não pertence a esta empresa.");
         }
