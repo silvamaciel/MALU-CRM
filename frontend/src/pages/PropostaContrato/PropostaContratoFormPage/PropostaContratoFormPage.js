@@ -374,7 +374,7 @@ function PropostaContratoFormPage() {
       </div>
     );
   }
-  
+
   if (!reservaBase && !loadingInitialData) {
     return (
       <div className="admin-page error-page">
@@ -411,8 +411,6 @@ function PropostaContratoFormPage() {
                 {modelosContrato.map(mod => <option key={mod._id} value={mod._id}>{mod.nomeModelo}</option>)}
               </select>
             </div>
-            {/* Outros campos: valorPropostaContrato, valorEntrada, responsavelNegociacao, dataProposta, statusPropostaContrato */}
-            {/* ... (Cole o JSX dos campos aqui, como na sua última versão) ... */}
              <div className="form-row">
               <div className="form-group">
                 <label htmlFor="valorPropostaContrato">Valor da Proposta (R$)*</label>
