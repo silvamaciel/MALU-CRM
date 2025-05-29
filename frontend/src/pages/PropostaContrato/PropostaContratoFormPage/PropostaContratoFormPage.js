@@ -292,7 +292,7 @@ function PropostaContratoFormPage() {
       }
       setLoadingInitialData(true);
       try {
-        const [reservaData, modelosData, usuariosDataResult] =
+        const [reservaData, modelosData, usuariosDataResult, brokersData] =
           await Promise.all([
             getReservaByIdApi(reservaId),
             getModelosContrato(),
