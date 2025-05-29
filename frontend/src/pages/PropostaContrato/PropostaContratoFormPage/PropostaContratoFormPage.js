@@ -8,7 +8,7 @@ import {
 } from "../../../api/propostaContratoApi"; // Verifique se getReservaByIdApi está aqui ou em reservaApi.js
 import { getModelosContrato } from "../../../api/modeloContratoApi";
 import { getUsuarios } from "../../../api/users";
-import { getBrokerContactsApi } from "../../../api/brokerContacts"; // trocar para getBrotkerContacts
+import { getBrokerContacts } from "../../../api/brokerContacts"; // trocar para getBrotkerContacts
 
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
@@ -297,7 +297,7 @@ function PropostaContratoFormPage() {
             getReservaByIdApi(reservaId),
             getModelosContrato(),
             getUsuarios({ ativo: true }),
-            getBrokerContactsApi({ ativo: true }),
+            getBrokerContacts({ ativo: true }),
           ]);
 
         setReservaBase(reservaData);
