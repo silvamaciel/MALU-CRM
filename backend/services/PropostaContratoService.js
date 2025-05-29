@@ -58,7 +58,7 @@ const createPropostaContrato = async (reservaId, propostaContratoData, companyId
         }
 
         // 2. Buscar dados da Empresa Vendedora (Company logada)
-        const empresaVendedora = await Company.findById(companyId).lean().session(session); // Usar .lean() se não for modificar
+        const empresaVendedora = await Company.findById(companyId).lean().session(session);
         if (!empresaVendedora) {
             throw new Error("Empresa vendedora não encontrada.");
         }
