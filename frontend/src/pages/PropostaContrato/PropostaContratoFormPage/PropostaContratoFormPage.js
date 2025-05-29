@@ -273,8 +273,6 @@ function PropostaContratoFormPage() {
       setIsSaving(false); return;
     }
     const dataToSubmit = {
-      // Envia apenas os campos que o backend espera para PropostaContratoData
-      // Os campos snapshot e de vínculo (leadId, etc) são adicionados no backend
       modeloContratoUtilizado: formData.modeloContratoUtilizado,
       valorPropostaContrato: parseFloat(formData.valorPropostaContrato) || 0,
       valorEntrada: formData.valorEntrada ? parseFloat(formData.valorEntrada) : undefined,

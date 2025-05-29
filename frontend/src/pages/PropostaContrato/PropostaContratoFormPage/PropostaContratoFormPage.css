@@ -158,3 +158,39 @@
   min-height: 280px; /* Ajuste conforme necessário */
   background-color: #fff;
 }
+
+
+.proposta-contrato-form-page .parcela-item-row .form-row {
+  margin-bottom: 10px; /* Espaçamento menor dentro de uma parcela */
+}
+.proposta-contrato-form-page .parcela-item-row .form-row:last-child {
+  margin-bottom: 0;
+}
+
+
+.proposta-contrato-form-page .button-link.delete-link {
+  color: #dc3545;
+  background-color: transparent;
+  border: none;
+  padding: 5px 0;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.85em;
+}
+.proposta-contrato-form-page .button-link.delete-link:hover {
+  color: #a71d2a;
+}
+
+.proposta-contrato-form-page .outline-button {
+  background-color: transparent;
+  border: 1px solid #007bff;
+  color: #007bff;
+  padding: 8px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.proposta-contrato-form-page .outline-button:hover {
+  background-color: #007bff;
+  color: white;
+}
