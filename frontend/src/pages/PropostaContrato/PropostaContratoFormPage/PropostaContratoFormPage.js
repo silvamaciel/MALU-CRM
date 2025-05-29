@@ -15,44 +15,45 @@ import "react-quill/dist/quill.snow.css";
 
 import "./PropostaContratoFormPage.css";
 
-const quillModules = {
-  toolbar: [
-    [{ header: [1, 2, 3, 4, 5, 6, false] }],
-    [{ font: [] }],
-    ["bold", "italic", "underline", "strike", "blockquote", "code-block"],
-    [
-      { list: "ordered" },
-      { list: "bullet" },
-      { indent: "-1" },
-      { indent: "+1" },
-    ],
-    [{ align: [] }],
-    [{ color: [] }, { background: [] }],
-    ["link", "image", "video"], // Adicionei image e video como exemplo, remova se não precisar
-    ["clean"], // Botão para remover formatação
-  ],
-  // Você pode adicionar outros módulos aqui, como handlers para upload de imagem, etc.
-};
 
-const quillFormats = [
-  "header",
-  "font",
-  "bold",
-  "italic",
-  "underline",
-  "strike",
-  "blockquote",
-  "code-block",
-  "list",
-  "bullet",
-  "indent",
-  "link",
-  "image",
-  "video",
-  "align",
-  "color",
-  "background",
-];
+const quillModules = {
+    toolbar: [
+      [{ header: [1, 2, 3, 4, 5, 6, false] }],
+      [{ font: [] }],
+      ["bold", "italic", "underline", "strike", "blockquote", "code-block"],
+      [
+        { list: "ordered" },
+        { list: "bullet" },
+        { indent: "-1" },
+        { indent: "+1" },
+      ],
+      [{ align: [] }],
+      [{ color: [] }, { background: [] }],
+      ["link", "image", "video"], // Adicionei image e video como exemplo, remova se não precisar
+      ["clean"], // Botão para remover formatação
+    ],
+    // Você pode adicionar outros módulos aqui, como handlers para upload de imagem, etc.
+  };
+
+  const quillFormats = [
+    "header",
+    "font",
+    "bold",
+    "italic",
+    "underline",
+    "strike",
+    "blockquote",
+    "code-block",
+    "list",
+    "bullet",
+    "indent",
+    "link",
+    "image",
+    "video",
+    "align",
+    "color",
+    "background",
+  ];
 
 const TIPO_FINANCIAMENTO_OPCOES = [
   "Direto Construtora",
@@ -145,7 +146,8 @@ function PropostaContratoFormPage() {
 
   const montarDadosParaTemplate = useCallback(() => {
     if (!reservaBase) return {};
-
+    // Adapte os placeholders para corresponder EXATAMENTE aos que você definiu em LISTA_PLACEHOLDERS_DISPONIVEIS
+    // no ModeloContratoFormPage e que seu backend PropostaContratoService espera.
     return {
       vendedor_nome_fantasia: reservaBase.company?.nome || "",
       vendedor_razao_social:
@@ -153,7 +155,7 @@ function PropostaContratoFormPage() {
       vendedor_cnpj: reservaBase.company?.cnpj || "",
       vendedor_endereco_completo: `${
         reservaBase.company?.endereco?.logradouro || ""
-      }, ${reservaBase.company?.endereco?.numero || ""} ...`,
+      }, ${reservaBase.company?.endereco?.numero || ""} ...`, // Formatar
       vendedor_representante_nome:
         reservaBase.company?.representanteLegalNome || "",
       vendedor_representante_cpf:
@@ -161,11 +163,11 @@ function PropostaContratoFormPage() {
 
       lead_nome: reservaBase.lead?.nome || "",
       lead_cpf: reservaBase.lead?.cpf || "",
-      lead_rg: reservaBase.lead?.rg || "",
+      lead_rg: reservaBase.lead?.rg || "", // Adicionar ao modelo Lead
       lead_endereco_completo: reservaBase.lead?.endereco || "",
-      lead_estado_civil: reservaBase.lead?.estadoCivil || "",
-      lead_profissao: reservaBase.lead?.profissao || "",
-      lead_nacionalidade: reservaBase.lead?.nacionalidade || "Brasileiro(a)",
+      lead_estado_civil: reservaBase.lead?.estadoCivil || "", // Adicionar ao modelo Lead
+      lead_profissao: reservaBase.lead?.profissao || "", // Adicionar ao modelo Lead
+      lead_nacionalidade: reservaBase.lead?.nacionalidade || "Brasileiro(a)", // Adicionar ao modelo Lead
       lead_email: reservaBase.lead?.email || "",
       lead_telefone: reservaBase.lead?.contato || "",
 
@@ -177,8 +179,9 @@ function PropostaContratoFormPage() {
         : "",
       empreendimento_endereco_completo: `${
         reservaBase.empreendimento?.localizacao?.logradouro || ""
-      }, ...`,
+      }, ...`, // Formatar
 
+      // Dados da transação vêm do formData ATUAL
       proposta_valor_total_formatado: parseFloat(
         formData.valorPropostaContrato || 0
       ).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
@@ -191,21 +194,16 @@ function PropostaContratoFormPage() {
       proposta_condicoes_pagamento_gerais:
         formData.condicoesPagamentoGerais || "",
 
+      // Data da proposta formatada
       data_proposta_extenso: formData.dataProposta
         ? new Date(formData.dataProposta + "T00:00:00").toLocaleDateString(
             "pt-BR",
             { year: "numeric", month: "long", day: "numeric" }
           )
-        : "",
+        : "", // Adiciona T00:00:00 para evitar problemas de fuso ao converter só data
       cidade_contrato: reservaBase.company?.endereco?.cidade || "____________",
     };
-  }, [
-    reservaBase,
-    formData.valorPropostaContrato,
-    formData.valorEntrada,
-    formData.condicoesPagamentoGerais,
-    formData.dataProposta,
-  ]);
+  }, []);
 
   // Carregar dados da Reserva, Modelos de Contrato e Usuários
   useEffect(() => {
@@ -282,46 +280,28 @@ function PropostaContratoFormPage() {
   const handleModeloChange = (e) => {
     const modeloId = e.target.value;
     const modeloSelecionado = modelosContrato.find((m) => m._id === modeloId);
-    const htmlTemplate = modeloSelecionado
-      ? modeloSelecionado.conteudoHTMLTemplate
-      : "<p>Selecione um modelo de contrato.</p>";
-
+    const htmlTemplate = modeloSelecionado ? modeloSelecionado.conteudoHTMLTemplate : '<p>Selecione um modelo de contrato.</p>';
+    
     setFormData((prev) => ({
       ...prev,
       modeloContratoUtilizado: modeloId,
-      corpoContratoHTMLGerado: preencherTemplateContrato(
-        htmlTemplate,
-        montarDadosParaTemplate()
-      ), // Processa com dados atuais
+      corpoContratoHTMLGerado: preencherTemplateContrato(htmlTemplate, montarDadosParaTemplate()) // Processa com dados atuais
     }));
   };
 
+
   useEffect(() => {
-    if (
-      formData.modeloContratoUtilizado &&
-      modelosContrato.length > 0 &&
-      reservaBase
-    ) {
-      const modeloSelecionado = modelosContrato.find(
-        (m) => m._id === formData.modeloContratoUtilizado
-      );
-      if (modeloSelecionado) {
-        const dadosParaTemplate = montarDadosParaTemplate();
-        setFormData((prev) => ({
-          ...prev,
-          corpoContratoHTMLGerado: preencherTemplateContrato(
-            modeloSelecionado.conteudoHTMLTemplate,
-            dadosParaTemplate
-          ),
-        }));
-      }
+    if (formData.modeloContratoUtilizado && modelosContrato.length > 0) {
+        const modeloSelecionado = modelosContrato.find(m => m._id === formData.modeloContratoUtilizado);
+        if (modeloSelecionado) {
+            setFormData(prev => ({
+                ...prev,
+                corpoContratoHTMLGerado: preencherTemplateContrato(modeloSelecionado.conteudoHTMLTemplate, montarDadosParaTemplate())
+            }));
+        }
     }
-  }, [
-    formData.modeloContratoUtilizado,
-    modelosContrato,
-    montarDadosParaTemplate,
-    reservaBase,
-  ]);
+  }, [formData.valorPropostaContrato, formData.valorEntrada, /* outros campos de formData que são placeholders */ montarDadosParaTemplate, formData.modeloContratoUtilizado, modelosContrato]);
+
 
   // TODO: Adicionar handlers para sub-objetos (dadosBancarios, planoDePagamento, corretagem)
 
@@ -380,6 +360,7 @@ function PropostaContratoFormPage() {
       </div>
     );
   }
+
 
   if (!reservaBase && !loadingInitialData) {
     // Se terminou de carregar e não achou a reserva base
