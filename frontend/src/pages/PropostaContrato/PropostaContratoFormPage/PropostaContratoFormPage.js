@@ -15,6 +15,46 @@ import "react-quill/dist/quill.snow.css";
 
 import "./PropostaContratoFormPage.css";
 
+
+const quillModules = {
+    toolbar: [
+      [{ header: [1, 2, 3, 4, 5, 6, false] }],
+      [{ font: [] }],
+      ["bold", "italic", "underline", "strike", "blockquote", "code-block"],
+      [
+        { list: "ordered" },
+        { list: "bullet" },
+        { indent: "-1" },
+        { indent: "+1" },
+      ],
+      [{ align: [] }],
+      [{ color: [] }, { background: [] }],
+      ["link", "image", "video"], // Adicionei image e video como exemplo, remova se não precisar
+      ["clean"], // Botão para remover formatação
+    ],
+    // Você pode adicionar outros módulos aqui, como handlers para upload de imagem, etc.
+  };
+
+  const quillFormats = [
+    "header",
+    "font",
+    "bold",
+    "italic",
+    "underline",
+    "strike",
+    "blockquote",
+    "code-block",
+    "list",
+    "bullet",
+    "indent",
+    "link",
+    "image",
+    "video",
+    "align",
+    "color",
+    "background",
+  ];
+
 const TIPO_FINANCIAMENTO_OPCOES = [
   "Direto Construtora",
   "Financiamento Bancário",
