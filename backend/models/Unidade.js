@@ -38,7 +38,7 @@ const unidadeSchema = new Schema(
         values: [
           "Disponível",
           "Reservada",
-          "Proposta Aceita",
+          "Proposta",
           "Vendido",
           "Bloqueado",
         ],

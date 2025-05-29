@@ -10,6 +10,8 @@ const LeadStage = require('../models/LeadStage');
 const { logHistory } = require('./LeadService');
 const User = require('../models/User');
 const ModeloContrato = require('../models/ModeloContrato');
+const BrokerContact = require('../models/BrokerContact');
+
 
 /**
  * Cria uma nova Proposta/Contrato a partir de uma Reserva ativa.
@@ -51,6 +53,7 @@ const createPropostaContrato = async (reservaId, propostaContratoData, companyId
 
     try {
         // 1. Buscar a Reserva e seus dados populados
+        console.log("[PropContSvc] Buscando Reserva, Lead, Unidade, Empreendimento...");
         const reserva = await Reserva.findOne({ _id: reservaId, company: companyId, statusReserva: "Ativa" })
             .populate('lead')
             .populate('unidade')
@@ -63,17 +66,22 @@ const createPropostaContrato = async (reservaId, propostaContratoData, companyId
         if (!reserva.lead || !reserva.unidade || !reserva.empreendimento) {
             throw new Error("Dados da reserva (Lead, Unidade ou Empreendimento) estão incompletos.");
         }
+        console.log("[PropContSvc] Reserva e dados associados encontrados.");
 
         // 2. Buscar dados da Empresa Vendedora (Company logada)
         const empresaVendedora = await Company.findById(companyId).lean().session(session);
         if (!empresaVendedora) {
             throw new Error("Empresa vendedora não encontrada.");
         }
+        console.log("[PropContSvc] Empresa vendedora encontrada.");
+
 
         // 3. Buscar o Modelo de Contrato selecionado
         if (!propostaContratoData.modeloContratoUtilizado || !mongoose.Types.ObjectId.isValid(propostaContratoData.modeloContratoUtilizado)) {
             throw new Error("ID do Modelo de Contrato válido é obrigatório.");
         }
+        console.log("[PropContSvc] Nenhuma proposta existente para esta reserva.");
+
         const modeloContrato = await ModeloContrato.findOne({ 
             _id: propostaContratoData.modeloContratoUtilizado, // <<< USE O NOME CORRETO AQUI
             company: companyId, 
@@ -82,6 +90,9 @@ const createPropostaContrato = async (reservaId, propostaContratoData, companyId
         if (!modeloContrato) {
             throw new Error("Modelo de Contrato selecionado não encontrado, inativo ou não pertence a esta empresa.");
         }
+
+        console.log(`[PropContSvc] Modelo de Contrato '${modeloContrato.nomeModelo}' encontrado.`);
+
         // 4. Montar o objeto de dados para substituir os placeholders no template
         // Este objeto precisa conter todas as chaves que seus placeholders esperam (ex: {{lead_nome}})
         const dadosParaTemplate = {
@@ -139,7 +150,9 @@ const createPropostaContrato = async (reservaId, propostaContratoData, companyId
             data_proposta_extenso: new Date(propostaContratoData.dataProposta || Date.now()).toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' }),
             cidade_contrato: empresaVendedora.endereco?.cidade || '_',
         };
-        
+
+        console.log("[PropContSvc] Corpo do contrato HTML preparado/processado.");
+
         // Se precisar de dados do BrokerContact, buscar aqui:
         if (propostaContratoData.corretagem?.corretorPrincipal) {
             const BrokerContactModel = mongoose.model('BrokerContact'); // Assumindo que o modelo é 'BrokerContact'
@@ -149,6 +162,8 @@ const createPropostaContrato = async (reservaId, propostaContratoData, companyId
                 dadosParaTemplate.corretor_principal_cpf_cnpj = corretor.cpfCnpj; // Assumindo campo
                 dadosParaTemplate.corretor_principal_creci = corretor.registroProfissional; // Assumindo campo
             }
+            console.log(`[PropContSvc] Corretor Principal ${corretor.nome} validado.`);
+
         }
 
         // 5
@@ -189,17 +204,24 @@ const createPropostaContrato = async (reservaId, propostaContratoData, companyId
             dataProposta: propostaContratoData.dataProposta || new Date(),
         };
 
+       console.log("[PropContSvc DEBUG] Objeto dadosParaNovaProposta montado:", JSON.stringify(dadosParaNovaProposta, null, 2));
 
 
         const novaPropostaContrato = new PropostaContrato(dadosParaNovaProposta);
+                console.log("[PropContSvc DEBUG] Tentando salvar nova PropostaContrato...");
+
         const propostaSalva = await novaPropostaContrato.save({ session });
+                console.log("[PropContSvc DEBUG] Tentando salvar nova PropostaContrato...");
 
         // 7. Atualizar Status da Reserva
+        console.log(`[PropContSvc] Atualizando Reserva ${reserva._id}...`);
         reserva.statusReserva = "ConvertidaEmProposta";
         reserva.propostaId = propostaSalva._id;
         await reserva.save({ session });
 
         // 8. Atualizar Status do Lead
+        console.log(`[PropContSvc] Atualizando Lead ${reserva.lead._id}...`);
+
         const nomeEstagioProposta = "Proposta Emitida"; // Ou o nome que você definiu
         let situacaoProposta = await LeadStage.findOne(
             { company: companyId, nome: { $regex: new RegExp(`^${nomeEstagioProposta}$`, "i") } }
@@ -240,6 +262,8 @@ const createPropostaContrato = async (reservaId, propostaContratoData, companyId
             if(leadDocParaAtualizar){
                 leadDocParaAtualizar.situacao = situacaoProposta._id;
                 await leadDocParaAtualizar.save({session});
+                console.log(`[PropContSvc] Lead ${leadDocParaAtualizar._id} atualizado para status ${situacaoProposta.nome}.`);
+
             } else {
                 throw new Error("Lead da reserva não encontrado para atualização de status.");
             }
@@ -248,13 +272,13 @@ const createPropostaContrato = async (reservaId, propostaContratoData, companyId
 
 
         // 9. Atualizar Status da Unidade (opcional, pode manter "Reservada" ou mudar para "Com Proposta")
-        // reserva.unidade.statusUnidade = "Com Proposta"; // Exemplo
-        // await reserva.unidade.save({ session }); 
+        reserva.unidade.statusUnidade = "Proposta"; // Exemplo
+         await reserva.unidade.save({ session }); 
         // ^^^ Se unidade foi populada e não lean, senão:
         const unidadeDoc = await Unidade.findById(reserva.unidade._id).session(session);
         if (unidadeDoc) {
-            // unidadeDoc.statusUnidade = "Com Proposta"; // Decida se quer mudar o status da unidade aqui
-            // await unidadeDoc.save({session});
+            unidadeDoc.statusUnidade = "Proposta";
+            await unidadeDoc.save({session});
         }
 
 
@@ -264,13 +288,14 @@ const createPropostaContrato = async (reservaId, propostaContratoData, companyId
             reserva.lead._id,
             creatingUserId,
             "PROPOSTA_CONTRATO_CRIADA",
-            `Proposta/Contrato (ID: ${propostaSalva._id}) criada para unidade <span class="math-inline">\{reserva\.unidade\.identificador\}\. Lead movido de "</span>{leadStatusAntigoNome?.nome || 'N/A'}" para "${situacaoProposta.nome}".`,
+            `Proposta/Contrato (ID: ${propostaSalva._id}) criada para unidade ${reserva.unidade.identificador}. Lead movido de "${leadStatusAntigoNome?.nome || 'N/A'}" para "${situacaoProposta.nome}".`,
             { propostaContratoId: propostaSalva._id, reservaId: reserva._id },
             null, // newValue
             'PropostaContrato', // entityType
             propostaSalva._id,  // entityId
             session
         );
+            console.log("[PropContSvc] Histórico registrado.");
 
         await session.commitTransaction();
         console.log(`[PropContSvc] Proposta/Contrato ${propostaSalva._id} criada com sucesso.`);
@@ -287,6 +312,18 @@ const createPropostaContrato = async (reservaId, propostaContratoData, companyId
     } finally {
         session.endSession();
     }
+};
+
+const preencherTemplateContrato = (templateHtml = "", dados = {}) => {
+  let corpoProcessado = templateHtml;
+  for (const key in dados) {
+    const placeholder = `{{${key}}}`;
+    corpoProcessado = corpoProcessado.replace(
+      new RegExp(placeholder.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'),
+      dados[key] !== null && dados[key] !== undefined ? dados[key] : ''
+    );
+  }
+  return corpoProcessado;
 };
 
 // Outras funções: getPropostaContratoById, updateStatusPropostaContrato, etc.
