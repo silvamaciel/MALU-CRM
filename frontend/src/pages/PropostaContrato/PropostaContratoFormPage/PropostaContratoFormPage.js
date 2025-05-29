@@ -277,22 +277,53 @@ function PropostaContratoFormPage() {
       valorPropostaContrato: parseFloat(formData.valorPropostaContrato) || 0,
       valorEntrada: formData.valorEntrada ? parseFloat(formData.valorEntrada) : undefined,
       condicoesPagamentoGerais: formData.condicoesPagamentoGerais,
-      // TODO: Enviar dadosBancariosParaPagamento, planoDePagamento, corretagem formatados
       dadosBancariosParaPagamento: formData.dadosBancariosParaPagamento,
-      planoDePagamento: formData.planoDePagamento.filter(p => p.valorUnitario && p.vencimentoPrimeira), // Envia apenas parcelas válidas
-      corretagem: formData.corretagem.valorCorretagem ? formData.corretagem : undefined,
+      
+      // VVVVV AJUSTE AQUI para garantir a conversão para número ANTES de filtrar VVVVV
+      planoDePagamento: formData.planoDePagamento
+        .map(p => ({
+          tipoParcela: p.tipoParcela,
+          quantidade: Number(p.quantidade) || 1, // Garante que é número, default 1
+          valorUnitario: Number(p.valorUnitario) || 0, // Garante que é número, default 0
+          vencimentoPrimeira: p.vencimentoPrimeira,
+          observacao: p.observacao || ''
+        }))
+        .filter(p => p.valorUnitario > 0 && p.vencimentoPrimeira), // Envia apenas parcelas com valor e vencimento
+      // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+      corretagem: formData.corretagem.valorCorretagem ? { // Envia corretagem apenas se houver valor
+          ...formData.corretagem,
+          valorCorretagem: Number(formData.corretagem.valorCorretagem) || 0
+      } : undefined,
+      
       corpoContratoHTMLGerado: formData.corpoContratoHTMLGerado,
       responsavelNegociacao: formData.responsavelNegociacao,
       observacoesInternasProposta: formData.observacoesInternasProposta,
       statusPropostaContrato: formData.statusPropostaContrato,
       dataProposta: formData.dataProposta,
     };
-    console.log("Enviando para API, Reserva ID:", reservaId, "Dados:", dataToSubmit);
+    
+    delete dataToSubmit.precoTabelaUnidadeNoMomento; // Se ele estiver no formData por algum motivo
+
+    console.log(
+      "Enviando para API createPropostaContratoApi, Reserva ID:",
+      reservaId,
+      "Dados:",
+      dataToSubmit
+    );
+
     try {
       await createPropostaContratoApi(reservaId, dataToSubmit);
       toast.success("Proposta/Contrato criada com sucesso!");
-      navigate(`/reservas`);
-    } catch (err) { /* ... */ } finally { setIsSaving(false); }
+      navigate(`/reservas`); // Ou para detalhes da proposta/contrato recém-criada
+    } catch (err) {
+      const errMsg =
+        err.error || err.message || "Erro ao criar Proposta/Contrato.";
+      setFormError(errMsg);
+      toast.error(errMsg);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
 
