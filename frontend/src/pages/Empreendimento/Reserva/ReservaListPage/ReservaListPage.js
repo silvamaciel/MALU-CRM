@@ -113,17 +113,25 @@ function ReservaListPage() {
                                         </td>
                                         <td>{res.createdBy?.nome || 'N/A'}</td>
                                         <td className="actions-cell">
-                                            {res.statusReserva === "Ativa" && (
-                                                <button 
-                                                    onClick={() => handleGerarProposta(res._id)}
-                                                    className="button primary-button small-button" // Adicione small-button se quiser menor
-                                                >
-                                                    Gerar Proposta/Contrato
-                                                </button>
-                                            )}
-                                            {/* Link para Detalhes da Reserva (página a ser criada) */}
-                                            {/* <Link to={`/reservas/${res._id}`} className="button-link view-link" style={{marginLeft: '8px'}}>Detalhes</Link> */}
-                                        </td>
+                                        {res.statusReserva === "Ativa" && (
+                                            <button 
+                                                onClick={() => handleGerarProposta(res._id)}
+                                                className="button primary-button small-button"
+                                            >
+                                                Gerar Proposta/Contrato
+                                            </button>
+                                        )}
+                                        {(res.statusReserva === "ConvertidaEmProposta" || res.propostaId) && (
+                                            <Link
+                                                to={`/propostas-contratos/${res.propostaId}`}
+                                                className="button-link view-link"
+                                                style={{marginLeft: res.statusReserva === "Ativa" ? '8px' : '0'}}
+                                            >
+                                                Visualizar Proposta
+                                            </Link>
+                                        )}
+                                        {/* Futuramente: Editar Proposta, Mudar Status da Proposta, etc. */}
+                                    </td>
                                     </tr>
                                 ))}
                             </tbody>

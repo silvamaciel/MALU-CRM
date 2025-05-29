@@ -30,6 +30,7 @@ import ReservaListPage from './pages/Empreendimento/Reserva/ReservaListPage/Rese
 import ModeloContratoListPage from './pages/Admin/ModeloContrato/ModeloContratoListPage/ModeloContratoListPage';
 import ModeloContratoFormPage from './pages/Admin/ModeloContrato/ModeloContratoFormPage/ModeloContratoFormPage';
 import PropostaContratoFormPage from './pages/PropostaContrato/PropostaContratoFormPage/PropostaContratoFormPage';
+import PropostaContratoDetailPage from './pages/PropostaContrato/PropostaContratoDetailPage/PropostaContratoDetailPage';
 
 
 
@@ -110,6 +111,7 @@ function App() {
                 <Route path="/reservas" element={<ReservaListPage />} />
 
                 <Route path="/reservas/:reservaId/proposta-contrato/novo" element={<PropostaContratoFormPage />} />
+                <Route path="/propostas-contratos/:propostaContratoId" element={<PropostaContratoDetailPage />} />
 
 
 
