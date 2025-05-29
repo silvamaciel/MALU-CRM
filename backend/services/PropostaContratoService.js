@@ -8,7 +8,8 @@ const Empreendimento = require('../models/Empreendimento');
 const Company = require('../models/Company'); 
 const LeadStage = require('../models/LeadStage');
 const { logHistory } = require('./LeadService');
-const User = require('../models/User'); 
+const User = require('../models/User');
+const ModeloContrato = require('../models/ModeloContrato');
 
 /**
  * Cria uma nova Proposta/Contrato a partir de uma Reserva ativa.
@@ -63,7 +64,7 @@ const createPropostaContrato = async (reservaId, propostaContratoData, companyId
         }
 
         // 3. Buscar o Modelo de Contrato selecionado
-        const modeloContrato = await ModeloContrato.findOne({ _id: propostaContratoData.modeloContratoId, company: companyId, ativo: true }).lean();
+        const modeloContrato = await ModeloContrato.findOne({ _id: propostaContratoData.modeloContratoUtilizado, company: companyId, ativo: true }).lean();
         if (!modeloContrato) {
             throw new Error("Modelo de Contrato selecionado não encontrado, inativo ou não pertence a esta empresa.");
         }
