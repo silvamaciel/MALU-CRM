@@ -22,6 +22,13 @@ const ModeloContrato = require('../models/ModeloContrato');
 const createPropostaContrato = async (reservaId, propostaContratoData, companyId, creatingUserId) => {
     console.log(`[PropContSvc] Criando Proposta/Contrato da Reserva ${reservaId} usando Modelo ID ${propostaContratoData.modeloContratoId}`);
 
+    console.log(`[PropContSvc] Iniciando createPropostaContrato.`);
+    console.log(`[PropContSvc] Reserva ID: ${reservaId}`);
+    // VVVVV LOG IMPORTANTE AQUI VVVVV
+    console.log("[PropContSvc] propostaContratoData RECEBIDO PELO SERVIÇO:", JSON.stringify(propostaContratoData, null, 2));
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    console.log(`[PropContSvc] Company ID: ${companyId}, Creating User ID: ${creatingUserId}`);
+
     // Validações básicas
     if (!mongoose.Types.ObjectId.isValid(reservaId) ||
         !mongoose.Types.ObjectId.isValid(companyId) ||
