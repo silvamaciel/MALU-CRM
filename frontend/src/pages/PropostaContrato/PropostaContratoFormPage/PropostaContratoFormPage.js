@@ -297,6 +297,46 @@ function PropostaContratoFormPage() {
     } catch (err) { /* ... */ } finally { setIsSaving(false); }
   };
 
+
+  const handlePlanoDePagamentoChange = (index, event) => {
+    const { name, value, type } = event.target;
+    const list = [...formData.planoDePagamento];
+    
+    // Converte para número se for quantidade ou valorUnitario
+    let processedValue = value;
+    if (name === 'quantidade' || name === 'valorUnitario') {
+        processedValue = value === '' ? '' : Number(value); // Permite limpar o campo, converte para número se houver valor
+    }
+
+    list[index][name] = processedValue;
+    setFormData(prev => ({ ...prev, planoDePagamento: list }));
+  };
+
+  const handleAddParcela = () => {
+    setFormData(prev => ({
+      ...prev,
+      planoDePagamento: [
+        ...prev.planoDePagamento,
+        { tipoParcela: TIPO_PARCELA_OPCOES[1], // Default para "PARCELA MENSAL"
+          quantidade: 1, 
+          valorUnitario: '', 
+          vencimentoPrimeira: '', 
+          observacao: '' 
+        }
+      ]
+    }));
+  };
+
+  const handleRemoveParcela = (index) => {
+    if (formData.planoDePagamento.length <= 1) { // Não permite remover a última parcela
+      toast.warn("É necessário pelo menos uma entrada no plano de pagamento.");
+      return;
+    }
+    const list = [...formData.planoDePagamento];
+    list.splice(index, 1);
+    setFormData(prev => ({ ...prev, planoDePagamento: list }));
+  };
+
   // Renderização
   if (loadingInitialData) { /* ... */ }
   if (!reservaBase && !loadingInitialData) { /* ... */ }
@@ -366,6 +406,103 @@ function PropostaContratoFormPage() {
             </div>
             <p><small><i>(Interface para Plano de Pagamento detalhado e Corretagem será adicionada. Use o corpo do contrato abaixo para esses detalhes por enquanto.)</i></small></p>
           </div>
+
+
+          {/* Plano de Pagamento Detalhado */}
+          <div className="form-group"> {/* Envolve a seção do plano de pagamento */}
+              <label style={{marginBottom: '10px', display: 'block', fontWeight: '600'}}>Plano de Pagamento Detalhado*</label>
+              {formData.planoDePagamento.map((parcela, index) => (
+                <div key={index} className="parcela-item-row" style={{ marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px dashed #eee' }}>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor={`tipoParcela-${index}`}>Tipo da Parcela</label>
+                      <select
+                        name="tipoParcela"
+                        id={`tipoParcela-${index}`}
+                        value={parcela.tipoParcela}
+                        onChange={(e) => handlePlanoDePagamentoChange(index, e)}
+                        disabled={isSaving}
+                        required
+                      >
+                        {TIPO_PARCELA_OPCOES.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor={`quantidade-${index}`}>Quantidade</label>
+                      <input
+                        type="number"
+                        name="quantidade"
+                        id={`quantidade-${index}`}
+                        value={parcela.quantidade}
+                        onChange={(e) => handlePlanoDePagamentoChange(index, e)}
+                        min="1"
+                        disabled={isSaving}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor={`valorUnitario-${index}`}>Valor Unitário (R$)</label>
+                      <input
+                        type="number"
+                        name="valorUnitario"
+                        id={`valorUnitario-${index}`}
+                        value={parcela.valorUnitario}
+                        onChange={(e) => handlePlanoDePagamentoChange(index, e)}
+                        step="0.01"
+                        min="0"
+                        disabled={isSaving}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor={`vencimentoPrimeira-${index}`}>1º Vencimento</label>
+                      <input
+                        type="date"
+                        name="vencimentoPrimeira"
+                        id={`vencimentoPrimeira-${index}`}
+                        value={parcela.vencimentoPrimeira}
+                        onChange={(e) => handlePlanoDePagamentoChange(index, e)}
+                        disabled={isSaving}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="form-group full-width">
+                    <label htmlFor={`observacaoParcela-${index}`}>Observação da Parcela</label>
+                    <input
+                        type="text"
+                        name="observacao"
+                        id={`observacaoParcela-${index}`}
+                        value={parcela.observacao}
+                        onChange={(e) => handlePlanoDePagamentoChange(index, e)}
+                        disabled={isSaving}
+                    />
+                  </div>
+                  {formData.planoDePagamento.length > 1 && ( // Só mostra botão de remover se houver mais de uma parcela
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveParcela(index)}
+                      className="button-link delete-link" // Use um estilo de link ou botão pequeno
+                      disabled={isSaving}
+                      style={{ marginTop: '5px', alignSelf: 'flex-start' }}
+                    >
+                      Remover Parcela
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={handleAddParcela}
+                className="button outline-button" // Um estilo de botão para adicionar
+                disabled={isSaving}
+                style={{ marginTop: '10px' }}
+              >
+                + Adicionar Parcela/Entrada
+              </button>
+            </div>
 
           {/* Conteúdo do Contrato com ReactQuill */}
           <div className="form-section">
