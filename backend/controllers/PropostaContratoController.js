@@ -10,6 +10,14 @@ const mongoose = require('mongoose');
 * @access  Privado
 */
 const createPropostaContratoController = asyncHandler(async (req, res, next) => {
+
+     // VVVVV LOG INICIAL DO CONTROLLER VVVVV
+    console.log("[PropContCtrl] INÍCIO createPropostaContratoController");
+    console.log("[PropContCtrl] req.user:", req.user ? { id: req.user._id, company: req.user.company } : "req.user não definido");
+    console.log("[PropContCtrl] req.params:", JSON.stringify(req.params, null, 2));
+    console.log("[PropContCtrl] req.body (antes de processar):", JSON.stringify(req.body, null, 2));
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
     const { reservaId } = req.params; // Se reservaId vier da URL
     // Se reservaId vier do corpo da requisição: const { reservaId, ...propostaContratoData } = req.body;
     const propostaContratoData = req.body; // Assume que o resto dos dados da proposta vêm no corpo
@@ -34,12 +42,22 @@ const createPropostaContratoController = asyncHandler(async (req, res, next) => 
         return next(new ErrorResponse('Valor da Proposta e Responsável pela Negociação são obrigatórios.', 400));
     }
 
+    // VVVVV LOG ANTES DE CHAMAR O SERVIÇO VVVVV
+    console.log("[PropContCtrl] Chamando PropostaContratoService.createPropostaContrato...");
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
     const novaPropostaContrato = await PropostaContratoService.createPropostaContrato(
         idReserva,
         propostaContratoData,
         companyId,
         creatingUserId
     );
+
+    // VVVVV LOG APÓS CHAMAR O SERVIÇO VVVVV
+    console.log("[PropContCtrl] PropostaContratoService.createPropostaContrato retornou com sucesso.");
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
     res.status(201).json({ success: true, data: novaPropostaContrato });
 });
 
