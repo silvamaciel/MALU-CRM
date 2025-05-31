@@ -374,6 +374,7 @@ const getPropostaContratoById = async (propostaContratoId, companyId) => {
  * @param {string} companyId - ID da Empresa.
  * @returns {Promise<Buffer>} Buffer do PDF gerado.
  */
+
 const gerarPDFPropostaContrato = async (propostaContratoId, companyId) => {
     if (!mongoose.Types.ObjectId.isValid(propostaContratoId) || !mongoose.Types.ObjectId.isValid(companyId)) {
         throw new Error("ID da Proposta/Contrato ou da Empresa inválido.");
@@ -381,10 +382,12 @@ const gerarPDFPropostaContrato = async (propostaContratoId, companyId) => {
 
     console.log(`[PropContSvc PDF] Gerando PDF para Proposta/Contrato ID: ${propostaContratoId}, Company: ${companyId}`);
 
+    let browser;
+
     try {
-        const propostaContrato = await PropostaContrato.findOne({ 
-            _id: propostaContratoId, 
-            company: companyId 
+        const propostaContrato = await PropostaContrato.findOne({
+            _id: propostaContratoId,
+            company: companyId
         })
         .select('corpoContratoHTMLGerado lead empreendimento unidade')
         .populate('lead', 'nome')
@@ -397,9 +400,9 @@ const gerarPDFPropostaContrato = async (propostaContratoId, companyId) => {
         }
 
         console.log("[PropContSvc PDF] Lançando Puppeteer...");
-        const browser = await puppeteer.launch({
-            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH, // necessário no Render
-            headless: 'new',
+
+        browser = await puppeteer.launch({
+            headless: true,
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
@@ -449,13 +452,14 @@ const gerarPDFPropostaContrato = async (propostaContratoId, companyId) => {
             }
         });
 
-        await browser.close();
         console.log("[PropContSvc PDF] PDF gerado com sucesso.");
         return pdfBuffer;
 
     } catch (error) {
-        console.error(`[PropContSvc PDF] Erro ao gerar PDF para Proposta/Contrato ${propostaContratoId}:`, error);
+        console.error(`[PropContSvc PDF] Erro ao gerar PDF:`, error);
         throw new Error(error.message || "Erro ao gerar o PDF da Proposta/Contrato.");
+    } finally {
+        if (browser) await browser.close();
     }
 };
 
@@ -466,5 +470,4 @@ module.exports = {
     preencherTemplateContrato,
     getPropostaContratoById,
     gerarPDFPropostaContrato,
-    browser
 };
