@@ -11,6 +11,7 @@ const { logHistory } = require('./LeadService');
 const User = require('../models/User');
 const ModeloContrato = require('../models/ModeloContrato');
 const BrokerContact = require('../models/BrokerContact');
+const puppeteer = require('puppeteer');
 
 
 /**
@@ -366,6 +367,99 @@ const getPropostaContratoById = async (propostaContratoId, companyId) => {
         throw new Error("Erro ao buscar Proposta/Contrato por ID.");
     }
 };
+
+/**
+ * Gera um PDF para uma Proposta/Contrato específica.
+ * @param {string} propostaContratoId - ID da Proposta/Contrato.
+ * @param {string} companyId - ID da Empresa.
+ * @returns {Promise<Buffer>} Buffer do PDF gerado.
+ */
+const gerarPDFPropostaContrato = async (propostaContratoId, companyId) => {
+    if (!mongoose.Types.ObjectId.isValid(propostaContratoId) || !mongoose.Types.ObjectId.isValid(companyId)) {
+        throw new Error("ID da Proposta/Contrato ou da Empresa inválido.");
+    }
+    console.log(`[PropContSvc PDF] Gerando PDF para Proposta/Contrato ID: ${propostaContratoId}, Company: ${companyId}`);
+
+    try {
+        const propostaContrato = await PropostaContrato.findOne({ 
+            _id: propostaContratoId, 
+            company: companyId 
+        })
+        .select('corpoContratoHTMLGerado lead empreendimento unidade') // Seleciona os campos necessários
+        .populate('lead', 'nome')
+        .populate('empreendimento', 'nome')
+        .populate('unidade', 'identificador')
+        .lean();
+
+        if (!propostaContrato || !propostaContrato.corpoContratoHTMLGerado) {
+            throw new Error("Proposta/Contrato não encontrada ou sem conteúdo HTML para gerar PDF.");
+        }
+
+        console.log("[PropContSvc PDF] Lançando Puppeteer...");
+        // Opções para Puppeteer (importante para ambientes de produção/PaaS como a Render)
+        const browser = await puppeteer.launch({
+            headless: true, // 'new' é o padrão mais recente, mas true é mais comum em exemplos antigos
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage', // Ajuda em ambientes com memória limitada
+                '--single-process' // Pode ser necessário em alguns ambientes
+            ]
+        });
+        const page = await browser.newPage();
+
+        // Adiciona um wrapper com algum estilo básico se o HTML for muito cru
+        // ou idealmente, seu corpoContratoHTMLGerado já tem estilos inline ou classes CSS que você pode injetar.
+        const htmlContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Proposta/Contrato</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+                    h1, h2, h3 { color: #333; }
+                    p { margin-bottom: 10px; }
+                    table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                    th { background-color: #f2f2f2; }
+                    .footer { font-size: 0.8em; text-align: center; margin-top: 30px; border-top: 1px solid #ccc; padding-top: 10px; }
+                    /* Adicione mais estilos globais que seu contrato precise */
+                </style>
+            </head>
+            <body>
+                ${propostaContrato.corpoContratoHTMLGerado}
+                <div class="footer">
+                    Documento gerado por MALU CRM
+                </div>
+            </body>
+            </html>
+        `;
+
+        await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+
+        console.log("[PropContSvc PDF] Gerando buffer do PDF...");
+        const pdfBuffer = await page.pdf({
+            format: 'A4',
+            printBackground: true,
+            margin: {
+                top: '20mm',
+                right: '20mm',
+                bottom: '20mm',
+                left: '20mm'
+            }
+        });
+
+        await browser.close();
+        console.log("[PropContSvc PDF] PDF gerado com sucesso.");
+        return pdfBuffer;
+
+    } catch (error) {
+        console.error(`[PropContSvc PDF] Erro ao gerar PDF para Proposta/Contrato ${propostaContratoId}:`, error);
+        throw new Error(error.message || "Erro ao gerar o PDF da Proposta/Contrato.");
+    }
+};
+
 
 
 module.exports = {
