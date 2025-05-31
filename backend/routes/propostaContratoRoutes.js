@@ -3,7 +3,8 @@ const express = require('express');
 const router = express.Router();
 const { 
     createPropostaContratoController,
-    getPropostaContratoByIdController
+    getPropostaContratoByIdController,
+    downloadPropostaContratoPDFController
  } = require('../controllers/PropostaContratoController'); // Ajuste o nome do arquivo se necessário
 const { protect } = require('../middlewares/authMiddleware');
 
