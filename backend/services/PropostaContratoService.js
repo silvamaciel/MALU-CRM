@@ -13,11 +13,6 @@ const ModeloContrato = require('../models/ModeloContrato');
 const BrokerContact = require('../models/BrokerContact');
 const puppeteer = require('puppeteer');
 
-const browser = await puppeteer.launch({
-  executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
-  headless: 'new',
-  args: ['--no-sandbox', '--disable-setuid-sandbox']
-});
 
 /**
  * Cria uma nova Proposta/Contrato a partir de uma Reserva ativa.
@@ -403,7 +398,8 @@ const gerarPDFPropostaContrato = async (propostaContratoId, companyId) => {
         console.log("[PropContSvc PDF] Lançando Puppeteer...");
         // Opções para Puppeteer (importante para ambientes de produção/PaaS como a Render)
         const browser = await puppeteer.launch({
-            headless: true, // 'new' é o padrão mais recente, mas true é mais comum em exemplos antigos
+            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+            headless: true, 
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
