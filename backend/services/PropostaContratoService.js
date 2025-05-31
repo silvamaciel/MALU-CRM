@@ -465,5 +465,6 @@ const gerarPDFPropostaContrato = async (propostaContratoId, companyId) => {
 module.exports = {
     createPropostaContrato,
     preencherTemplateContrato,
-    getPropostaContratoById
+    getPropostaContratoById,
+    gerarPDFPropostaContrato
 };
