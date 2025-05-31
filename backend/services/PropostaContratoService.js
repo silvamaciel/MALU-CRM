@@ -13,6 +13,11 @@ const ModeloContrato = require('../models/ModeloContrato');
 const BrokerContact = require('../models/BrokerContact');
 const puppeteer = require('puppeteer');
 
+const browser = await puppeteer.launch({
+  executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+  headless: 'new',
+  args: ['--no-sandbox', '--disable-setuid-sandbox']
+});
 
 /**
  * Cria uma nova Proposta/Contrato a partir de uma Reserva ativa.
@@ -466,5 +471,6 @@ module.exports = {
     createPropostaContrato,
     preencherTemplateContrato,
     getPropostaContratoById,
-    gerarPDFPropostaContrato
+    gerarPDFPropostaContrato,
+    browser
 };
