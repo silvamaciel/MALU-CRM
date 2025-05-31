@@ -19,6 +19,10 @@ router.route('/a-partir-da-reserva/:reservaId')
 router.route('/:id')
     .get(getPropostaContratoByIdController);
 
+
+router.route('/:id/pdf')
+    .get(downloadPropostaContratoPDFController);
+
 // Rota alternativa se você quiser uma rota base /api/propostas-contratos e passar reservaId no corpo
 // router.route('/')
 //     .post(createPropostaContratoController); 
