@@ -374,22 +374,18 @@ const getPropostaContratoById = async (propostaContratoId, companyId) => {
  * @param {string} companyId - ID da Empresa.
  * @returns {Promise<Buffer>} Buffer do PDF gerado.
  */
-
 const gerarPDFPropostaContrato = async (propostaContratoId, companyId) => {
     if (!mongoose.Types.ObjectId.isValid(propostaContratoId) || !mongoose.Types.ObjectId.isValid(companyId)) {
         throw new Error("ID da Proposta/Contrato ou da Empresa inválido.");
     }
-
     console.log(`[PropContSvc PDF] Gerando PDF para Proposta/Contrato ID: ${propostaContratoId}, Company: ${companyId}`);
 
-    let browser;
-
     try {
-        const propostaContrato = await PropostaContrato.findOne({
-            _id: propostaContratoId,
-            company: companyId
+        const propostaContrato = await PropostaContrato.findOne({ 
+            _id: propostaContratoId, 
+            company: companyId 
         })
-        .select('corpoContratoHTMLGerado lead empreendimento unidade')
+        .select('corpoContratoHTMLGerado lead empreendimento unidade') // Seleciona os campos necessários
         .populate('lead', 'nome')
         .populate('empreendimento', 'nome')
         .populate('unidade', 'identificador')
@@ -400,19 +396,20 @@ const gerarPDFPropostaContrato = async (propostaContratoId, companyId) => {
         }
 
         console.log("[PropContSvc PDF] Lançando Puppeteer...");
-
-        browser = await puppeteer.launch({
-            headless: true,
+        // Opções para Puppeteer (importante para ambientes de produção/PaaS como a Render)
+        const browser = await puppeteer.launch({
+            headless: true, // 'new' é o padrão mais recente, mas true é mais comum em exemplos antigos
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--single-process'
+                '--disable-dev-shm-usage', // Ajuda em ambientes com memória limitada
+                '--single-process' // Pode ser necessário em alguns ambientes
             ]
         });
-
         const page = await browser.newPage();
 
+        // Adiciona um wrapper com algum estilo básico se o HTML for muito cru
+        // ou idealmente, seu corpoContratoHTMLGerado já tem estilos inline ou classes CSS que você pode injetar.
         const htmlContent = `
             <!DOCTYPE html>
             <html>
@@ -427,6 +424,7 @@ const gerarPDFPropostaContrato = async (propostaContratoId, companyId) => {
                     th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
                     th { background-color: #f2f2f2; }
                     .footer { font-size: 0.8em; text-align: center; margin-top: 30px; border-top: 1px solid #ccc; padding-top: 10px; }
+                    /* Adicione mais estilos globais que seu contrato precise */
                 </style>
             </head>
             <body>
@@ -452,14 +450,13 @@ const gerarPDFPropostaContrato = async (propostaContratoId, companyId) => {
             }
         });
 
+        await browser.close();
         console.log("[PropContSvc PDF] PDF gerado com sucesso.");
         return pdfBuffer;
 
     } catch (error) {
-        console.error(`[PropContSvc PDF] Erro ao gerar PDF:`, error);
+        console.error(`[PropContSvc PDF] Erro ao gerar PDF para Proposta/Contrato ${propostaContratoId}:`, error);
         throw new Error(error.message || "Erro ao gerar o PDF da Proposta/Contrato.");
-    } finally {
-        if (browser) await browser.close();
     }
 };
 
@@ -469,5 +466,4 @@ module.exports = {
     createPropostaContrato,
     preencherTemplateContrato,
     getPropostaContratoById,
-    gerarPDFPropostaContrato,
 };
