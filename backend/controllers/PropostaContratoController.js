@@ -75,8 +75,42 @@ const getPropostaContratoByIdController = asyncHandler(async (req, res, next) =>
     res.status(200).json({ success: true, data: propostaContrato });
 });
 
+/**
+ * Controller para baixar o PDF de uma Proposta/Contrato.
+ */
+const downloadPropostaContratoPDFController = asyncHandler(async (req, res, next) => {
+    const companyId = req.user.company;
+    const { id: propostaContratoId } = req.params;
+
+    console.log(`[PropContCtrl PDF] Recebido GET /api/propostas-contratos/${propostaContratoId}/pdf para Company ${companyId}`);
+
+    if (!propostaContratoId || !mongoose.Types.ObjectId.isValid(propostaContratoId)) {
+        return next(new ErrorResponse('ID da Proposta/Contrato inválido.', 400));
+    }
+
+    try {
+        const pdfBuffer = await PropostaContratoService.gerarPDFPropostaContrato(propostaContratoId, companyId);
+
+        if (!pdfBuffer) { // O serviço pode ter lançado erro, mas como dupla checagem
+            return next(new ErrorResponse('PDF não pôde ser gerado.', 500));
+        }
+
+        const filename = `proposta_contrato_${propostaContratoId}.pdf`;
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+        res.send(pdfBuffer); 
+        console.log(`[PropContCtrl PDF] PDF para Proposta/Contrato ${propostaContratoId} enviado para download.`);
+
+    } catch (error) {
+        console.error(`[PropContCtrl PDF] Erro ao gerar/enviar PDF para Proposta/Contrato ${propostaContratoId}:`, error);
+        return next(new ErrorResponse(error.message || 'Falha ao gerar o PDF.', 500));
+    }
+});
+
 
 module.exports = {
     createPropostaContratoController,
-    getPropostaContratoByIdController
+    getPropostaContratoByIdController,
+    downloadPropostaContratoPDFController
 };
