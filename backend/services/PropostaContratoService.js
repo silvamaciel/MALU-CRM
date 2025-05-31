@@ -378,6 +378,7 @@ const gerarPDFPropostaContrato = async (propostaContratoId, companyId) => {
     if (!mongoose.Types.ObjectId.isValid(propostaContratoId) || !mongoose.Types.ObjectId.isValid(companyId)) {
         throw new Error("ID da Proposta/Contrato ou da Empresa inválido.");
     }
+
     console.log(`[PropContSvc PDF] Gerando PDF para Proposta/Contrato ID: ${propostaContratoId}, Company: ${companyId}`);
 
     try {
@@ -385,7 +386,7 @@ const gerarPDFPropostaContrato = async (propostaContratoId, companyId) => {
             _id: propostaContratoId, 
             company: companyId 
         })
-        .select('corpoContratoHTMLGerado lead empreendimento unidade') // Seleciona os campos necessários
+        .select('corpoContratoHTMLGerado lead empreendimento unidade')
         .populate('lead', 'nome')
         .populate('empreendimento', 'nome')
         .populate('unidade', 'identificador')
@@ -396,21 +397,19 @@ const gerarPDFPropostaContrato = async (propostaContratoId, companyId) => {
         }
 
         console.log("[PropContSvc PDF] Lançando Puppeteer...");
-        // Opções para Puppeteer (importante para ambientes de produção/PaaS como a Render)
         const browser = await puppeteer.launch({
-            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
-            headless: true, 
+            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH, // necessário no Render
+            headless: 'new',
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage', // Ajuda em ambientes com memória limitada
-                '--single-process' // Pode ser necessário em alguns ambientes
+                '--disable-dev-shm-usage',
+                '--single-process'
             ]
         });
+
         const page = await browser.newPage();
 
-        // Adiciona um wrapper com algum estilo básico se o HTML for muito cru
-        // ou idealmente, seu corpoContratoHTMLGerado já tem estilos inline ou classes CSS que você pode injetar.
         const htmlContent = `
             <!DOCTYPE html>
             <html>
@@ -425,7 +424,6 @@ const gerarPDFPropostaContrato = async (propostaContratoId, companyId) => {
                     th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
                     th { background-color: #f2f2f2; }
                     .footer { font-size: 0.8em; text-align: center; margin-top: 30px; border-top: 1px solid #ccc; padding-top: 10px; }
-                    /* Adicione mais estilos globais que seu contrato precise */
                 </style>
             </head>
             <body>
