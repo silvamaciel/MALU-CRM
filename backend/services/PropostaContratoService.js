@@ -374,91 +374,109 @@ const getPropostaContratoById = async (propostaContratoId, companyId) => {
  * @param {string} companyId - ID da Empresa.
  * @returns {Promise<Buffer>} Buffer do PDF gerado.
  */
+/**
+ * Gera um PDF para uma Proposta/Contrato específica.
+ * @param {string} propostaContratoId - ID da Proposta/Contrato.
+ * @param {string} companyId - ID da Empresa (para verificação de propriedade).
+ * @returns {Promise<Buffer>} Buffer do PDF gerado.
+ * @throws {Error} Se a proposta não for encontrada ou falhar a geração do PDF.
+ */
 const gerarPDFPropostaContrato = async (propostaContratoId, companyId) => {
     if (!mongoose.Types.ObjectId.isValid(propostaContratoId) || !mongoose.Types.ObjectId.isValid(companyId)) {
-        throw new Error("ID da Proposta/Contrato ou da Empresa inválido.");
+        throw new Error("ID da Proposta/Contrato ou da Empresa inválido para gerar PDF.");
     }
-    console.log(`[PropContSvc PDF] Gerando PDF para Proposta/Contrato ID: ${propostaContratoId}, Company: ${companyId}`);
+    console.log(`[PropContSvc PDF] Iniciando geração de PDF para Proposta/Contrato ID: ${propostaContratoId}, Company: ${companyId}`);
+
+    let browser = null; // Define o browser fora do try para poder fechar no finally
 
     try {
         const propostaContrato = await PropostaContrato.findOne({ 
             _id: propostaContratoId, 
             company: companyId 
         })
-        .select('corpoContratoHTMLGerado lead empreendimento unidade') // Seleciona os campos necessários
-        .populate('lead', 'nome')
-        .populate('empreendimento', 'nome')
-        .populate('unidade', 'identificador')
+        .select('corpoContratoHTMLGerado lead empreendimento unidade') // Campos para nome do arquivo, se desejar
+        .populate({ path: 'lead', select: 'nome' })
         .lean();
 
         if (!propostaContrato || !propostaContrato.corpoContratoHTMLGerado) {
             throw new Error("Proposta/Contrato não encontrada ou sem conteúdo HTML para gerar PDF.");
         }
+        console.log(`[PropContSvc PDF] Proposta/Contrato encontrada. Conteúdo HTML (início): ${propostaContrato.corpoContratoHTMLGerado.substring(0, 100)}...`);
 
         console.log("[PropContSvc PDF] Lançando Puppeteer...");
-        // Opções para Puppeteer (importante para ambientes de produção/PaaS como a Render)
-        const browser = await puppeteer.launch({
-            headless: true, // 'new' é o padrão mais recente, mas true é mais comum em exemplos antigos
+        browser = await puppeteer.launch({
+            headless: true, // 'new' é o padrão mais recente para headless
+            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH, // Essencial para Render/Docker
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage', // Ajuda em ambientes com memória limitada
-                '--single-process' // Pode ser necessário em alguns ambientes
-            ]
+                '--disable-dev-shm-usage',     
+                '--disable-accelerated-2d-canvas',
+                '--no-first-run',
+                '--no-zygote',
+                '--disable-gpu'         
+            ],
         });
-        const page = await browser.newPage();
+        console.log("[PropContSvc PDF] Navegador Puppeteer lançado.");
 
-        // Adiciona um wrapper com algum estilo básico se o HTML for muito cru
-        // ou idealmente, seu corpoContratoHTMLGerado já tem estilos inline ou classes CSS que você pode injetar.
-        const htmlContent = `
+        const page = await browser.newPage();
+        console.log("[PropContSvc PDF] Nova página Puppeteer criada.");
+
+        const fullHtml = `
             <!DOCTYPE html>
-            <html>
+            <html lang="pt-BR">
             <head>
                 <meta charset="UTF-8">
                 <title>Proposta/Contrato</title>
                 <style>
-                    body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
-                    h1, h2, h3 { color: #333; }
-                    p { margin-bottom: 10px; }
-                    table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                    th { background-color: #f2f2f2; }
-                    .footer { font-size: 0.8em; text-align: center; margin-top: 30px; border-top: 1px solid #ccc; padding-top: 10px; }
-                    /* Adicione mais estilos globais que seu contrato precise */
+                    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 40px; line-height: 1.6; color: #333; }
+                    h1, h2, h3, h4, h5, h6 { font-weight: normal; color: #111; }
+                    /* Adicione aqui estilos CSS que você quer que sejam aplicados ao PDF */
+                    /* Ex: table { width: 100%; border-collapse: collapse; } */
+                    /* td, th { border: 1px solid #ccc; padding: 8px; } */
+                    /* .assinatura { margin-top: 50px; border-top: 1px solid #000; width: 250px; text-align: center; } */
                 </style>
             </head>
             <body>
                 ${propostaContrato.corpoContratoHTMLGerado}
-                <div class="footer">
-                    Documento gerado por MALU CRM
-                </div>
             </body>
             </html>
         `;
 
-        await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+        console.log("[PropContSvc PDF] Definindo conteúdo da página...");
+        await page.setContent(fullHtml, { waitUntil: 'networkidle0' }); // Espera a rede ficar ociosa
+        console.log("[PropContSvc PDF] Conteúdo definido. Gerando PDF...");
 
-        console.log("[PropContSvc PDF] Gerando buffer do PDF...");
         const pdfBuffer = await page.pdf({
             format: 'A4',
-            printBackground: true,
+            printBackground: true, // Importante para imprimir cores e imagens de fundo do CSS
             margin: {
-                top: '20mm',
-                right: '20mm',
-                bottom: '20mm',
-                left: '20mm'
-            }
+                top: '2.5cm',    // Ajuste conforme necessário
+                right: '2cm',
+                bottom: '2.5cm',
+                left: '2cm'
+            },
+            displayHeaderFooter: true,
+            footerTemplate: `<div style="font-size:8px; width:100%; text-align:center; padding:5px 0;">Página <span class="pageNumber"></span> de <span class="totalPages"></span></div>`,
+            headerTemplate: '<div></div>',
         });
+        console.log("[PropContSvc PDF] Buffer do PDF gerado.");
 
-        await browser.close();
-        console.log("[PropContSvc PDF] PDF gerado com sucesso.");
-        return pdfBuffer;
+        return pdfBuffer; // Retorna o buffer
 
     } catch (error) {
-        console.error(`[PropContSvc PDF] Erro ao gerar PDF para Proposta/Contrato ${propostaContratoId}:`, error);
-        throw new Error(error.message || "Erro ao gerar o PDF da Proposta/Contrato.");
+        console.error(`[PropContSvc PDF] ERRO DETALHADO ao gerar PDF para Proposta/Contrato ${propostaContratoId}:`, error);
+        // Lança um erro mais genérico ou o erro original se preferir
+        throw new Error(`Falha ao gerar o PDF da Proposta/Contrato. Detalhe: ${error.message}`);
+    } finally {
+        if (browser !== null) {
+            console.log("[PropContSvc PDF] Fechando navegador Puppeteer...");
+            await browser.close();
+            console.log("[PropContSvc PDF] Navegador Puppeteer fechado.");
+        }
     }
 };
+
 
 
 
@@ -466,4 +484,5 @@ module.exports = {
     createPropostaContrato,
     preencherTemplateContrato,
     getPropostaContratoById,
+    gerarPDFPropostaContrato
 };
