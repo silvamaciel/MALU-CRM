@@ -406,7 +406,7 @@ const gerarPDFPropostaContrato = async (propostaContratoId, companyId) => {
         console.log("[PropContSvc PDF] Lançando Puppeteer...");
         browser = await puppeteer.launch({
             headless: true, // 'new' é o padrão mais recente para headless
-            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH, // Essencial para Render/Docker
+            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable',
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
