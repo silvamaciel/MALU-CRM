@@ -93,6 +93,16 @@ function PropostaContratoDetailPage() {
                         Voltar para Reservas
                     </Link>
 
+                    <Link 
+                        to={`/propostas-contratos/${propostaContrato._id}/editar`}
+                        className="button primary-button"
+                        style={{marginRight: '10px'}}
+                        // Desabilitar se status não permitir edição
+                        // disabled={!["Em Elaboração", "Aguardando Aprovações"].includes(propostaContrato.statusPropostaContrato)}
+                        >   
+                        Editar Proposta/Contrato
+                    </Link>
+
                     {/* Botão para baixar PDF */}
                     <button 
                         onClick={handleDownloadPdf}
