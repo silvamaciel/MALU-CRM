@@ -970,12 +970,15 @@ function PropostaContratoFormPage() {
               Cancelar
             </button>
             <button
-              type="submit"
-              className="button submit-button"
-              disabled={isSaving || loadingInitialData}
+                type="submit"
+                className="button submit-button"
+                disabled={isSaving || loadingInitialData}
             >
-              {isSaving ? "Salvando..." : "Criar Proposta/Contrato"}
-            </button>
+                {isSaving 
+                    ? (isEditMode ? 'Atualizando...' : 'Salvando...') 
+                    : (isEditMode ? 'Salvar Alterações' : 'Criar Proposta/Contrato')
+                }
+          </button>
           </div>
         </form>
       </div>
