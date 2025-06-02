@@ -1,0 +1,120 @@
+/* src/pages/PropostaContrato/PropostaContratoDetailPage/PropostaContratoDetailPage.css */
+
+.proposta-contrato-detail-page .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.proposta-contrato-detail-page .page-header h1 {
+  margin: 0;
+  font-size: 1.8em;
+  color: #333;
+}
+
+.proposta-contrato-detail-page .header-actions .button,
+.proposta-contrato-detail-page .header-actions .button-link {
+  margin-left: 10px;
+}
+
+.proposta-contrato-detail-page .page-content {
+  background-color: #fff;
+  padding: 20px 25px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.proposta-contrato-detail-page .info-section,
+.proposta-contrato-detail-page .financial-section,
+.proposta-contrato-detail-page .brokerage-section,
+.proposta-contrato-detail-page .contract-content-section {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px dashed #eee; /* Divisor suave entre seções */
+}
+.proposta-contrato-detail-page .info-section:last-child,
+.proposta-contrato-detail-page .financial-section:last-child,
+.proposta-contrato-detail-page .brokerage-section:last-child,
+.proposta-contrato-detail-page .contract-content-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+
+.proposta-contrato-detail-page .info-section h3,
+.proposta-contrato-detail-page .financial-section h3,
+.proposta-contrato-detail-page .brokerage-section h3,
+.proposta-contrato-detail-page .contract-content-section h3 {
+  font-size: 1.4em;
+  color: #007bff;
+  margin-top: 0;
+  margin-bottom: 15px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.proposta-contrato-detail-page .detail-grid-display { /* Para agrupar dados em colunas */
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Responsivo */
+    gap: 15px 25px; /* row-gap column-gap */
+}
+
+.proposta-contrato-detail-page .detail-item-display {
+  margin-bottom: 10px;
+}
+
+.proposta-contrato-detail-page .detail-item-display strong {
+  display: block;
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.9em;
+  margin-bottom: 3px;
+}
+
+.proposta-contrato-detail-page .detail-item-display p,
+.proposta-contrato-detail-page .detail-item-display span {
+  margin: 0;
+  color: #212529;
+  font-size: 0.95em;
+  line-height: 1.6;
+}
+
+.proposta-contrato-detail-page .html-preview-container {
+  border: 1px solid #e0e0e0;
+  padding: 15px 20px;
+  background-color: #fdfdfd;
+  border-radius: 6px;
+  margin-top: 10px;
+  max-height: 600px; /* Limita altura, adiciona scroll */
+  overflow-y: auto;
+}
+
+/* Estilos para tabela de Plano de Pagamento (se você renderizar como tabela) */
+.proposta-contrato-detail-page .payment-plan-table {
+    width: 100%;
+    margin-top: 10px;
+    border-collapse: collapse;
+}
+.proposta-contrato-detail-page .payment-plan-table th,
+.proposta-contrato-detail-page .payment-plan-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+    font-size: 0.9em;
+}
+.proposta-contrato-detail-page .payment-plan-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+/* Para erros na página de detalhes */
+.proposta-contrato-detail-page .error-page .error-message {
+  color: #721c24;
+  margin-bottom: 15px;
+}
+.proposta-contrato-detail-page .error-page .button {
+  margin-top: 10px;
+}
