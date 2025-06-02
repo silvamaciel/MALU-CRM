@@ -112,6 +112,8 @@ function App() {
 
                 <Route path="/reservas/:reservaId/proposta-contrato/novo" element={<PropostaContratoFormPage />} />
                 <Route path="/propostas-contratos/:propostaContratoId" element={<PropostaContratoDetailPage />} />
+                <Route path="/propostas-contratos/:propostaContratoId/editar" element={<PropostaContratoFormPage />} />
+
 
 
 
