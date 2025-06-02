@@ -323,21 +323,12 @@ function PropostaContratoFormPage() {
           return;
         }
 
-      const [reservaData, modelosData, usuariosDataResult, brokersDataResponse] = await Promise.all([
-            getReservaByIdApi(reservaId),
-            getModelosContrato(),
-            getUsuarios({ ativo: true }),
-            getBrokerContacts({ ativo: true })
-          ]);
+        const [modelosData, usuariosDataResult] = await Promise.all([
+          getModelosContrato(),
+          getUsuarios({ ativo: true }),
+        ]);
         setModelosContrato(modelosData.modelos || []);
         setUsuariosCRM(usuariosDataResult || []);
-
-        // VVVVV LOG DETALHADO PARA BROKERS VVVVV
-        console.log("BrokerContacts RAW RESPONSE da API:", brokersDataResponse); 
-        const brokersArray = brokersDataResponse?.data || brokersDataResponse?.brokerContacts || brokersDataResponse?.brokers || brokersDataResponse || [];
-        console.log("BrokerContacts ARRAY EXTRAÍDO para o estado:", brokersArray);
-        setBrokerContactsList(brokersArray);
-    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         if (isEditMode && currentPropostaData) {
             // Preenche o formData com os dados da proposta existente
