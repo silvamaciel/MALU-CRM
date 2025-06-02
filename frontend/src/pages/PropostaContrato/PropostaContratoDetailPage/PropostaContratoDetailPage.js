@@ -17,6 +17,9 @@ function PropostaContratoDetailPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const [isDownloadingPdf, setIsDownloadingPdf] = useState(false); 
+
+
     const fetchPropostaContrato = useCallback(async () => {
         if (!propostaContratoId) return;
         setLoading(true);
