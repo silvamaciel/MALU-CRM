@@ -80,3 +80,20 @@ export const downloadPropostaContratoPdfApi = async (propostaContratoId) => {
         throw new Error("Falha ao baixar o PDF da Proposta/Contrato.");
     }
 };
+
+/**
+ * Atualiza uma Proposta/Contrato existente.
+ * @param {string} propostaContratoId - ID da Proposta/Contrato a ser atualizada.
+ * @param {object} propostaData - Dados para atualizar.
+ * @returns {Promise<object>} A Proposta/Contrato atualizada.
+ */
+export const updatePropostaContratoApi = async (propostaContratoId, propostaData) => {
+    if (!propostaContratoId) throw new Error("ID da Proposta/Contrato é obrigatório para atualização.");
+    try {
+        const response = await axiosInstance.put(`${API_URL_BASE}/${propostaContratoId}`, propostaData);
+        return response.data.data; // Assumindo que o backend retorna { success: true, data: propostaContrato }
+    } catch (error) {
+        console.error(`Erro ao atualizar Proposta/Contrato ${propostaContratoId}:`, error.response?.data || error.message);
+        throw error.response?.data || new Error("Falha ao atualizar a Proposta/Contrato.");
+    }
+};
