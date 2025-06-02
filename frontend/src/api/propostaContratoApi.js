@@ -56,3 +56,27 @@ export const getPropostaContratoByIdApi = async (propostaContratoId) => {
         throw error.response?.data || new Error("Falha ao buscar a Proposta/Contrato.");
     }
 };
+
+/**
+ * Solicita o PDF de uma Proposta/Contrato ao backend.
+ * @param {string} propostaContratoId - ID da Proposta/Contrato.
+ * @returns {Promise<Blob>} O PDF como um Blob.
+ */
+export const downloadPropostaContratoPdfApi = async (propostaContratoId) => {
+    if (!propostaContratoId) throw new Error("ID da Proposta/Contrato é obrigatório para download.");
+    try {
+        const response = await axiosInstance.get(`<span class="math-inline">\{API\_URL\_BASE\}/</span>{propostaContratoId}/pdf`, {
+            responseType: 'blob', // Importante para tratar a resposta como um arquivo binário
+        });
+        return response.data; // Retorna o Blob do PDF
+    } catch (error) {
+        console.error(`Erro ao baixar PDF da Proposta/Contrato ${propostaContratoId}:`, error.response?.data || error.message);
+        // Tentar ler o erro se for um JSON (caso o backend não tenha enviado um PDF por algum erro)
+        if (error.response && error.response.data instanceof Blob && error.response.data.type.includes('application/json')) {
+            const errorJson = await error.response.data.text();
+            const errorObj = JSON.parse(errorJson);
+            throw errorObj || new Error("Falha ao baixar o PDF.");
+        }
+        throw new Error("Falha ao baixar o PDF da Proposta/Contrato.");
+    }
+};
