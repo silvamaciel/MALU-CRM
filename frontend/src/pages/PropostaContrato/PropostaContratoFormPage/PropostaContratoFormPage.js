@@ -5,11 +5,12 @@ import { toast } from "react-toastify";
 import {
   getReservaByIdApi, // Você precisará criar esta função na sua API de Proposta/Reserva
   createPropostaContratoApi,
-  
-} from "../../../api/propostaContratoApi"; // Verifique se getReservaByIdApi está aqui ou em reservaApi.js
+  getPropostaContratoByIdApi,
+  updatePropostaContratoApi
+} from "../../../api/propostaContratoApi";
 import { getModelosContrato } from "../../../api/modeloContratoApi";
 import { getUsuarios } from "../../../api/users";
-import { getBrokerContacts } from "../../../api/brokerContacts"; // trocar para getBrotkerContacts
+import { getBrokerContacts } from "../../../api/brokerContacts";
 
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
@@ -99,8 +100,10 @@ const preencherTemplateContrato = (templateHtml, dados) => {
 };
 
 function PropostaContratoFormPage() {
-  const { reservaId } = useParams();
+  const { reservaId, propostaContratoId } = useParams();
   const navigate = useNavigate();
+
+   const isEditMode = Boolean(propostaContratoId);
 
   const [reservaBase, setReservaBase] = useState(null);
   const [modelosContrato, setModelosContrato] = useState([]);
@@ -284,69 +287,97 @@ function PropostaContratoFormPage() {
     []
   ); // Vazio para ser estável, recebe dados como argumentos
 
-  useEffect(() => {
+   useEffect(() => {
     const loadInitialData = async () => {
-      if (!reservaId) {
-        toast.error("ID da Reserva não fornecido.");
-        navigate("/reservas");
-        return;
-      }
       setLoadingInitialData(true);
       try {
-        const [reservaData, modelosData, usuariosDataResult, brokersData] =
-          await Promise.all([
-            getReservaByIdApi(reservaId),
-            getModelosContrato(),
-            getUsuarios({ ativo: true }),
-            getBrokerContacts({ ativo: true }),
-          ]);
+        let currentReservaBase = null;
+        let currentPropostaData = null;
 
-        setReservaBase(reservaData);
+        if (isEditMode && propostaContratoId) {
+          setPageTitle("Carregando Proposta...");
+          currentPropostaData = await getPropostaContratoByIdApi(propostaContratoId);
+          if (!currentPropostaData) throw new Error("Proposta/Contrato não encontrada.");
+
+          // Se está editando, a reserva base já está vinculada à proposta
+          // O getPropostaContratoByIdApi já deve popular lead, unidade, empreendimento, company
+          currentReservaBase = { 
+            lead: currentPropostaData.lead,
+            unidade: currentPropostaData.unidade,
+            empreendimento: currentPropostaData.empreendimento,
+            company: currentPropostaData.company,
+            // Adicione outros campos da reserva se forem necessários para montarDadosParaTemplate
+          };
+          setReservaBase(currentReservaBase); // Para a função montarDadosParaTemplate
+          setPageTitle(`Editar Proposta/Contrato (Lead: ${currentPropostaData.lead?.nome})`);
+
+        } else if (reservaId) { // Modo Criação a partir de uma reserva
+          setPageTitle("Carregando dados da Reserva...");
+          currentReservaBase = await getReservaByIdApi(reservaId);
+          if (!currentReservaBase) throw new Error("Reserva base não encontrada.");
+          setReservaBase(currentReservaBase);
+          setPageTitle(`Nova Proposta (Lead: ${currentReservaBase.lead?.nome} | Unidade: ${currentReservaBase.unidade?.identificador})`);
+        } else {
+          toast.error("ID da Reserva ou da Proposta/Contrato não fornecido.");
+          navigate('/reservas');
+          return;
+        }
+
+        const [modelosData, usuariosDataResult] = await Promise.all([
+          getModelosContrato(),
+          getUsuarios({ ativo: true }),
+        ]);
         setModelosContrato(modelosData.modelos || []);
         setUsuariosCRM(usuariosDataResult || []);
-        setBrokerContactsList(brokersData || []);
 
-        console.log(usuariosDataResult);
+        if (isEditMode && currentPropostaData) {
+            // Preenche o formData com os dados da proposta existente
+            setFormData({
+                modeloContratoUtilizado: currentPropostaData.modeloContratoUtilizado?._id || currentPropostaData.modeloContratoUtilizado || "",
+                valorPropostaContrato: currentPropostaData.valorPropostaContrato || "",
+                valorEntrada: currentPropostaData.valorEntrada || "",
+                condicoesPagamentoGerais: currentPropostaData.condicoesPagamentoGerais || "",
+                dadosBancariosParaPagamento: currentPropostaData.dadosBancariosParaPagamento || { bancoNome: "", agencia: "", contaCorrente: "", cnpjPagamento: "", pix: "" },
+                planoDePagamento: currentPropostaData.planoDePagamento && currentPropostaData.planoDePagamento.length > 0 
+                                  ? currentPropostaData.planoDePagamento.map(p => ({...p, vencimentoPrimeira: p.vencimentoPrimeira ? new Date(p.vencimentoPrimeira).toISOString().split('T')[0] : ''})) 
+                                  : [{ tipoParcela: TIPO_PARCELA_OPCOES[0], quantidade: 1, valorUnitario: "", vencimentoPrimeira: "", observacao: "" }],
+                corretagem: currentPropostaData.corretagem || { valorCorretagem: "", corretorPrincipal: "", condicoesPagamentoCorretagem: "", observacoesCorretagem: "" },
+                corpoContratoHTMLGerado: currentPropostaData.corpoContratoHTMLGerado || "",
+                responsavelNegociacao: currentPropostaData.responsavelNegociacao?._id || currentPropostaData.responsavelNegociacao || "",
+                observacoesInternasProposta: currentPropostaData.observacoesInternasProposta || "",
+                statusPropostaContrato: currentPropostaData.statusPropostaContrato || STATUS_PROPOSTA_OPCOES[0],
+                dataProposta: currentPropostaData.dataProposta ? new Date(currentPropostaData.dataProposta).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                // Campos snapshot e de vínculo não são editáveis aqui, são definidos na criação
+            });
+        } else if (!isEditMode && currentReservaBase) { // Modo Criação
+            const primeiroModelo = (modelosData.modelos && modelosData.modelos.length > 0) ? modelosData.modelos[0] : null;
+            const htmlTemplateInicial = primeiroModelo ? primeiroModelo.conteudoHTMLTemplate : "<p>Selecione um modelo de contrato.</p>";
 
-        if (reservaData) {
-          setPageTitle(
-            `Nova Proposta para Lead: ${reservaData.lead?.nome} | Unidade: ${reservaData.unidade?.identificador}`
-          );
+            const initialLocalFormData = {
+                valorPropostaContrato: currentReservaBase.unidade?.precoTabela || "",
+                dataProposta: new Date().toISOString().split("T")[0],
+                // ... outros campos do formData que dependem de currentReservaBase para o template
+            };
 
-          const primeiroModelo =
-            modelosData.modelos && modelosData.modelos.length > 0
-              ? modelosData.modelos[0]
-              : null;
-          const htmlTemplateInicial = primeiroModelo
-            ? primeiroModelo.conteudoHTMLTemplate
-            : "<p>Selecione um modelo de contrato.</p>";
-
-          // Define o formData inicial
-          const initialFormData = {
-            ...formData, // Mantém defaults como dataProposta, statusPropostaContrato
-            valorPropostaContrato: reservaData.unidade?.precoTabela || "",
-            modeloContratoUtilizado: primeiroModelo ? primeiroModelo._id : "",
-            // corpoContratoHTMLGerado será preenchido pelo useEffect abaixo
-          };
-
-          // Preenche o corpo do contrato com o template e os dados iniciais
-          initialFormData.corpoContratoHTMLGerado = preencherTemplateContrato(
-            htmlTemplateInicial,
-            montarDadosParaTemplate(initialFormData, reservaData)
-          );
-          setFormData(initialFormData);
+            setFormData(prev => ({
+                ...prev, // Mantém defaults como statusPropostaContrato
+                valorPropostaContrato: initialLocalFormData.valorPropostaContrato,
+                modeloContratoUtilizado: primeiroModelo ? primeiroModelo._id : "",
+                corpoContratoHTMLGerado: preencherTemplateContrato(
+                    htmlTemplateInicial,
+                    montarDadosParaTemplate(initialLocalFormData, currentReservaBase)
+                )
+            }));
         }
+
       } catch (err) {
-        toast.error(
-          "Erro ao carregar dados para nova proposta: " +
-            (err.error || err.message)
-        );
+        toast.error(`Erro ao carregar dados: ${err.error || err.message}`);
       } finally {
         setLoadingInitialData(false);
       }
     };
-    if (reservaId) loadInitialData();
-  }, [reservaId, navigate, montarDadosParaTemplate]);
+    loadInitialData();
+}, [reservaId, propostaContratoId, isEditMode, navigate, montarDadosParaTemplate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -398,78 +429,74 @@ function PropostaContratoFormPage() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSaving(true);
-    setFormError("");
-    if (
-      !formData.modeloContratoUtilizado ||
-      !formData.valorPropostaContrato ||
-      !formData.responsavelNegociacao
-    ) {
-      toast.error(
-        "Modelo, Valor da Proposta e Responsável pela Negociação são obrigatórios."
-      );
-      setIsSaving(false);
-      return;
-    }
-    const dataToSubmit = {
-      modeloContratoUtilizado: formData.modeloContratoUtilizado,
-      valorPropostaContrato: parseFloat(formData.valorPropostaContrato) || 0,
-      valorEntrada: formData.valorEntrada
-        ? parseFloat(formData.valorEntrada)
-        : undefined,
-      condicoesPagamentoGerais: formData.condicoesPagamentoGerais,
-      dadosBancariosParaPagamento: formData.dadosBancariosParaPagamento,
+  e.preventDefault();
+  setIsSaving(true);
+  setFormError("");
 
-      // VVVVV AJUSTE AQUI para garantir a conversão para número ANTES de filtrar VVVVV
-      planoDePagamento: formData.planoDePagamento
-        .map((p) => ({
-          tipoParcela: p.tipoParcela,
-          quantidade: Number(p.quantidade) || 1, // Garante que é número, default 1
-          valorUnitario: Number(p.valorUnitario) || 0, // Garante que é número, default 0
-          vencimentoPrimeira: p.vencimentoPrimeira,
-          observacao: p.observacao || "",
-        }))
-        .filter((p) => p.valorUnitario > 0 && p.vencimentoPrimeira), // Envia apenas parcelas com valor e vencimento
-      // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-      corretagem: formData.corretagem.valorCorretagem
-        ? {
-            // Envia corretagem apenas se houver valor
-            ...formData.corretagem,
-            valorCorretagem: Number(formData.corretagem.valorCorretagem) || 0,
-          }
-        : undefined,
-
-      corpoContratoHTMLGerado: formData.corpoContratoHTMLGerado,
-      responsavelNegociacao: formData.responsavelNegociacao,
-      observacoesInternasProposta: formData.observacoesInternasProposta,
-      statusPropostaContrato: formData.statusPropostaContrato,
-      dataProposta: formData.dataProposta,
-    };
-
-    delete dataToSubmit.precoTabelaUnidadeNoMomento; // Se ele estiver no formData por algum motivo
-
-    console.log(
-      "Enviando para API createPropostaContratoApi, Reserva ID:",
-      reservaId,
-      "Dados:",
-      dataToSubmit
+  if (
+    !formData.modeloContratoUtilizado ||
+    !formData.valorPropostaContrato ||
+    !formData.responsavelNegociacao
+  ) {
+    toast.error(
+      "Modelo, Valor da Proposta e Responsável pela Negociação são obrigatórios."
     );
+    setIsSaving(false);
+    return;
+  }
 
-    try {
+  const dataToSubmit = {
+    modeloContratoUtilizado: formData.modeloContratoUtilizado,
+    valorPropostaContrato: parseFloat(formData.valorPropostaContrato) || 0,
+    valorEntrada: formData.valorEntrada
+      ? parseFloat(formData.valorEntrada)
+      : undefined,
+    condicoesPagamentoGerais: formData.condicoesPagamentoGerais,
+    dadosBancariosParaPagamento: formData.dadosBancariosParaPagamento,
+    planoDePagamento: formData.planoDePagamento
+      .map((p) => ({
+        tipoParcela: p.tipoParcela,
+        quantidade: Number(p.quantidade) || 1,
+        valorUnitario: Number(p.valorUnitario) || 0,
+        vencimentoPrimeira: p.vencimentoPrimeira,
+        observacao: p.observacao || "",
+      }))
+      .filter((p) => p.valorUnitario > 0 && p.vencimentoPrimeira),
+    corretagem: formData.corretagem?.valorCorretagem
+      ? {
+          ...formData.corretagem,
+          valorCorretagem: Number(formData.corretagem.valorCorretagem) || 0,
+        }
+      : undefined,
+    corpoContratoHTMLGerado: formData.corpoContratoHTMLGerado,
+    responsavelNegociacao: formData.responsavelNegociacao,
+    observacoesInternasProposta: formData.observacoesInternasProposta,
+    statusPropostaContrato: formData.statusPropostaContrato,
+    dataProposta: formData.dataProposta,
+  };
+
+  delete dataToSubmit.precoTabelaUnidadeNoMomento;
+
+  try {
+    if (isEditMode) {
+      await updatePropostaContratoApi(propostaContratoId, dataToSubmit);
+      toast.success("Proposta/Contrato atualizada com sucesso!");
+      navigate(`/propostas-contratos/${propostaContratoId}`);
+    } else {
       await createPropostaContratoApi(reservaId, dataToSubmit);
       toast.success("Proposta/Contrato criada com sucesso!");
-      navigate(`/reservas`); // Ou para detalhes da proposta/contrato recém-criada
-    } catch (err) {
-      const errMsg =
-        err.error || err.message || "Erro ao criar Proposta/Contrato.";
-      setFormError(errMsg);
-      toast.error(errMsg);
-    } finally {
-      setIsSaving(false);
+      navigate(`/reservas`);
     }
-  };
+  } catch (err) {
+    const errMsg =
+      err.error || err.message || "Erro ao salvar Proposta/Contrato.";
+    setFormError(errMsg);
+    toast.error(errMsg);
+  } finally {
+    setIsSaving(false);
+  }
+};
+
 
   const handlePlanoDePagamentoChange = (index, event) => {
     const { name, value, type } = event.target;
@@ -522,6 +549,27 @@ function PropostaContratoFormPage() {
       },
     }));
   };
+
+  // Atualiza o preview do contrato se dados relevantes do formulário ou o modelo mudarem
+  useEffect(() => {
+      if (!isEditMode && formData.modeloContratoUtilizado && modelosContrato.length > 0 && reservaBase) { // Só reprocessa no modo CRIAR ou se o modelo mudar
+          const modeloSelecionado = modelosContrato.find(m => m._id === formData.modeloContratoUtilizado);
+          if (modeloSelecionado) {
+              const htmlProcessado = preencherTemplateContrato(modeloSelecionado.conteudoHTMLTemplate, montarDadosParaTemplate(formData, reservaBase));
+              if (htmlProcessado !== formData.corpoContratoHTMLGerado) {
+                  setFormData(prev => ({ ...prev, corpoContratoHTMLGerado: htmlProcessado }));
+              }
+          }
+      }
+  }, [
+      formData.valorPropostaContrato, formData.valorEntrada, formData.condicoesPagamentoGerais, formData.dataProposta,
+      formData.modeloContratoUtilizado, // Adicionado para reprocessar se o modelo mudar
+      modelosContrato, reservaBase, isEditMode, montarDadosParaTemplate
+      // Removido formData.corpoContratoHTMLGerado da dependência para evitar loop com o ReactQuill
+  ]);
+
+
+
 
   // Renderização
   if (loadingInitialData) {
