@@ -108,9 +108,37 @@ const downloadPropostaContratoPDFController = asyncHandler(async (req, res, next
     }
 });
 
+/**
+ * Controller para atualizar uma Proposta/Contrato existente.
+ */
+const updatePropostaContratoController = asyncHandler(async (req, res, next) => {
+    const companyId = req.user.company;
+    const actorUserId = req.user._id;
+    const { id: propostaContratoId } = req.params;
+    const updateData = req.body;
+
+    console.log(`[PropContCtrl] Recebido PUT /api/propostas-contratos/${propostaContratoId} para Company ${companyId}`);
+
+    if (!propostaContratoId || !mongoose.Types.ObjectId.isValid(propostaContratoId)) {
+        return next(new ErrorResponse('ID da Proposta/Contrato inválido.', 400));
+    }
+    if (Object.keys(updateData).length === 0) {
+        return next(new ErrorResponse('Nenhum dado fornecido para atualização.', 400));
+    }
+
+    const propostaAtualizada = await PropostaContratoService.updatePropostaContrato(
+        propostaContratoId,
+        updateData,
+        companyId,
+        actorUserId
+    );
+    res.status(200).json({ success: true, data: propostaAtualizada });
+});
+
 
 module.exports = {
     createPropostaContratoController,
     getPropostaContratoByIdController,
-    downloadPropostaContratoPDFController
+    downloadPropostaContratoPDFController,
+    updatePropostaContratoController
 };

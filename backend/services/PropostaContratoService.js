@@ -368,12 +368,7 @@ const getPropostaContratoById = async (propostaContratoId, companyId) => {
     }
 };
 
-/**
- * Gera um PDF para uma Proposta/Contrato específica.
- * @param {string} propostaContratoId - ID da Proposta/Contrato.
- * @param {string} companyId - ID da Empresa.
- * @returns {Promise<Buffer>} Buffer do PDF gerado.
- */
+
 /**
  * Gera um PDF para uma Proposta/Contrato específica.
  * @param {string} propostaContratoId - ID da Proposta/Contrato.
@@ -477,6 +472,80 @@ const gerarPDFPropostaContrato = async (propostaContratoId, companyId) => {
     }
 };
 
+/**
+ * Atualiza uma Proposta/Contrato existente.
+ * @param {string} propostaContratoId - ID da Proposta/Contrato a ser atualizada.
+ * @param {object} updateData - Dados para atualizar (não permite alterar vínculos como lead, unidade, etc.).
+ * @param {string} companyId - ID da Empresa do usuário logado.
+ * @param {string} actorUserId - ID do Usuário do CRM que está realizando a atualização.
+ * @returns {Promise<PropostaContrato>} A Proposta/Contrato atualizada.
+ */
+const updatePropostaContrato = async (propostaContratoId, updateData, companyId, actorUserId) => {
+    console.log(`[PropContSvc] Atualizando Proposta/Contrato ID: ${propostaContratoId} para Company: ${companyId} por User: ${actorUserId}`);
+    
+    if (!mongoose.Types.ObjectId.isValid(propostaContratoId) || 
+        !mongoose.Types.ObjectId.isValid(companyId) ||
+        !mongoose.Types.ObjectId.isValid(actorUserId) ) {
+        throw new Error("IDs inválidos fornecidos (Proposta/Contrato, Empresa ou Usuário).");
+    }
+
+    // Campos que não devem ser alterados via update genérico
+    const NaoAlterar = ['lead', 'reserva', 'unidade', 'empreendimento', 'company', 'createdBy', '_id', 'createdAt', 'updatedAt', '__v', 'modeloContratoUtilizado', 'precoTabelaUnidadeNoMomento'];
+    for (const key of NaoAlterar) {
+        delete updateData[key];
+    }
+
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const propostaContrato = await PropostaContrato.findOne({
+            _id: propostaContratoId,
+            company: companyId
+        }).session(session);
+
+        if (!propostaContrato) {
+            throw new Error("Proposta/Contrato não encontrada ou não pertence a esta empresa.");
+        }
+
+        // Não permitir edição se já estiver "Vendido" ou "Cancelado" (Exemplo de regra de negócio)
+        if (["Vendido", "Cancelado"].includes(propostaContrato.statusPropostaContrato)) {
+            throw new Error(`Proposta/Contrato com status "${propostaContrato.statusPropostaContrato}" não pode ser editada.`);
+        }
+        
+        // Atualiza os campos
+        Object.assign(propostaContrato, updateData);
+
+       
+        const propostaAtualizada = await propostaContrato.save({ session });
+
+    
+        const oldData = await PropostaContrato.findById(propostaContratoId).lean(); // Pega o estado anterior para o log
+        await logHistory(
+            propostaAtualizada.lead,
+            actorUserId,
+            "PROPOSTA_CONTRATO_EDITADA",
+            `Proposta/Contrato (ID: ${propostaAtualizada._id}) atualizada.`,
+            { oldData: oldData }, // Salvar o objeto antigo pode ser muito grande, talvez campos específicos
+            propostaAtualizada.toObject(),
+            'PropostaContrato',
+            propostaAtualizada._id,
+            session
+        );
+
+        await session.commitTransaction();
+        console.log(`[PropContSvc] Proposta/Contrato ${propostaAtualizada._id} atualizada com sucesso.`);
+        return propostaAtualizada;
+
+    } catch (error) {
+        await session.abortTransaction();
+        console.error("[PropContSvc] Erro ao atualizar Proposta/Contrato:", error);
+        throw new Error(error.message || "Erro interno ao atualizar a Proposta/Contrato.");
+    } finally {
+        session.endSession();
+    }
+};
 
 
 
@@ -484,5 +553,6 @@ module.exports = {
     createPropostaContrato,
     preencherTemplateContrato,
     getPropostaContratoById,
-    gerarPDFPropostaContrato
+    gerarPDFPropostaContrato,
+    updatePropostaContrato
 };
