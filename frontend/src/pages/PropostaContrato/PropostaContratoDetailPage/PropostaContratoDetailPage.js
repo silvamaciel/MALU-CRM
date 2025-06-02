@@ -2,7 +2,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { getPropostaContratoByIdApi, /* updatePropostaContratoStatusApi, exportPropostaContratoPdfApi */ } from '../../../api/propostaContratoApi';
+import {
+     getPropostaContratoByIdApi, 
+     downloadPropostaContratoPdfApi,
+     } from '../../../api/propostaContratoApi';
+
 import './PropostaContratoDetailPage.css'; // Crie este CSS
 
 function PropostaContratoDetailPage() {
@@ -32,7 +36,40 @@ function PropostaContratoDetailPage() {
         fetchPropostaContrato();
     }, [fetchPropostaContrato]);
 
-    // TODO: Handlers para mudar status, baixar PDF, editar
+    //Handler para Baixar Pdf
+    const handleDownloadPdf = async () => {
+        if (!propostaContrato || !propostaContrato._id) return;
+
+        setIsDownloadingPdf(true);
+        toast.info("Gerando PDF, por favor aguarde...");
+        try {
+            const pdfBlob = await downloadPropostaContratoPdfApi(propostaContrato._id);
+
+            // Cria um link temporário para o download
+            const url = window.URL.createObjectURL(pdfBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            // Define o nome do arquivo
+            const leadName = propostaContrato.lead?.nome?.replace(/\s+/g, '_') || 'Lead';
+            const unidadeId = propostaContrato.unidade?.identificador?.replace(/\s+/g, '_') || propostaContrato.unidade?._id;
+            link.setAttribute('download', `Proposta_${leadName}_Unidade_${unidadeId}.pdf`);
+
+            document.body.appendChild(link);
+            link.click(); // Simula o clique para iniciar o download
+
+            link.parentNode.removeChild(link); // Remove o link temporário
+            window.URL.revokeObjectURL(url); // Libera o objeto URL
+
+            toast.success("Download do PDF iniciado!");
+
+        } catch (err) {
+            const errorMsg = err.error || err.message || "Falha ao gerar ou baixar o PDF.";
+            toast.error(errorMsg);
+            console.error("Erro no download do PDF:", err);
+        } finally {
+            setIsDownloadingPdf(false);
+        }
+    };
 
     if (loading) {
         return <div className="admin-page loading"><p>Carregando Proposta/Contrato...</p></div>;
@@ -52,6 +89,17 @@ function PropostaContratoDetailPage() {
                     <Link to="/reservas" className="button-link" style={{ marginRight: '10px' }}>
                         Voltar para Reservas
                     </Link>
+
+                    {/* Botão para baixar PDF */}
+                    <button 
+                        onClick={handleDownloadPdf}
+                        className="button action-button"
+                        disabled={isDownloadingPdf}
+                        style={{marginRight: '10px'}}
+                    >
+                        {isDownloadingPdf ? 'Gerando PDF...' : 'Baixar PDF'}
+                    </button>
+
                     {/* Botões de Ação Futuros */}
                     {/* <button className="button primary-button" style={{marginRight: '10px'}}>Editar</button> */}
                     {/* <button className="button action-button" style={{marginRight: '10px'}}>Baixar PDF</button> */}
