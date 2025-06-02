@@ -323,7 +323,7 @@ function PropostaContratoFormPage() {
           return;
         }
 
-        const [modelosData, usuariosDataResult] = await Promise.all([
+        const [modelosData, usuariosDataResult, brokerContactsResult] = await Promise.all([
           getModelosContrato(),
           getUsuarios({ ativo: true }),
           getBrokerContacts({ativo: true}),
