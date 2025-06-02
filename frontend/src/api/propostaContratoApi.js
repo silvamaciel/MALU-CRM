@@ -65,7 +65,7 @@ export const getPropostaContratoByIdApi = async (propostaContratoId) => {
 export const downloadPropostaContratoPdfApi = async (propostaContratoId) => {
     if (!propostaContratoId) throw new Error("ID da Proposta/Contrato é obrigatório para download.");
     try {
-        const response = await axiosInstance.get(`<span class="math-inline">\{API\_URL\_BASE\}/</span>{propostaContratoId}/pdf`, {
+        const response = await axiosInstance.get(`${API_URL_BASE}/${propostaContratoId}/pdf`, {
             responseType: 'blob', // Importante para tratar a resposta como um arquivo binário
         });
         return response.data; // Retorna o Blob do PDF
