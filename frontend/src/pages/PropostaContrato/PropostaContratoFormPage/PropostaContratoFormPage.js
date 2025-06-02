@@ -326,9 +326,11 @@ function PropostaContratoFormPage() {
         const [modelosData, usuariosDataResult] = await Promise.all([
           getModelosContrato(),
           getUsuarios({ ativo: true }),
+          getBrokerContacts({ativo: true}),
         ]);
         setModelosContrato(modelosData.modelos || []);
         setUsuariosCRM(usuariosDataResult || []);
+        setBrokerContactsList(brokerContactsResult || []);
 
         if (isEditMode && currentPropostaData) {
             // Preenche o formData com os dados da proposta existente
