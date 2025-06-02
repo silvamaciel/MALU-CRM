@@ -130,7 +130,6 @@ function PropostaContratoDetailPage() {
                     <p><strong>Data da Proposta:</strong> {propostaContrato.dataProposta ? new Date(propostaContrato.dataProposta).toLocaleDateString('pt-BR') : 'N/A'}</p>
                     <p><strong>Responsável pela Negociação:</strong> {propostaContrato.responsavelNegociacao?.nome || 'N/A'}</p>
                 </div>
-
                 <div className="contrato-preview-section">
                     <h3>Conteúdo do Contrato</h3>
                     <div 

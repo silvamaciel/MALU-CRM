@@ -20,50 +20,34 @@
   margin-left: 10px;
 }
 
-.proposta-contrato-detail-page .page-content {
-  background-color: #fff;
-  padding: 20px 25px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+/* VVVVV Estilos para o layout principal da página de detalhes VVVVV */
+.proposta-contrato-detail-page .page-content-detail {
+  display: flex;
+  flex-direction: column; /* Padrão para telas menores: informações em cima, contrato embaixo */
+  gap: 25px;
 }
 
-.proposta-contrato-detail-page .info-section,
-.proposta-contrato-detail-page .financial-section,
-.proposta-contrato-detail-page .brokerage-section,
-.proposta-contrato-detail-page .contract-content-section {
-  margin-bottom: 30px;
-  padding-bottom: 20px;
-  border-bottom: 1px dashed #eee; /* Divisor suave entre seções */
+.proposta-contrato-detail-page .info-sidebar-ou-superior {
+  background-color: #f8f9fa; /* Um fundo leve para a seção de informações */
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
-.proposta-contrato-detail-page .info-section:last-child,
-.proposta-contrato-detail-page .financial-section:last-child,
-.proposta-contrato-detail-page .brokerage-section:last-child,
-.proposta-contrato-detail-page .contract-content-section:last-child {
-  border-bottom: none;
+
+.proposta-contrato-detail-page .info-section {
+  margin-bottom: 20px;
+}
+.proposta-contrato-detail-page .info-section:last-child {
   margin-bottom: 0;
 }
 
-
-.proposta-contrato-detail-page .info-section h3,
-.proposta-contrato-detail-page .financial-section h3,
-.proposta-contrato-detail-page .brokerage-section h3,
-.proposta-contrato-detail-page .contract-content-section h3 {
-  font-size: 1.4em;
+.proposta-contrato-detail-page .info-section h3 {
+  font-size: 1.2em; /* Título da seção de informações um pouco menor */
   color: #007bff;
   margin-top: 0;
   margin-bottom: 15px;
   padding-bottom: 8px;
-  border-bottom: 1px solid #e9ecef;
-}
-
-.proposta-contrato-detail-page .detail-grid-display { /* Para agrupar dados em colunas */
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Responsivo */
-    gap: 15px 25px; /* row-gap column-gap */
-}
-
-.proposta-contrato-detail-page .detail-item-display {
-  margin-bottom: 10px;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .proposta-contrato-detail-page .detail-item-display strong {
@@ -74,47 +58,66 @@
   margin-bottom: 3px;
 }
 
-.proposta-contrato-detail-page .detail-item-display p,
-.proposta-contrato-detail-page .detail-item-display span {
-  margin: 0;
+.proposta-contrato-detail-page .detail-item-display p {
+  margin: 0 0 10px 0;
   color: #212529;
   font-size: 0.95em;
-  line-height: 1.6;
+}
+
+.proposta-contrato-detail-page .contrato-main-content {
+  flex-grow: 1; /* Permite que esta seção cresça se estiver em layout flexível */
+  background-color: #fff;
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.proposta-contrato-detail-page .contract-content-section h3 {
+  font-size: 1.5em; /* Título do conteúdo do contrato maior */
+  color: #333;
+  margin-top: 0;
+  margin-bottom: 20px;
 }
 
 .proposta-contrato-detail-page .html-preview-container {
-  border: 1px solid #e0e0e0;
-  padding: 15px 20px;
-  background-color: #fdfdfd;
+  border: 1px solid #e9ecef;
+  padding: 20px;
   border-radius: 6px;
-  margin-top: 10px;
-  max-height: 600px; /* Limita altura, adiciona scroll */
-  overflow-y: auto;
+  background-color: #fff; /* Fundo branco para o conteúdo do contrato */
+  line-height: 1.7; /* Melhor legibilidade para texto longo */
+  font-size: 1em; /* Garante um bom tamanho de fonte para o contrato */
+  min-height: 400px; /* Altura mínima para o conteúdo */
+  max-height: 70vh; 
+  overflow-y: auto; 
 }
 
-/* Estilos para tabela de Plano de Pagamento (se você renderizar como tabela) */
-.proposta-contrato-detail-page .payment-plan-table {
-    width: 100%;
-    margin-top: 10px;
-    border-collapse: collapse;
-}
-.proposta-contrato-detail-page .payment-plan-table th,
-.proposta-contrato-detail-page .payment-plan-table td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
-    font-size: 0.9em;
-}
-.proposta-contrato-detail-page .payment-plan-table th {
-    background-color: #f8f9fa;
+/* Estilo para status (você pode já ter isso globalmente) */
+.status-badge {
+    padding: 0.25em 0.6em;
+    font-size: 0.85em;
     font-weight: 600;
+    border-radius: 0.25rem;
+    display: inline-block;
 }
+.status-em-elaboração { background-color: #ffc107; color: #212529; }
+.status-assinado, .status-vendido { background-color: #28a745; color: white; }
+.status-recusado, .status-cancelado { background-color: #dc3545; color: white; }
+.status-aguardando-assinatura, .status-aguardando-aprovações { background-color: #17a2b8; color: white; }
 
-/* Para erros na página de detalhes */
-.proposta-contrato-detail-page .error-page .error-message {
-  color: #721c24;
-  margin-bottom: 15px;
-}
-.proposta-contrato-detail-page .error-page .button {
-  margin-top: 10px;
+
+/* Para telas maiores, podemos tentar um layout de duas colunas */
+@media (min-width: 992px) {
+  .proposta-contrato-detail-page .page-content-detail {
+    flex-direction: row; /* Lado a lado */
+    align-items: flex-start; /* Alinha itens no topo */
+  }
+  .proposta-contrato-detail-page .info-sidebar-ou-superior {
+    flex: 0 0 320px; /* Largura fixa para a barra lateral de informações */
+    max-width: 320px;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+  }
+  .proposta-contrato-detail-page .contrato-main-content {
+    flex: 1 1 auto; /* Ocupa o restante do espaço */
+  }
 }
