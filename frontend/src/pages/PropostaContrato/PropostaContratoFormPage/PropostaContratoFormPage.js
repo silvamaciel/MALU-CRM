@@ -327,7 +327,7 @@ function PropostaContratoFormPage() {
             getReservaByIdApi(reservaId),
             getModelosContrato(),
             getUsuarios({ ativo: true }),
-            getBrokerContactsApi({ ativo: true })
+            getBrokerContacts({ ativo: true })
           ]);
         setModelosContrato(modelosData.modelos || []);
         setUsuariosCRM(usuariosDataResult || []);
