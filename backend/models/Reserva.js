@@ -49,7 +49,7 @@ const reservaSchema = new Schema({
         type: String,
         required: [true, 'O Status da Reserva é obrigatório.'],
         enum: {
-            values: ["Pendente", "Ativa", "Expirada", "Cancelada", "ConvertidaEmProposta", "ConvertidaEmVenda"],
+            values: ["Pendente", "Ativa", "Expirada", "Cancelada", "ConvertidaEmProposta", "ConvertidaEmVenda", "Distratada"],
             message: 'Status da Reserva inválido: {VALUE}.'
         },
         default: "Ativa", 

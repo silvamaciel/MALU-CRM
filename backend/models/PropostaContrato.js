@@ -77,13 +77,16 @@ const propostaContratoSchema = new Schema({
     statusPropostaContrato: {
         type: String,
         required: true,
-        enum: ["Em Elaboração", "Aguardando Aprovações", "Aguardando Assinatura Cliente", "Assinado", "Vendido", "Recusado", "Cancelado"],
+        enum: ["Em Elaboração", "Aguardando Aprovações", "Aguardando Assinatura Cliente", "Assinado", "Vendido", "Recusado", "Cancelado", "Distrato Realizado"],
         default: "Em Elaboração",
         index: true
     },
     responsavelNegociacao: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    observacoesInternasProposta: { type: String, trim: true }
+    observacoesInternasProposta: { type: String, trim: true },
+    dataDistrato: { type: Date },
+    motivoDistrato: { type: String, trim: true }
+    
 }, { timestamps: true });
 
 // Hook para calcular o desconto
