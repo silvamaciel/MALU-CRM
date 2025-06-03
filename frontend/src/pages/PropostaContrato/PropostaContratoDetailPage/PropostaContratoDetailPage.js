@@ -10,6 +10,8 @@ import {
      } from '../../../api/propostaContratoApi';
 
 import './PropostaContratoDetailPage.css'; // Crie este CSS
+import ConfirmModal from '../../../components/ConfirmModal/ConfirmModal'; // Ajuste o caminho se necessário
+
 
 const STATUS_PROPOSTA_OPCOES = [
   "Em Elaboração", "Aguardando Aprovações", "Aguardando Assinatura Cliente", 
@@ -31,26 +33,25 @@ function PropostaContratoDetailPage() {
 
 
 
-    const fetchPropostaContrato = useCallback(async () => {
-        if (!propostaContratoId) return;
-        setLoading(true);
-        if(!showToast) setLoading(true);
-        setError(null);
-        try {
-            const data = await getPropostaContratoByIdApi(propostaContratoId);
-            setPropostaContrato(data);
-        } catch (err) {
-            setError(err.message || "Erro ao carregar dados da proposta/contrato.");
-            toast.error(err.message || "Erro ao carregar dados da proposta/contrato.");
-        } finally {
-            setLoading(false);
-        }
-    }, [propostaContratoId]);
+    const fetchPropostaContrato = useCallback(async () => { 
+    if (!propostaContratoId) return;
+    setLoading(true);
+    setError(null);
+    try {
+        const data = await getPropostaContratoByIdApi(propostaContratoId);
+        setPropostaContrato(data);
+    } catch (err) {
+        const errorMsg = err.message || "Erro ao carregar dados da proposta/contrato.";
+        setError(errorMsg);
+        toast.error(errorMsg);
+    } finally {
+        setLoading(false);
+    }
+}, [propostaContratoId]);
 
-    useEffect(() => {
-        fetchPropostaContrato();
-    }, [fetchPropostaContrato]);
-
+useEffect(() => {
+    fetchPropostaContrato();
+}, [fetchPropostaContrato]);
     //Handler para Baixar Pdf
     const handleDownloadPdf = async () => {
         if (!propostaContrato || !propostaContrato._id) return;
