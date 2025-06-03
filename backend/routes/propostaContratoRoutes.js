@@ -6,7 +6,8 @@ const {
     getPropostaContratoByIdController,
     downloadPropostaContratoPDFController,
     updatePropostaContratoController,
-    updateStatusPropostaContratoController
+    updateStatusPropostaContratoController,
+    registrarDistratoController
  } = require('../controllers/PropostaContratoController'); // Ajuste o nome do arquivo se necessário
 const { protect } = require('../middlewares/authMiddleware');
 
@@ -32,7 +33,7 @@ router.route('/:id/status')
     .put(updateStatusPropostaContratoController);
 
 router.route('/:id/distrato')
-    .put(updateStatusPropostaContratoController);
+    .put(registrarDistratoController);
 
 // Rota alternativa se você quiser uma rota base /api/propostas-contratos e passar reservaId no corpo
 // router.route('/')

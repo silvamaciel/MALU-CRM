@@ -169,10 +169,44 @@ const updateStatusPropostaContratoController = asyncHandler(async (req, res, nex
 });
 
 
+/**
+ * Controller para registrar o distrato de uma Proposta/Contrato.
+ */
+const registrarDistratoController = asyncHandler(async (req, res, next) => {
+    const companyId = req.user.company;
+    const actorUserId = req.user._id;
+    const { id: propostaContratoId } = req.params;
+
+    // Dados esperados do corpo da requisição para o distrato
+    const { motivoDistrato, dataDistrato } = req.body;
+
+    console.log(`[PropContCtrl Distrato] Recebido PUT /api/propostas-contratos/${propostaContratoId}/distrato`);
+    console.log(`[PropContCtrl Distrato] Dados do Distrato:`, { motivoDistrato, dataDistrato });
+
+    if (!propostaContratoId || !mongoose.Types.ObjectId.isValid(propostaContratoId)) {
+        return next(new ErrorResponse('ID da Proposta/Contrato inválido.', 400));
+    }
+    if (!motivoDistrato) { // Motivo é obrigatório
+        return next(new ErrorResponse('O motivo do distrato é obrigatório.', 400));
+    }
+
+    const dadosDistratoParaServico = { motivoDistrato, dataDistrato };
+
+    const propostaAtualizada = await PropostaContratoService.registrarDistratoPropostaContrato(
+        propostaContratoId,
+        dadosDistratoParaServico,
+        companyId,
+        actorUserId
+    );
+    res.status(200).json({ success: true, data: propostaAtualizada });
+});
+
+
 module.exports = {
     createPropostaContratoController,
     getPropostaContratoByIdController,
     downloadPropostaContratoPDFController,
     updatePropostaContratoController,
-    updateStatusPropostaContratoController 
+    updateStatusPropostaContratoController,
+    registrarDistratoController
 };
