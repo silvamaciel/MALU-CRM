@@ -97,3 +97,28 @@ export const updatePropostaContratoApi = async (propostaContratoId, propostaData
         throw error.response?.data || new Error("Falha ao atualizar a Proposta/Contrato.");
     }
 };
+
+
+
+/**
+ * Atualiza o status de uma Proposta/Contrato existente.
+ * @param {string} propostaContratoId - ID da Proposta/Contrato.
+ * @param {string} novoStatus - O novo status para a proposta.
+ * @param {object} dadosAdicionais - Dados extras como dataAssinaturaCliente, dataVendaEfetivada.
+ * @returns {Promise<object>} A Proposta/Contrato atualizada.
+ */
+export const updatePropostaContratoStatusApi = async (propostaContratoId, novoStatus, dadosAdicionais = {}) => {
+    if (!propostaContratoId || !novoStatus) {
+        throw new Error("ID da Proposta/Contrato e novo status são obrigatórios.");
+    }
+    try {
+        const response = await axiosInstance.put(`<span class="math-inline">\{API\_URL\_BASE\}/</span>{propostaContratoId}/status`, { 
+            novoStatus,
+            ...dadosAdicionais // Envia dataAssinaturaCliente, etc., se houver
+        });
+        return response.data.data; // Assumindo que o backend retorna { success: true, data: propostaAtualizada }
+    } catch (error) {
+        console.error(`Erro ao atualizar status da Proposta/Contrato ${propostaContratoId} para ${novoStatus}:`, error.response?.data || error.message);
+        throw error.response?.data || new Error("Falha ao atualizar o status da Proposta/Contrato.");
+    }
+};
