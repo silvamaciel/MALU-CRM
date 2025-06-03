@@ -136,6 +136,39 @@ const updatePropostaContratoController = asyncHandler(async (req, res, next) => 
 });
 
 
+/**
+ * Controller para atualizar o status de uma Proposta/Contrato.
+ */
+const updateStatusPropostaContratoController = asyncHandler(async (req, res, next) => {
+    const companyId = req.user.company;
+    const actorUserId = req.user._id;
+    const { id: propostaContratoId } = req.params;
+    const { novoStatus, dataAssinaturaCliente, dataVendaEfetivada } = req.body; // Espera o novo status no corpo
+
+    console.log(`[PropContCtrl Status] Recebido PUT /api/propostas-contratos/${propostaContratoId}/status para Company ${companyId}`);
+    console.log(`[PropContCtrl Status] Novo Status Solicitado: ${novoStatus}, Dados Adicionais:`, { dataAssinaturaCliente, dataVendaEfetivada });
+
+
+    if (!propostaContratoId || !mongoose.Types.ObjectId.isValid(propostaContratoId)) {
+        return next(new ErrorResponse('ID da Proposta/Contrato inválido.', 400));
+    }
+    if (!novoStatus) {
+        return next(new ErrorResponse('O novo status é obrigatório.', 400));
+    }
+
+    const dadosAdicionais = { dataAssinaturaCliente, dataVendaEfetivada };
+
+    const propostaAtualizada = await PropostaContratoService.updateStatusPropostaContrato(
+        propostaContratoId,
+        novoStatus,
+        dadosAdicionais,
+        companyId,
+        actorUserId
+    );
+    res.status(200).json({ success: true, data: propostaAtualizada });
+});
+
+
 module.exports = {
     createPropostaContratoController,
     getPropostaContratoByIdController,
