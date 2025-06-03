@@ -548,11 +548,149 @@ const updatePropostaContrato = async (propostaContratoId, updateData, companyId,
 };
 
 
+/**
+ * Atualiza o status de uma Proposta/Contrato e os status relacionados de Lead, Unidade e Reserva.
+ * @param {string} propostaContratoId - ID da Proposta/Contrato.
+ * @param {string} novoStatus - O novo status para a Proposta/Contrato.
+ * @param {object} dadosAdicionais - Dados extras, como dataAssinaturaCliente, dataVendaEfetivada.
+ * @param {string} companyId - ID da Empresa.
+ * @param {string} actorUserId - ID do Usuário que está realizando a ação.
+ * @returns {Promise<PropostaContrato>} A Proposta/Contrato atualizada.
+ */
+const updateStatusPropostaContrato = async (propostaContratoId, novoStatus, dadosAdicionais = {}, companyId, actorUserId) => {
+    console.log(`[PropContSvc Status] Atualizando status da Proposta/Contrato ID: ${propostaContratoId} para '${novoStatus}' por User: ${actorUserId}`);
+
+    if (!mongoose.Types.ObjectId.isValid(propostaContratoId) ||
+        !mongoose.Types.ObjectId.isValid(companyId) ||
+        !mongoose.Types.ObjectId.isValid(actorUserId)) {
+        throw new Error("IDs inválidos fornecidos (Proposta/Contrato, Empresa ou Usuário).");
+    }
+
+    const statusPermitidos = PropostaContrato.schema.path('statusPropostaContrato').enumValues;
+    if (!statusPermitidos.includes(novoStatus)) {
+        throw new Error(`Status '${novoStatus}' é inválido para Proposta/Contrato.`);
+    }
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const propostaContrato = await PropostaContrato.findOne({ _id: propostaContratoId, company: companyId })
+            .populate('lead')
+            .populate('unidade')
+            .populate('reserva')
+            .session(session);
+
+        if (!propostaContrato) {
+            throw new Error("Proposta/Contrato não encontrada ou não pertence a esta empresa.");
+        }
+        if (!propostaContrato.lead || !propostaContrato.unidade || !propostaContrato.reserva) {
+            throw new Error("Dados vinculados (Lead, Unidade ou Reserva) não encontrados para esta Proposta/Contrato.");
+        }
+
+        const statusAntigoProposta = propostaContrato.statusPropostaContrato;
+        if (statusAntigoProposta === novoStatus) {
+            // Nenhuma mudança de status, talvez apenas atualizando outros campos como dataAssinatura
+            if (novoStatus === "Assinado" && dadosAdicionais.dataAssinaturaCliente) {
+                propostaContrato.dataAssinaturaCliente = new Date(dadosAdicionais.dataAssinaturaCliente);
+            }
+             // Poderia adicionar lógica para atualizar outros campos se não houver mudança de status
+            await propostaContrato.save({ session });
+            await session.commitTransaction();
+            console.log(`[PropContSvc Status] Proposta/Contrato ${propostaContratoId} já estava com status '${novoStatus}'. Outros dados podem ter sido atualizados.`);
+            return propostaContrato;
+        }
+        
+        // TODO: Adicionar lógica de transição de status permitida (ex: de "Em Elaboração" só pode ir para "Aguardando Aprovação", etc.)
+
+        propostaContrato.statusPropostaContrato = novoStatus;
+        let leadStatusNomeAlvo = null; // Nome do novo estágio do lead
+        let logAction = `PROPOSTA_STATUS_${novoStatus.toUpperCase().replace(/\s+/g, '_')}`;
+        let logDetails = `Status da Proposta/Contrato (ID: ${propostaContrato._id}) alterado de "${statusAntigoProposta}" para "${novoStatus}".`;
+
+        // Lógica específica baseada no NOVO status
+        if (novoStatus === "Assinado") {
+            propostaContrato.dataAssinaturaCliente = dadosAdicionais.dataAssinaturaCliente ? new Date(dadosAdicionais.dataAssinaturaCliente) : new Date();
+            leadStatusNomeAlvo = "Contrato Assinado"; // Ou o nome do seu estágio
+        } else if (novoStatus === "Vendido") {
+            propostaContrato.dataVendaEfetivada = dadosAdicionais.dataVendaEfetivada ? new Date(dadosAdicionais.dataVendaEfetivada) : new Date();
+            propostaContrato.dataAssinaturaCliente = propostaContrato.dataAssinaturaCliente || new Date(); // Garante data de assinatura se não houver
+            
+            // Atualiza Unidade
+            propostaContrato.unidade.statusUnidade = "Vendido";
+            // currentLeadId e currentReservaId já devem estar corretos na unidade desde a reserva
+
+            // Atualiza Reserva
+            propostaContrato.reserva.statusReserva = "ConvertidaEmVenda";
+            
+            leadStatusNomeAlvo = "Vendido";
+        } else if (novoStatus === "Recusado" || novoStatus === "Cancelado") {
+            // Atualiza Reserva
+            propostaContrato.reserva.statusReserva = novoStatus === "Recusado" ? "RecusadaPelaProposta" : "CanceladaPelaProposta";
+
+            // Libera a Unidade
+            if (propostaContrato.unidade.statusUnidade !== "Disponível" && 
+                propostaContrato.unidade.currentReservaId && 
+                propostaContrato.unidade.currentReservaId.equals(propostaContrato.reserva._id)) 
+            {
+                propostaContrato.unidade.statusUnidade = "Disponível";
+                propostaContrato.unidade.currentLeadId = null;
+                propostaContrato.unidade.currentReservaId = null;
+            }
+            leadStatusNomeAlvo = novoStatus === "Recusado" ? "Proposta Recusada" : "Negociação Perdida"; // Ou um estágio genérico
+        }
+        // Adicione mais 'else if' para outros status que alteram Lead/Unidade
+
+        // Salva Unidade e Reserva se foram modificadas
+        if (propostaContrato.unidade.isModified()) await propostaContrato.unidade.save({ session });
+        if (propostaContrato.reserva.isModified()) await propostaContrato.reserva.save({ session });
+
+        // Atualiza Status do Lead se um leadStatusNomeAlvo foi definido
+        if (leadStatusNomeAlvo) {
+            const novoLeadStage = await LeadStage.findOneAndUpdate(
+                { company: companyId, nome: { $regex: new RegExp(`^${leadStatusNomeAlvo}$`, "i") } },
+                { $setOnInsert: { nome: leadStatusNomeAlvo, company: companyId, ativo: true, descricao: `Status automático via Proposta/Contrato.` } },
+                { new: true, upsert: true, runValidators: true, session: session }
+            );
+            if (!novoLeadStage) throw new Error (`Estágio de Lead '${leadStatusNomeAlvo}' não pôde ser encontrado ou criado.`);
+            
+            if (!propostaContrato.lead.situacao.equals(novoLeadStage._id)) {
+                const oldLeadStageDoc = await LeadStage.findById(propostaContrato.lead.situacao).lean();
+                logDetails += ` Lead movido de "${oldLeadStageDoc?.nome || 'N/A'}" para "${novoLeadStage.nome}".`;
+                propostaContrato.lead.situacao = novoLeadStage._id;
+            }
+        }
+        if (propostaContrato.lead.isModified()) await propostaContrato.lead.save({ session });
+        
+        const propostaAtualizada = await propostaContrato.save({ session });
+
+        await logHistory(
+            propostaAtualizada.lead._id, actorUserId, logAction, logDetails,
+            { oldStatus: statusAntigoProposta }, { newStatus: novoStatus },
+            'PropostaContrato', propostaAtualizada._id, session
+        );
+
+        await session.commitTransaction();
+        console.log(`[PropContSvc Status] Status da Proposta/Contrato ${propostaAtualizada._id} atualizado para '${novoStatus}'. Entidades relacionadas atualizadas.`);
+        return propostaAtualizada;
+
+    } catch (error) {
+        await session.abortTransaction();
+        console.error("[PropContSvc Status] Erro ao atualizar status da Proposta/Contrato:", error);
+        throw new Error(error.message || "Erro interno ao atualizar status da Proposta/Contrato.");
+    } finally {
+        session.endSession();
+    }
+};
+
+
+
 
 module.exports = {
     createPropostaContrato,
     preencherTemplateContrato,
     getPropostaContratoById,
     gerarPDFPropostaContrato,
-    updatePropostaContrato
+    updatePropostaContrato,
+    updateStatusPropostaContrato
 };
