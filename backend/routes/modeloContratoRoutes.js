@@ -6,7 +6,7 @@ const {
     getModelosContratoController,
     getModeloContratoByIdController,
     updateModeloContratoController,
-    deleteModeloContratoController
+    deleteModeloContratoController,
 } = require('../controllers/ModeloContratoController'); // Ajuste o nome do arquivo se necessário
 const { protect, authorize } = require('../middlewares/authMiddleware');
 
