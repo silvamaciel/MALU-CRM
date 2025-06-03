@@ -10,7 +10,9 @@ import {
      } from '../../../api/propostaContratoApi';
 
 import './PropostaContratoDetailPage.css'; // Crie este CSS
-import ConfirmModal from '../../../components/ConfirmModal/ConfirmModal'; // Ajuste o caminho se necessário
+import ConfirmModal from '../../../components/ConfirmModal/ConfirmModal';
+import DiscardLeadModal from '../../../components/DiscardLeadModal/DiscardLeadModal';
+import { getDiscardReasons } from '../../../api/discardReasons';
 
 
 const STATUS_PROPOSTA_OPCOES = [
@@ -31,6 +33,11 @@ function PropostaContratoDetailPage() {
 
     const [confirmStatusModal, setConfirmStatusModal] = useState({ isOpen: false, novoStatus: '', title: '', message: '' });
 
+    const [isDistratoModalOpen, setIsDistratoModalOpen] = useState(false);
+    const [motivosDescarte, setMotivosDescarte] = useState([]);
+    const [isProcessingDistrato, setIsProcessingDistrato] = useState(false);
+    const [distratoError, setDistratoError] = useState('');
+
 
 
     const fetchPropostaContrato = useCallback(async () => { 
@@ -47,11 +54,11 @@ function PropostaContratoDetailPage() {
     } finally {
         setLoading(false);
     }
-}, [propostaContratoId]);
+    }, [propostaContratoId]);
 
-useEffect(() => {
-    fetchPropostaContrato();
-}, [fetchPropostaContrato]);
+    useEffect(() => {
+        fetchPropostaContrato();
+    }, [fetchPropostaContrato]);
     //Handler para Baixar Pdf
     const handleDownloadPdf = async () => {
         if (!propostaContrato || !propostaContrato._id) return;
@@ -137,6 +144,68 @@ useEffect(() => {
         }
     };
 
+    useEffect(() => {
+        const fetchMotivos = async () => {
+                try {
+                    const data = await getDiscardReasons(); // Assume que busca para a company correta ou são globais
+                    setMotivosDescarte(data || []);
+                } catch (error) {
+                    console.error("Erro ao buscar motivos de descarte:", error);
+                    toast.error("Falha ao carregar motivos de descarte.");
+                }
+            };
+        fetchMotivos();
+        }, []);
+
+
+        const handleOpenDistratoModal = () => {
+            if (!propostaContrato || propostaContrato.statusPropostaContrato !== "Vendido") {
+                toast.warn('Apenas propostas/contratos com status "Vendido" podem ser distratadas.');
+                return;
+            }
+            setDistratoError(''); // Limpa erros anteriores do modal
+            setIsDistratoModalOpen(true);
+        };
+
+        const handleCloseDistratoModal = () => {
+            setIsDistratoModalOpen(false);
+            setDistratoError('');
+        };
+
+        const handleConfirmDistrato = async (discardData) => { // discardData virá do modal: { motivoDescarteId, comentario }
+            if (!propostaContrato) return;
+
+            setIsProcessingDistrato(true);
+            setDistratoError('');
+            toast.info("Registrando distrato...");
+
+            // O comentário do modal pode ser ADICIONADO ao motivo principal
+            const motivoPrincipal = discardData.motivoTexto || "Distrato solicitado pelo cliente"; // Pega o texto do motivo selecionado
+            const comentarioFinalDistrato = `<span class="math-inline">\{motivoPrincipal\}</span>{discardData.comentario ? '\nObservações Adicionais: ' + discardData.comentario : ''}`;
+
+            const dadosParaBackend = {
+                novoStatus: "Distrato Realizado", // Status final da PropostaContrato
+                motivoDistrato: comentarioFinalDistrato, // O motivo + comentário para PropostaContrato.motivoDistrato
+                dataDistrato: new Date().toISOString().split('T')[0], // Data atual
+                // Backend também precisará do motivoDescarteId para o Lead
+                leadMotivoDescarteId: discardData.motivoDescarteId 
+            };
+
+            try {
+                // A API updatePropostaContratoStatusApi precisa ser capaz de receber e passar leadMotivoDescarteId para o serviço
+                await updatePropostaContratoStatusApi(propostaContrato._id, "Distrato Realizado", dadosParaBackend);
+                toast.success("Distrato registrado com sucesso!");
+                handleCloseDistratoModal();
+                fetchPropostaContrato(true); // Atualiza os dados da proposta na página
+            } catch (err) {
+                const errorMsg = err.error || err.message || "Falha ao registrar distrato.";
+                setDistratoError(errorMsg); // Mostra erro no modal
+                toast.error(errorMsg);
+            } finally {
+                setIsProcessingDistrato(false);
+            }
+        };
+
 
     if (loading) {
         return <div className="admin-page loading"><p>Carregando Proposta/Contrato...</p></div>;
@@ -204,6 +273,15 @@ useEffect(() => {
             {/* SEÇÃO DE STATUS ATUAL E AÇÕES DE MUDANÇA DE STATUS VVVVV */}
             <div className="status-actions-section" style={{ padding: '15px', backgroundColor: '#f0f8ff', borderRadius: '6px', marginBottom: '20px' }}>
                 <h3 style={{ marginTop: 0, marginBottom: '10px' }}>Situação Atual: <span className={`status-badge status-${String(statusAtual).toLowerCase().replace(/\s+/g, '-')}`}>{statusAtual}</span></h3>
+                {propostaContrato.statusPropostaContrato === "Vendido" && (
+                    <button
+                        onClick={handleOpenDistratoModal}
+                        className="button خطر-button small-button" // Ou um estilo apropriado
+                        disabled={isProcessingDistrato || isUpdatingStatus} // Use um estado de loading apropriado
+                    >
+                        Registrar Distrato
+                    </button>
+                )}
                 <div className="status-buttons-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                     {acoesDeStatusPermitidas.map(status => (
                         <button
@@ -245,6 +323,16 @@ useEffect(() => {
                 message={confirmStatusModal.message}
                 confirmText="Sim, Confirmar"
                 isProcessing={isUpdatingStatus}
+                />
+                <DiscardLeadModal
+                isOpen={isDistratoModalOpen}
+                onClose={handleCloseDistratoModal}
+                onSubmit={handleConfirmDistrato} // Este handler agora faz mais do que só descartar
+                leadName={`Proposta/Contrato para: ${propostaContrato?.lead?.nome || 'Lead Desconhecido'}`}
+                isProcessing={isProcessingDistrato}
+                errorMessage={distratoError}
+                discardReasons={motivosDescarte} 
+                initialComment={`Distrato referente à unidade ${propostaContrato?.unidade?.identificador} do empreendimento ${propostaContrato?.empreendimento?.nome}.`}
                 />
 
                 
