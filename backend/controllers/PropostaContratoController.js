@@ -173,5 +173,6 @@ module.exports = {
     createPropostaContratoController,
     getPropostaContratoByIdController,
     downloadPropostaContratoPDFController,
-    updatePropostaContratoController
+    updatePropostaContratoController,
+    updateStatusPropostaContratoController 
 };
