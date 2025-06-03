@@ -5,9 +5,16 @@ import { toast } from 'react-toastify';
 import {
      getPropostaContratoByIdApi, 
      downloadPropostaContratoPdfApi,
+     updatePropostaContratoApi,
+     updatePropostaContratoStatusApi
      } from '../../../api/propostaContratoApi';
 
 import './PropostaContratoDetailPage.css'; // Crie este CSS
+
+const STATUS_PROPOSTA_OPCOES = [
+  "Em Elaboração", "Aguardando Aprovações", "Aguardando Assinatura Cliente", 
+  "Assinado", "Vendido", "Recusado", "Cancelado"
+];
 
 function PropostaContratoDetailPage() {
     const { propostaContratoId } = useParams();
@@ -18,11 +25,16 @@ function PropostaContratoDetailPage() {
     const [error, setError] = useState(null);
 
     const [isDownloadingPdf, setIsDownloadingPdf] = useState(false); 
+    const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+    const [confirmStatusModal, setConfirmStatusModal] = useState({ isOpen: false, novoStatus: '', title: '', message: '' });
+
 
 
     const fetchPropostaContrato = useCallback(async () => {
         if (!propostaContratoId) return;
         setLoading(true);
+        if(!showToast) setLoading(true);
         setError(null);
         try {
             const data = await getPropostaContratoByIdApi(propostaContratoId);
@@ -74,6 +86,57 @@ function PropostaContratoDetailPage() {
         }
     };
 
+    const handleChangeStatus = async (novoStatus) => {
+        if (!propostaContrato || isUpdatingStatus || propostaContrato.statusPropostaContrato === novoStatus) return;
+
+        setConfirmStatusModal({
+            isOpen: true,
+            novoStatus: novoStatus,
+            title: `Confirmar Mudança de Status para "${novoStatus}"`,
+            message: `Você tem certeza que deseja alterar o status desta proposta/contrato para "${novoStatus}"? Esta ação pode atualizar o status do Lead e da Unidade associados.`
+        });
+    };
+
+    const handleConfirmStatusChange = async () => {
+        const { novoStatus } = confirmStatusModal;
+        if (!propostaContrato || !novoStatus) return;
+
+        setIsUpdatingStatus(true);
+        toast.info(`Atualizando status para ${novoStatus}...`);
+        let dadosAdicionais = {};
+
+        // Coletar dados adicionais se necessário para certos status
+        if (novoStatus === "Assinado") {
+            const dataAssinatura = prompt("Digite a data da assinatura (AAAA-MM-DD):", new Date().toISOString().split('T')[0]);
+            if (!dataAssinatura) { // Usuário cancelou o prompt
+                setIsUpdatingStatus(false);
+                setConfirmStatusModal({ isOpen: false, novoStatus: '', title: '', message: '' });
+                return;
+            }
+            dadosAdicionais.dataAssinaturaCliente = dataAssinatura;
+        } else if (novoStatus === "Vendido") {
+            const dataVenda = prompt("Digite a data da venda efetivada (AAAA-MM-DD):", new Date().toISOString().split('T')[0]);
+             if (!dataVenda) {
+                setIsUpdatingStatus(false);
+                setConfirmStatusModal({ isOpen: false, novoStatus: '', title: '', message: '' });
+                return;
+            }
+            dadosAdicionais.dataVendaEfetivada = dataVenda;
+        }
+
+        try {
+            await updatePropostaContratoStatusApi(propostaContrato._id, novoStatus, dadosAdicionais);
+            toast.success(`Status da Proposta/Contrato atualizado para "${novoStatus}"!`);
+            fetchPropostaContrato(true); // Re-busca os dados para atualizar a UI e mostrar o toast de sucesso do fetch
+        } catch (err) {
+            toast.error(err.message || "Falha ao atualizar status.");
+        } finally {
+            setIsUpdatingStatus(false);
+            setConfirmStatusModal({ isOpen: false, novoStatus: '', title: '', message: '' });
+        }
+    };
+
+
     if (loading) {
         return <div className="admin-page loading"><p>Carregando Proposta/Contrato...</p></div>;
     }
@@ -83,6 +146,23 @@ function PropostaContratoDetailPage() {
     if (!propostaContrato) {
         return <div className="admin-page"><p>Proposta/Contrato não encontrada.</p><Link to="/reservas">Voltar para Reservas</Link></div>;
     }
+
+     // Lógica para definir quais botões de status mostrar
+    // Baseado no status atual, quais são as próximas ações válidas?
+    let acoesDeStatusPermitidas = [];
+    const statusAtual = propostaContrato.statusPropostaContrato;
+
+    if (statusAtual === "Em Elaboração") {
+        acoesDeStatusPermitidas = ["Aguardando Aprovações", "Aguardando Assinatura Cliente", "Cancelado"];
+    } else if (statusAtual === "Aguardando Aprovações") {
+        acoesDeStatusPermitidas = ["Aguardando Assinatura Cliente", "Recusado", "Cancelado"];
+    } else if (statusAtual === "Aguardando Assinatura Cliente") {
+        acoesDeStatusPermitidas = ["Assinado", "Recusado", "Cancelado"];
+    } else if (statusAtual === "Assinado") {
+        acoesDeStatusPermitidas = ["Vendido", "Cancelado"];
+    }
+
+
 
     return (
         <div className="admin-page proposta-contrato-detail-page">
@@ -120,6 +200,24 @@ function PropostaContratoDetailPage() {
                 </div>
             </header>
 
+            {/* SEÇÃO DE STATUS ATUAL E AÇÕES DE MUDANÇA DE STATUS VVVVV */}
+            <div className="status-actions-section" style={{ padding: '15px', backgroundColor: '#f0f8ff', borderRadius: '6px', marginBottom: '20px' }}>
+                <h3 style={{ marginTop: 0, marginBottom: '10px' }}>Situação Atual: <span className={`status-badge status-${String(statusAtual).toLowerCase().replace(/\s+/g, '-')}`}>{statusAtual}</span></h3>
+                <div className="status-buttons-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                    {acoesDeStatusPermitidas.map(status => (
+                        <button
+                            key={status}
+                            onClick={() => handleChangeStatus(status)}
+                            className="button small-button action-button"
+                            disabled={isUpdatingStatus}
+                        >
+                            Mover para: {status}
+                        </button>
+                    ))}
+                </div>
+                {isUpdatingStatus && <p style={{marginTop: '10px', fontStyle: 'italic'}}>Atualizando status...</p>}
+            </div>
+
             <div className="page-content">
                 <div className="info-section">
                     <h3>Informações Gerais</h3>
@@ -137,6 +235,18 @@ function PropostaContratoDetailPage() {
                         dangerouslySetInnerHTML={{ __html: propostaContrato.corpoContratoHTMLGerado || '<p>Conteúdo do contrato não disponível.</p>' }}
                     />
                 </div>
+
+                <ConfirmModal
+                isOpen={confirmStatusModal.isOpen}
+                onClose={() => setConfirmStatusModal({ isOpen: false, novoStatus: '', title: '', message: '' })}
+                onConfirm={handleConfirmStatusChange}
+                title={confirmStatusModal.title}
+                message={confirmStatusModal.message}
+                confirmText="Sim, Confirmar"
+                isProcessing={isUpdatingStatus}
+                />
+
+                
                 {/* TODO: Adicionar mais seções para Plano de Pagamento, Corretagem, etc. */}
             </div>
         </div>
