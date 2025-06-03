@@ -31,6 +31,9 @@ router.route('/:id/pdf')
 router.route('/:id/status')
     .put(updateStatusPropostaContratoController);
 
+router.route('/:id/distrato')
+    .put(updateStatusPropostaContratoController);
+
 // Rota alternativa se você quiser uma rota base /api/propostas-contratos e passar reservaId no corpo
 // router.route('/')
 //     .post(createPropostaContratoController); 
