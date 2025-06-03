@@ -740,23 +740,35 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
         propostaContrato.unidade.currentReservaId = null; // Limpa a referência à reserva original
 
         // 4. Atualizar Lead
-        const nomeEstagioDistrato = "Distrato"; // Ou "Venda Cancelada", "Disponível para Nova Venda"
-        const situacaoDistrato = await LeadStage.findOneAndUpdate(
-            { company: companyId, nome: { $regex: new RegExp(`^${nomeEstagioDistrato}$`, "i") } },
-            { $setOnInsert: { nome: nomeEstagioDistrato, company: companyId, ativo: true, descricao: "Lead resultante de um distrato/venda cancelada." } },
+        const nomeEstagioDescartado = "Descartado"; // Nome exato do seu LeadStage
+        const situacaoDescartado = await LeadStage.findOneAndUpdate(
+            { company: companyId, nome: { $regex: new RegExp(`^${nomeEstagioDescartado}$`, "i") } },
+            { $setOnInsert: { nome: nomeEstagioDescartado, company: companyId, ativo: true, descricao: "Lead descartado devido a distrato de contrato." } },
             { new: true, upsert: true, runValidators: true, session: session }
         );
-        if (!situacaoDistrato) throw new Error (`Estágio de Lead '${nomeEstagioDistrato}' não pôde ser encontrado ou criado.`);
+        if (!situacaoDescartado) throw new Error (`Estágio de Lead '${nomeEstagioDescartado}' não pôde ser encontrado ou criado.`);
         
-        const oldLeadStatusId = propostaContrato.lead.situacao;
-        propostaContrato.lead.situacao = situacaoDistrato._id;
-        // Opcional: Limpar unidadeInteresse do Lead ou manter para histórico
-        // propostaContrato.lead.unidadeInteresse = null; 
+        const leadDoc = propostaContrato.lead; // Já populado
+        const oldLeadStatusId = leadDoc.situacao;
+        leadDoc.situacao = situacaoDescartado._id;
 
+        // Adicionar motivo do distrato ao comentário do Lead
+        const motivoDistratoParaComentario = `Distrato da Proposta/Contrato ID ${propostaContrato._id} (Unidade: ${unidadeDoc.identificador} do Empr.: ${unidadeDoc.empreendimento?.nome || 'N/A'}). Motivo: ${dadosDistrato.motivoDistrato}.`;
+        leadDoc.comentario = leadDoc.comentario 
+            ? `${leadDoc.comentario}\n\n${motivoDistratoParaComentario}` 
+            : motivoDistratoParaComentario;
+        
+        const motivoDistratoDoc = await DiscardReason.findOneAndUpdate(
+            { company: companyId, nome: "Distrato Contratual" },
+            { $setOnInsert: { nome: "Distrato Contratual", company: companyId, ativo: true } },
+            { new: true, upsert: true, runValidators: true, session: session }
+         );
+         if (motivoDistratoDoc) leadDoc.motivoDescarte = motivoDistratoDoc._id;
+        
         // Salvar todas as entidades
-        await propostaContrato.unidade.save({ session });
+        await unidadeDoc.save({ session });
         await propostaContrato.reserva.save({ session });
-        await propostaContrato.lead.save({ session });
+        await leadDoc.save({ session });
         const propostaAtualizada = await propostaContrato.save({ session });
 
         // 5. Log de Histórico
