@@ -20,7 +20,6 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 
-app.use(express.json()); 
 
 dotenv.config();
 const app = express();
@@ -33,6 +32,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // Conectar ao MongoDB
 connectDB();
+
+app.use(express.json()); 
 
 // --- Rotas Públicas (Autenticação) ---
 app.use('/api/auth', require('./routes/authRoutes')); 
