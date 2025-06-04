@@ -6,7 +6,8 @@ import {
      getPropostaContratoByIdApi, 
      downloadPropostaContratoPdfApi,
      updatePropostaContratoApi,
-     updatePropostaContratoStatusApi
+     updatePropostaContratoStatusApi,
+     registrarDistratoApi
      } from '../../../api/propostaContratoApi';
 
 import './PropostaContratoDetailPage.css'; // Crie este CSS
@@ -193,10 +194,10 @@ function PropostaContratoDetailPage() {
 
             try {
                 // A API updatePropostaContratoStatusApi precisa ser capaz de receber e passar leadMotivoDescarteId para o serviço
-                await updatePropostaContratoStatusApi(propostaContrato._id, "Distrato Realizado", dadosParaBackend);
+            await registrarDistratoApi(propostaContrato._id, dadosParaBackend);
                 toast.success("Distrato registrado com sucesso!");
                 handleCloseDistratoModal();
-                fetchPropostaContrato(true); // Atualiza os dados da proposta na página
+                fetchPropostaContrato(true);
             } catch (err) {
                 const errorMsg = err.error || err.message || "Falha ao registrar distrato.";
                 setDistratoError(errorMsg); // Mostra erro no modal
