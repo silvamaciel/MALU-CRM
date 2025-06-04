@@ -34,6 +34,12 @@ const leadHistorySchema = new Schema(
         "PROPOSTA_CONTRATO_CRIADA",
         "PROPOSTA_STATUS_ALTERADO", 
         "VENDA_CONCRETIZADA",
+        "DISTRATO_REALIZADO",
+        "PROPOSTA_STATUS_ASSINADO",
+        "PROPOSTA_STATUS_VENDIDO",
+        "PROPOSTA_STATUS_RECUSADO",    
+        "PROPOSTA_STATUS_CANCELADO",  
+        "PROPOSTA_STATUS_DISTRATO_REALIZADO",
         "DISTRATO_REALIZADO"
       ],
       message: 'Valor de ação inválido: {VALUE}'
