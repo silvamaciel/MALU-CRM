@@ -786,6 +786,10 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
         }
         
         // Salvar todas as entidades MODIFICADAS
+
+        console.log('[DEBUG] Unidade:', unidadeDoc.statusUnidade);
+        console.log('[DEBUG] Lead:', leadDoc.situacao);
+        console.log('[DEBUG] Reserva:', reservaDoc.statusReserva);
         await unidadeDoc.save({ session });       // Salva as alterações na unidade
         await reservaDoc.save({ session });       // Salva as alterações na reserva
         await leadDoc.save({ session });          // Salva as alterações no lead
