@@ -10,12 +10,10 @@ const DESCARTADO_ORDER_VALUE = 9999;
  * @param {string} companyId - ID da empresa.
  */
 const getAllLeadStages = async (companyId) => {
-    if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+     if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
          throw new Error('ID da empresa inválido ou não fornecido para buscar situações.');
     }
     try {
-        
-        // <<< FILTRA por companyId e ativo=true, ORDENA por ordem e nome >>>
         return await LeadStage.find({ company: companyId, ativo: true })
                            .sort({ ordem: 1, nome: 1 });
     } catch (error) {
@@ -73,10 +71,12 @@ const createLeadStage = async (stageData, companyId) => {
         const novaSituacao = new LeadStage({
             nome: nomeTrimmed,
             ordem: ordemCalculada,
-            company: companyId // <<< SALVA o companyId
+            company: companyId,
+            ativo: stageData.ativo !== undefined ? stageData.ativo : true
+
         });
         await novaSituacao.save();
-        console.log(`[LSvc] Situação criada para empresa ${companyId}:`, novaSituacao._id);
+        console.log(`[LSvc] Situação criada para empresa ${companyId}:`, novaSituacao._id, `com ordem: ${ordemCalculada}`);
         return novaSituacao;
 
     } catch (error) {
@@ -216,36 +216,37 @@ const deleteLeadStage = async (id, companyId) => {
  * @returns {Promise<object>} Resultado da operação.
  */
 const updateLeadStagesOrder = async (companyId, orderedStageIds) => {
-    console.log(`[LStageSvc] Atualizando ordem das LeadStages para Company: ${companyId}`);
-    if (!companyId || !Array.isArray(orderedStageIds)) {
-        throw new Error("ID da empresa e um array de IDs de estágio ordenados são obrigatórios.");
+    console.log(`[LStageSvc] Atualizando ordem das LeadStages para Company: ${companyId}. IDs ordenados:`, orderedStageIds);
+    if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+        throw new Error("ID da empresa inválido.");
+    }
+    if (!Array.isArray(orderedStageIds)) {
+        throw new Error("orderedStageIds deve ser um array.");
+    }
+    if (orderedStageIds.some(id => !mongoose.Types.ObjectId.isValid(id))) {
+        throw new Error("O array orderedStageIds contém um ou mais IDs inválidos.");
     }
 
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
-        const updatePromises = orderedStageIds.map((stageId, index) => {
-            if (!mongoose.Types.ObjectId.isValid(stageId)) {
-                throw new Error(`ID de estágio inválido fornecido: ${stageId}`);
+        const operations = orderedStageIds.map((stageId, index) => ({
+            updateOne: {
+                filter: { _id: stageId, company: companyId }, // Garante que só atualiza estágios da empresa correta
+                update: { $set: { ordem: index } } // Define a ordem baseada no índice do array
             }
-            return LeadStage.updateOne(
-                { _id: stageId, company: companyId },
-                { $set: { ordem: index } }, // Define a ordem baseada no índice do array
-                { session }
-            );
-        });
+        }));
 
-        const results = await Promise.all(updatePromises);
-
-        // Verificar se todas as atualizações foram bem-sucedidas (opcional, mas bom)
-        results.forEach((result, index) => {
-            if (result.matchedCount === 0) {
-                console.warn(`[LStageSvc] Estágio com ID ${orderedStageIds[index]} não encontrado para a empresa ${companyId} ou já estava na ordem correta.`);
+        if (operations.length > 0) {
+            const result = await LeadStage.bulkWrite(operations, { session });
+            console.log(`[LStageSvc] Resultado do bulkWrite para ordem: Modificados=${result.modifiedCount}, Correspondidos=${result.matchedCount}`);
+            if (result.modifiedCount !== orderedStageIds.length && result.matchedCount !== orderedStageIds.length) {
+                 // Isso pode acontecer se algum ID não pertencer à empresa ou já tiver sido deletado
+                 console.warn(`[LStageSvc] Alguns estágios podem não ter sido encontrados ou atualizados durante a reordenação. Total de IDs: ${orderedStageIds.length}, Modificados: ${result.modifiedCount}`);
             }
-            if (result.modifiedCount === 0 && result.matchedCount > 0) {
-                console.log(`[LStageSvc] Estágio ${orderedStageIds[index]} já estava na ordem correta ou não precisou de modificação.`);
-            }
-        });
+        } else {
+            console.log("[LStageSvc] Nenhum estágio fornecido para reordenar.");
+        }
 
         await session.commitTransaction();
         console.log(`[LStageSvc] Ordem das LeadStages atualizada com sucesso para Company: ${companyId}.`);
@@ -258,6 +259,9 @@ const updateLeadStagesOrder = async (companyId, orderedStageIds) => {
         session.endSession();
     }
 };
+
+
+
 module.exports = {
     getAllLeadStages,
     createLeadStage,
