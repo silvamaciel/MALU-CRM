@@ -112,7 +112,7 @@ const updateLeadStagesOrderController = asyncHandler(async (req, res, next) => {
     }
 
     console.log("[LeadStageCtrl Order] Todos os IDs parecem válidos. Chamando LeadStageService.updateLeadStagesOrder...");
-    const result = await LeadStageService.updateLeadStagesOrder(companyId, orderedStageIds);
+    const result = await leadStageService.updateLeadStagesOrder(companyId, orderedStageIds);
     console.log("[LeadStageCtrl Order] LeadStageService.updateLeadStagesOrder retornou.");
     
     res.status(200).json({ success: true, message: result.message });
