@@ -77,23 +77,27 @@ const updateLeadStagesOrderController = asyncHandler(async (req, res, next) => {
     const companyId = req.user.company;
     const { orderedStageIds } = req.body;
 
-    // VVVVV LOG DETALHADO DO QUE O BACKEND RECEBEU VVVVV
+    console.log("[LeadStageCtrl Order] INÍCIO updateLeadStagesOrderController"); // Log de entrada
     console.log("[LeadStageCtrl Order] req.body recebido:", JSON.stringify(req.body, null, 2));
     console.log("[LeadStageCtrl Order] orderedStageIds extraído:", orderedStageIds);
     console.log("[LeadStageCtrl Order] Tipo de orderedStageIds:", typeof orderedStageIds, "É array?", Array.isArray(orderedStageIds));
+
     if (Array.isArray(orderedStageIds)) {
         orderedStageIds.forEach((id, index) => {
             console.log(`[LeadStageCtrl Order] ID[${index}]: ${id}, É ObjectId válido? ${mongoose.Types.ObjectId.isValid(id)}`);
         });
     }
-    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    if (!Array.isArray(orderedStageIds) || orderedStageIds.some(id => !mongoose.Types.ObjectId.isValid(id))) {
-        console.error("[LeadStageCtrl Order] ERRO DE VALIDAÇÃO: Um ou mais IDs são inválidos ou não é um array.");
-        return next(new ErrorResponse('Um array de IDs de estágio válidos é obrigatório para reordenar.', 400)); // Mensagem mais específica
+    if (!Array.isArray(orderedStageIds) || orderedStageIds.some(id => !id || !mongoose.Types.ObjectId.isValid(id))) { // Adicionada checagem !id
+        console.error("[LeadStageCtrl Order] ERRO DE VALIDAÇÃO: Um ou mais IDs são inválidos, nulos, ou não é um array.");
+        // Use a mensagem de erro específica para este caso:
+        return next(new ErrorResponse('O corpo da requisição deve conter um array "orderedStageIds" com IDs de situação válidos.', 400));
     }
 
+    console.log("[LeadStageCtrl Order] Chamando LeadStageService.updateLeadStagesOrder...");
     const result = await LeadStageService.updateLeadStagesOrder(companyId, orderedStageIds);
+    console.log("[LeadStageCtrl Order] LeadStageService.updateLeadStagesOrder retornou.");
+
     res.status(200).json({ success: true, message: result.message });
 });
 
