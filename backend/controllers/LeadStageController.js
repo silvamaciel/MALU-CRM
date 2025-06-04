@@ -77,24 +77,31 @@ const updateLeadStagesOrderController = asyncHandler(async (req, res, next) => {
     const companyId = req.user.company;
     const { orderedStageIds } = req.body;
 
-    console.log("[LeadStageCtrl Order] INÍCIO updateLeadStagesOrderController"); // Log de entrada
+    console.log("[LeadStageCtrl Order] INÍCIO updateLeadStagesOrderController");
     console.log("[LeadStageCtrl Order] req.body recebido:", JSON.stringify(req.body, null, 2));
     console.log("[LeadStageCtrl Order] orderedStageIds extraído:", orderedStageIds);
     console.log("[LeadStageCtrl Order] Tipo de orderedStageIds:", typeof orderedStageIds, "É array?", Array.isArray(orderedStageIds));
 
+    let algumIdInvalido = false; // Flag para ajudar a depurar
     if (Array.isArray(orderedStageIds)) {
         orderedStageIds.forEach((id, index) => {
-            console.log(`[LeadStageCtrl Order] ID[${index}]: ${id}, É ObjectId válido? ${mongoose.Types.ObjectId.isValid(id)}`);
+            const isValid = id && mongoose.Types.ObjectId.isValid(id); // Checa se não é null/undefined e é válido
+            console.log(`[LeadStageCtrl Order] ID[${index}]: '${id}', É ObjectId válido? ${isValid}`
+);
+            if (!isValid) {
+                algumIdInvalido = true;
+            }
         });
+    } else {
+        algumIdInvalido = true; // Se não for array, já é inválido para o propósito
     }
 
-    if (!Array.isArray(orderedStageIds) || orderedStageIds.some(id => !id || !mongoose.Types.ObjectId.isValid(id))) { // Adicionada checagem !id
-        console.error("[LeadStageCtrl Order] ERRO DE VALIDAÇÃO: Um ou mais IDs são inválidos, nulos, ou não é um array.");
-        // Use a mensagem de erro específica para este caso:
+    if (algumIdInvalido || !Array.isArray(orderedStageIds)) { // A condição original era boa, esta é para log detalhado
+        console.error("[LeadStageCtrl Order] ERRO DE VALIDAÇÃO: Um ou mais IDs são inválidos, nulos, ou não é um array. Array recebido:", orderedStageIds);
         return next(new ErrorResponse('O corpo da requisição deve conter um array "orderedStageIds" com IDs de situação válidos.', 400));
     }
 
-    console.log("[LeadStageCtrl Order] Chamando LeadStageService.updateLeadStagesOrder...");
+    console.log("[LeadStageCtrl Order] Todos os IDs parecem válidos. Chamando LeadStageService.updateLeadStagesOrder...");
     const result = await LeadStageService.updateLeadStagesOrder(companyId, orderedStageIds);
     console.log("[LeadStageCtrl Order] LeadStageService.updateLeadStagesOrder retornou.");
 
