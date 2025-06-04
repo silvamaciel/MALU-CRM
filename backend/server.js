@@ -20,6 +20,8 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 
+app.use(express.json()); 
+
 dotenv.config();
 const app = express();
 
@@ -38,6 +40,12 @@ app.use('/api/auth', require('./routes/authRoutes'));
 
 app.use('/api/companies', require('./routes/companyRoutes')); 
 
+
+app.use((req, res, next) => {
+    console.log(`[SERVER GLOBAL LOG] Recebida Requisição: ${req.method} ${req.originalUrl}`);
+    console.log("[SERVER GLOBAL LOG] req.body (após parsing inicial):", req.body);
+    next();
+});
 
 
 
