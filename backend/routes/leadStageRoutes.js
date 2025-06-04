@@ -13,4 +13,7 @@ router.put('/:id', protect, authorize('admin'), leadStageController.updateLeadSt
 
 router.delete('/:id', protect, authorize('admin'), leadStageController.deleteLeadStage);
 
+router.put('/order', protect, authorize('admin'), leadStageController.updateLeadStagesOrderController);
+
+
 module.exports = router;

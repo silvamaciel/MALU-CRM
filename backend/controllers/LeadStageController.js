@@ -71,10 +71,24 @@ const deleteLeadStage = async (req, res) => {
     }
 };
 
+
+const updateLeadStagesOrderController = asyncHandler(async (req, res, next) => {
+    const companyId = req.user.company;
+    const { orderedStageIds } = req.body; // Espera um array de IDs no corpo da requisição
+
+    if (!Array.isArray(orderedStageIds) || orderedStageIds.some(id => !mongoose.Types.ObjectId.isValid(id))) {
+        return next(new ErrorResponse('Um array de IDs de estágio válidos é obrigatório.', 400));
+    }
+
+    const result = await LeadStageService.updateLeadStagesOrder(companyId, orderedStageIds);
+    res.status(200).json({ success: true, message: result.message });
+});
+
 module.exports = {
     checkCompanyId,
     getAllLeadStages,
     createLeadStage,
     updateLeadStage,
-    deleteLeadStage
+    deleteLeadStage,
+    updateLeadStagesOrderController
 };
