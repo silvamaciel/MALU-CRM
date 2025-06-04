@@ -17,7 +17,7 @@ import { getDiscardReasons } from '../../../api/discardReasons';
 
 const STATUS_PROPOSTA_OPCOES = [
   "Em Elaboração", "Aguardando Aprovações", "Aguardando Assinatura Cliente", 
-  "Assinado", "Vendido", "Recusado", "Cancelado"
+  "Assinado", "Vendido", "Recusado", "Cancelado", "Distrato Realizado"
 ];
 
 function PropostaContratoDetailPage() {
