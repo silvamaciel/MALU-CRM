@@ -23,6 +23,10 @@ const leadStageSchema = new Schema(
       type: Boolean,
       default: true,
     },
+    ordem: {
+        type: Number,
+        default: 0 
+    },
   },
   {
     timestamps: true,
@@ -30,6 +34,7 @@ const leadStageSchema = new Schema(
 );
 
 leadStageSchema.index({ company: 1, nome: 1 }, { unique: true });
+LeadStageSchema.index({ company: 1, ordem: 1 });
 
 leadStageSchema.post("save", function (error, doc, next) {
   if (

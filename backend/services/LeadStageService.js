@@ -207,9 +207,60 @@ const deleteLeadStage = async (id, companyId) => {
     }
 };
 
+
+/**
+ * Atualiza a ordem de múltiplas LeadStages para uma empresa.
+ * @param {string} companyId - ID da empresa.
+ * @param {string[]} orderedStageIds - Array de IDs de LeadStage na nova ordem desejada.
+ * @returns {Promise<object>} Resultado da operação.
+ */
+const updateLeadStagesOrder = async (companyId, orderedStageIds) => {
+    console.log(`[LStageSvc] Atualizando ordem das LeadStages para Company: ${companyId}`);
+    if (!companyId || !Array.isArray(orderedStageIds)) {
+        throw new Error("ID da empresa e um array de IDs de estágio ordenados são obrigatórios.");
+    }
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+        const updatePromises = orderedStageIds.map((stageId, index) => {
+            if (!mongoose.Types.ObjectId.isValid(stageId)) {
+                throw new Error(`ID de estágio inválido fornecido: ${stageId}`);
+            }
+            return LeadStage.updateOne(
+                { _id: stageId, company: companyId },
+                { $set: { ordem: index } }, // Define a ordem baseada no índice do array
+                { session }
+            );
+        });
+
+        const results = await Promise.all(updatePromises);
+
+        // Verificar se todas as atualizações foram bem-sucedidas (opcional, mas bom)
+        results.forEach((result, index) => {
+            if (result.matchedCount === 0) {
+                console.warn(`[LStageSvc] Estágio com ID ${orderedStageIds[index]} não encontrado para a empresa ${companyId} ou já estava na ordem correta.`);
+            }
+            if (result.modifiedCount === 0 && result.matchedCount > 0) {
+                console.log(`[LStageSvc] Estágio ${orderedStageIds[index]} já estava na ordem correta ou não precisou de modificação.`);
+            }
+        });
+
+        await session.commitTransaction();
+        console.log(`[LStageSvc] Ordem das LeadStages atualizada com sucesso para Company: ${companyId}.`);
+        return { success: true, message: "Ordem das situações atualizada com sucesso." };
+    } catch (error) {
+        await session.abortTransaction();
+        console.error("[LStageSvc] Erro ao atualizar ordem das LeadStages:", error);
+        throw new Error(error.message || "Erro interno ao atualizar a ordem das situações.");
+    } finally {
+        session.endSession();
+    }
+};
 module.exports = {
     getAllLeadStages,
     createLeadStage,
     updateLeadStage,
     deleteLeadStage,
+    updateLeadStagesOrder
 };
