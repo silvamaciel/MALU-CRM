@@ -748,31 +748,38 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
         );
         if (!situacaoDescartado) throw new Error (`Estágio de Lead '${nomeEstagioDescartado}' não pôde ser encontrado ou criado.`);
         
-        const leadDoc = propostaContrato.lead; // Já populado
+        const leadDoc = propostaContrato.lead;
         const oldLeadStatusId = leadDoc.situacao;
         leadDoc.situacao = situacaoDescartado._id;
 
-       leadDoc.comentario = dadosDistrato.motivoDistrato; // Ou a combinação que você preferir
+       const comentarioDistrato = `Distrato da Proposta/Contrato ID ${propostaContrato._id} (Unidade: ${propostaContrato.unidade.identificador} do Empr.: ${propostaContrato.empreendimento.nome || 'N/A'}). Motivo original fornecido: ${dadosDistrato.motivoDistrato}.`;
+        leadDoc.comentario = leadDoc.comentario 
+            ? `${leadDoc.comentario}\n\n--- DISTRATO ---\n${comentarioDistrato}` 
+            : `--- DISTRATO ---\n${comentarioDistrato}`;
 
-       if (dadosDistrato.leadMotivoDescarteId && mongoose.Types.ObjectId.isValid(dadosDistrato.leadMotivoDescarteId)) {
-            const motivoDoc = await DiscardReason.findOne({_id: dadosDistrato.leadMotivoDescarteId, company: companyId});
+        // Lida com o motivoDeDescarte estruturado
+        if (dadosDistrato.leadMotivoDescarteId && mongoose.Types.ObjectId.isValid(dadosDistrato.leadMotivoDescarteId)) {
+            const motivoDoc = await DiscardReason.findOne({_id: dadosDistrato.leadMotivoDescarteId, company: companyId}).session(session);
             if (motivoDoc) {
                 leadDoc.motivoDescarte = dadosDistrato.leadMotivoDescarteId;
+                console.log(`[PropContSvc Distrato] Motivo de Descarte ID ${dadosDistrato.leadMotivoDescarteId} definido para o Lead.`);
             } else {
-                console.warn(`[PropContSvc Distrato] Motivo de Descarte ID ${dadosDistrato.leadMotivoDescarteId} não encontrado para o Lead.`);
+                console.warn(`[PropContSvc Distrato] Motivo de Descarte ID ${dadosDistrato.leadMotivoDescarteId} fornecido não encontrado ou não pertence à empresa. Tentando usar/criar default.`);
+                const motivoDistratoDefault = await DiscardReason.findOneAndUpdate(
+                    { company: companyId, nome: "Distrato Contratual" },
+                    { $setOnInsert: { nome: "Distrato Contratual", company: companyId, ativo: true, descricao: "Venda cancelada via distrato." } },
+                    { new: true, upsert: true, runValidators: true, session: session }
+                );
+                if (motivoDistratoDefault) leadDoc.motivoDescarte = motivoDistratoDefault._id;
             }
         } else {
-            const motivoDistratoParaComentario = `Distrato da Proposta/Contrato ID ${propostaContrato._id} (Unidade: ${unidadeDoc.identificador} do Empr.: ${unidadeDoc.empreendimento?.nome || 'N/A'}). Motivo: ${dadosDistrato.motivoDistrato}.`;
-        leadDoc.comentario = leadDoc.comentario 
-            ? `${leadDoc.comentario}\n\n${motivoDistratoParaComentario}` 
-            : motivoDistratoParaComentario;
-        
-        const motivoDistratoDoc = await DiscardReason.findOneAndUpdate(
-            { company: companyId, nome: "Distrato Contratual" },
-            { $setOnInsert: { nome: "Distrato Contratual", company: companyId, ativo: true } },
-            { new: true, upsert: true, runValidators: true, session: session }
-         );
-         if (motivoDistratoDoc) leadDoc.motivoDescarte = motivoDistratoDoc._id;
+            console.log(`[PropContSvc Distrato] Nenhum ID de Motivo de Descarte específico fornecido. Usando/Criando default "Distrato Contratual".`);
+            const motivoDistratoDefault = await DiscardReason.findOneAndUpdate(
+                { company: companyId, nome: "Distrato Contratual" },
+                { $setOnInsert: { nome: "Distrato Contratual", company: companyId, ativo: true, descricao: "Venda cancelada via distrato." } },
+                { new: true, upsert: true, runValidators: true, session: session }
+            );
+            if (motivoDistratoDefault) leadDoc.motivoDescarte = motivoDistratoDefault._id;
         }
         
         // Salvar todas as entidades
