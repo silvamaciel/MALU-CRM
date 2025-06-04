@@ -75,10 +75,22 @@ const deleteLeadStage = async (req, res) => {
 
 const updateLeadStagesOrderController = asyncHandler(async (req, res, next) => {
     const companyId = req.user.company;
-    const { orderedStageIds } = req.body; // Espera um array de IDs no corpo da requisição
+    const { orderedStageIds } = req.body;
+
+    // VVVVV LOG DETALHADO DO QUE O BACKEND RECEBEU VVVVV
+    console.log("[LeadStageCtrl Order] req.body recebido:", JSON.stringify(req.body, null, 2));
+    console.log("[LeadStageCtrl Order] orderedStageIds extraído:", orderedStageIds);
+    console.log("[LeadStageCtrl Order] Tipo de orderedStageIds:", typeof orderedStageIds, "É array?", Array.isArray(orderedStageIds));
+    if (Array.isArray(orderedStageIds)) {
+        orderedStageIds.forEach((id, index) => {
+            console.log(`[LeadStageCtrl Order] ID[${index}]: ${id}, É ObjectId válido? ${mongoose.Types.ObjectId.isValid(id)}`);
+        });
+    }
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     if (!Array.isArray(orderedStageIds) || orderedStageIds.some(id => !mongoose.Types.ObjectId.isValid(id))) {
-        return next(new ErrorResponse('Um array de IDs de estágio válidos é obrigatório.', 400));
+        console.error("[LeadStageCtrl Order] ERRO DE VALIDAÇÃO: Um ou mais IDs são inválidos ou não é um array.");
+        return next(new ErrorResponse('Um array de IDs de estágio válidos é obrigatório para reordenar.', 400)); // Mensagem mais específica
     }
 
     const result = await LeadStageService.updateLeadStagesOrder(companyId, orderedStageIds);
