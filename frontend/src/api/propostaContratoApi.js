@@ -122,3 +122,22 @@ export const updatePropostaContratoStatusApi = async (propostaContratoId, novoSt
         throw error.response?.data || new Error("Falha ao atualizar o status da Proposta/Contrato.");
     }
 };
+
+
+/**
+ * Registra o distrato de uma Proposta/Contrato.
+ * @param {string} propostaContratoId - ID da Proposta/Contrato.
+ * @param {object} dadosDistrato - { motivoDistrato, dataDistrato?, leadMotivoDescarteId? }
+ * @returns {Promise<object>} A Proposta/Contrato atualizada.
+ */
+export const registrarDistratoApi = async (propostaContratoId, dadosDistrato) => {
+    if (!propostaContratoId) throw new Error("ID da Proposta/Contrato é obrigatório para distrato.");
+    if (!dadosDistrato || !dadosDistrato.motivoDistrato) throw new Error("Dados do distrato (motivo) são obrigatórios.");
+    try {
+        const response = await axiosInstance.put(`<span class="math-inline">\{API\_URL\_BASE\}/</span>{propostaContratoId}/distrato`, dadosDistrato);
+        return response.data.data; // Assumindo que o backend retorna { success: true, data: propostaAtualizada }
+    } catch (error) {
+        console.error(`Erro ao registrar distrato para Proposta/Contrato ${propostaContratoId}:`, error.response?.data || error.message);
+        throw error.response?.data || new Error("Falha ao registrar o distrato.");
+    }
+};
