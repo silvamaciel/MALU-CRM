@@ -9,10 +9,6 @@ const leadStageSchema = new Schema(
       required: [true, "O nome da situação é obrigatório."],
       trim: true,
     },
-    ordem: {
-      type: Number,
-      default: 0,
-    },
     company: {
       type: Schema.Types.ObjectId,
       ref: "Company",
@@ -23,7 +19,7 @@ const leadStageSchema = new Schema(
       type: Boolean,
       default: true,
     },
-    ordem: {
+    ordem: { 
         type: Number,
         default: 0 
     },
@@ -33,9 +29,11 @@ const leadStageSchema = new Schema(
   }
 );
 
+
 leadStageSchema.index({ company: 1, nome: 1 }, { unique: true });
 leadStageSchema.index({ company: 1, ordem: 1 });
 
+// hooks post-save para erros de duplicidade de nome estão bons
 leadStageSchema.post("save", function (error, doc, next) {
   if (
     error.name === "MongoServerError" &&
@@ -43,12 +41,13 @@ leadStageSchema.post("save", function (error, doc, next) {
     error.keyPattern?.company &&
     error.keyPattern?.nome
   ) {
-    next(new Error(`A situação '${doc.nome}' já existe nesta empresa.`));
+    // Adiciona o nome do documento ao erro para melhor feedback
+    next(new Error(`A situação '${doc ? doc.nome : this.nome}' já existe nesta empresa.`));
   } else {
     next(error);
   }
 });
-leadStageSchema.post("findOneAndUpdate", function (error, doc, next) {
+leadStageSchema.post("findOneAndUpdate", function (error, doc, next) { 
   if (
     error.name === "MongoServerError" &&
     error.code === 11000 &&
@@ -62,6 +61,7 @@ leadStageSchema.post("findOneAndUpdate", function (error, doc, next) {
     next(error);
   }
 });
+
 
 const LeadStage = mongoose.model("LeadStage", leadStageSchema);
 
