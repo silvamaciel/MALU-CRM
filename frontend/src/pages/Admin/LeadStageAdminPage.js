@@ -6,14 +6,25 @@ import {
   createLeadStage,
   updateLeadStage,
   deleteLeadStage,
+  updateLeadStagesOrderApi
 } from "../../api/leadStages";
 import { toast } from "react-toastify";
 
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
-import './AdminPages.css';
+//import './AdminPages.css';
+import './LeadStageAdminPage.css'; 
+
+const reorder = (list, startIndex, endIndex) => {
+  const result = Array.from(list);
+  const [removed] = result.splice(startIndex, 1);
+  result.splice(endIndex, 0, removed);
+  return result;
+};
 
 function LeadStageAdminPage() {
-  const [stages, setStages] = useState([]);
+  const [Stages, setStages] = useState([]);  // Use o nome Stages conforme seu código original
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -21,9 +32,13 @@ function LeadStageAdminPage() {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [currentStage, setCurrentStage] = useState(null); // null para Add, objeto para Edit
   const [stageName, setStageName] = useState(""); // <<< NOVO state para o input nome
-  // Adicione state para 'ordem' se seu modelo/form usar: const [stageOrder, setStageOrder] = useState('');
+  // const [stageOrder, setStageOrder] = useState(''); // se precisar
   const [isProcessingForm, setIsProcessingForm] = useState(false);
   const [formError, setFormError] = useState(null);
+
+  // Para habilitar o botão de salvar ordem
+  const [isSavingOrder, setIsSavingOrder] = useState(false);
+  const [orderChanged, setOrderChanged] = useState(false);
 
   // --- State para Delete ---
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -37,7 +52,7 @@ function LeadStageAdminPage() {
     setError(null);
     try {
       const data = await getLeadStages();
-      setStages(data || []);
+      setStages(data || data.leadStages || data.data || []);
     } catch (err) {
       setError(err.message || "Falha ao carregar situações.");
       toast.error(err.message || "Falha ao carregar situações.");
@@ -51,6 +66,33 @@ function LeadStageAdminPage() {
   useEffect(() => {
     fetchStages();
   }, [fetchStages]);
+
+  const onDragEnd = (result) => {
+    if (!result.destination) {
+      return;
+    }
+    const items = reorder(
+      Stages,  // manter "Stages"
+      result.source.index,
+      result.destination.index
+    );
+    setStages(items);
+    setOrderChanged(true);
+  };
+
+  const handleSaveOrder = async () => {
+    setIsSavingOrder(true);
+    try {
+      const orderedStageIds = Stages.map(s => s._id);  // manter "Stages"
+      await updateLeadStagesOrderApi(orderedStageIds);
+      toast.success("Ordem das situações salva com sucesso!");
+      setOrderChanged(false);
+    } catch (err) {
+      toast.error(err.message || "Falha ao salvar a nova ordem.");
+    } finally {
+      setIsSavingOrder(false);
+    }
+  };
 
   // --- Handlers ATUALIZADOS para Add/Edit ---
   const handleOpenAddModal = () => {
@@ -80,16 +122,15 @@ function LeadStageAdminPage() {
 
   // Função chamada ao submeter o form de Add/Edit
   const handleSaveStage = async (event) => {
-    event.preventDefault(); // Previne reload da página se for <form>
+    event.preventDefault();
     setFormError(null);
     setIsProcessingForm(true);
 
     const stageData = {
-      nome: stageName.trim(), // Remove espaços extras
-      // ordem: stageOrder ? parseInt(stageOrder, 10) : undefined, // Inclui ordem se usar
+      nome: stageName.trim(),
+      // ordem: stageOrder ? parseInt(stageOrder, 10) : undefined,
     };
 
-    // Validação básica
     if (!stageData.nome) {
       setFormError("O nome da situação não pode estar vazio.");
       setIsProcessingForm(false);
@@ -100,21 +141,19 @@ function LeadStageAdminPage() {
       let result;
       let successMessage;
       if (currentStage && currentStage._id) {
-        // Modo Edição
         result = await updateLeadStage(currentStage._id, stageData);
         successMessage = `Situação "${result.nome}" atualizada com sucesso!`;
       } else {
-        // Modo Adição
         result = await createLeadStage(stageData);
         successMessage = `Situação "${result.nome}" criada com sucesso!`;
       }
       toast.success(successMessage);
-      fetchStages(); // Atualiza a lista
-      handleCloseFormModal(); // Fecha o form/modal
+      fetchStages();
+      handleCloseFormModal();
     } catch (err) {
       console.error("Erro ao salvar situação:", err);
-      const errorMsg = err.error || err.message || "Falha ao salvar situação."; // Pega erro do backend
-      setFormError(errorMsg); // Mostra erro no form
+      const errorMsg = err.error || err.message || "Falha ao salvar situação.";
+      setFormError(errorMsg);
       toast.error(errorMsg);
     } finally {
       setIsProcessingForm(false);
@@ -136,7 +175,6 @@ function LeadStageAdminPage() {
   };
 
   const handleConfirmDelete = async () => {
-    // ... (lógica do delete continua igual) ...
     if (!deleteTargetStage) return;
     setIsDeleting(true);
     setDeleteErrorState(null);
@@ -147,7 +185,7 @@ function LeadStageAdminPage() {
       fetchStages();
     } catch (err) {
       console.error("Erro ao deletar situação:", err);
-      const errorMsg = err.error || err.message || "Falha ao excluir situação."; // Pega erro backend
+      const errorMsg = err.error || err.message || "Falha ao excluir situação.";
       setDeleteErrorState(errorMsg);
       toast.error(errorMsg);
     } finally {
@@ -155,9 +193,11 @@ function LeadStageAdminPage() {
     }
   };
 
+  if (isLoading) return <p>Carregando situações...</p>;
+  if (error) return <p className="error-message">{error}</p>;
+
   return (
     <div className="admin-page lead-stage-admin-page">
-        
       <h1>Gerenciar Situações de Lead</h1>
       <Link to="/leads" className="button back-to-list-button">
         <i className="fas fa-list"></i> Voltar para Lista
@@ -175,59 +215,96 @@ function LeadStageAdminPage() {
       {error && <p className="error-message">{error}</p>}
 
       {!isLoading && !error && (
-        <div className="admin-table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Nome</th>
-                {/* <th>Ordem</th> */}
-                <th>Data Criação</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {stages.map((stage) => (
-                <tr key={stage._id}>
-                  <td>{stage.nome}</td>
-                  {/* <td>{stage.ordem}</td> */}
-                  <td>
-                    {new Date(stage.createdAt).toLocaleDateString("pt-BR")}
-                  </td>
-                  <td>
-                    <button
-                      onClick={() => handleOpenEditModal(stage)}
-                      className="button edit-button-table"
-                      disabled={isFormModalOpen || isDeleteConfirmOpen}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleOpenDeleteConfirm(stage)}
-                      className="button delete-button-table"
-                      disabled={isFormModalOpen || isDeleteConfirmOpen}
-                    >
-                      Excluir
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {stages.length === 0 && (
-                <tr>
-                  <td colSpan="4">
-                    Nenhuma situação encontrada. Crie a primeira!
-                  </td>
-                </tr>
+        <>
+          <DragDropContext onDragEnd={onDragEnd}>
+            <Droppable droppableId="stagesDroppable">
+              {(provided) => (
+                <table {...provided.droppableProps} ref={provided.innerRef}>
+                  <thead>
+                    <tr>
+                      <th>Nome</th>
+                      {/* <th>Ordem</th> */}
+                      <th>Data Criação</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Stages.map((stage, index) => (
+                      <Draggable
+                        key={stage._id}
+                        draggableId={stage._id}
+                        index={index}
+                      >
+                        {(provided, snapshot) => (
+                          <tr
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            style={{
+                              ...provided.draggableProps.style,
+                              backgroundColor: snapshot.isDragging
+                                ? "#f0f8ff"
+                                : "inherit",
+                              cursor: "move",
+                            }}
+                          >
+                            <td>{stage.nome}</td>
+                            {/* <td>{stage.ordem}</td> */}
+                            <td>
+                              {new Date(stage.createdAt).toLocaleDateString(
+                                "pt-BR"
+                              )}
+                            </td>
+                            <td>
+                              <button
+                                onClick={() => handleOpenEditModal(stage)}
+                                className="button edit-button-table"
+                                disabled={isFormModalOpen || isDeleteConfirmOpen}
+                              >
+                                Editar
+                              </button>
+                              <button
+                                onClick={() => handleOpenDeleteConfirm(stage)}
+                                className="button delete-button-table"
+                                disabled={isFormModalOpen || isDeleteConfirmOpen}
+                              >
+                                Excluir
+                              </button>
+                            </td>
+                          </tr>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                    {Stages.length === 0 && (
+                      <tr>
+                        <td colSpan="4">
+                          Nenhuma situação encontrada. Crie a primeira!
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               )}
-            </tbody>
-          </table>
-        </div>
+            </Droppable>
+          </DragDropContext>
+
+          {orderChanged && (
+            <button
+              onClick={handleSaveOrder}
+              disabled={isSavingOrder}
+              className="button primary-button"
+              style={{ margin: "15px 0" }}
+            >
+              {isSavingOrder ? "Salvando ordem..." : "Salvar nova ordem"}
+            </button>
+          )}
+        </>
       )}
 
       {/* --- Modal/Formulário Simples para Adicionar/Editar --- */}
       {isFormModalOpen && (
         <div className="form-modal-overlay">
-          {" "}
-          {/* Simula um fundo de modal */}
           <div className="form-modal-content">
             <h2>
               {currentStage ? "Editar Situação" : "Adicionar Nova Situação"}
@@ -245,11 +322,19 @@ function LeadStageAdminPage() {
                   disabled={isProcessingForm}
                 />
               </div>
-              {/* Adicione input para 'ordem' aqui se necessário */}
+
+              {/* input para ordem, se quiser usar */}
               {/* <div className="form-group">
-                                <label htmlFor="stageOrder">Ordem:</label>
-                                <input type="number" id="stageOrder" value={stageOrder} onChange={(e) => setStageOrder(e.target.value)} placeholder="Ex: 1" disabled={isProcessingForm}/>
-                            </div> */}
+                <label htmlFor="stageOrder">Ordem:</label>
+                <input
+                  type="number"
+                  id="stageOrder"
+                  value={stageOrder}
+                  onChange={(e) => setStageOrder(e.target.value)}
+                  placeholder="Ex: 1"
+                  disabled={isProcessingForm}
+                />
+              </div> */}
 
               {formError && (
                 <p className="error-message modal-error">{formError}</p>
@@ -290,7 +375,7 @@ function LeadStageAdminPage() {
         title="Confirmar Exclusão"
         message={`Tem certeza que deseja excluir a situação "${
           deleteTargetStage?.nome || ""
-        }"?`} // Mensagem mais simples
+        }"?`}
         confirmText="Excluir"
         cancelText="Cancelar"
         confirmButtonClass="confirm-button-delete"
