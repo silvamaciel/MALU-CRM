@@ -112,7 +112,7 @@ export const updatePropostaContratoStatusApi = async (propostaContratoId, novoSt
         throw new Error("ID da Proposta/Contrato e novo status são obrigatórios.");
     }
     try {
-        const response = await axiosInstance.put(`<span class="math-inline">\{API\_URL\_BASE\}/</span>{propostaContratoId}/status`, { 
+        const response = await axiosInstance.put(`${API_URL_BASE}/${propostaContratoId}/status`, { 
             novoStatus,
             ...dadosAdicionais // Envia dataAssinaturaCliente, etc., se houver
         });

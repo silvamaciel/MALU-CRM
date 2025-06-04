@@ -181,7 +181,7 @@ function PropostaContratoDetailPage() {
 
             // O comentário do modal pode ser ADICIONADO ao motivo principal
             const motivoPrincipal = discardData.motivoTexto || "Distrato solicitado pelo cliente"; // Pega o texto do motivo selecionado
-            const comentarioFinalDistrato = `<span class="math-inline">\{motivoPrincipal\}</span>{discardData.comentario ? '\nObservações Adicionais: ' + discardData.comentario : ''}`;
+            const comentarioFinalDistrato = `${motivoPrincipal}${discardData.comentario ? '\nObservações Adicionais: ' + discardData.comentario : ''}`;
 
             const dadosParaBackend = {
                 novoStatus: "Distrato Realizado", // Status final da PropostaContrato

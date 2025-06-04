@@ -13,7 +13,7 @@ const toInputDate = (date) => {
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
-    return `<span class="math-inline">\{year\}\-</span>{month}-${day}`;
+    return `${year}-${month}-${day}`;
 };
 
 function ReservaFormModal({ leadId, leadNome, companyId, onClose }) {
