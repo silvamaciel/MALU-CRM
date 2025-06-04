@@ -12,6 +12,7 @@ const User = require('../models/User');
 const ModeloContrato = require('../models/ModeloContrato');
 const BrokerContact = require('../models/BrokerContact');
 const puppeteer = require('puppeteer-core');
+const DiscardReason = require('../models/DiscardReason');
 
 
 /**
