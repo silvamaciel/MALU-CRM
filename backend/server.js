@@ -43,7 +43,7 @@ app.use('/api/companies', require('./routes/companyRoutes'));
 
 // --rotas protegidas -- // 
 app.use('/api/leads', require('./routes/leadRoutes'));
-app.use('/api/leadStage', require('./routes/leadStageRoutes'));
+app.use('/api/leadstages', require('./routes/leadStageRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/origens', require('./routes/OrigemRoutes'));
 app.use('/api/motivosdescarte', require('./routes/discardReasonRoutes'));
