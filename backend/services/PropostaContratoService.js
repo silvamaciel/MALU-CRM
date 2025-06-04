@@ -740,7 +740,7 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
         propostaContrato.unidade.currentReservaId = null; // Limpa a referência à reserva original
 
         // 4. Atualizar Lead
-        const nomeEstagioDescartado = "Descartado"; // Nome exato do seu LeadStage
+        const nomeEstagioDescartado = "Descartado"; 
         const situacaoDescartado = await LeadStage.findOneAndUpdate(
             { company: companyId, nome: { $regex: new RegExp(`^${nomeEstagioDescartado}$`, "i") } },
             { $setOnInsert: { nome: nomeEstagioDescartado, company: companyId, ativo: true, descricao: "Lead descartado devido a distrato de contrato." } },
@@ -754,8 +754,7 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
 
        leadDoc.comentario = dadosDistrato.motivoDistrato; // Ou a combinação que você preferir
 
-        // VVVVV ATUALIZAR O MOTIVO DE DESCARTE ESTRUTURADO DO LEAD VVVVV
-        if (dadosDistrato.leadMotivoDescarteId && mongoose.Types.ObjectId.isValid(dadosDistrato.leadMotivoDescarteId)) {
+       if (dadosDistrato.leadMotivoDescarteId && mongoose.Types.ObjectId.isValid(dadosDistrato.leadMotivoDescarteId)) {
             const motivoDoc = await DiscardReason.findOne({_id: dadosDistrato.leadMotivoDescarteId, company: companyId});
             if (motivoDoc) {
                 leadDoc.motivoDescarte = dadosDistrato.leadMotivoDescarteId;
