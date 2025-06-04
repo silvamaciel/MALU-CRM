@@ -3,17 +3,30 @@
 const express = require('express');
 const router = express.Router();
 const { protect, authorize } = require('../middlewares/authMiddleware'); 
-const leadStageController = require('../controllers/LeadStageController');
 
-router.get('/', protect, leadStageController.getAllLeadStages);
+const {
+    getAllLeadStages, 
+    createLeadStage,  
+    updateLeadStage,  
+    deleteLeadStage,  
+    updateLeadStagesOrderController
+} = require('../controllers/LeadStageController');
 
-router.post('/', protect, authorize('admin'), leadStageController.createLeadStage);
 
-router.put('/:id', protect, authorize('admin'), leadStageController.updateLeadStage);
 
-router.delete('/:id', protect, authorize('admin'), leadStageController.deleteLeadStage);
+router.use(protect);
 
-router.put('/order', leadStageController.updateLeadStagesOrderController);
+router.route('/')
+    .get(getAllLeadStages)
+    .post(authorize(['admin']), createLeadStage);
+
+router.route('/order')
+    .put(authorize(['admin']), updateLeadStagesOrderController);
+
+router.route('/:id')
+    .put(authorize(['admin']), updateLeadStage)
+    .delete(authorize(['admin']), deleteLeadStage);
+
 
 
 module.exports = router;
