@@ -776,12 +776,20 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
                 console.log(`[PropContSvc Distrato] Motivo de Descarte ID ${dadosDistrato.leadMotivoDescarteId} definido para o Lead.`);
             } else {
                 console.warn(`[PropContSvc Distrato] Motivo de Descarte ID ${dadosDistrato.leadMotivoDescarteId} fornecido não encontrado ou não pertence à empresa. Usando/Criando default.`);
-                const motivoDistratoDefault = await DiscardReason.findOneAndUpdate( /* ... como antes ... */ { session: session });
+                const motivoDistratoDefault = await DiscardReason.findOneAndUpdate(
+                { company: companyId, nome: "Distrato Contratual" }, // Nome padrão para motivo de distrato
+                { $setOnInsert: { nome: "Distrato Contratual", company: companyId, ativo: true, descricao: "Venda cancelada via distrato." } },
+                { new: true, upsert: true, runValidators: true, session: session }
+            );
                 if (motivoDistratoDefault) leadDoc.motivoDescarte = motivoDistratoDefault._id;
             }
         } else {
             console.log(`[PropContSvc Distrato] Nenhum ID de Motivo de Descarte específico fornecido. Usando/Criando default "Distrato Contratual".`);
-            const motivoDistratoDefault = await DiscardReason.findOneAndUpdate( /* ... como antes ... */ { session: session });
+            const motivoDistratoDefault = await DiscardReason.findOneAndUpdate(
+                { company: companyId, nome: "Distrato Contratual" }, // Nome padrão para motivo de distrato
+                { $setOnInsert: { nome: "Distrato Contratual", company: companyId, ativo: true, descricao: "Venda cancelada via distrato." } },
+                { new: true, upsert: true, runValidators: true, session: session }
+            );
             if (motivoDistratoDefault) leadDoc.motivoDescarte = motivoDistratoDefault._id;
         }
         
