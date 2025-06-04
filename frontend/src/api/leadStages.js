@@ -2,7 +2,8 @@
 import axiosInstance from "./axiosInstance.js"; // <<< CORRIGIDO o typo aqui
 
 // Define a URL base para esta entidade (confirme se é /leadStage no seu backend)
-const API_URL = '/leadstages';
+const API_URL = '/leadStage';
+
 /**
  * Busca todas as situações de lead.
  * (Sua função existente, mantida)
