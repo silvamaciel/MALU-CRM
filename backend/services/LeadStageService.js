@@ -14,6 +14,7 @@ const getAllLeadStages = async (companyId) => {
          throw new Error('ID da empresa inválido ou não fornecido para buscar situações.');
     }
     try {
+        
         // <<< FILTRA por companyId e ativo=true, ORDENA por ordem e nome >>>
         return await LeadStage.find({ company: companyId, ativo: true })
                            .sort({ ordem: 1, nome: 1 });

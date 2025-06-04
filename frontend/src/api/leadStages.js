@@ -73,3 +73,19 @@ export const deleteLeadStage = async (id) => {
         throw error.response?.data || new Error("Falha ao excluir situação.");
     }
 };
+
+
+/**
+ * Atualiza a ordem das situações de lead para a empresa.
+ * @param {string[]} orderedStageIds - Array de IDs de LeadStage na nova ordem.
+ * @returns {Promise<object>} Resposta da API.
+ */
+export const updateLeadStagesOrderApi = async (orderedStageIds) => {
+    try {
+        const response = await axiosInstance.put(`${API_URL}/order`, { orderedStageIds });
+        return response.data; // Espera { success: true, message: "..." }
+    } catch (error) {
+        console.error("Erro ao atualizar ordem das situações:", error.response?.data || error.message);
+        throw error.response?.data || new Error("Falha ao atualizar a ordem das situações.");
+    }
+};
