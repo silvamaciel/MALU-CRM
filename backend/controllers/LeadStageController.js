@@ -2,6 +2,8 @@
 const leadStageService = require('../services/LeadStageService');
 const mongoose = require('mongoose');
 const asyncHandler = require("../middlewares/asyncHandler");
+const ErrorResponse = require('../utils/errorResponse');
+
 
 const checkCompanyId = (req, res, next) => {
     if (!req.user || !req.user.company) {
