@@ -752,8 +752,19 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
         const oldLeadStatusId = leadDoc.situacao;
         leadDoc.situacao = situacaoDescartado._id;
 
-        // Adicionar motivo do distrato ao comentário do Lead
-        const motivoDistratoParaComentario = `Distrato da Proposta/Contrato ID ${propostaContrato._id} (Unidade: ${unidadeDoc.identificador} do Empr.: ${unidadeDoc.empreendimento?.nome || 'N/A'}). Motivo: ${dadosDistrato.motivoDistrato}.`;
+       leadDoc.comentario = dadosDistrato.motivoDistrato; // Ou a combinação que você preferir
+
+        // VVVVV ATUALIZAR O MOTIVO DE DESCARTE ESTRUTURADO DO LEAD VVVVV
+        if (dadosDistrato.leadMotivoDescarteId && mongoose.Types.ObjectId.isValid(dadosDistrato.leadMotivoDescarteId)) {
+            // Opcional: Validar se o motivoDescarteId existe e pertence à empresa
+            const motivoDoc = await DiscardReason.findOne({_id: dadosDistrato.leadMotivoDescarteId, company: companyId});
+            if (motivoDoc) {
+                leadDoc.motivoDescarte = dadosDistrato.leadMotivoDescarteId;
+            } else {
+                console.warn(`[PropContSvc Distrato] Motivo de Descarte ID ${dadosDistrato.leadMotivoDescarteId} não encontrado para o Lead.`);
+            }
+        } else {
+            const motivoDistratoParaComentario = `Distrato da Proposta/Contrato ID ${propostaContrato._id} (Unidade: ${unidadeDoc.identificador} do Empr.: ${unidadeDoc.empreendimento?.nome || 'N/A'}). Motivo: ${dadosDistrato.motivoDistrato}.`;
         leadDoc.comentario = leadDoc.comentario 
             ? `${leadDoc.comentario}\n\n${motivoDistratoParaComentario}` 
             : motivoDistratoParaComentario;
@@ -764,6 +775,7 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
             { new: true, upsert: true, runValidators: true, session: session }
          );
          if (motivoDistratoDoc) leadDoc.motivoDescarte = motivoDistratoDoc._id;
+        }
         
         // Salvar todas as entidades
         await unidadeDoc.save({ session });
