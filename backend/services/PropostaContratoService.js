@@ -756,7 +756,6 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
 
         // VVVVV ATUALIZAR O MOTIVO DE DESCARTE ESTRUTURADO DO LEAD VVVVV
         if (dadosDistrato.leadMotivoDescarteId && mongoose.Types.ObjectId.isValid(dadosDistrato.leadMotivoDescarteId)) {
-            // Opcional: Validar se o motivoDescarteId existe e pertence à empresa
             const motivoDoc = await DiscardReason.findOne({_id: dadosDistrato.leadMotivoDescarteId, company: companyId});
             if (motivoDoc) {
                 leadDoc.motivoDescarte = dadosDistrato.leadMotivoDescarteId;
