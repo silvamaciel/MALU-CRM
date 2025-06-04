@@ -72,41 +72,50 @@ const deleteLeadStage = async (req, res) => {
     }
 };
 
-
+/**
+ * @desc    Atualizar a ordem das situações de lead para uma empresa
+ * @route   PUT /api/leadstages/order
+ * @access  Privado (Admin)
+ */
 const updateLeadStagesOrderController = asyncHandler(async (req, res, next) => {
-    const companyId = req.user.company;
+    // Log inicial para sabermos que o controller foi atingido
+    console.log("[LeadStageCtrl Order] INÍCIO updateLeadStagesOrderController");
+
+    const companyId = req.user.company; // Obtido do middleware 'protect'
     const { orderedStageIds } = req.body;
 
-    console.log("[LeadStageCtrl Order] INÍCIO updateLeadStagesOrderController");
+    // Logs para depurar o que foi recebido
     console.log("[LeadStageCtrl Order] req.body recebido:", JSON.stringify(req.body, null, 2));
     console.log("[LeadStageCtrl Order] orderedStageIds extraído:", orderedStageIds);
     console.log("[LeadStageCtrl Order] Tipo de orderedStageIds:", typeof orderedStageIds, "É array?", Array.isArray(orderedStageIds));
-
-    let algumIdInvalido = false; // Flag para ajudar a depurar
+    
+    let algumIdInvalidoLog = false; // Flag para log
     if (Array.isArray(orderedStageIds)) {
         orderedStageIds.forEach((id, index) => {
-            const isValid = id && mongoose.Types.ObjectId.isValid(id); // Checa se não é null/undefined e é válido
-            console.log(`[LeadStageCtrl Order] ID[${index}]: '${id}', É ObjectId válido? ${isValid}`
-);
+            const isValid = id && mongoose.Types.ObjectId.isValid(id);
+            console.log(`[LeadStageCtrl Order] Verificando ID[${index}]: '${id}', É ObjectId válido? ${isValid}`);
             if (!isValid) {
-                algumIdInvalido = true;
+                algumIdInvalidoLog = true;
             }
         });
     } else {
-        algumIdInvalido = true; // Se não for array, já é inválido para o propósito
+        algumIdInvalidoLog = true; // Não é um array
     }
 
-    if (algumIdInvalido || !Array.isArray(orderedStageIds)) { // A condição original era boa, esta é para log detalhado
-        console.error("[LeadStageCtrl Order] ERRO DE VALIDAÇÃO: Um ou mais IDs são inválidos, nulos, ou não é um array. Array recebido:", orderedStageIds);
+    // Validação
+    if (algumIdInvalidoLog || !Array.isArray(orderedStageIds)) {
+        console.error("[LeadStageCtrl Order] ERRO DE VALIDAÇÃO: Um ou mais IDs são inválidos, nulos, ou 'orderedStageIds' não é um array. Array recebido:", orderedStageIds);
+        // Esta é a mensagem de erro que o frontend deveria receber se esta validação falhar
         return next(new ErrorResponse('O corpo da requisição deve conter um array "orderedStageIds" com IDs de situação válidos.', 400));
     }
 
     console.log("[LeadStageCtrl Order] Todos os IDs parecem válidos. Chamando LeadStageService.updateLeadStagesOrder...");
     const result = await LeadStageService.updateLeadStagesOrder(companyId, orderedStageIds);
     console.log("[LeadStageCtrl Order] LeadStageService.updateLeadStagesOrder retornou.");
-
+    
     res.status(200).json({ success: true, message: result.message });
 });
+
 
 module.exports = {
     checkCompanyId,
