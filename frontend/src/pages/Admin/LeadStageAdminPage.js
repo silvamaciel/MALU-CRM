@@ -83,6 +83,7 @@ function LeadStageAdminPage() {
   const handleSaveOrder = async () => {
     setIsSavingOrder(true);
     try {
+      console.log('Ordered IDs:', orderedStageIds);
       const orderedStageIds = Stages.map(s => s._id);  // manter "Stages"
       await updateLeadStagesOrderApi(orderedStageIds);
       toast.success("Ordem das situações salva com sucesso!");
