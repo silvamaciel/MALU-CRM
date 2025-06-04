@@ -18,14 +18,14 @@ router.use(protect);
 
 router.route('/')
     .get(getAllLeadStages)
-    .post(authorize(['admin']), createLeadStage);
+    .post(authorize('admin'), createLeadStage);
 
 router.route('/order')
-    .put(authorize(['admin']), updateLeadStagesOrderController);
+    .put(authorize('admin'), updateLeadStagesOrderController);
 
 router.route('/:id')
-    .put(authorize(['admin']), updateLeadStage)
-    .delete(authorize(['admin']), deleteLeadStage);
+    .put(authorize('admin'), updateLeadStage)
+    .delete(authorize('admin'), deleteLeadStage);
 
 
 
