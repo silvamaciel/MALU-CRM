@@ -1,324 +1,235 @@
 // src/pages/LeadList/LeadListPage.js
-
-import React, { useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
-import ReactPaginate from 'react-paginate'; // Importar react-paginate
-
-// Funções da API
-import { getLeads, discardLead, updateLead, deleteLead } from "../../api/leads";
-import { getLeadStages } from "../../api/leadStages";
-import { getOrigens } from "../../api/origens";
-// !!! ATENÇÃO: Verifique se o nome do arquivo/caminho está correto !!!
-import { getUsuarios } from "../../api/users"; // ou '../../api/users'
-
-// Componentes
-import LeadCard from "../../components/LeadCard/LeadCard";
-import DiscardLeadModal from "../../components/DiscardLeadModal/DiscardLeadModal";
-import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
-import LeadFilters from '../../components/LeadFilters/LeadFilters';
-
-// Estilos (Inclua estilos para .pagination-container aqui ou em App.css)
-import "./LeadListPage.css";
-
-// Toastify
+import React, { useState, useEffect, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-// O <ToastContainer /> deve estar no App.js
+import { getLeads, updateLead } from '../../api/leads'; // Assumindo que updateLead pode atualizar a situação
+import { getLeadStages } from '../../api/leadStages'; // Para buscar as colunas do Kanban
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+// import KanbanColumn from './KanbanColumn'; // Criaremos depois
+// import LeadCard from './LeadCard'; // Criaremos depois
+import './LeadListPage.css'; // Seu CSS existente
+// import './Kanban.css'; // Um novo CSS para o Kanban
 
-// Constante para itens por página
-const LEADS_PER_PAGE = 10; // Ajuste conforme necessário
+// Função auxiliar para reordenar dentro de uma coluna (se implementado)
+const reorderList = (list, startIndex, endIndex) => {
+  const result = Array.from(list);
+  const [removed] = result.splice(startIndex, 1);
+  result.splice(endIndex, 0, removed);
+  return result;
+};
+
 
 function LeadListPage() {
+    const navigate = useNavigate();
+    const [allLeads, setAllLeads] = useState([]); // Guarda todos os leads buscados
+    const [leadStages, setLeadStages] = useState([]); // Lista de LeadStages ordenados
+    const [leadsByStage, setLeadsByStage] = useState({}); // Objeto: { stageId: [leads...], ... }
+    
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+    // ... (seus states existentes para filtros, paginação se for manter para uma visão de tabela alternativa)
 
-  // --- State Management ---
-
-  // Leads Data
-  const [leads, setLeads] = useState([]);
-  const [isLoadingLeads, setIsLoadingLeads] = useState(true);
-  const [leadsError, setLeadsError] = useState(null);
-
-  // Filter Dropdown Options Data
-  const [situacoesList, setSituacoesList] = useState([]);
-  const [origensList, setOrigensList] = useState([]);
-  const [usuariosList, setUsuariosList] = useState([]);
-  const [isLoadingOptions, setIsLoadingOptions] = useState(true);
-  const [optionsError, setOptionsError] = useState(null);
-
-  // Active Filters
-  const [activeFilters, setActiveFilters] = useState({});
-
-  // Pagination State
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalLeads, setTotalLeads] = useState(0); // Para informação, se necessário
-
-  // Discard Modal State
-  const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
-  const [discardTargetLead, setDiscardTargetLead] = useState(null);
-  const [isDiscarding, setIsDiscarding] = useState(false);
-  const [discardError, setDiscardError] = useState(null);
-
-  // Reactivate State
-  const [isReactivatingId, setIsReactivatingId] = useState(null);
-  // Erro de reativação agora é tratado via toast
-
-  // Delete Modal State
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [deleteTargetLead, setDeleteTargetLead] = useState(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState(null);
-
-  // Refresh Trigger State
-  const [refreshKey, setRefreshKey] = useState(0); // Usado para forçar re-busca após ações
-
-  // --- Data Fetching Effects ---
-
-  // Efeito 1: Buscar opções para filtros (roda uma vez no mount)
-  useEffect(() => {
-    console.log("Buscando opções para filtros...");
-    const fetchFilterOptions = async () => {
-      setIsLoadingOptions(true); setOptionsError(null);
-      try {
-         const [situacoesData, origensData, usuariosData] = await Promise.all([
-            getLeadStages(), getOrigens(), getUsuarios() // Chamadas API
-         ]);
-         // Define os estados com os dados ou arrays vazios em caso de falha parcial
-         setSituacoesList(Array.isArray(situacoesData) ? situacoesData : []);
-         setOrigensList(Array.isArray(origensData) ? origensData : []);
-         setUsuariosList(Array.isArray(usuariosData) ? usuariosData : []);
-         if (!Array.isArray(situacoesData) || !Array.isArray(origensData) || !Array.isArray(usuariosData)) {
-             console.warn("Uma ou mais APIs de opções não retornaram um array.");
-         }
-      } catch (err) {
-         console.error("Falha ao buscar opções para filtros:", err);
-         setOptionsError("Não foi possível carregar opções de filtro."); // Define erro geral
-         setSituacoesList([]); setOrigensList([]); setUsuariosList([]); // Garante arrays vazios
-      } finally {
-         setIsLoadingOptions(false); // Finaliza loading das opções
-      }
-    };
-    fetchFilterOptions();
-  }, []); // Dependência vazia: roda só na montagem
-
-
-  // Efeito 2: Buscar LEADS (roda quando filtros, página ou refreshKey mudam)
-  useEffect(() => {
-    console.log(`Effect leads: Página=${currentPage}, Filtros:`, activeFilters, "Refresh:", refreshKey);
-    const fetchFilteredLeads = async () => {
-        setIsLoadingLeads(true); // Inicia loading dos leads
-        setLeadsError(null); // Limpa erro anterior dos leads
+    // Função para buscar todos os dados necessários
+    const fetchData = useCallback(async () => {
+        setIsLoading(true);
+        setError(null);
         try {
-            const params = {
-                ...activeFilters,
-                page: currentPage,
-                limit: LEADS_PER_PAGE
-            };
-            const data = await getLeads(params); // Busca leads com filtros e paginação
+            // Busca os estágios ordenados (o backend já deve retornar ordenado por 'ordem')
+            const stagesData = await getLeadStages(); 
+            const fetchedStages = stagesData.leadStages || stagesData.data || stagesData || [];
+            setLeadStages(fetchedStages);
 
-            // Atualiza states com dados da resposta paginada
-            setLeads(data.leads || []);
-            setTotalLeads(data.totalLeads || 0);
-            setTotalPages(data.totalPages || 0);
-            // Ajusta currentPage se backend retornar diferente (segurança)
-            if(data.currentPage && data.currentPage !== currentPage) {
-                setCurrentPage(data.currentPage);
+            // Busca todos os leads ativos (ou com paginação/filtros se preferir)
+            // Para o Kanban, geralmente é melhor carregar todos os leads ativos de uma vez
+            // Se forem muitos, considere filtros ou paginação por coluna.
+            const leadsData = await getLeads(1, 1000, { /* filtros iniciais, ex: ativo: true */ });
+            const fetchedLeads = leadsData.leads || [];
+            setAllLeads(fetchedLeads);
+
+            // Agrupa os leads por estágio
+            const grouped = {};
+            fetchedStages.forEach(stage => {
+                grouped[stage._id] = []; // Inicializa um array para cada estágio
+            });
+            fetchedLeads.forEach(lead => {
+                const stageId = lead.situacao?._id || lead.situacao; // Pega o ID da situação
+                if (stageId && grouped[stageId]) {
+                    grouped[stageId].push(lead);
+                } else if (stageId) { // Caso raro: lead com situacao._id que não está na lista de stages (ex: stage inativo)
+                    // grouped[stageId] = [lead]; // Ou crie uma coluna "Outros"
+                    console.warn(`Lead ${lead._id} com situação ${stageId} não corresponde a um estágio ativo carregado.`);
+                } else {
+                    // Leads sem situação definida (pode ir para uma coluna "Não Triado" ou ser ignorado)
+                    if (!grouped["sem_situacao"]) grouped["sem_situacao"] = [];
+                    grouped["sem_situacao"].push(lead);
+                }
+            });
+
+            // Ordena leads dentro de cada estágio (ex: por data de atualização)
+            for (const stageId in grouped) {
+                grouped[stageId].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
             }
+            setLeadsByStage(grouped);
 
         } catch (err) {
-            console.error("Falha ao buscar leads filtrados:", err);
-            setLeadsError(err.message || 'Não foi possível carregar os leads.');
-            setLeads([]); setTotalPages(0); setTotalLeads(0); // Reseta em caso de erro
+            const errMsg = err.message || "Falha ao carregar dados para o Kanban.";
+            setError(errMsg);
+            toast.error(errMsg);
         } finally {
-            setIsLoadingLeads(false); // Finaliza loading dos leads
+            setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
+
+
+    // Handler para quando um card é arrastado e solto
+    const onDragEnd = async (result) => {
+        const { source, destination, draggableId } = result;
+
+        // Soltou fora de uma coluna válida
+        if (!destination) return;
+
+        // Soltou na mesma posição na mesma coluna
+        if (source.droppableId === destination.droppableId && source.index === destination.index) {
+            return;
+        }
+
+        const startStageId = source.droppableId;
+        const finishStageId = destination.droppableId;
+        const leadId = draggableId;
+
+        // Criando cópias dos arrays para manipulação otimista
+        const startLeads = Array.from(leadsByStage[startStageId] || []);
+        const finishLeads = startStageId === finishStageId ? startLeads : Array.from(leadsByStage[finishStageId] || []);
+        
+        const [movedLead] = startLeads.splice(source.index, 1); // Remove da coluna de origem
+
+        // Se moveu para uma coluna diferente
+        if (startStageId !== finishStageId) {
+            finishLeads.splice(destination.index, 0, movedLead); // Adiciona na coluna de destino
+
+            // Atualiza o estado local otimisticamente
+            setLeadsByStage(prev => ({
+                ...prev,
+                [startStageId]: startLeads,
+                [finishStageId]: finishLeads,
+            }));
+
+            // Chama a API para atualizar a situação do lead no backend
+            try {
+                toast.info(`Movendo lead ${movedLead.nome} para ${leadStages.find(s => s._id === finishStageId)?.nome || 'nova situação'}...`);
+                await updateLead(leadId, { situacao: finishStageId }); // Envia o ID do novo estágio
+                toast.success(`Lead "${movedLead.nome}" atualizado com sucesso!`);
+                // Opcional: re-fetchData() para garantir consistência, ou confiar na atualização otimista
+                // Se a API de updateLead retornar o lead atualizado, podemos usá-lo para atualizar o estado local com mais precisão.
+                // Por agora, a atualização otimista é suficiente e o fetchData() no próximo load garante.
+            } catch (err) {
+                toast.error(err.message || "Falha ao atualizar situação do lead.");
+                // Reverte a mudança otimista se a API falhar
+                // (isso requer guardar o estado anterior ou chamar fetchData() )
+                fetchData(); // Simplesmente recarrega tudo em caso de erro na API
+            }
+        } else {
+            // Reordenando dentro da mesma coluna (opcional)
+            // startLeads.splice(destination.index, 0, movedLead); // Reinsere na nova posição
+            // setLeadsByStage(prev => ({
+            //     ...prev,
+            //     [startStageId]: startLeads,
+            // }));
+            // TODO: Se você quiser salvar a ordem dos leads dentro de um estágio,
+            // precisaria de um campo 'ordemNoEstagio' no modelo Lead e uma API para atualizar isso.
+            // Por enquanto, a ordenação é por 'updatedAt'.
+            console.log("Lead reordenado dentro da mesma coluna (sem persistência de ordem no backend por enquanto).");
         }
     };
-    fetchFilteredLeads();
-  }, [activeFilters, refreshKey, currentPage]); // Dependências corretas
 
 
-  // --- Handlers ---
+    if (isLoading) {
+        return <div className="admin-page loading"><p>Carregando Leads e Situações...</p></div>;
+    }
+    if (error) {
+        return <div className="admin-page error-page"><p className="error-message">{error}</p></div>;
+    }
 
-  // Handler para mudança nos filtros (recebe de LeadFilters)
-  const handleFilterChange = useCallback((newFilters) => {
-    setCurrentPage(1); // <<< IMPORTANTE: Reseta para página 1 ao aplicar novos filtros
-    setActiveFilters(newFilters);
-  }, []); // Não precisa de dependências extras
-
-  // Handler para clique na paginação (recebe de ReactPaginate)
-  const handlePageClick = useCallback((event) => {
-    const newPage = event.selected + 1; // react-paginate usa índice 0
-    setCurrentPage(newPage);
-    // Opcional: Scroll para o topo
-    // window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []); // Não precisa de dependências extras
-
-  // Função para forçar refresh (usada após ações)
-  const forceRefresh = useCallback(() => setRefreshKey(prevKey => prevKey + 1), []);
-
-  // Handlers para Modal de Descarte
-  const handleOpenDiscardModal = useCallback((id, nome) => {
-    setDiscardTargetLead({ id, nome }); setDiscardError(null); setIsDiscardModalOpen(true);
-  }, []);
-  const handleCloseDiscardModal = useCallback(() => {
-    if (!isDiscarding) { setDiscardTargetLead(null); setIsDiscardModalOpen(false); setDiscardError(null); }
-  }, [isDiscarding]);
-  const handleConfirmDiscard = useCallback(async (discardData) => {
-    if (!discardTargetLead) return; setIsDiscarding(true); setDiscardError(null);
-    try {
-      await discardLead(discardTargetLead.id, discardData);
-      toast.success(`Lead "${discardTargetLead.nome}" descartado!`);
-      handleCloseDiscardModal();
-      forceRefresh(); // Atualiza a lista
-    } catch (err) {
-      const errorMsg = err.message || "Falha ao descartar."; console.error(err);
-      setDiscardError(errorMsg); toast.error(errorMsg);
-    } finally { setIsDiscarding(false); }
-  }, [discardTargetLead, handleCloseDiscardModal, forceRefresh]);
-
-  // Handler para Reativar Lead
-  const handleReactivateLead = useCallback(async (id) => {
-    if (isReactivatingId) return;
-    const situacaoAtendimento = situacoesList.find(s => s.nome === "Em Atendimento"); // Nome exato!
-    if (!situacaoAtendimento) { toast.error("Erro: Status 'Em Atendimento' não encontrado."); return; }
-    setIsReactivatingId(id);
-    try {
-      const leadReativado = await updateLead(id, { situacao: situacaoAtendimento._id });
-      toast.success(`Lead "${leadReativado?.nome || id}" reativado!`);
-      forceRefresh(); // Atualiza a lista
-    } catch (err) { toast.error(err.message || "Falha ao reativar."); console.error(err); }
-    finally { setIsReactivatingId(null); }
-  }, [isReactivatingId, situacoesList, forceRefresh]); // Adicionado forceRefresh
-
-  // Handlers para Modal de Exclusão
-  const handleOpenDeleteModal = useCallback((id, nome) => {
-    setDeleteTargetLead({ id, nome }); setDeleteError(null); setIsDeleteModalOpen(true);
-  }, []);
-  const handleCloseDeleteModal = useCallback(() => {
-    if (!isDeleting) { setDeleteTargetLead(null); setIsDeleteModalOpen(false); setDeleteError(null); }
-  }, [isDeleting]);
-  const handleConfirmDelete = useCallback(async () => {
-    if (!deleteTargetLead) return; setIsDeleting(true); setDeleteError(null);
-    try {
-      await deleteLead(deleteTargetLead.id);
-      const tempName = deleteTargetLead.nome;
-      handleCloseDeleteModal();
-      toast.success(`Lead "${tempName}" excluído!`);
-      forceRefresh(); // Atualiza a lista
-    } catch (err) {
-      const errorMsg = err.message || "Falha ao excluir."; console.error(err);
-      setDeleteError(errorMsg); toast.error(errorMsg);
-    } finally { setIsDeleting(false); }
-  }, [deleteTargetLead, handleCloseDeleteModal, forceRefresh]); // Adicionado forceRefresh
-  // --- Fim Handlers ---
-
-
-  // --- Renderização ---
-  return (
-    <div className="lead-list-page">
-      {/* O ToastContainer fica no App.js */}
-      <h1>Meus Leads</h1>
-
-      {/* Mensagens de Erro Gerais */}
-      {optionsError && <div className="error-message">Erro ao carregar opções: {optionsError}</div>}
-      {/* Erro de reativação é tratado via toast */}
-
-      {/* Botão Novo Lead */}
-      <div className="add-lead-button-container">
-         <Link to="/leads/novo" className="add-lead-button">Cadastrar Novo Lead</Link>
-      </div>
-
-      {/* Filtros */}
-      {isLoadingOptions && <div className="loading-message">Carregando opções de filtro...</div>}
-      {!isLoadingOptions && !optionsError && (
-         <LeadFilters
-             situacoesList={situacoesList}
-             origensList={origensList}
-             usuariosList={usuariosList}
-             onFilterChange={handleFilterChange}
-             isProcessing={isLoadingLeads} // Desabilita filtros enquanto busca leads
-         />
-      )}
-
-      {/* Loading/Erro dos Leads */}
-      {isLoadingLeads && !isLoadingOptions && <div className="loading-message">Buscando leads...</div>} {/* Só mostra se opções já carregaram */}
-      {!isLoadingLeads && leadsError && <div className="error-message">Erro ao carregar leads: {leadsError}</div>}
-
-      {/* Lista de Leads e Paginação */}
-      {!isLoadingLeads && !leadsError && !isLoadingOptions && (
-
-        
-        <> {/* Fragmento para agrupar lista e paginação */}
-        <strong>{totalLeads}</strong> {totalLeads === 1 ? 'lead encontrado' : 'leads encontrados'}
-
-            <div className="leads-container">
-              {leads.length > 0 ? (
-                leads.map((lead) => (
-                  <LeadCard
-                    key={lead._id}
-                    lead={lead}
-                    onDiscardClick={handleOpenDiscardModal}
-                    onReactivateClick={handleReactivateLead}
-                    isProcessingReactivation={isReactivatingId === lead._id}
-                    onDeleteClick={handleOpenDeleteModal} // Passando o handler correto
-                  />
-                ))
-              ) : (
-                <p className="no-leads-message">
-                    {Object.keys(activeFilters).length > 0 ? 'Nenhum lead encontrado com os filtros aplicados.' : 'Nenhum lead cadastrado.'}
-                </p>
-              )}
+    return (
+        <div className="admin-page lead-list-page kanban-board-page"> {/* Nova classe para Kanban */}
+            <header className="page-header">
+                <h1>Funil de Leads (Kanban)</h1>
+                <Link to="/leads/novo" className="button primary-button">
+                    + Novo Lead
+                </Link>
+            </header>
+            <div className="page-content">
+                <DragDropContext onDragEnd={onDragEnd}>
+                    <div className="kanban-container"> {/* Um container para as colunas */}
+                        {leadStages.map(stage => (
+                            <Droppable droppableId={stage._id} key={stage._id}>
+                                {(provided, snapshot) => (
+                                    <div
+                                        ref={provided.innerRef}
+                                        {...provided.droppableProps}
+                                        className={`kanban-column ${snapshot.isDraggingOver ? 'dragging-over' : ''}`}
+                                    >
+                                        <h3 className="kanban-column-title">{stage.nome} ({leadsByStage[stage._id]?.length || 0})</h3>
+                                        <div className="kanban-column-content">
+                                            {(leadsByStage[stage._id] || []).map((lead, index) => (
+                                                <Draggable key={lead._id} draggableId={lead._id} index={index}>
+                                                    {(provided, snapshot) => (
+                                                        <div
+                                                            ref={provided.innerRef}
+                                                            {...provided.draggableProps}
+                                                            {...provided.dragHandleProps}
+                                                            className={`lead-card ${snapshot.isDragging ? 'dragging' : ''}`}
+                                                            onClick={() => navigate(`/leads/${lead._id}`)} // Navega para detalhes ao clicar
+                                                        >
+                                                            <h4>{lead.nome}</h4>
+                                                            <p className="lead-card-contato">{lead.contato || 'Sem contato'}</p>
+                                                            <p className="lead-card-email">{lead.email || 'Sem email'}</p>
+                                                            {/* Adicionar mais infos úteis no card */}
+                                                            <small className="lead-card-updated">Atualizado: {new Date(lead.updatedAt).toLocaleDateString('pt-BR')}</small>
+                                                        </div>
+                                                    )}
+                                                </Draggable>
+                                            ))}
+                                            {provided.placeholder}
+                                            {(!leadsByStage[stage._id] || leadsByStage[stage._id]?.length === 0) && (
+                                                <p className="kanban-empty-column">Nenhum lead nesta situação.</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </Droppable>
+                        ))}
+                        {/* Coluna para leads sem situação, se houver */}
+                        {leadsByStage["sem_situacao"] && leadsByStage["sem_situacao"].length > 0 && (
+                             <Droppable droppableId="sem_situacao" key="sem_situacao">
+                             {(provided, snapshot) => (
+                                 <div ref={provided.innerRef} {...provided.droppableProps} className={`kanban-column ${snapshot.isDraggingOver ? 'dragging-over' : ''}`}>
+                                     <h3 className="kanban-column-title">Sem Situação ({leadsByStage["sem_situacao"].length})</h3>
+                                     <div className="kanban-column-content">
+                                         {leadsByStage["sem_situacao"].map((lead, index) => (
+                                             <Draggable key={lead._id} draggableId={lead._id} index={index}>
+                                                 {(providedCard) => ( /* ... render LeadCard ... */ 
+                                                     <div ref={providedCard.innerRef} {...providedCard.draggableProps} {...providedCard.dragHandleProps} className={`lead-card ${snapshot.isDragging ? 'dragging' : ''}`} onClick={() => navigate(`/leads/${lead._id}`)}>
+                                                         <h4>{lead.nome}</h4>
+                                                         <p>{lead.contato}</p>
+                                                     </div>
+                                                 )}
+                                             </Draggable>
+                                         ))}
+                                         {provided.placeholder}
+                                     </div>
+                                 </div>
+                             )}
+                         </Droppable>
+                        )}
+                    </div>
+                </DragDropContext>
             </div>
-
-            {/* Componente de Paginação */}
-            {totalPages > 1 && (
-            <ReactPaginate
-                previousLabel={'< Anterior'}
-                nextLabel={'Próximo >'}
-                breakLabel={'...'}
-                pageCount={totalPages}
-                marginPagesDisplayed={2}
-                pageRangeDisplayed={3}
-                onPageChange={handlePageClick} // Handler para mudança de página
-                containerClassName={'pagination-container'} // Classe CSS para estilização
-                pageClassName={'page-item'}
-                pageLinkClassName={'page-link'}
-                previousClassName={'page-item'}
-                previousLinkClassName={'page-link'}
-                nextClassName={'page-item'}
-                nextLinkClassName={'page-link'}
-                breakClassName={'page-item'}
-                breakLinkClassName={'page-link'}
-                activeClassName={'active'} // Classe para página ativa
-                forcePage={currentPage - 1} // Sincroniza com o estado (lembrar que é 0-based)
-                renderOnZeroPageCount={null}
-            />
-            )}
-            {/* Fim Paginação */}
-        </>
-      )}
-
-      {/* Modais */}
-      <DiscardLeadModal
-        isOpen={isDiscardModalOpen}
-        onClose={handleCloseDiscardModal}
-        onSubmit={handleConfirmDiscard}
-        leadName={discardTargetLead?.nome}
-        isProcessing={isDiscarding}
-        errorMessage={discardError}
-      />
-      <ConfirmModal
-        isOpen={isDeleteModalOpen}
-        onClose={handleCloseDeleteModal}
-        onConfirm={handleConfirmDelete}
-        title="Confirmar Exclusão"
-        message={`Tem certeza que deseja excluir permanentemente o lead "${deleteTargetLead?.nome || ''}"? Esta ação não pode ser desfeita.`}
-        confirmText="Excluir Permanentemente"
-        cancelText="Cancelar"
-        confirmButtonClass="confirm-button-delete"
-        isProcessing={isDeleting}
-        errorMessage={deleteError}
-      />
-    </div>
-  );
+        </div>
+    );
 }
-
 export default LeadListPage;
