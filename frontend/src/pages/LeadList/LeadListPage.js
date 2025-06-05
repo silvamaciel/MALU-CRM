@@ -312,7 +312,7 @@ const handleConfirmDiscard = useCallback(async (discardData) => {
         onSubmit={handleConfirmDiscard}
         leadName={discardTargetLead?.lead?.nome}
         isProcessing={isProcessingAction}
-        // errorMessage={discardError} // Se o modal suportar exibir erro interno
+        errorMessage={discardError} // Se o modal suportar exibir erro interno
       />
       <ConfirmModal
         isOpen={isDeleteModalOpen}
