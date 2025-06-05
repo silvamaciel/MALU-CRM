@@ -188,6 +188,7 @@ const handleConfirmDiscard = useCallback(async (discardData) => {
   // VVVVV Handler para o FIM DO DRAG-AND-DROP VVVVV
   const onDragEnd = async (result) => {
     const { source, destination, draggableId: leadId } = result;
+
     if (!destination || (source.droppableId === destination.droppableId && source.index === destination.index)) {
       return;
     }
@@ -200,38 +201,63 @@ const handleConfirmDiscard = useCallback(async (discardData) => {
 
     // Se moveu para a coluna "Descartado"
     if (finishStageId === stageIdDescartado) {
-      handleOpenDiscardModal(leadToMove, finishStageId); // Passa o lead e o estágio de destino
-      // A atualização da UI (mover o card) acontecerá APÓS o modal ser confirmado
+      handleOpenDiscardModal(leadToMove, finishStageId);
       return; 
     }
     
-    // Se moveu para qualquer outra coluna (não "Descartado")
-    // Atualização otimista da UI
-    const newLeadsByStage = { ...leadsByStage };
-    const sourceLeads = Array.from(newLeadsByStage[startStageId] || []);
-    const [movedItem] = sourceLeads.splice(source.index, 1);
-    newLeadsByStage[startStageId] = sourceLeads;
-    const destinationLeads = Array.from(newLeadsByStage[finishStageId] || []);
-    destinationLeads.splice(destination.index, 0, movedItem);
-    newLeadsByStage[finishStageId] = destinationLeads;
-    
-    movedItem.situacao = leadStages.find(s => s._id === finishStageId); // Atualiza situacao no objeto movido
-    setLeadsByStage(newLeadsByStage);
+    // --- ATUALIZAÇÃO OTIMISTA DA UI ---
+    // 1. Cria uma cópia profunda de leadsByStage para evitar mutação direta
+    const newLeadsByStageOptimistic = JSON.parse(JSON.stringify(leadsByStage)); 
 
-    // Chama API para atualizar backend
+    // 2. Remove o lead da coluna de origem
+    const sourceLeadsOptimistic = Array.from(newLeadsByStageOptimistic[startStageId] || []);
+    const movedItemIndex = sourceLeadsOptimistic.findIndex(lead => lead._id === leadId);
+    if (movedItemIndex === -1) return; // Lead não encontrado na coluna de origem, algo errado
+    const [movedItemOptimistic] = sourceLeadsOptimistic.splice(movedItemIndex, 1);
+    newLeadsByStageOptimistic[startStageId] = sourceLeadsOptimistic;
+
+    // 3. Adiciona o lead à coluna de destino
+    const destinationLeadsOptimistic = Array.from(newLeadsByStageOptimistic[finishStageId] || []);
+    destinationLeadsOptimistic.splice(destination.index, 0, movedItemOptimistic);
+    newLeadsByStageOptimistic[finishStageId] = destinationLeadsOptimistic;
+    
+    // 4. Atualiza o estado da situação no objeto do lead movido (para UI imediata)
+    const targetStageForMovedItem = leadStages.find(s => s._id === finishStageId);
+    movedItemOptimistic.situacao = targetStageForMovedItem; // Atualiza o objeto situação
+    
+    setLeadsByStage(newLeadsByStageOptimistic); // Aplica a mudança visual otimista
+    // --- FIM ATUALIZAÇÃO OTIMISTA ---
+
+    // 5. Chama a API para atualizar o backend
     try {
-      const targetStage = leadStages.find(s => s._id === finishStageId);
-      setIsProcessingAction(true); // Indica que uma ação está em progresso
-      await updateLead(leadId, { situacao: finishStageId });
-      toast.success(`Lead "${movedItem.nome}" movido para "${targetStage?.nome || ''}"!`);
+      setIsProcessingAction(true); // Indica que uma ação de API está em progresso
+      toast.info(`Movendo lead "${movedItemOptimistic.nome}" para "${targetStageForMovedItem?.nome || 'nova situação'}"...`);
+      
+      const updatedLeadFromApi = await updateLead(leadId, { situacao: finishStageId }); // API para atualizar
+      
+      toast.success(`Lead "${movedItemOptimistic.nome}" atualizado para "${targetStageForMovedItem?.nome || ''}"!`);
+
+      // VVVVV ATUALIZAR allLeadsRaw e REAGRUPAR VVVVV
+      // Atualiza o lead específico em allLeadsRaw com os dados retornados pela API (ou pelo menos a nova situação)
+      setAllLeadsRaw(prevAllLeads => {
+          return prevAllLeads.map(lead => 
+              lead._id === leadId 
+                  ? { ...lead, situacao: updatedLeadFromApi.situacao || targetStageForMovedItem } // Usa o retorno da API se disponível
+                  : lead
+          );
+      });
+      
+       
+      forceRefresh(); // Isso vai buscar tudo de novo e reconstruir leadsByStage
+
+
     } catch (err) {
-      toast.error(err.message || "Falha ao atualizar situação do lead.");
-      fetchData(); // Reverte para o estado do servidor em caso de erro
+      toast.error(err.message || "Falha ao atualizar situação do lead no backend.");
+      fetchData(); 
     } finally {
       setIsProcessingAction(false);
     }
   };
-  // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
   if (isLoading) {
     return <div className="admin-page loading"><p>Carregando Funil de Leads...</p></div>;
