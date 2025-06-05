@@ -34,6 +34,9 @@ function LeadListPage() {
   const [error, setError] = useState(null);
   const [allLeadsRaw, setAllLeadsRaw] = useState([]); // Para re-agrupar se necessário
 
+  const [stageIdDescartado, setStageIdDescartado] = useState(null);
+  const [deleteError, setDeleteError] = useState(null);
+
   // States para modais (podem ser mantidos se as ações nos cards abrirem modais)
   const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
   const [discardTargetLead, setDiscardTargetLead] = useState(null);
