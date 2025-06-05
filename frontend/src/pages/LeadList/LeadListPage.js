@@ -5,17 +5,24 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'; // 
 import { toast } from "react-toastify";
 
 // API Functions
-import { getLeads, updateLead } from "../../api/leads"; // updateLead será usado para mudar a situação
+import { getLeads, updateLead, discardLead, deleteLead } from "../../api/leads";
 import { getLeadStages } from "../../api/leadStages"; // Para as colunas do Kanban
 
 // Componentes (Modais podem continuar sendo usados, LeadCard será para o Kanban)
 // import LeadCard from '../../components/LeadCard/LeadCard'; // Vamos definir o card inline por agora
 import DiscardLeadModal from "../../components/DiscardLeadModal/DiscardLeadModal";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
-// import LeadFilters from '../../components/LeadFilters/LeadFilters'; // Filtros no Kanban podem ser diferentes
+import LeadFilters from '../../components/LeadFilters/LeadFilters';
 
-import "./LeadListPage.css"; // Seu CSS existente
+import "./LeadListPage.css";
+import "./Kanban.css";
 
+ const reorder = (list, startIndex, endIndex) => {
+   const result = Array.from(list);
+   const [removed] = result.splice(startIndex, 1);
+   result.splice(endIndex, 0, removed);
+   return result;
+ };
 
 function LeadListPage() {
   const navigate = useNavigate(); // Para navegação ao clicar no card
@@ -30,45 +37,54 @@ function LeadListPage() {
   // States para modais (podem ser mantidos se as ações nos cards abrirem modais)
   const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
   const [discardTargetLead, setDiscardTargetLead] = useState(null);
+  const [isProcessingAction, setIsProcessingAction] = useState(false);
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteTargetLeadForModal, setDeleteTargetLeadForModal] = useState(null);
+
+
   const [isDiscarding, setIsDiscarding] = useState(false);
   const [discardError, setDiscardError] = useState(null);
   // ... (outros states de modal se precisar manter: delete, etc.)
 
   // Função para buscar dados iniciais (LeadStages e Leads)
-  const fetchData = useCallback(async () => {
+const fetchData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const stagesData = await getLeadStages(); // Backend já deve retornar ordenado por 'ordem'
-      const fetchedStages = stagesData.leadStages || stagesData.data || stagesData || [];
+      const stagesResponse = await getLeadStages();
+      const fetchedStages = stagesResponse.leadStages || stagesResponse.data || stagesResponse || [];
       setLeadStages(fetchedStages);
 
-      // Para Kanban, geralmente buscamos todos os leads ativos relevantes.
-      // Se a quantidade for muito grande, filtros globais acima do Kanban podem ser úteis.
-      const leadsData = await getLeads({ page: 1, limit: 500, ativo: true }); // Busca mais leads, filtre por 'ativo:true' se aplicável
-      const fetchedLeads = leadsData.leads || [];
-      setAllLeadsRaw(fetchedLeads); // Guarda a lista crua
+      const descartadoStage = fetchedStages.find(s => s.nome.toLowerCase() === "descartado");
+      if (descartadoStage) {
+        setStageIdDescartado(descartadoStage._id);
+      } else {
+        console.warn("Estágio 'Descartado' não encontrado. A funcionalidade de arrastar para descartar pode não funcionar como esperado.");
+      }
 
-      // Agrupa os leads por estágio
+      // Para Kanban, buscar todos os leads ativos é comum. Ajuste 'limit' se necessário.
+      const leadsResponse = await getLeads({ page: 1, limit: 1000, ativo: true }); // Filtro 'ativo' se aplicável
+      const fetchedLeads = leadsResponse.leads || [];
+
       const grouped = {};
       fetchedStages.forEach(stage => {
-        grouped[stage._id] = []; // Inicializa um array para cada estágio
+        grouped[stage._id] = [];
       });
       fetchedLeads.forEach(lead => {
         const stageId = lead.situacao?._id || lead.situacao;
         if (stageId && grouped[stageId]) {
           grouped[stageId].push(lead);
-        } else if (stageId) { // Lead com situação não encontrada na lista de estágios ativos
-          console.warn(`Lead ${lead._id} (situação: ${stageId}) não corresponde a um estágio carregado.`);
-          if (!grouped['sem_correspondencia']) grouped['sem_correspondencia'] = [];
-          grouped['sem_correspondencia'].push(lead);
-        } else { // Leads sem situação
-          if (!grouped["sem_situacao"]) grouped["sem_situacao"] = [];
-          grouped["sem_situacao"].push(lead);
+        } else if (stageId) {
+            if (!grouped["sem_correspondencia_valida"]) grouped["sem_correspondencia_valida"] = [];
+             grouped["sem_correspondencia_valida"].push(lead);
+            console.warn(`Lead ${lead._id} (nome: ${lead.nome}, situação ID: ${stageId}) tem uma situação não listada entre os estágios ativos.`);
+        } else {
+          if (!grouped["sem_situacao_definida"]) grouped["sem_situacao_definida"] = [];
+          grouped["sem_situacao_definida"].push(lead);
         }
       });
 
-      // Ordena leads dentro de cada estágio (ex: por data de atualização decrescente)
       for (const stageId in grouped) {
         grouped[stageId].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
       }
@@ -87,63 +103,129 @@ function LeadListPage() {
     fetchData();
   }, [fetchData]);
 
-  // Função para forçar refresh (pode ser usada após ações nos cards)
   const forceRefresh = useCallback(() => fetchData(), [fetchData]);
 
-  // Handlers para Modais (manter e adaptar se forem chamados de dentro dos cards)
-  const handleOpenDiscardModal = useCallback((lead) => { // Agora recebe o objeto lead
-    setDiscardTargetLead(lead); setDiscardError(null); setIsDiscardModalOpen(true);
+  // Handlers para Discard Modal
+  const handleOpenDiscardModal = useCallback((lead, targetStageId = null) => {
+    setDiscardTargetLead({ lead, targetStageId }); // Guarda o lead e o estágio de destino (se arrastado)
+    setIsDiscardModalOpen(true);
   }, []);
-  const handleCloseDiscardModal = useCallback(() => { /* ... */ }, [isDiscarding]);
-  const handleConfirmDiscard = useCallback(async (discardData) => { /* ... chama forceRefresh ... */ }, [discardTargetLead, handleCloseDiscardModal, forceRefresh]);
+
+  const handleCloseDiscardModal = useCallback(() => {
+    setIsDiscardModalOpen(false);
+    setDiscardTargetLead(null);
+  }, []);
+
+
+const handleConfirmDiscard = useCallback(async (discardData) => {
+    if (!discardTargetLead || !discardTargetLead.lead) return;
+    setIsProcessingAction(true);
+    try {
+      await discardLead(discardTargetLead.lead._id, discardData); // API de descarte
+      toast.success(`Lead "${discardTargetLead.lead.nome}" descartado!`);
+      handleCloseDiscardModal();
+      forceRefresh(); // Atualiza todo o Kanban
+    } catch (err) {
+      toast.error(err.message || "Falha ao descartar lead.");
+      // Não fecha o modal automaticamente em caso de erro, para o usuário ver.
+    } finally {
+      setIsProcessingAction(false);
+    }
+  }, [discardTargetLead, forceRefresh, handleCloseDiscardModal]);
+  
   // ... (outros handlers de modal se os mantiver)
+
+  const handleReactivateLead = useCallback(async (leadToReactivate) => {
+    if (isProcessingAction) return;
+    const situacaoAtendimento = leadStages.find(s => s.nome === "Em Atendimento" || s.nome === "Novo"); // Ou o seu estágio padrão de reativação
+    if (!situacaoAtendimento) {
+      toast.error("Erro: Status padrão para reativação (Ex: 'Em Atendimento') não encontrado.");
+      return;
+    }
+    setIsProcessingAction(true);
+    try {
+      await updateLead(leadToReactivate._id, { situacao: situacaoAtendimento._id });
+      toast.success(`Lead "${leadToReactivate.nome}" reativado para "${situacaoAtendimento.nome}"!`);
+      forceRefresh();
+    } catch (err) {
+      toast.error(err.message || "Falha ao reativar lead.");
+    } finally {
+      setIsProcessingAction(false);
+    }
+  }, [isProcessingAction, leadStages, forceRefresh]);
+
+  const handleOpenDeleteModal = useCallback((lead) => {
+    setDeleteTargetLeadForModal(lead);
+    setIsDeleteModalOpen(true);
+  }, []);
+  const handleCloseDeleteModal = useCallback(() => {
+    if (!isProcessingAction) { setIsDeleteModalOpen(false); setDeleteTargetLeadForModal(null); }
+  }, [isProcessingAction]);
+
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!deleteTargetLeadForModal?._id) return;
+
+    setIsProcessingAction(true);
+
+    try {
+      await deleteLead(deleteTargetLeadForModal._id);
+      toast.success(`Lead "${deleteTargetLeadForModal.nome}" excluído!`);
+      handleCloseDeleteModal();
+      forceRefresh();
+    } catch (err) {
+      console.error('Erro ao deletar lead:', err);
+      toast.error('Erro ao excluir o lead. Tente novamente.');
+    } finally {
+      setIsProcessingAction(false);
+    }
+  }, [deleteTargetLeadForModal, deleteLead, handleCloseDeleteModal, forceRefresh]);
 
 
   // VVVVV Handler para o FIM DO DRAG-AND-DROP VVVVV
   const onDragEnd = async (result) => {
     const { source, destination, draggableId: leadId } = result;
-
-    // Se soltou fora de uma coluna válida ou na mesma posição
     if (!destination || (source.droppableId === destination.droppableId && source.index === destination.index)) {
       return;
     }
 
-    const startStageId = source.droppableId;
-    const finishStageId = destination.droppableId;
-
-    // Atualização otimista da UI
     const leadToMove = allLeadsRaw.find(lead => lead._id === leadId);
     if (!leadToMove) return;
 
-    // 1. Remove o lead da coluna de origem no estado local
+    const startStageId = source.droppableId;
+    const finishStageId = destination.droppableId;
+
+    // Se moveu para a coluna "Descartado"
+    if (finishStageId === stageIdDescartado) {
+      handleOpenDiscardModal(leadToMove, finishStageId); // Passa o lead e o estágio de destino
+      // A atualização da UI (mover o card) acontecerá APÓS o modal ser confirmado
+      return; 
+    }
+    
+    // Se moveu para qualquer outra coluna (não "Descartado")
+    // Atualização otimista da UI
     const newLeadsByStage = { ...leadsByStage };
     const sourceLeads = Array.from(newLeadsByStage[startStageId] || []);
-    const [movedLead] = sourceLeads.splice(source.index, 1);
+    const [movedItem] = sourceLeads.splice(source.index, 1);
     newLeadsByStage[startStageId] = sourceLeads;
-
-    // 2. Adiciona o lead à coluna de destino no estado local
     const destinationLeads = Array.from(newLeadsByStage[finishStageId] || []);
-    destinationLeads.splice(destination.index, 0, movedLead);
+    destinationLeads.splice(destination.index, 0, movedItem);
     newLeadsByStage[finishStageId] = destinationLeads;
     
-    // Atualiza o estado da situação no objeto do lead movido (para UI imediata)
-    movedLead.situacao = leadStages.find(s => s._id === finishStageId);
-    
+    movedItem.situacao = leadStages.find(s => s._id === finishStageId); // Atualiza situacao no objeto movido
     setLeadsByStage(newLeadsByStage);
 
-    // 3. Chama a API para atualizar a situação do lead no backend
+    // Chama API para atualizar backend
     try {
       const targetStage = leadStages.find(s => s._id === finishStageId);
-      toast.info(`Movendo lead "${movedLead.nome}" para "${targetStage?.nome || 'nova situação'}"...`);
-      await updateLead(leadId, { situacao: finishStageId }); // Envia o ID do novo estágio
-      toast.success(`Lead "${movedLead.nome}" atualizado para "${targetStage?.nome || ''}"!`);
-      // Opcional: forceRefresh() para garantir consistência total, mas a atualização otimista já cuidou da UI.
-      // Se você quiser reordenar por updatedAt após mover, um forceRefresh pode ser útil.
-      // Por agora, a ordem dentro da coluna é baseada na inserção do drag-n-drop na UI.
+      setIsProcessingAction(true); // Indica que uma ação está em progresso
+      await updateLead(leadId, { situacao: finishStageId });
+      toast.success(`Lead "${movedItem.nome}" movido para "${targetStage?.nome || ''}"!`);
     } catch (err) {
-      toast.error(err.message || "Falha ao atualizar situação do lead no backend.");
-      // Reverte a mudança otimista se a API falhar, recarregando os dados
-      fetchData(); 
+      toast.error(err.message || "Falha ao atualizar situação do lead.");
+      fetchData(); // Reverte para o estado do servidor em caso de erro
+    } finally {
+      setIsProcessingAction(false);
     }
   };
   // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -156,7 +238,7 @@ function LeadListPage() {
   }
 
   return (
-    <div className="admin-page lead-list-page kanban-board-page">
+      <div className="admin-page lead-list-page kanban-board-page">
       <header className="page-header">
         <h1>Funil de Leads</h1>
         <Link to="/leads/novo" className="button primary-button">
@@ -164,6 +246,7 @@ function LeadListPage() {
         </Link>
       </header>
       <div className="page-content">
+        {/* TODO: Adicionar Filtros Globais para o Kanban aqui */}
         <DragDropContext onDragEnd={onDragEnd}>
           <div className="kanban-container">
             {leadStages.map(stage => (
@@ -174,9 +257,7 @@ function LeadListPage() {
                     {...provided.droppableProps}
                     className={`kanban-column ${snapshot.isDraggingOver ? 'dragging-over' : ''}`}
                   >
-                    <h3 className="kanban-column-title">
-                      {stage.nome} ({leadsByStage[stage._id]?.length || 0})
-                    </h3>
+                    <h3 className="kanban-column-title">{stage.nome} ({leadsByStage[stage._id]?.length || 0})</h3>
                     <div className="kanban-column-content">
                       {(leadsByStage[stage._id] || []).map((lead, index) => (
                         <Draggable key={lead._id} draggableId={lead._id} index={index}>
@@ -186,21 +267,33 @@ function LeadListPage() {
                               {...providedCard.draggableProps}
                               {...providedCard.dragHandleProps}
                               className={`lead-card ${snapshotCard.isDragging ? 'dragging' : ''}`}
-                              onClick={() => navigate(`/leads/${lead._id}`)}
                             >
-                              <h4>{lead.nome}</h4>
-                              <p className="lead-card-contato">{lead.contato || 'Sem contato'}</p>
-                              <p className="lead-card-email">{lead.email || 'Sem email'}</p>
+                              <div className="lead-card-header" onClick={() => navigate(`/leads/${lead._id}`)}>
+                                <h4>{lead.nome}</h4>
+                              </div>
+                              <div className="lead-card-body" onClick={() => navigate(`/leads/${lead._id}`)}>
+                                <p className="lead-card-contato">{lead.contato || 'Sem contato'}</p>
+                                <p className="lead-card-email">{lead.email || 'Sem email'}</p>
+                                {/* Adicionar tags aqui no futuro */}
+                              </div>
                               <div className="lead-card-footer">
                                 <small>Atualizado: {new Date(lead.updatedAt).toLocaleDateString('pt-BR')}</small>
-                                {/* Adicionar ícones/botões para ações rápidas no card (Ex: Descartar) se desejar */}
+                                <div className="lead-card-actions">
+                                  <Link to={`/leads/${lead._id}`} className="action-icon" title="Detalhes">🔍</Link>
+                                  {lead.situacao?.nome?.toLowerCase() === 'descartado' ? (
+                                    <button onClick={() => handleReactivateLead(lead)} className="action-icon" disabled={isProcessingAction} title="Reativar">♻️</button>
+                                  ) : (
+                                    <button onClick={() => handleOpenDiscardModal(lead)} className="action-icon" disabled={isProcessingAction} title="Descartar">🗑️</button>
+                                  )}
+                                  <button onClick={() => handleOpenDeleteModal(lead)} className="action-icon" disabled={isProcessingAction} title="Excluir">❌</button>
+                                </div>
                               </div>
                             </div>
                           )}
                         </Draggable>
                       ))}
                       {provided.placeholder}
-                      {(!leadsByStage[stage._id] || leadsByStage[stage._id]?.length === 0) && (
+                      {(!leadsByStage[stage._id] || leadsByStage[stage._id]?.length === 0) && !isLoading &&(
                         <p className="kanban-empty-column">Nenhum lead aqui.</p>
                       )}
                     </div>
@@ -208,21 +301,28 @@ function LeadListPage() {
                 )}
               </Droppable>
             ))}
-            {/* Você pode adicionar colunas para "sem_situacao" ou "sem_correspondencia" se necessário */}
+            {/* Colunas para sem_correspondencia_valida e sem_situacao_definida (opcional) */}
           </div>
         </DragDropContext>
       </div>
 
-      {/* Modais (se você ainda for usá-los a partir de ações nos cards) */}
       <DiscardLeadModal
         isOpen={isDiscardModalOpen}
         onClose={handleCloseDiscardModal}
         onSubmit={handleConfirmDiscard}
-        leadName={discardTargetLead?.nome}
-        isProcessing={isDiscarding}
-        errorMessage={discardError}
+        leadName={discardTargetLead?.lead?.nome}
+        isProcessing={isProcessingAction}
+        // errorMessage={discardError} // Se o modal suportar exibir erro interno
       />
-      {/* ... (ConfirmModal para delete, se mantiver essa ação aqui) ... */}
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={handleCloseDeleteModal}
+        onConfirm={handleConfirmDelete}
+        title="Confirmar Exclusão"
+        message={`Excluir permanentemente o lead "${deleteTargetLeadForModal?.nome || ''}"?`}
+        isProcessing={isProcessingAction}
+        errorMessage={deleteError} // Se o modal suportar
+      />
     </div>
   );
 }
