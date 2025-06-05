@@ -1,0 +1,136 @@
+/* src/pages/LeadList/Kanban.css */
+.kanban-board-page .page-content {
+  overflow-x: auto;
+  padding-bottom: 20px; /* Espaço para scrollbar horizontal não cobrir conteúdo */
+}
+
+.kanban-container {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  padding: 10px 0;
+  min-height: calc(100vh - 250px); /* Ajuste conforme altura do seu header/footer */
+  align-items: flex-start; /* Colunas começam do topo */
+}
+
+.kanban-column {
+  flex: 0 0 320px; /* Largura da coluna */
+  max-width: 320px;
+  background-color: #f0f2f5; /* Fundo da coluna mais suave */
+  border-radius: 6px;
+  padding: 0; /* Padding será interno ao título e conteúdo */
+  display: flex;
+  flex-direction: column; /* Título em cima, conteúdo abaixo */
+  max-height: calc(100vh - 280px); /* Altura máxima da coluna, permite scroll interno */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+}
+
+.kanban-column.dragging-over {
+  background-color: #e6f0ff; /* Azul claro suave ao arrastar sobre */
+}
+
+.kanban-column-title {
+  font-size: 1.05em; /* Um pouco maior */
+  font-weight: 600;
+  padding: 12px 15px;
+  margin: 0;
+  border-bottom: 1px solid #d1d9e0;
+  color: #172b4d; /* Azul escuro para texto */
+  background-color: #e9ecef; /* Fundo levemente diferente para o título */
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+
+.kanban-column-content {
+  flex-grow: 1;
+  min-height: 80px;
+  overflow-y: auto; /* Scroll vertical se muitos cards */
+  padding: 10px;
+}
+
+.lead-card {
+  background-color: #ffffff;
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  cursor: grab;
+  border: 1px solid #dfe1e6;
+  transition: box-shadow 0.2s ease-in-out;
+}
+.lead-card:hover {
+  border-color: #007bff;
+}
+
+.lead-card.dragging {
+  background-color: #f8f9fa;
+  transform: rotate(2deg);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+}
+
+.lead-card-header {
+  cursor: pointer; /* Indica que o header é clicável para detalhes */
+}
+.lead-card-header:hover h4 {
+  color: #0056b3;
+}
+
+.lead-card h4 {
+  font-size: 1em;
+  margin-top: 0;
+  margin-bottom: 8px;
+  color: #172b4d;
+  font-weight: 500;
+}
+
+.lead-card p {
+  font-size: 0.88em;
+  color: #42526e;
+  margin-bottom: 5px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+.lead-card p:last-of-type {
+  margin-bottom: 8px;
+}
+
+.lead-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  border-top: 1px solid #f0f2f5;
+  padding-top: 8px;
+}
+
+.lead-card-footer small {
+  font-size: 0.78em;
+  color: #6b778c;
+}
+
+.lead-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.lead-card-actions .action-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1em; /* Ajuste o tamanho dos ícones/emojis */
+  padding: 2px;
+  color: #5e6c84;
+}
+.lead-card-actions .action-icon:hover {
+  color: #007bff;
+}
+
+.kanban-empty-column {
+  text-align: center;
+  color: #7a869a;
+  font-style: italic;
+  padding: 20px;
+  border: 2px dashed #d1d9e0;
+  border-radius: 4px;
+  margin: 10px;
+}
