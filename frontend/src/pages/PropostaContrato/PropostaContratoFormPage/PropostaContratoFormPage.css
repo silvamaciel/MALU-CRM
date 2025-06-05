@@ -1,73 +1,88 @@
-/* src/pages/PropostaContrato/PropostaContratoFormPage/PropostaContratoFormPage.css */
+/* ================================
+   Página: PropostaContratoFormPage
+   Estilo Clean & Modernizado
+================================ */
 
+/* ===== Header da Página ===== */
 .proposta-contrato-form-page .page-header {
   display: flex;
-  flex-direction: column; /* Para o título e subtítulo ficarem um abaixo do outro */
-  align-items: flex-start; /* Alinha à esquerda */
-  margin-bottom: 20px;
-  padding-bottom: 15px;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 32px;
+  padding-bottom: 16px;
   border-bottom: 1px solid #e0e0e0;
 }
 
 .proposta-contrato-form-page .page-header h1 {
-  margin: 0 0 5px 0; /* Espaço abaixo do título principal */
-  font-size: 1.8em;
-  color: #333;
+  margin: 0 0 6px 0;
+  font-size: 2em;
+  font-weight: 600;
+  color: #212529;
 }
 
-.proposta-contrato-form-page .page-header p { /* Para o subtítulo com Lead/Unidade */
+.proposta-contrato-form-page .page-header p {
   margin: 0;
-  font-size: 0.95em;
-  color: #555;
+  font-size: 1em;
+  color: #6c757d;
 }
 
+
+/* ===== Container do Formulário ===== */
 .proposta-contrato-form-page .form-container {
-  max-width: 900px;
+  max-width: 920px;
   margin: 0 auto;
-  background-color: #f9f9f9; /* Fundo levemente diferente para o container do form */
-  padding: 20px;
-  border-radius: 8px;
+  background-color: #f8f9fa;
+  padding: 28px;
+  border-radius: 12px;
 }
 
+
+/* ===== Seções do Form ===== */
 .proposta-contrato-form-page .form-section {
-  background-color: #fff;
-  padding: 20px 25px;
+  background-color: #fafafa;
+  padding: 24px 28px;
   border: 1px solid #e7e7e7;
-  border-radius: 6px;
-  margin-bottom: 25px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border-radius: 10px;
+  margin-bottom: 32px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 }
 
 .proposta-contrato-form-page .form-section h3 {
   margin-top: 0;
-  margin-bottom: 25px; /* Mais espaço após o título da seção */
-  border-bottom: 2px solid #007bff; /* Linha de destaque no título da seção */
+  margin-bottom: 24px;
   padding-bottom: 10px;
-  font-size: 1.4em; /* Título da seção um pouco maior */
-  color: #007bff;
+  font-size: 1.4em;
+  font-weight: 600;
+  border-bottom: 2px solid #007bff;
+  color: #0056b3;
 }
 
+
+/* ===== Grid do Formulário ===== */
 .proposta-contrato-form-page .form-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
-  margin-bottom: 18px;
+  gap: 24px;
+  margin-bottom: 24px;
 }
 
 .proposta-contrato-form-page .form-group {
-  flex: 1 1 calc(50% - 10px); /* Tenta 2 por linha, ajustado pelo gap */
-  min-width: 220px; /* Ajuste conforme necessário */
+  flex: 1 1 calc(50% - 12px);
+  min-width: 220px;
   display: flex;
   flex-direction: column;
 }
+
 .proposta-contrato-form-page .form-group.full-width {
   flex-basis: 100%;
 }
 
+
+/* ===== Inputs, Labels e Textareas ===== */
 .proposta-contrato-form-page .form-group label {
-  margin-bottom: 7px;
-  font-weight: 600; /* Labels mais destacados */
-  font-size: 0.9em;
+  margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 0.95em;
   color: #343a40;
 }
 
@@ -80,17 +95,18 @@
   width: 100%;
   padding: 10px 12px;
   border: 1px solid #ced4da;
-  border-radius: 4px;
+  border-radius: 6px;
+  font-size: 1em;
+  background-color: #fff;
   box-sizing: border-box;
-  font-size: 0.95em;
-  background-color: #fff; /* Garante fundo branco para inputs */
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .proposta-contrato-form-page .form-group input:focus,
 .proposta-contrato-form-page .form-group select:focus,
 .proposta-contrato-form-page .form-group textarea:focus {
-  border-color: #80bdff;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  border-color: #66afe9;
+  box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
   outline: none;
 }
 
@@ -99,83 +115,97 @@
   min-height: 80px;
 }
 
-/* Estilo específico para o ReactQuill (editor HTML) */
+.proposta-contrato-form-page .form-group small {
+  font-size: 0.85em;
+  color: #6c757d;
+  margin-top: 5px;
+}
+
+
+/* ===== Editor HTML (ReactQuill) ===== */
 .proposta-contrato-form-page .quill-editor-container {
-  margin-top: 5px; /* Espaço abaixo do label/small text */
+  margin-top: 5px;
   border: 1px solid #ced4da;
-  border-radius: 4px;
+  border-radius: 6px;
   background-color: #fff;
 }
-.proposta-contrato-form-page .quill-editor-container .ql-toolbar.ql-snow {
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
-  border-bottom: 1px solid #ced4da; /* Linha divisória entre toolbar e editor */
+
+.quill-editor-container .ql-toolbar.ql-snow {
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  border-bottom: 1px solid #ced4da;
 }
-.proposta-contrato-form-page .quill-editor-container .ql-container.ql-snow {
-  border-bottom-left-radius: 4px;
-  border-bottom-right-radius: 4px;
+
+.quill-editor-container .ql-container.ql-snow {
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
   min-height: 350px;
   font-size: 1rem;
-  border: none; /* Remove a borda do container do editor, já que o wrapper tem */
+  border: none;
 }
-.proposta-contrato-form-page .quill-editor-container .ql-editor {
+
+.quill-editor-container .ql-editor {
   min-height: 330px;
 }
 
-.proposta-contrato-form-page .form-group small {
-    font-size: 0.85em;
-    color: #6c757d;
-    margin-top: 5px;
-    display: block;
-}
 
-/* Estilos para a seção de Plano de Pagamento Dinâmico */
+/* ===== Seção Dinâmica de Parcelas ===== */
 .proposta-contrato-form-page .parcela-item-row {
   border: 1px solid #e9ecef;
-  padding: 15px;
-  border-radius: 5px;
-  margin-bottom: 15px;
-  background-color: #fff; /* Fundo para cada item de parcela */
+  padding: 18px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  background-color: #fff;
 }
-.proposta-contrato-form-page .parcela-item-row .form-row {
-  margin-bottom: 10px;
+
+.parcela-item-row .form-row {
+  margin-bottom: 12px;
 }
-.proposta-contrato-form-page .parcela-item-row .form-row:last-child {
+
+.parcela-item-row .form-row:last-child {
   margin-bottom: 0;
 }
-.proposta-contrato-form-page .button-link.delete-link { /* Para "Remover Parcela" */
+
+
+/* ===== Botões ===== */
+.proposta-contrato-form-page .button-link.delete-link {
   color: #dc3545;
-  background-color: transparent;
+  background: none;
   border: none;
   padding: 5px 0;
   text-decoration: underline;
   cursor: pointer;
   font-size: 0.85em;
-  display: inline-block; /* Para que margin-top funcione */
-  margin-top: 5px;
+  display: inline-block;
+  margin-top: 6px;
 }
-.proposta-contrato-form-page .outline-button { /* Para "+ Adicionar Parcela" */
+
+.proposta-contrato-form-page .outline-button {
   background-color: transparent;
-  border: 1px dashed #007bff; /* Borda tracejada para diferenciar */
+  border: 1px dashed #007bff;
   color: #007bff;
-  padding: 8px 15px;
-  border-radius: 4px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.95em;
   cursor: pointer;
   transition: background-color 0.2s ease, color 0.2s ease;
-  display: block; /* Ocupa a largura */
+  display: block;
   text-align: center;
-  margin-top: 10px;
+  margin-top: 12px;
 }
+
 .proposta-contrato-form-page .outline-button:hover {
-  background-color: #e7f3ff; /* Um hover sutil */
+  background-color: #e7f3ff;
 }
 
 
+/* ===== Ações do Formulário ===== */
 .proposta-contrato-form-page .form-actions {
-  margin-top: 30px;
-  padding-top: 20px;
+  margin-top: 40px;
+  padding-top: 24px;
   border-top: 1px solid #e0e0e0;
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 16px;
 }
