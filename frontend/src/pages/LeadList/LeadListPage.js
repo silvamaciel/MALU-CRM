@@ -15,7 +15,6 @@ import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 // import LeadFilters from '../../components/LeadFilters/LeadFilters'; // Filtros no Kanban podem ser diferentes
 
 import "./LeadListPage.css"; // Seu CSS existente
-import "./Kanban.css"; // <<< NOVO CSS para o Kanban (crie este arquivo)
 
 
 function LeadListPage() {
