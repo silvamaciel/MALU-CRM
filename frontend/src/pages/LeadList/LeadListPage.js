@@ -69,6 +69,7 @@ const fetchData = useCallback(async () => {
       // Para Kanban, buscar todos os leads ativos é comum. Ajuste 'limit' se necessário.
       const leadsResponse = await getLeads({ page: 1, limit: 1000, ativo: true }); // Filtro 'ativo' se aplicável
       const fetchedLeads = leadsResponse.leads || [];
+      setAllLeadsRaw(fetchedLeads);
 
       const grouped = {};
       fetchedStages.forEach(stage => {
