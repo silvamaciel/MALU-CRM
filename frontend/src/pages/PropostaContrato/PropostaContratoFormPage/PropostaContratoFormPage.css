@@ -4,6 +4,10 @@
 ================================ */
 
 /* ===== Header da Página ===== */
+
+body{
+  width: 100%;
+}
 .proposta-contrato-form-page .page-header {
   display: flex;
   flex-direction: column;
