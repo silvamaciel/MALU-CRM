@@ -249,7 +249,7 @@ const handleConfirmDiscard = useCallback(async (discardData) => {
       });
       
        
-      forceRefresh(); // Isso vai buscar tudo de novo e reconstruir leadsByStage
+      //forceRefresh(); // Isso vai buscar tudo de novo e reconstruir leadsByStage
 
 
     } catch (err) {
