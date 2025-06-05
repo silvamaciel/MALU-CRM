@@ -33,6 +33,7 @@ body{
 
 /* ===== Container do Formulário ===== */
 .proposta-contrato-form-page .form-container {
+  width: 100%;
   max-width: 920px;
   margin: 0 auto;
   background-color: #f8f9fa;
