@@ -461,6 +461,13 @@ function LeadDetailPage() {
               )}
             </ul>
           )}
+          <div className="detail-item-section"> {/* Use uma classe para estilizar a seção se quiser */}
+              <LeadTagsManager
+                 leadId={leadDetails._id}
+                 currentTags={leadDetails.tags}
+                 onTagsUpdated={forceRefresh} // Atualiza a página inteira após salvar
+              />
+          </div>
         </div>
 
         {/* Coluna 3: Placeholder Conversas */}
@@ -471,13 +478,7 @@ function LeadDetailPage() {
           </p>
         </div>
 
-        <div className="detail-item-section"> {/* Use uma classe para estilizar a seção se quiser */}
-              <LeadTagsManager
-                 leadId={leadDetails._id}
-                 currentTags={leadDetails.tags}
-                 onTagsUpdated={forceRefresh} // Atualiza a página inteira após salvar
-              />
-          </div>
+        
       </div>
 
       {/* Modais */}
