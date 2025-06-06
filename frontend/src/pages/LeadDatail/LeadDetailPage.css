@@ -340,18 +340,24 @@
 }
 
 
-.card-tags-container {
-    margin-top: 8px;
+.tags-section {
+    grid-column: 1 / -1; /* Ocupa a largura toda na grid */
+}
+.tags-display-container-detail {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 6px;
+    margin-top: 5px;
 }
-
-.card-tag {
+.tag-item-display {
     background-color: #e9ecef;
     color: #495057;
-    font-size: 0.75em;
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-weight: 500;
+    font-size: 0.85em;
+    padding: 3px 8px;
+    border-radius: 4px;
 }
+.detail-value-italic {
+    font-style: italic;
+    color: #6c757d;
+}
+
