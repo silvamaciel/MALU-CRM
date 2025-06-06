@@ -16,7 +16,7 @@ import { getLeadStages } from "../../api/leadStages";
 import DiscardLeadModal from "../../components/DiscardLeadModal/DiscardLeadModal";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 import ReservaFormModal from "./ReservaFormModal";
-import LeadTagsModal from '../../components/LeadTagsModal/LeadTagsModal';
+import LeadTagsManager from '../../components/LeadTagsManager/LeadTagsManager';
 
 
 import "./LeadDetailPage.css";
@@ -49,7 +49,6 @@ function LeadDetailPage() {
   const navigate = useNavigate();
 
   // --- States ---
-  const [isTagsModalOpen, setIsTagsModalOpen] = useState(false);
 
   const [leadDetails, setLeadDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -244,13 +243,7 @@ function LeadDetailPage() {
     }
   };
 
-  const handleOpenTagsModal = () => {
-        setIsTagsModalOpen(true);
-    };
   
-  const handleCloseTagsModal = () => {
-        setIsTagsModalOpen(false);
-    };
 
   // --- Fim Handlers ---
 
@@ -341,39 +334,13 @@ function LeadDetailPage() {
         <p className="error-message reactivation-error">{reactivateError}</p>
       )}
 
-      <div className="detail-item tags-section">
-                            <span className="detail-label">Tags</span>
-                            <div className="tags-display-container-detail">
-                                {(leadDetails.tags && leadDetails.tags.length > 0) ? (
-                                    leadDetails.tags.map(tag => <span key={tag} className="tag-item-display">{tag}</span>)
-                                ) : (
-                                    <span className="detail-value-italic">Nenhuma tag.</span>
-                                )}
-                            </div>
-                            <button onClick={handleOpenTagsModal} className="button-link" style={{marginTop: '10px'}}>
-                                Gerenciar Tags
-                            </button>
-            </div>
+    
       {/* Layout com Grid para Detalhes e Histórico */}
       <div className="detail-layout-grid">
         {/* Coluna 1: Detalhes do Lead */}
         <div className="lead-details-column">
           <h2>Informações do Lead</h2>
           <div className="detail-grid">
-
-            <div className="detail-item tags-section">
-                            <span className="detail-label">Tags</span>
-                            <div className="tags-display-container-detail">
-                                {(leadDetails.tags && leadDetails.tags.length > 0) ? (
-                                    leadDetails.tags.map(tag => <span key={tag} className="tag-item-display">{tag}</span>)
-                                ) : (
-                                    <span className="detail-value-italic">Nenhuma tag.</span>
-                                )}
-                            </div>
-                            <button onClick={handleOpenTagsModal} className="button-link" style={{marginTop: '10px'}}>
-                                Gerenciar Tags
-                            </button>
-            </div>
 
             {/* Nome */}
             <div className="detail-item">
@@ -463,7 +430,13 @@ function LeadDetailPage() {
         </div>
 
         {/* Coluna 2: Histórico */}
-        
+        <div className="detail-item-section"> {/* Use uma classe para estilizar a seção se quiser */}
+              <LeadTagsManager
+                 leadId={leadDetails._id}
+                 currentTags={leadDetails.tags}
+                 onTagsUpdated={forceRefresh} // Atualiza a página inteira após salvar
+              />
+        </div>
         <div className="lead-history-column">
           <h2>Histórico de Alterações</h2>
           {isLoadingHistory && <p>Carregando histórico...</p>}
@@ -530,12 +503,7 @@ function LeadDetailPage() {
         errorMessage={deleteError}
       />
 
-      <LeadTagsModal
-        isOpen={isTagsModalOpen}
-        onClose={handleCloseTagsModal}
-        lead={leadDetails}
-        onTagsSaved={forceRefresh} // Chama forceRefresh para atualizar a página após salvar
-      />
+     
 
       {/* MODAL DE RESERVA REAL */}
         {isReservaModalOpen && leadDetails && (

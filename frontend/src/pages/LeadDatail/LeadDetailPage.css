@@ -340,24 +340,5 @@
 }
 
 
-.tags-section {
-    grid-column: 1 / -1; /* Ocupa a largura toda na grid */
-}
-.tags-display-container-detail {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 5px;
-}
-.tag-item-display {
-    background-color: #e9ecef;
-    color: #495057;
-    font-size: 0.85em;
-    padding: 3px 8px;
-    border-radius: 4px;
-}
-.detail-value-italic {
-    font-style: italic;
-    color: #6c757d;
-}
+
 
