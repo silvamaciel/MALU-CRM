@@ -145,7 +145,11 @@ const handleConfirmDiscard = useCallback(async (discardData) => {
       await discardLead(discardTargetLead.lead._id, discardData); // API de descarte
       toast.success(`Lead "${discardTargetLead.lead.nome}" descartado!`);
       handleCloseDiscardModal();
-      forceRefresh(); // Atualiza todo o Kanban
+      setAllLeadsRaw(prevAllLeads => 
+          prevAllLeads.map(lead =>
+              lead._id === updatedLeadFromApi._id ? updatedLeadFromApi : lead
+          )
+      );
     } catch (err) {
       toast.error(err.message || "Falha ao descartar lead.");
       // Não fecha o modal automaticamente em caso de erro, para o usuário ver.
@@ -167,7 +171,11 @@ const handleConfirmDiscard = useCallback(async (discardData) => {
     try {
       await updateLead(leadToReactivate._id, { situacao: situacaoAtendimento._id });
       toast.success(`Lead "${leadToReactivate.nome}" reativado para "${situacaoAtendimento.nome}"!`);
-      forceRefresh();
+      setAllLeadsRaw(prevAllLeads => 
+          prevAllLeads.map(lead =>
+              lead._id === updatedLeadFromApi._id ? updatedLeadFromApi : lead
+          )
+      );
     } catch (err) {
       toast.error(err.message || "Falha ao reativar lead.");
     } finally {
@@ -266,7 +274,11 @@ const handleConfirmDiscard = useCallback(async (discardData) => {
       });
       
        
-      //forceRefresh(); // Isso vai buscar tudo de novo e reconstruir leadsByStage
+      setAllLeadsRaw(prevAllLeads => 
+          prevAllLeads.map(lead =>
+              lead._id === updatedLeadFromApi._id ? updatedLeadFromApi : lead
+          )
+      );
 
 
     } catch (err) {
