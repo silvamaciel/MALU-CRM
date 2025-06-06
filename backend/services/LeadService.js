@@ -656,8 +656,6 @@ const updateLead = async (id, leadData, companyId, userId) => {
     ); // --- Log de Histórico AJUSTADO ---
 
     try {
-      // Envolve em try/catch para não quebrar a resposta principal
-
       
       const detalhesLog = `Campos atualizados: ${Object.keys(updateFields).join(", ")}.`;
 
