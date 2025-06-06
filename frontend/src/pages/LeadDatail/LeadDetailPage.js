@@ -16,6 +16,8 @@ import { getLeadStages } from "../../api/leadStages";
 import DiscardLeadModal from "../../components/DiscardLeadModal/DiscardLeadModal";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 import ReservaFormModal from "./ReservaFormModal";
+import LeadTagsModal from '../../components/LeadTagsModal/LeadTagsModal';
+
 
 import "./LeadDetailPage.css";
 
@@ -47,6 +49,8 @@ function LeadDetailPage() {
   const navigate = useNavigate();
 
   // --- States ---
+  const [isTagsModalOpen, setIsTagsModalOpen] = useState(false);
+
   const [leadDetails, setLeadDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -239,6 +243,15 @@ function LeadDetailPage() {
       forceRefresh();
     }
   };
+
+  const handleOpenTagsModal = () => {
+        setIsTagsModalOpen(true);
+    };
+  
+  const handleCloseTagsModal = () => {
+        setIsTagsModalOpen(false);
+    };
+
   // --- Fim Handlers ---
 
   // --- Renderização Condicional Loading/Error ---
@@ -334,6 +347,21 @@ function LeadDetailPage() {
         <div className="lead-details-column">
           <h2>Informações do Lead</h2>
           <div className="detail-grid">
+
+            <div className="detail-item tags-section">
+                            <span className="detail-label">Tags</span>
+                            <div className="tags-display-container-detail">
+                                {(leadDetails.tags && leadDetails.tags.length > 0) ? (
+                                    leadDetails.tags.map(tag => <span key={tag} className="tag-item-display">{tag}</span>)
+                                ) : (
+                                    <span className="detail-value-italic">Nenhuma tag.</span>
+                                )}
+                            </div>
+                            <button onClick={handleOpenTagsModal} className="button-link" style={{marginTop: '10px'}}>
+                                Gerenciar Tags
+                            </button>
+            </div>
+
             {/* Nome */}
             <div className="detail-item">
               <span className="detail-label">Nome:</span>
@@ -486,6 +514,13 @@ function LeadDetailPage() {
         confirmButtonClass="confirm-button-delete"
         isProcessing={isDeleting}
         errorMessage={deleteError}
+      />
+
+      <LeadTagsModal
+        isOpen={isTagsModalOpen}
+        onClose={handleCloseTagsModal}
+        lead={leadDetails}
+        onTagsSaved={forceRefresh} // Chama forceRefresh para atualizar a página após salvar
       />
 
       {/* MODAL DE RESERVA REAL */}
