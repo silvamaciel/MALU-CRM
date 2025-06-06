@@ -45,7 +45,11 @@ const getDefaultLeadStageIdForCompany = async (companyId, stageName = "Novo") =>
     return stage?._id || null;
 };
 
-
+const getStageNameById = async (stageId, companyId) => {
+    if (!stageId || !mongoose.Types.ObjectId.isValid(stageId)) return 'N/A';
+    const stageDoc = await LeadStage.findOne({ _id: stageId, company: companyId }).select('nome').lean();
+    return stageDoc?.nome || 'N/A';
+};
 
 // --- Função Auxiliar logHistory ---
 const logHistory = async (leadId, userId, action, details) => {
@@ -846,4 +850,7 @@ module.exports = {
   deleteLead,
   descartarLead,
   logHistory,
+  getStageNameById,
+  getDefaultAdminUserIdForCompany,
+  getDefaultLeadStageIdForCompany 
 };
