@@ -145,6 +145,8 @@ const handleConfirmDiscard = useCallback(async (discardData) => {
       await discardLead(discardTargetLead.lead._id, discardData); // API de descarte
       toast.success(`Lead "${discardTargetLead.lead.nome}" descartado!`);
       handleCloseDiscardModal();
+
+      const updatedLeadFromApi = await updateLead(leadId, { situacao: finishStageId });
       setAllLeadsRaw(prevAllLeads => 
           prevAllLeads.map(lead =>
               lead._id === updatedLeadFromApi._id ? updatedLeadFromApi : lead
@@ -171,6 +173,7 @@ const handleConfirmDiscard = useCallback(async (discardData) => {
     try {
       await updateLead(leadToReactivate._id, { situacao: situacaoAtendimento._id });
       toast.success(`Lead "${leadToReactivate.nome}" reativado para "${situacaoAtendimento.nome}"!`);
+      const updatedLeadFromApi = await updateLead(leadId, { situacao: finishStageId });
       setAllLeadsRaw(prevAllLeads => 
           prevAllLeads.map(lead =>
               lead._id === updatedLeadFromApi._id ? updatedLeadFromApi : lead
@@ -262,17 +265,6 @@ const handleConfirmDiscard = useCallback(async (discardData) => {
       const updatedLeadFromApi = await updateLead(leadId, { situacao: finishStageId }); // API para atualizar
       
       toast.success(`Lead "${movedItemOptimistic.nome}" atualizado para "${targetStageForMovedItem?.nome || ''}"!`);
-
-      // VVVVV ATUALIZAR allLeadsRaw e REAGRUPAR VVVVV
-      // Atualiza o lead específico em allLeadsRaw com os dados retornados pela API (ou pelo menos a nova situação)
-      setAllLeadsRaw(prevAllLeads => {
-          return prevAllLeads.map(lead => 
-              lead._id === leadId 
-                  ? { ...lead, situacao: updatedLeadFromApi.situacao || targetStageForMovedItem } // Usa o retorno da API se disponível
-                  : lead
-          );
-      });
-      
        
       setAllLeadsRaw(prevAllLeads => 
           prevAllLeads.map(lead =>
