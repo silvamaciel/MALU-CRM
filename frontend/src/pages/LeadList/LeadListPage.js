@@ -255,16 +255,6 @@ const handleConfirmDiscard = useCallback(async (discardData) => {
       
       toast.success(`Lead "${movedItemOptimistic.nome}" atualizado para "${targetStageForMovedItem?.nome || ''}"!`);
 
-      // VVVVV ATUALIZAR allLeadsRaw e REAGRUPAR VVVVV
-      // Atualiza o lead específico em allLeadsRaw com os dados retornados pela API (ou pelo menos a nova situação)
-      setAllLeadsRaw(prevAllLeads => {
-          return prevAllLeads.map(lead => 
-              lead._id === leadId 
-                  ? { ...lead, situacao: updatedLeadFromApi.situacao || targetStageForMovedItem } // Usa o retorno da API se disponível
-                  : lead
-          );
-      });
-      
        
       setAllLeadsRaw(prevAllLeads => 
           prevAllLeads.map(lead =>
