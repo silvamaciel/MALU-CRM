@@ -341,6 +341,19 @@ function LeadDetailPage() {
         <p className="error-message reactivation-error">{reactivateError}</p>
       )}
 
+      <div className="detail-item tags-section">
+                            <span className="detail-label">Tags</span>
+                            <div className="tags-display-container-detail">
+                                {(leadDetails.tags && leadDetails.tags.length > 0) ? (
+                                    leadDetails.tags.map(tag => <span key={tag} className="tag-item-display">{tag}</span>)
+                                ) : (
+                                    <span className="detail-value-italic">Nenhuma tag.</span>
+                                )}
+                            </div>
+                            <button onClick={handleOpenTagsModal} className="button-link" style={{marginTop: '10px'}}>
+                                Gerenciar Tags
+                            </button>
+            </div>
       {/* Layout com Grid para Detalhes e Histórico */}
       <div className="detail-layout-grid">
         {/* Coluna 1: Detalhes do Lead */}
@@ -450,6 +463,7 @@ function LeadDetailPage() {
         </div>
 
         {/* Coluna 2: Histórico */}
+        
         <div className="lead-history-column">
           <h2>Histórico de Alterações</h2>
           {isLoadingHistory && <p>Carregando histórico...</p>}
