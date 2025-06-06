@@ -429,14 +429,15 @@ function LeadDetailPage() {
           </div>
         </div>
 
-        {/* Coluna 2: Histórico */}
         <div className="detail-item-section"> {/* Use uma classe para estilizar a seção se quiser */}
               <LeadTagsManager
                  leadId={leadDetails._id}
                  currentTags={leadDetails.tags}
                  onTagsUpdated={forceRefresh} // Atualiza a página inteira após salvar
               />
-        </div>
+          </div>
+
+        {/* Coluna 2: Histórico */}
         <div className="lead-history-column">
           <h2>Histórico de Alterações</h2>
           {isLoadingHistory && <p>Carregando histórico...</p>}
