@@ -429,14 +429,6 @@ function LeadDetailPage() {
           </div>
         </div>
 
-        <div className="detail-item-section"> {/* Use uma classe para estilizar a seção se quiser */}
-              <LeadTagsManager
-                 leadId={leadDetails._id}
-                 currentTags={leadDetails.tags}
-                 onTagsUpdated={forceRefresh} // Atualiza a página inteira após salvar
-              />
-          </div>
-
         {/* Coluna 2: Histórico */}
         <div className="lead-history-column">
           <h2>Histórico de Alterações</h2>
@@ -478,6 +470,14 @@ function LeadDetailPage() {
             <i>(Funcionalidade futura)</i>
           </p>
         </div>
+
+        <div className="detail-item-section"> {/* Use uma classe para estilizar a seção se quiser */}
+              <LeadTagsManager
+                 leadId={leadDetails._id}
+                 currentTags={leadDetails.tags}
+                 onTagsUpdated={forceRefresh} // Atualiza a página inteira após salvar
+              />
+          </div>
       </div>
 
       {/* Modais */}
