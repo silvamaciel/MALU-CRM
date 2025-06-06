@@ -376,6 +376,13 @@ const handleConfirmDiscard = useCallback(async (discardData) => {
         isProcessing={isProcessingAction}
         errorMessage={deleteError} // Se o modal suportar
       />
+
+      <LeadTagsModal
+                isOpen={isTagsModalOpen}
+                onClose={handleCloseTagsModal}
+                lead={selectedLeadForTags}
+                onTagsSaved={forceRefresh}
+            />
     </div>
   );
 }
