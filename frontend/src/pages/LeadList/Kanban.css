@@ -134,3 +134,18 @@
   border-radius: 4px;
   margin: 10px;
 }
+
+.card-tags-container {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+.card-tag {
+    background-color: #e9ecef;
+    color: #495057;
+    font-size: 0.75em;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 500;
+}

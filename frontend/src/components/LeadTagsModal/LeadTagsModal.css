@@ -1,0 +1,59 @@
+/* src/components/LeadTagsModal/LeadTagsModal.css */
+/* O .form-modal-overlay e .form-modal-content podem ser reutilizados de um CSS global de modais */
+.form-modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex; align-items: center; justify-content: center; z-index: 1050;
+}
+.form-modal-content {
+  background-color: #fff; padding: 25px 30px; border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); width: 100%;
+}
+
+.tags-display-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+  margin-top: 10px;
+  margin-bottom: 20px;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  min-height: 50px;
+}
+
+.tag-item {
+  display: flex;
+  align-items: center;
+  background-color: #007bff;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 15px; /* Bordas arredondadas para pílula */
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.tag-item button {
+  background: none;
+  border: none;
+  color: white;
+  margin-left: 8px;
+  cursor: pointer;
+  font-size: 1.2em;
+  line-height: 1;
+  padding: 0;
+  font-weight: bold;
+}
+.tag-item button:hover {
+  opacity: 0.8;
+}
+
+.no-tags-message {
+  width: 100%;
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
+  font-size: 0.9em;
+  padding: 10px 0;
+}

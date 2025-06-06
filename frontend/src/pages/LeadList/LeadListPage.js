@@ -14,6 +14,9 @@ import DiscardLeadModal from "../../components/DiscardLeadModal/DiscardLeadModal
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 import LeadFilters from '../../components/LeadFilters/LeadFilters';
 
+import LeadTagsModal from '../../components/LeadTagsModal/LeadTagsModal';
+
+
 import "./LeadListPage.css";
 import "./Kanban.css";
 
@@ -49,6 +52,9 @@ function LeadListPage() {
   const [isDiscarding, setIsDiscarding] = useState(false);
   const [discardError, setDiscardError] = useState(null);
   // ... (outros states de modal se precisar manter: delete, etc.)
+
+  const [isTagsModalOpen, setIsTagsModalOpen] = useState(false);
+  const [selectedLeadForTags, setSelectedLeadForTags] = useState(null);
 
   // Função para buscar dados iniciais (LeadStages e Leads)
 const fetchData = useCallback(async () => {
@@ -108,6 +114,17 @@ const fetchData = useCallback(async () => {
   }, [fetchData]);
 
   const forceRefresh = useCallback(() => fetchData(), [fetchData]);
+
+  const handleOpenTagsModal = useCallback((lead) => {
+        setSelectedLeadForTags(lead);
+        setIsTagsModalOpen(true);
+    }, []);
+
+    const handleCloseTagsModal = useCallback(() => {
+        setIsTagsModalOpen(false);
+        setSelectedLeadForTags(null);
+    }, []);
+
 
   // Handlers para Discard Modal
   const handleOpenDiscardModal = useCallback((lead, targetStageId = null) => {
@@ -304,7 +321,12 @@ const handleConfirmDiscard = useCallback(async (discardData) => {
                               <div className="lead-card-body" onClick={() => navigate(`/leads/${lead._id}`)}>
                                 <p className="lead-card-contato">{lead.contato || 'Sem contato'}</p>
                                 <p className="lead-card-email">{lead.email || 'Sem email'}</p>
-                                {/* Adicionar tags aqui no futuro */}
+                                <div className="card-tags-container">
+                                       {(lead.tags || []).slice(0, 3).map(tag => ( // Mostra até 3 tags
+                                      <span key={tag} className="card-tag">{tag}</span>
+                                     ))}
+                                       {(lead.tags?.length > 3) && <span className="card-tag more-tags">...</span>}
+                                   </div>
                               </div>
                               <div className="lead-card-footer">
                                 <small>Atualizado: {new Date(lead.updatedAt).toLocaleDateString('pt-BR')}</small>
@@ -316,6 +338,7 @@ const handleConfirmDiscard = useCallback(async (discardData) => {
                                     <button onClick={() => handleOpenDiscardModal(lead)} className="action-icon" disabled={isProcessingAction} title="Descartar">🗑️</button>
                                   )}
                                   <button onClick={() => handleOpenDeleteModal(lead)} className="action-icon" disabled={isProcessingAction} title="Excluir">❌</button>
+                                  <button onClick={() => handleOpenTagsModal(lead)} className="action-icon" title="Gerenciar Tags">🏷️</button>
                                 </div>
                               </div>
                             </div>
