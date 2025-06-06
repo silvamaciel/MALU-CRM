@@ -62,6 +62,11 @@ const leadSchema = new Schema(
       required: [true, 'A empresa do lead é obrigatória.'], 
       index: true 
   },
+  tags: [{
+        type: String,
+        trim: true,
+        lowercase: true
+    }],
 
   },
   {

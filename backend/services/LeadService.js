@@ -28,6 +28,25 @@ const getDefaultAdminUserIdForCompany = async (companyId) => {
   return adminUser?._id || null;
 };
 
+
+const getDefaultLeadStageIdForCompany = async (companyId, stageName = "Novo") => {
+    if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) return null;
+    let stage = await LeadStage.findOne({ company: companyId, nome: { $regex: new RegExp(`^${stageName}$`, 'i') }, ativo: true });
+    if (!stage) {
+        try {
+            console.log(`[LeadService] Estágio '${stageName}' não encontrado para Company ${companyId}. Tentando criar...`);
+            const newStage = new LeadStage({ nome: stageName, company: companyId, ativo: true, ordem: 0 }); // Ajuste 'ordem'
+            stage = await newStage.save();
+        } catch (error) {
+            console.error(`[LeadService] Falha ao criar estágio padrão '${stageName}' para Company ${companyId}:`, error);
+            return null;
+        }
+    }
+    return stage?._id || null;
+};
+
+
+
 // --- Função Auxiliar logHistory ---
 const logHistory = async (leadId, userId, action, details) => {
   try {
@@ -185,6 +204,7 @@ const createLead = async (leadData, companyId, userId) => {
     cpf,
     situacao,
     origem,
+    tags,
     responsavel,
     comentario,
   } = leadData;
@@ -330,6 +350,19 @@ const createLead = async (leadData, companyId, userId) => {
     );
   }
 
+  let processedTags = [];
+  if (Array.isArray(tags)) {
+    processedTags = tags
+      .filter(tag => typeof tag === 'string' && tag.trim() !== '')
+      .map(tag => tag.trim().toLowerCase());
+    processedTags = [...new Set(processedTags)]; 
+    } else if (typeof tags === 'string' && tags.trim() !== '') {
+    processedTags = tags.split(',')
+        .map(tag => tag.trim().toLowerCase())
+        .filter(tag => tag.length > 0);
+    processedTags = [...new Set(processedTags)];
+  }
+
   // 5. Criação do Novo Lead
   const novoLead = new Lead({
     nome: nome.trim(),
@@ -342,8 +375,12 @@ const createLead = async (leadData, companyId, userId) => {
     motivoDescarte: null, // Sempre null na criação
     comentario: comentario || null,
     origem: origemIdFinal,
+    tags: leadData.tags || [],
     responsavel: responsavelIdFinal,
-    company: companyId, // Associa à empresa
+    company: companyId,
+    tags: processedTags,
+    createdBy: userId,
+    ativo: true // Associa à empresa
   });
 
   // 6. Salvar
@@ -359,14 +396,8 @@ const createLead = async (leadData, companyId, userId) => {
 };
 
 const updateLead = async (id, leadData, companyId, userId) => {
-  console.log(
-    `--- [updateLead] Iniciando para ID: ${id}, Empresa: ${companyId}, User: ${userId} ---`
-  );
-
-  console.log(
-    "[updateLead] leadData recebido:",
-    JSON.stringify(leadData, null, 2)
-  ); // Validações Iniciais
+ console.log(`--- [updateLead] Iniciando para ID: ${id}, Empresa: ${companyId}, User: ${userId} ---`);
+  console.log("[updateLead] leadData recebido:", JSON.stringify(leadData, null, 2));
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new Error("ID de Lead inválido.");
@@ -380,21 +411,25 @@ const updateLead = async (id, leadData, companyId, userId) => {
     throw new Error("ID do usuário inválido.");
   }
 
+  // --- BUSCA LEAD EXISTENTE PARA PEGAR O ESTADO ANTERIOR ---
+  const leadExistente = await Lead.findOne({ _id: id, company: companyId });
+  if (!leadExistente) {
+    throw new Error("Lead não encontrado nesta empresa.");
+  }
+
+  const situacaoAntigaId = leadExistente.situacao;
+  const nomeSituacaoAntiga = situacaoAntigaId ? await getStageNameById(situacaoAntigaId, companyId) : 'N/A';
+
+
   const {
-    nome,
-    contato,
-    email,
-    nascimento,
-    endereco,
-    cpf,
-    responsavel, // ID
-    situacao, // ID
-    motivoDescarte, // ID
-    comentario,
-    origem, // ID
+    nome, contato, email, nascimento, endereco, cpf,
+    responsavel, situacao, motivoDescarte, comentario, origem, tags,
   } = leadData;
 
+
   const updateFields = {}; // Objeto para acumular alterações // --- Processa Campos Simples ---
+
+  
   if (nome !== undefined) updateFields.nome = nome.trim();
   if (email !== undefined)
     updateFields.email = email ? email.trim().toLowerCase() : null;
@@ -430,6 +465,18 @@ const updateLead = async (id, leadData, companyId, userId) => {
       updateFields.cpf = cpfLimpo;
     }
   } // --- Validação e Lógica de Referências e Descarte ---
+
+  if (tags !== undefined) {
+    if (Array.isArray(tags)) {
+        updateFields.tags = tags
+            .filter(tag => typeof tag === 'string' && tag.trim() !== '')
+            .map(tag => tag.trim().toLowerCase());
+        updateFields.tags = [...new Set(updateFields.tags)]; 
+    } else {
+        throw new Error("O campo 'tags' deve ser um array de strings.");
+    }
+  }
+
 
   try {
     // Situação e Limpeza/Atualização de Descarte
@@ -563,6 +610,46 @@ const updateLead = async (id, leadData, companyId, userId) => {
     if (!updatedLead) {
       throw new Error("Lead não encontrado nesta empresa (update falhou).");
     }
+
+    const nomeSituacaoNova = await getStageNameById(updatedLead.situacao, companyId);
+    
+    if (updateFields.situacao && !updatedLead.situacao.equals(situacaoAntigaId) && nomeSituacaoAntiga.toLowerCase().includes('em reserva')) {
+        const proximosEstagiosPermitidos = ["em proposta", "proposta emitida", "contrato assinado", "vendido"]; // Estágios que mantêm a unidade "ocupada"
+        
+        if (!proximosEstagiosPermitidos.some(s => nomeSituacaoNova.toLowerCase().includes(s))) {
+            console.log(`[updateLead] Lead ${id} saiu de 'Em Reserva' para '${nomeSituacaoNova}'. Verificando e cancelando reserva ativa.`);
+            
+            const reservaAtiva = await Reserva.findOne({ lead: id, statusReserva: "Ativa", company: companyId }).session(session);
+
+            if (reservaAtiva) {
+                const unidadeIdDaReserva = reservaAtiva.unidade;
+                reservaAtiva.statusReserva = "Cancelada"; // Ou "CanceladaPorMudancaDeStatusLead"
+                
+                // Usar unidadeService seria mais limpo, mas para manter a atomicidade, atualizamos aqui
+                const unidadeParaLiberar = await Unidade.findById(unidadeIdDaReserva).session(session);
+                if (unidadeParaLiberar && unidadeParaLiberar.currentReservaId && unidadeParaLiberar.currentReservaId.equals(reservaAtiva._id)) {
+                    unidadeParaLiberar.statusUnidade = "Disponível";
+                    unidadeParaLiberar.currentLeadId = null;
+                    unidadeParaLiberar.currentReservaId = null;
+                    await unidadeParaLiberar.save({ session });
+                    console.log(`[updateLead] Unidade ${unidadeIdDaReserva} liberada. Status: Disponível.`);
+                } else {
+                    console.warn(`[updateLead] Unidade ${unidadeIdDaReserva} não foi liberada pois não estava vinculada a esta reserva ativa ou não foi encontrada.`);
+                }
+                
+                await reservaAtiva.save({ session });
+                console.log(`[updateLead] Reserva ${reservaAtiva._id} status alterado para 'Cancelada'.`);
+                
+                await logHistory(
+                    id, userId, "RESERVA_CANCELADA_STATUS_LEAD",
+                    `Reserva da unidade ID ${unidadeIdDaReserva} cancelada devido à mudança de status do lead para '${nomeSituacaoNova}'.`,
+                    { oldReservaStatus: "Ativa", newReservaStatus: "Cancelada" }, null, 'Reserva', reservaAtiva._id, session
+                );
+            }
+        }
+    }
+
+
     console.log(
       "[updateLead] Documento atualizado no DB (raw):",
       JSON.stringify(updatedLead, null, 2)
@@ -571,14 +658,12 @@ const updateLead = async (id, leadData, companyId, userId) => {
     try {
       // Envolve em try/catch para não quebrar a resposta principal
 
-      const changedFieldsList =
-        Object.keys(updateFields).join(", ") || "Nenhum";
+      
+      const detalhesLog = `Campos atualizados: ${Object.keys(updateFields).join(", ")}.`;
 
-      const actionType = "ATUALIZACAO"; // <<< Sempre ATUALIZACAO por agora
 
-      const details = `Campos processados na atualização: ${changedFieldsList}`; // <<< Mensagem mais precisa
-
-      await logHistory(updatedLead._id, userId, actionType, details);
+      await logHistory(updatedLead._id, userId, "EDICAO_DADOS", detalhesLog, leadExistente.toObject(), updatedLead.toObject());
+      
     } catch (historyError) {
       console.error(
         `[updateLead] Falha ao gravar histórico para Lead ${updatedLead._id}:`,
