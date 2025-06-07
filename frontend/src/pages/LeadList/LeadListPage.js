@@ -368,8 +368,8 @@ const handleConfirmDiscard = useCallback(async (discardData) => {
         title="Confirmar Exclusão"
         message={`Excluir permanentemente o lead "${deleteTargetLeadForModal?.nome || ''}"?`}
         isProcessing={isProcessingAction}
-        errorMessage={deleteError} // Se o modal suportar
-      />
+        errorMessage={deleteError}
+        />
 
       <LeadTagsModal
                 isOpen={isTagsModalOpen}
