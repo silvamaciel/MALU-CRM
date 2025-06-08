@@ -1,189 +1,143 @@
 // src/components/LeadFilters/LeadFilters.js
-import React, { useState, useEffect } from 'react';
-import './LeadFilters.css'; // Criaremos este CSS
-
-// Hook simples para debounce (opcional, mas recomendado)
-function useDebounce(value, delay) {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-  return debouncedValue;
-}
-
+import React, { useState } from 'react';
+import './LeadFilters.css'; // Mantenha ou ajuste seu CSS
 
 function LeadFilters({
-    situacoesList = [], // Recebe as listas como props
     origensList = [],
     usuariosList = [],
-    onFilterChange, // Função para notificar o pai sobre a mudança nos filtros
-    isProcessing // Opcional: para desabilitar filtros durante o carregamento
+    onFilterChange,
+    isProcessing,
+    initialFilters = {} // Para carregar com filtros pré-definidos se necessário
 }) {
-  const initialFilterState = {
-    nome: '',
-    email: '',
-    situacao: '', // ID da situação
-    origem: '',   // ID da origem
-    responsavel: '', // ID do responsável
-    dataInicio: '', // Formato YYYY-MM-DD
-    dataFim: ''     // Formato YYYY-MM-DD
-  };
-  const [filters, setFilters] = useState(initialFilterState);
+    const initialState = {
+        termoBusca: '', // Para Nome, Email ou CPF
+        tags: '',       // Para tags separadas por vírgula
+        origem: '',
+        responsavel: '',
+        dataInicio: '',
+        dataFim: ''
+    };
+    const [filters, setFilters] = useState({ ...initialState, ...initialFilters });
 
-  // Usa debounce para evitar chamadas excessivas à API enquanto digita
-  const debouncedFilters = useDebounce(filters, 500); // Atraso de 500ms
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFilters(prevFilters => ({
+            ...prevFilters,
+            [name]: value
+        }));
+    };
 
-  // Efeito que chama onFilterChange quando os filtros (debounced) mudam
-  useEffect(() => {
-    // Verifica se onFilterChange é uma função antes de chamar
-    if (typeof onFilterChange === 'function') {
-        // Limpa filtros vazios antes de enviar
+    const handleApplyFilters = (e) => {
+        e.preventDefault();
+        // Limpa filtros vazios antes de enviar para o componente pai
         const activeFilters = {};
-        for (const key in debouncedFilters) {
-            if (debouncedFilters[key] !== '' && debouncedFilters[key] !== null) {
-                activeFilters[key] = debouncedFilters[key];
+        for (const key in filters) {
+            if (filters[key] !== '' && filters[key] !== null) {
+                activeFilters[key] = filters[key];
             }
         }
-        console.log("LeadFilters: Chamando onFilterChange com:", activeFilters);
-        onFilterChange(activeFilters);
-    }
-  }, [debouncedFilters, onFilterChange]); // Depende dos filtros debounced
+        if (typeof onFilterChange === 'function') {
+            console.log("LeadFilters: Aplicando filtros:", activeFilters);
+            onFilterChange(activeFilters);
+        }
+    };
 
-  // Handler genérico para mudanças nos inputs/selects
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFilters(prevFilters => ({
-      ...prevFilters,
-      [name]: value
-    }));
-  };
+    const handleClearFilters = () => {
+        setFilters(initialState);
+        if (typeof onFilterChange === 'function') {
+            onFilterChange({}); // Notifica o pai para limpar os filtros
+        }
+    };
 
-  // Handler para limpar todos os filtros
-  const handleClearFilters = () => {
-    setFilters(initialFilterState);
-    // Chama onFilterChange imediatamente com filtros vazios
-     if (typeof onFilterChange === 'function') {
-         onFilterChange({});
-     }
-  };
-
-  return (
-    <div className="lead-filters-container">
-      <form className="lead-filters-form">
-        {/* Linha 1: Nome, Email */}
-        <div className="filter-group">
-          <label htmlFor="filter-nome">Nome</label>
-          <input
-            type="text"
-            id="filter-nome"
-            name="nome"
-            value={filters.nome}
-            onChange={handleChange}
-            placeholder="Filtrar por nome..."
-            disabled={isProcessing}
-          />
+    return (
+        <div className="lead-filters-container">
+            <form onSubmit={handleApplyFilters} className="lead-filters-form">
+                <div className="filter-group wide-group">
+                    {/* Input unificado para Nome, Email, CPF */}
+                    <input
+                        type="text"
+                        name="termoBusca"
+                        value={filters.termoBusca}
+                        onChange={handleChange}
+                        placeholder="Buscar por Nome, Email ou CPF..."
+                        disabled={isProcessing}
+                        className="filter-input"
+                    />
+                </div>
+                <div className="filter-group wide-group">
+                    {/* Input para Tags */}
+                    <input
+                        type="text"
+                        name="tags"
+                        value={filters.tags}
+                        onChange={handleChange}
+                        placeholder="Filtrar por tags (ex: vip, investidor)"
+                        disabled={isProcessing}
+                        className="filter-input"
+                    />
+                </div>
+                <div className="filter-group">
+                    <label htmlFor="filter-origem">Origem</label>
+                    <select
+                        id="filter-origem"
+                        name="origem"
+                        value={filters.origem}
+                        onChange={handleChange}
+                        disabled={isProcessing}
+                    >
+                        <option value="">Todas</option>
+                        {origensList.map(o => <option key={o._id} value={o._id}>{o.nome}</option>)}
+                    </select>
+                </div>
+                <div className="filter-group">
+                    <label htmlFor="filter-responsavel">Responsável</label>
+                    <select
+                        id="filter-responsavel"
+                        name="responsavel"
+                        value={filters.responsavel}
+                        onChange={handleChange}
+                        disabled={isProcessing}
+                    >
+                        <option value="">Todos</option>
+                        {usuariosList.map(u => <option key={u._id} value={u._id}>{u.nome}</option>)}
+                    </select>
+                </div>
+                <div className="filter-group date-range">
+                    <label>Criado entre:</label>
+                    <input
+                        type="date"
+                        name="dataInicio"
+                        value={filters.dataInicio}
+                        onChange={handleChange}
+                        disabled={isProcessing}
+                        max={filters.dataFim || undefined}
+                    />
+                    <span>até</span>
+                    <input
+                        type="date"
+                        name="dataFim"
+                        value={filters.dataFim}
+                        onChange={handleChange}
+                        disabled={isProcessing}
+                        min={filters.dataInicio || undefined}
+                    />
+                </div>
+                <div className="filter-group actions-group">
+                    <button type="submit" className="button primary-button small-button" disabled={isProcessing}>
+                        {isProcessing ? 'Buscando...' : 'Filtrar'}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleClearFilters}
+                        className="button-link"
+                        disabled={isProcessing}
+                    >
+                        Limpar
+                    </button>
+                </div>
+            </form>
         </div>
-        <div className="filter-group">
-          <label htmlFor="filter-email">Email</label>
-          <input
-            type="email"
-            id="filter-email"
-            name="email"
-            value={filters.email}
-            onChange={handleChange}
-            placeholder="Filtrar por email..."
-            disabled={isProcessing}
-          />
-        </div>
-
-         {/* Linha 2: Situação, Origem, Responsável */}
-         <div className="filter-group">
-             <label htmlFor="filter-situacao">Situação</label>
-             <select
-                id="filter-situacao"
-                name="situacao"
-                value={filters.situacao}
-                onChange={handleChange}
-                disabled={isProcessing}
-             >
-                 <option value="">Todas</option>
-                 {situacoesList.map(s => <option key={s._id} value={s._id}>{s.nome}</option>)}
-             </select>
-        </div>
-        <div className="filter-group">
-            <label htmlFor="filter-origem">Origem</label>
-             <select
-                id="filter-origem"
-                name="origem"
-                value={filters.origem}
-                onChange={handleChange}
-                disabled={isProcessing}
-             >
-                 <option value="">Todas</option>
-                 {origensList.map(o => <option key={o._id} value={o._id}>{o.nome}</option>)}
-             </select>
-        </div>
-        <div className="filter-group">
-             <label htmlFor="filter-responsavel">Responsável</label>
-             <select
-                id="filter-responsavel"
-                name="responsavel"
-                value={filters.responsavel}
-                onChange={handleChange}
-                disabled={isProcessing}
-             >
-                 <option value="">Todos</option>
-                 {usuariosList.map(u => <option key={u._id} value={u._id}>{u.nome}</option>)}
-             </select>
-        </div>
-
-
-        {/* Linha 3: Datas */}
-        <div className="filter-group">
-          <label htmlFor="filter-dataInicio">Criado de:</label>
-          <input
-            type="date"
-            id="filter-dataInicio"
-            name="dataInicio"
-            value={filters.dataInicio}
-            onChange={handleChange}
-            disabled={isProcessing}
-            max={filters.dataFim || undefined} // Impede data inicial > data final
-          />
-        </div>
-        <div className="filter-group">
-           <label htmlFor="filter-dataFim">Criado até:</label>
-           <input
-             type="date"
-             id="filter-dataFim"
-             name="dataFim"
-             value={filters.dataFim}
-             onChange={handleChange}
-             disabled={isProcessing}
-             min={filters.dataInicio || undefined} // Impede data final < data inicial
-           />
-        </div>
-
-         {/* Linha 4: Botão Limpar */}
-         <div className="filter-group clear-button-group">
-             <button
-               type="button"
-               onClick={handleClearFilters}
-               className="clear-filters-button"
-               disabled={isProcessing}
-             >
-                Limpar Filtros
-             </button>
-         </div>
-
-      </form>
-    </div>
-  );
+    );
 }
 
 export default LeadFilters;

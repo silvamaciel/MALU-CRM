@@ -12,7 +12,7 @@ import { getLeadStages } from "../../api/leadStages"; // Para as colunas do Kanb
 // import LeadCard from '../../components/LeadCard/LeadCard'; // Vamos definir o card inline por agora
 import DiscardLeadModal from "../../components/DiscardLeadModal/DiscardLeadModal";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
-import LeadFilters from '../../components/LeadFilters/LeadFilters';
+import LeadFilters from '../../components/LeadFilters/LeadFilters'; 
 
 import LeadTagsModal from '../../components/LeadTagsModal/LeadTagsModal';
 
@@ -36,6 +36,11 @@ function LeadListPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [allLeadsRaw, setAllLeadsRaw] = useState([]); // Para re-agrupar se necessário
+
+  const [activeFilters, setActiveFilters] = useState({});
+
+  const [origensList, setOrigensList] = useState([]);
+  const [usuariosList, setUsuariosList] = useState([]);
 
   const [stageIdDescartado, setStageIdDescartado] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
@@ -61,9 +66,18 @@ const fetchData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const stagesResponse = await getLeadStages();
+      const [stagesResponse, leadsResponse, origensResponse, usuariosResponse] = await Promise.all([
+                getLeadStages(),
+                getLeads({ page: 1, limit: 1000, ...currentFilters }), // Passa os filtros para a API de leads
+                getOrigens(), // Busca origens para o filtro
+                getUsuarios({ ativo: true }) // Busca usuários para o filtro
+            ]);
+      
+      setOrigensList(origensResponse || []);
+      setUsuariosList(usuariosResponse.users || usuariosResponse.data || usuariosResponse || []);
+
       const fetchedStages = stagesResponse.leadStages || stagesResponse.data || stagesResponse || [];
-      setLeadStages(fetchedStages);
+            setLeadStages(fetchedStages);
 
       const descartadoStage = fetchedStages.find(s => s.nome.toLowerCase() === "descartado");
       if (descartadoStage) {
@@ -73,8 +87,6 @@ const fetchData = useCallback(async () => {
       }
 
       // Para Kanban, buscar todos os leads ativos é comum. Ajuste 'limit' se necessário.
-      const leadsResponse = await getLeads({ page: 1, limit: 1000, ativo: true }); // Filtro 'ativo' se aplicável
-      const fetchedLeads = leadsResponse.leads || [];
       setAllLeadsRaw(fetchedLeads);
 
       const grouped = {};
@@ -110,8 +122,12 @@ const fetchData = useCallback(async () => {
   }, []);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    fetchData(activeFilters);
+  }, [activeFilters, fetchData]);
+
+  const handleFilterChange = useCallback((newFilters) => {
+        setActiveFilters(newFilters);
+    }, []);
 
   const forceRefresh = useCallback(() => fetchData(), [fetchData]);
 
@@ -287,6 +303,14 @@ const handleConfirmDiscard = useCallback(async (discardData) => {
         </Link>
       </header>
       <div className="page-content">
+
+        <LeadFilters
+                    origensList={origensList}
+                    usuariosList={usuariosList}
+                    onFilterChange={handleFilterChange}
+                    isProcessing={isLoading}
+                />
+                
         {/* TODO: Adicionar Filtros Globais para o Kanban aqui */}
         <DragDropContext onDragEnd={onDragEnd}>
           <div className="kanban-container">
