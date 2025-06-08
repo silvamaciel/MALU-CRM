@@ -68,7 +68,7 @@ const fetchData = useCallback(async () => {
     try {
       const [stagesResponse, leadsResponse, origensResponse, usuariosResponse] = await Promise.all([
                 getLeadStages(),
-                getLeads({ page: 1, limit: 1000, ...currentFilters }), // Passa os filtros para a API de leads
+                getLeads({ page: 1, limit: 1000, ...activeFilters }), // Passa os filtros para a API de leads
                 getOrigens(), // Busca origens para o filtro
                 getUsuarios({ ativo: true }) // Busca usuários para o filtro
             ]);
@@ -85,6 +85,8 @@ const fetchData = useCallback(async () => {
       } else {
         console.warn("Estágio 'Descartado' não encontrado. A funcionalidade de arrastar para descartar pode não funcionar como esperado.");
       }
+
+      const fetchedLeads = leadsResponse.data || leadsResponse.leads || leadsResponse || [];
 
       // Para Kanban, buscar todos os leads ativos é comum. Ajuste 'limit' se necessário.
       setAllLeadsRaw(fetchedLeads);
@@ -310,7 +312,7 @@ const handleConfirmDiscard = useCallback(async (discardData) => {
                     onFilterChange={handleFilterChange}
                     isProcessing={isLoading}
                 />
-                
+
         {/* TODO: Adicionar Filtros Globais para o Kanban aqui */}
         <DragDropContext onDragEnd={onDragEnd}>
           <div className="kanban-container">
