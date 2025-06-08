@@ -375,6 +375,7 @@ const handleConfirmDiscard = useCallback(async (discardData) => {
                 isOpen={isTagsModalOpen}
                 onClose={handleCloseTagsModal}
                 lead={selectedLeadForTags}
+                onTagsSaved={handleAtualizaListaLeads}
             />
     </div>
   );

@@ -37,25 +37,37 @@ function LeadTagsModal({ isOpen, onClose, lead, onTagsSaved }) {
 
     // Handler para salvar as tags
     const handleSave = async () => {
-        if (!lead || !lead._id) {
-            toast.error("ID do Lead inválido.");
-            return;
+    if (!lead || !lead._id) {
+        toast.error("ID do Lead inválido.");
+        return;
+    }
+    setIsSaving(true);
+    try {
+        await updateLead(lead._id, { tags: tags });
+        toast.success("Tags atualizadas com sucesso!");
+        onTagsSaved();
+        onClose();
+    } catch (error) {
+        console.error("Erro no handleSave:", error);
+
+        // Se o erro vier de uma resposta HTTP da API (ex: axios)
+        if (error.response) {
+            // Exemplo: error.response.data.message ou outro campo
+            const apiMessage = error.response.data?.message || "Erro na resposta da API.";
+            toast.error(apiMessage);
+        } 
+        // Se for erro de requisição (ex: rede)
+        else if (error.request) {
+            toast.error("Erro de comunicação com o servidor. Verifique sua conexão.");
+        } 
+        // Outros erros (ex: sintaxe, lógica)
+        else {
+            toast.error(error.message || "Erro inesperado ao salvar tags.");
         }
-        setIsSaving(true);
-        try {
-            // A API updateLead espera o leadId e um objeto com os campos a serem atualizados
-            await updateLead(lead._id, { tags: tags });
-            toast.success("Tags atualizadas com sucesso!");
-            onTagsSaved(); // Chama a função do pai para atualizar a UI (ex: forceRefresh)
-            onClose(); // Fecha o modal
-        } catch (error) {
-            console.log(error.message);
-            console.trace("Erro capturado no handleSave");
-            toast.error(error.message || "Falha ao salvar tags.");
-        } finally {
-            setIsSaving(false);
-        }
-    };
+    } finally {
+        setIsSaving(false);
+    }
+};
 
     if (!isOpen) {
         return null; // Não renderiza nada se o modal não estiver aberto
