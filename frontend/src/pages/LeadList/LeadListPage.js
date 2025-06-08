@@ -6,6 +6,8 @@ import { toast } from "react-toastify";
 
 // API Functions
 import { getLeads, updateLead, discardLead, deleteLead } from "../../api/leads";
+import { getOrigens, createOrigem, updateOrigem, deleteOrigem } from '../../api/origens';
+import { getUsuarios, createUser, updateUser, deleteUser } from '../../api/users'; // Ou usuarios.js
 import { getLeadStages } from "../../api/leadStages"; // Para as colunas do Kanban
 
 // Componentes (Modais podem continuar sendo usados, LeadCard será para o Kanban)
