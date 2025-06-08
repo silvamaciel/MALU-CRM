@@ -50,6 +50,7 @@ function LeadTagsModal({ isOpen, onClose, lead, onTagsSaved }) {
             onClose(); // Fecha o modal
         } catch (error) {
             console.log(error.message);
+            console.trace("Erro capturado no handleSave");
             toast.error(error.message || "Falha ao salvar tags.");
         } finally {
             setIsSaving(false);
