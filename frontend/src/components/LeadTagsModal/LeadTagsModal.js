@@ -49,6 +49,7 @@ function LeadTagsModal({ isOpen, onClose, lead, onTagsSaved }) {
             onTagsSaved(); // Chama a função do pai para atualizar a UI (ex: forceRefresh)
             onClose(); // Fecha o modal
         } catch (error) {
+            console.log(error.message);
             toast.error(error.message || "Falha ao salvar tags.");
         } finally {
             setIsSaving(false);
