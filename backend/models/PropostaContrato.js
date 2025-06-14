@@ -39,6 +39,29 @@ const corretagemSchema = new Schema({
     observacoesCorretagem: { type: String, trim: true }
 }, { _id: false });
 
+const adquirenteSnapshotSchema = new Schema({
+    nome: { type: String, required: true, trim: true },
+    cpf: { type: String, trim: true },
+    rg: { type: String, trim: true },
+    nacionalidade: { type: String, trim: true },
+    estadoCivil: { type: String, trim: true },
+    profissao: { type: String, trim: true },
+    email: {
+      type: String,
+      required: [false, "O email do lead é obrigatório."],
+      match: [/\S+@\S+\.\S+/, 'Email inválido.'],
+      unique: true,
+      sparse: true,
+      trim: true,
+      lowercase: true
+    },
+    contato: {
+      type: String,
+      required: [true, "O contato do lead é obrigatório."],
+    },
+}, { _id: false });
+
+
 
 const propostaContratoSchema = new Schema({
     // --- Vínculos ---
@@ -47,6 +70,10 @@ const propostaContratoSchema = new Schema({
     unidade: { type: Schema.Types.ObjectId, ref: 'Unidade', required: true, index: true },
     empreendimento: { type: Schema.Types.ObjectId, ref: 'Empreendimento', required: true, index: true },
     company: { type: Schema.Types.ObjectId, ref: 'Company', required: true, index: true },
+    adquirentesSnapshot: {
+        type: [adquirenteSnapshotSchema],
+        required: true
+    },
     modeloContratoUtilizado: {
         type: Schema.Types.ObjectId,
         ref: 'ModeloContrato',
