@@ -1,4 +1,3 @@
-// src/pages/LeadList/LeadListPage.js
 import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
@@ -13,32 +12,32 @@ import { getUsuarios } from "../../api/users";
 // Componentes
 import DiscardLeadModal from "../../components/DiscardLeadModal/DiscardLeadModal";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
-import KanbanFilters from "../../components/KanbanFilters/KanbanFilters";
+import KanbanFilters from "../../components/KanbanFilters/KanbanFilters"; // Assumindo que você criou este para os filtros do Kanban
 import LeadTagsModal from '../../components/LeadTagsModal/LeadTagsModal';
 
 // Estilos
 import "./LeadListPage.css";
-import "./Kanban.css";
+import "./Kanban.css"; // CSS para o Kanban
 
 function LeadListPage() {
   const navigate = useNavigate();
 
-  // States para Kanban
+  // States para Kanban e Dados
   const [leadStages, setLeadStages] = useState([]);
   const [leadsByStage, setLeadsByStage] = useState({});
-  const [allLeadsRaw, setAllLeadsRaw] = useState([]);
-
+  const [allLeadsRaw, setAllLeadsRaw] = useState([]); // "Fonte da verdade" para os leads
+  const [stageIdDescartado, setStageIdDescartado] = useState(null);
+  
   // States para Filtros
   const [activeFilters, setActiveFilters] = useState({});
   const [origensList, setOrigensList] = useState([]);
   const [usuariosList, setUsuariosList] = useState([]);
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(false); // Para o filtro retrátil
   
   // States de UI e Modais
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [stageIdDescartado, setStageIdDescartado] = useState(null);
-  const [isProcessingAction, setIsProcessingAction] = useState(false);
+  const [isProcessingAction, setIsProcessingAction] = useState(false); // Para qualquer ação que precisa de loading
   
   const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
   const [discardTargetLead, setDiscardTargetLead] = useState(null);
@@ -49,14 +48,14 @@ function LeadListPage() {
   const [isTagsModalOpen, setIsTagsModalOpen] = useState(false);
   const [selectedLeadForTags, setSelectedLeadForTags] = useState(null);
 
-  // Função para buscar todos os dados
+  // Função para buscar TODOS os dados da página
   const fetchData = useCallback(async (filters = {}) => {
     setIsLoading(true);
     setError(null);
     try {
       const [stagesResponse, leadsResponse, origensResponse, usuariosResponse] = await Promise.all([
         getLeadStages(),
-        getLeads({ page: 1, limit: 1000, ...filters }), // Passa filtros para a API
+        getLeads({ page: 1, limit: 1000, ...filters }), // Passa os filtros para a API de leads
         getOrigens(),
         getUsuarios({ ativo: true }),
       ]);
@@ -90,17 +89,17 @@ function LeadListPage() {
       setLeadsByStage(grouped);
 
     } catch (err) {
-      const errMsg = err.message || "Falha ao carregar dados para o Kanban.";
+      const errMsg = err.message || "Falha ao carregar dados do Kanban.";
       setError(errMsg);
       toast.error(errMsg);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, []); // useCallback com dependência vazia torna a função estável
 
   useEffect(() => {
     fetchData(activeFilters);
-  }, [activeFilters, fetchData]);
+  }, [activeFilters, fetchData]); // Re-busca quando os filtros mudam
 
   const forceRefresh = useCallback(() => fetchData(activeFilters), [fetchData, activeFilters]);
 
@@ -112,7 +111,7 @@ function LeadListPage() {
     setShowFilters(prev => !prev);
   };
 
-  // Handlers para os Modais
+  // Handlers para os Modais (Descarte, Delete, Tags)
   const handleOpenDiscardModal = useCallback((lead) => { setDiscardTargetLead({ lead }); setIsDiscardModalOpen(true); }, []);
   const handleCloseDiscardModal = useCallback(() => { setIsDiscardModalOpen(false); setDiscardTargetLead(null); }, []);
   const handleConfirmDiscard = useCallback(async (discardData) => {
@@ -130,9 +129,7 @@ function LeadListPage() {
   const handleReactivateLead = useCallback(async (lead) => {
     if (isProcessingAction) return;
     const situacaoAtendimento = leadStages.find(s => s.nome === "Em Atendimento" || s.nome === "Novo");
-    if (!situacaoAtendimento) {
-      toast.error("Erro: Status padrão para reativação (Ex: 'Em Atendimento') não encontrado."); return;
-    }
+    if (!situacaoAtendimento) { toast.error("Erro: Status padrão para reativação não encontrado."); return; }
     setIsProcessingAction(true);
     try {
       await updateLead(lead._id, { situacao: situacaoAtendimento._id });
@@ -158,7 +155,7 @@ function LeadListPage() {
 
   const handleOpenTagsModal = useCallback((lead) => { setSelectedLeadForTags(lead); setIsTagsModalOpen(true); }, []);
   const handleCloseTagsModal = useCallback(() => { setIsTagsModalOpen(false); setSelectedLeadForTags(null); }, []);
-
+  
   // Handler do Drag-and-Drop
   const onDragEnd = async (result) => {
     const { source, destination, draggableId: leadId } = result;
@@ -172,7 +169,7 @@ function LeadListPage() {
       handleOpenDiscardModal(leadToMove);
       return;
     }
-
+    
     // Atualização Otimista da UI
     const newStartLeads = [...(leadsByStage[source.droppableId] || [])];
     const [movedItem] = newStartLeads.splice(source.index, 1);
@@ -186,6 +183,8 @@ function LeadListPage() {
       const targetStage = leadStages.find(s => s._id === finishStageId);
       const updatedLeadFromApi = await updateLead(leadId, { situacao: finishStageId });
       toast.success(`Lead "${updatedLeadFromApi.nome}" movido para "${targetStage?.nome || ''}"!`);
+      
+      // Atualiza o estado "mestra" localmente, sem refetch completo
       setAllLeadsRaw(prevAll => prevAll.map(l => l._id === updatedLeadFromApi._id ? updatedLeadFromApi : l));
     } catch (err) {
       toast.error(err.message || "Falha ao atualizar situação.");
@@ -195,38 +194,30 @@ function LeadListPage() {
     }
   };
 
-  if (isLoading) {
-    return <div className="admin-page loading"><p>Carregando Funil de Leads...</p></div>;
-  }
-  if (error) {
-    return <div className="admin-page error-page"><p className="error-message">{error}</p></div>;
-  }
+
+  if (isLoading) { return <div className="admin-page loading"><p>Carregando Funil de Leads...</p></div>; }
+  if (error) { return <div className="admin-page error-page"><p className="error-message">{error}</p></div>; }
 
   return (
     <div className="admin-page lead-list-page kanban-board-page">
       <header className="page-header">
         <h1>Funil de Leads</h1>
-        <div className="header-actions-kanban"> {/* Um container para os botões do header */}
-            <button onClick={toggleFiltersVisibility} className="button outline-button">
-                Filtros {showFilters ? '▲' : '▼'}
-            </button>
-            <Link to="/leads/novo" className="button primary-button">
-                + Novo Lead
-            </Link>
+        <div className="header-actions-kanban">
+          <button onClick={toggleFiltersVisibility} className="button outline-button">
+            Filtros {showFilters ? '▲' : '▼'}
+          </button>
+          <Link to="/leads/novo" className="button primary-button">+ Novo Lead</Link>
         </div>
       </header>
       <div className="page-content">
-
         <div className={`filters-wrapper ${showFilters ? 'open' : 'closed'}`}>
-            <KanbanFilters 
-                origensList={origensList}
-                usuariosList={usuariosList}
-                onFilterChange={handleFilterChange}
-                isProcessing={isLoading}
-            />
+          <KanbanFilters 
+              origensList={origensList}
+              usuariosList={usuariosList}
+              onFilterChange={handleFilterChange}
+              isProcessing={isLoading}
+          />
         </div>
-
-
         <DragDropContext onDragEnd={onDragEnd}>
           <div className="kanban-container">
             {leadStages.map(stage => (
@@ -244,9 +235,7 @@ function LeadListPage() {
                               {...providedCard.dragHandleProps}
                               className={`lead-card ${snapshotCard.isDragging ? 'dragging' : ''}`}
                             >
-                              <div className="lead-card-header" onClick={() => navigate(`/leads/${lead._id}`)}>
-                                <h4>{lead.nome}</h4>
-                              </div>
+                              <div className="lead-card-header" onClick={() => navigate(`/leads/${lead._id}`)}><h4>{lead.nome}</h4></div>
                               <div className="lead-card-body">
                                 <p className="lead-card-contato">{lead.contato || 'Sem contato'}</p>
                                 <div className="card-tags-container">
