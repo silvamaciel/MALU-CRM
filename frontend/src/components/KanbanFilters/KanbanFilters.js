@@ -1,6 +1,19 @@
-// src/components/KanbanFilters/KanbanFilters.js
-import React, { useState } from 'react';
-import './KanbanFilters.css';
+import React, { useState, useEffect, useCallback } from 'react';
+import './KanbanFilters.css'; // Mantenha ou ajuste seu CSS
+
+// Hook customizado para debounce (atraso na execução de uma função)
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+  return debouncedValue;
+}
 
 function KanbanFilters({
     origensList = [],
@@ -9,14 +22,31 @@ function KanbanFilters({
     isProcessing
 }) {
     const initialState = {
-        termoBusca: '',
-        tags: '',
+        termoBusca: '', // Para Nome, Email ou CPF
+        tags: '',       // Para tags separadas por vírgula
         origem: '',
         responsavel: '',
         dataInicio: '',
         dataFim: ''
     };
     const [filters, setFilters] = useState(initialState);
+    
+    // Aplica debounce nos filtros. A API só será chamada 500ms após o usuário parar de digitar.
+    const debouncedFilters = useDebounce(filters, 500);
+
+    // Efeito que chama onFilterChange quando os filtros (debounced) mudam
+    useEffect(() => {
+        if (typeof onFilterChange === 'function') {
+            const activeFilters = {};
+            // Limpa chaves vazias antes de enviar
+            for (const key in debouncedFilters) {
+                if (debouncedFilters[key] !== '' && debouncedFilters[key] !== null) {
+                    activeFilters[key] = debouncedFilters[key];
+                }
+            }
+            onFilterChange(activeFilters);
+        }
+    }, [debouncedFilters, onFilterChange]); // Depende dos filtros com debounce
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -26,32 +56,16 @@ function KanbanFilters({
         }));
     };
 
-    const handleApplyFilters = (e) => {
-        e.preventDefault(); // Previne o recarregamento da página pelo form
-        // Limpa filtros vazios antes de enviar para o componente pai
-        const activeFilters = {};
-        for (const key in filters) {
-            if (filters[key] !== '' && filters[key] !== null && filters[key] !== undefined) {
-                activeFilters[key] = filters[key];
-            }
-        }
-        if (typeof onFilterChange === 'function') {
-            console.log("KanbanFilters: Aplicando filtros:", activeFilters);
-            onFilterChange(activeFilters);
-        }
-    };
-
     const handleClearFilters = () => {
         setFilters(initialState);
-        if (typeof onFilterChange === 'function') {
-            onFilterChange({}); // Notifica o pai para limpar os filtros
-        }
+        // onFilterChange será chamado pelo useEffect acima quando debouncedFilters atualizar
     };
 
     return (
         <div className="kanban-filters-container">
-            <form onSubmit={handleApplyFilters} className="kanban-filters-form">
-                <div className="filter-group wide-group">
+            <form className="kanban-filters-form">
+                {/* Inputs de Texto Unificados */}
+                <div className="filter-group text-search">
                     <input
                         type="text"
                         name="termoBusca"
@@ -62,43 +76,43 @@ function KanbanFilters({
                         className="filter-input"
                     />
                 </div>
-                <div className="filter-group wide-group">
+                <div className="filter-group">
                     <input
                         type="text"
                         name="tags"
                         value={filters.tags}
                         onChange={handleChange}
-                        placeholder="Filtrar por tags (ex: vip, investidor)"
+                        placeholder="Tags (ex: vip, investidor)"
                         disabled={isProcessing}
                         className="filter-input"
                     />
                 </div>
+
+                {/* Dropdowns */}
                 <div className="filter-group">
-                    <label htmlFor="filter-origem">Origem</label>
-                    <select id="filter-origem" name="origem" value={filters.origem} onChange={handleChange} disabled={isProcessing}>
-                        <option value="">Todas</option>
+                    <select name="origem" value={filters.origem} onChange={handleChange} disabled={isProcessing}>
+                        <option value="">Todas as Origens</option>
                         {origensList.map(o => <option key={o._id} value={o._id}>{o.nome}</option>)}
                     </select>
                 </div>
                 <div className="filter-group">
-                    <label htmlFor="filter-responsavel">Responsável</label>
-                    <select id="filter-responsavel" name="responsavel" value={filters.responsavel} onChange={handleChange} disabled={isProcessing}>
-                        <option value="">Todos</option>
+                    <select name="responsavel" value={filters.responsavel} onChange={handleChange} disabled={isProcessing}>
+                        <option value="">Todos os Responsáveis</option>
                         {usuariosList.map(u => <option key={u._id} value={u._id}>{u.nome}</option>)}
                     </select>
                 </div>
+
+                {/* Datas */}
                 <div className="filter-group date-range">
-                    <label>Criado entre:</label>
                     <input type="date" name="dataInicio" value={filters.dataInicio} onChange={handleChange} disabled={isProcessing} max={filters.dataFim || undefined}/>
-                    <span>até</span>
+                    <span>a</span>
                     <input type="date" name="dataFim" value={filters.dataFim} onChange={handleChange} disabled={isProcessing} min={filters.dataInicio || undefined}/>
                 </div>
+
+                {/* Ações */}
                 <div className="filter-group actions-group">
-                    <button type="submit" className="button primary-button small-button" disabled={isProcessing}>
-                        {isProcessing ? 'Buscando...' : 'Filtrar'}
-                    </button>
                     <button type="button" onClick={handleClearFilters} className="button-link" disabled={isProcessing}>
-                        Limpar
+                        Limpar Filtros
                     </button>
                 </div>
             </form>
