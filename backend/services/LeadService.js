@@ -97,25 +97,24 @@ const getLeads = async (queryParams = {}, companyId) => {
     // Condições da Query
     const queryConditions = { company: companyId };
 
-    // VVVVV LÓGICA DE FILTROS AVANÇADOS ATUALIZADA VVVVV
-    
     // Filtro unificado por Nome, Email ou CPF (busca textual)
     if (queryParams.termoBusca && queryParams.termoBusca.trim() !== '') {
         const searchTerm = queryParams.termoBusca.trim();
-        const searchRegex = { $regex: searchTerm, $options: 'i' }; // 'i' para case-insensitive (busca aproximada)
+        const searchRegex = { $regex: searchTerm, $options: 'i' };
         const cpfLimpo = searchTerm.replace(/\D/g, "");
 
         queryConditions.$or = [
             { nome: searchRegex },
             { email: searchRegex },
         ];
-        // Adiciona busca por CPF ao $or se for um CPF válido
+
         if (cpfLimpo.length > 0) {
-             queryConditions.$or.push({ cpf: cpfLimpo });
+            queryConditions.$or.push({ cpf: cpfLimpo });
+            queryConditions.$or.push({ contato: { $regex: cpfLimpo } });
         }
     }
-    
-    // Filtros por ID (Origem, Responsável) - Você disse que estes já funcionam, ótimo!
+
+    // Filtros por ID
     if (queryParams.origem && mongoose.Types.ObjectId.isValid(queryParams.origem)) {
         queryConditions.origem = queryParams.origem;
     }
@@ -123,13 +122,13 @@ const getLeads = async (queryParams = {}, companyId) => {
         queryConditions.responsavel = queryParams.responsavel;
     }
 
-    // Filtro por Tags (recebe uma string de tags separadas por vírgula)
+    // Filtro por Tags
     if (queryParams.tags && queryParams.tags.trim() !== '') {
-        // Converte a string "vip, investidor" em um array ["vip", "investidor"]
-        const tagsArray = queryParams.tags.split(',').map(tag => tag.trim().toLowerCase()).filter(Boolean);
+        const tagsArray = queryParams.tags
+            .split(',')
+            .map(tag => tag.trim().toLowerCase())
+            .filter(Boolean);
         if (tagsArray.length > 0) {
-            // $all busca leads que contenham TODAS as tags fornecidas.
-            // Se preferir buscar leads com QUALQUER UMA das tags, use $in: tagsArray
             queryConditions.tags = { $all: tagsArray };
         }
     }
@@ -138,32 +137,31 @@ const getLeads = async (queryParams = {}, companyId) => {
     if (queryParams.dataInicio || queryParams.dataFim) {
         queryConditions.createdAt = {};
         if (queryParams.dataInicio) {
-            // Adiciona T00:00:00.000Z para garantir que pega desde o início do dia
             queryConditions.createdAt.$gte = new Date(queryParams.dataInicio + "T00:00:00.000Z");
         }
         if (queryParams.dataFim) {
-            // Adiciona T23:59:59.999Z para garantir que pega até o final do dia
             queryConditions.createdAt.$lte = new Date(queryParams.dataFim + "T23:59:59.999Z");
         }
     }
 
-    // ^^^^^ FIM DA LÓGICA DE FILTROS ^^^^^
-
     console.log("[getLeads] Condições Query MongoDB:", JSON.stringify(queryConditions, null, 2));
 
     try {
-        const totalLeads = await Lead.countDocuments(queryConditions);
+        // Execução paralela para reduzir tempo de I/O
+        const [leads, totalLeads] = await Promise.all([
+            Lead.find(queryConditions)
+                .populate('situacao', 'nome ordem')
+                .populate('origem', 'nome')
+                .populate('responsavel', 'nome perfil')
+                .sort({ updatedAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+            Lead.countDocuments(queryConditions)
+        ]);
+
         const totalPages = Math.ceil(totalLeads / limit) || 1;
-        
-        const leads = await Lead.find(queryConditions)
-            .populate('situacao', 'nome ordem')
-            .populate('origem', 'nome')
-            .populate('responsavel', 'nome perfil')
-            .sort({ updatedAt: -1 })
-            .skip(skip)
-            .limit(limit)
-            .lean();
-            
+
         return { leads, totalLeads, totalPages, currentPage: page };
     } catch (error) {
         console.error(`[getLeads] Erro ao buscar leads para empresa ${companyId}:`, error);
