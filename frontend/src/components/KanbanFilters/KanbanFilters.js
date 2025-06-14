@@ -1,19 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import './KanbanFilters.css'; // Mantenha ou ajuste seu CSS
-
-// Hook customizado para debounce (atraso na execução de uma função)
-function useDebounce(value, delay) {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-  return debouncedValue;
-}
+import React, { useState } from 'react';
+import './KanbanFilters.css';
 
 function KanbanFilters({
     origensList = [],
@@ -22,49 +8,43 @@ function KanbanFilters({
     isProcessing
 }) {
     const initialState = {
-        termoBusca: '', // Para Nome, Email ou CPF
-        tags: '',       // Para tags separadas por vírgula
+        termoBusca: '',
+        tags: '',
         origem: '',
         responsavel: '',
         dataInicio: '',
         dataFim: ''
     };
     const [filters, setFilters] = useState(initialState);
-    
-    // Aplica debounce nos filtros. A API só será chamada 500ms após o usuário parar de digitar.
-    const debouncedFilters = useDebounce(filters, 500);
-
-    // Efeito que chama onFilterChange quando os filtros (debounced) mudam
-    useEffect(() => {
-        if (typeof onFilterChange === 'function') {
-            const activeFilters = {};
-            // Limpa chaves vazias antes de enviar
-            for (const key in debouncedFilters) {
-                if (debouncedFilters[key] !== '' && debouncedFilters[key] !== null) {
-                    activeFilters[key] = debouncedFilters[key];
-                }
-            }
-            onFilterChange(activeFilters);
-        }
-    }, [debouncedFilters, onFilterChange]); // Depende dos filtros com debounce
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFilters(prevFilters => ({
-            ...prevFilters,
-            [name]: value
-        }));
+        setFilters(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleApplyFilters = (e) => {
+        e.preventDefault();
+        const activeFilters = {};
+        for (const key in filters) {
+            if (filters[key]) { // Envia apenas filtros com valor
+                activeFilters[key] = filters[key];
+            }
+        }
+        if (typeof onFilterChange === 'function') {
+            onFilterChange(activeFilters);
+        }
     };
 
     const handleClearFilters = () => {
         setFilters(initialState);
-        // onFilterChange será chamado pelo useEffect acima quando debouncedFilters atualizar
+        if (typeof onFilterChange === 'function') {
+            onFilterChange({});
+        }
     };
 
     return (
         <div className="kanban-filters-container">
-            <form className="kanban-filters-form">
-                {/* Inputs de Texto Unificados */}
+            <form onSubmit={handleApplyFilters} className="kanban-filters-form">
                 <div className="filter-group text-search">
                     <input
                         type="text"
@@ -73,7 +53,6 @@ function KanbanFilters({
                         onChange={handleChange}
                         placeholder="Buscar por Nome, Email ou CPF..."
                         disabled={isProcessing}
-                        className="filter-input"
                     />
                 </div>
                 <div className="filter-group">
@@ -84,11 +63,8 @@ function KanbanFilters({
                         onChange={handleChange}
                         placeholder="Tags (ex: vip, investidor)"
                         disabled={isProcessing}
-                        className="filter-input"
                     />
                 </div>
-
-                {/* Dropdowns */}
                 <div className="filter-group">
                     <select name="origem" value={filters.origem} onChange={handleChange} disabled={isProcessing}>
                         <option value="">Todas as Origens</option>
@@ -101,16 +77,16 @@ function KanbanFilters({
                         {usuariosList.map(u => <option key={u._id} value={u._id}>{u.nome}</option>)}
                     </select>
                 </div>
-
-                {/* Datas */}
                 <div className="filter-group date-range">
+                    <label>Criado de:</label>
                     <input type="date" name="dataInicio" value={filters.dataInicio} onChange={handleChange} disabled={isProcessing} max={filters.dataFim || undefined}/>
-                    <span>a</span>
+                    <label>até:</label>
                     <input type="date" name="dataFim" value={filters.dataFim} onChange={handleChange} disabled={isProcessing} min={filters.dataInicio || undefined}/>
                 </div>
-
-                {/* Ações */}
-                <div className="filter-group actions-group">
+                <div className="filter-actions">
+                    <button type="submit" className="button primary-button small-button" disabled={isProcessing}>
+                        {isProcessing ? 'Buscando...' : 'Filtrar'}
+                    </button>
                     <button type="button" onClick={handleClearFilters} className="button-link" disabled={isProcessing}>
                         Limpar Filtros
                     </button>
