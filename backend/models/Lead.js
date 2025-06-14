@@ -1,6 +1,20 @@
 // models/Lead.js
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
+const coadquirenteSchema = new Schema({
+    nome: { type: String, required: true, trim: true },
+    cpf: { type: String, trim: true },
+    rg: { type: String, trim: true },
+    nacionalidade: { type: String, trim: true, default: 'Brasileiro(a)' },
+    estadoCivil: { 
+        type: String, 
+        trim: true,
+        enum: ["Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)", "União Estável", "Outro"]
+    },
+    profissao: { type: String, trim: true },
+    // Adicione mais campos se necessário para o coadquirente
+}, { _id: false });
+
 
 const leadSchema = new Schema(
   {
@@ -31,6 +45,23 @@ const leadSchema = new Schema(
     },
     
     cpf: { type: String, required: false, unique: true, sparse: true },
+
+     rg: { type: String, trim: true },
+    nacionalidade: { type: String, trim: true, default: 'Brasileiro(a)' },
+    estadoCivil: { 
+        type: String, 
+        trim: true,
+        enum: ["Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)", "União Estável", "Outro"]
+    },
+    profissao: { type: String, trim: true },
+    nascimento: { type: Date },
+    endereco: { type: String, trim: true },
+
+    coadquirentes: {
+        type: [coadquirenteSchema],
+        default: [] // Default para um array vazio
+    },
+
 
     situacao: {
       type: Schema.Types.ObjectId,
