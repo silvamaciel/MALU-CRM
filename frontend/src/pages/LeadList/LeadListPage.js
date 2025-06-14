@@ -16,6 +16,7 @@ import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 import KanbanFilters from "../../components/KanbanFilters/KanbanFilters";
 import LeadTagsModal from '../../components/LeadTagsModal/LeadTagsModal';
 
+// Estilos
 import "./LeadListPage.css";
 import "./Kanban.css";
 
@@ -26,23 +27,26 @@ function LeadListPage() {
   const [leadStages, setLeadStages] = useState([]);
   const [leadsByStage, setLeadsByStage] = useState({});
   const [allLeadsRaw, setAllLeadsRaw] = useState([]);
-  const [stageIdDescartado, setStageIdDescartado] = useState(null);
-  
+
   // States para Filtros
   const [activeFilters, setActiveFilters] = useState({});
   const [origensList, setOrigensList] = useState([]);
   const [usuariosList, setUsuariosList] = useState([]);
-
+  
   // States de UI e Modais
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [stageIdDescartado, setStageIdDescartado] = useState(null);
+  const [isProcessingAction, setIsProcessingAction] = useState(false);
+  
   const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
   const [discardTargetLead, setDiscardTargetLead] = useState(null);
+  
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteTargetLeadForModal, setDeleteTargetLeadForModal] = useState(null);
+
   const [isTagsModalOpen, setIsTagsModalOpen] = useState(false);
   const [selectedLeadForTags, setSelectedLeadForTags] = useState(null);
-  const [isProcessingAction, setIsProcessingAction] = useState(false);
 
   // Função para buscar todos os dados
   const fetchData = useCallback(async (filters = {}) => {
@@ -51,21 +55,20 @@ function LeadListPage() {
     try {
       const [stagesResponse, leadsResponse, origensResponse, usuariosResponse] = await Promise.all([
         getLeadStages(),
-        getLeads({ page: 1, limit: 1000, ...filters }),
+        getLeads({ page: 1, limit: 1000, ...filters }), // Passa filtros para a API
         getOrigens(),
         getUsuarios({ ativo: true }),
       ]);
-
-      setOrigensList(origensResponse || []);
-      setUsuariosList(usuariosResponse?.users || usuariosResponse?.data || usuariosResponse || []);
       
       const fetchedStages = stagesResponse.leadStages || stagesResponse.data || stagesResponse || [];
       setLeadStages(fetchedStages);
+      setOrigensList(origensResponse || []);
+      setUsuariosList(usuariosResponse?.users || usuariosResponse?.data || usuariosResponse || []);
 
       const descartadoStage = fetchedStages.find(s => s.nome.toLowerCase() === "descartado");
       if (descartadoStage) setStageIdDescartado(descartadoStage._id);
       
-      const fetchedLeads = leadsResponse.data || leadsResponse.leads || leadsResponse || []; // <<< MELHORIA: Garantir que funciona com várias respostas da API
+      const fetchedLeads = leadsResponse.leads || [];
       setAllLeadsRaw(fetchedLeads);
 
       // Agrupa os leads por estágio
@@ -76,7 +79,6 @@ function LeadListPage() {
         if (stageId && grouped[stageId]) {
           grouped[stageId].push(lead);
         } else {
-            // Simplificado para agrupar qualquer lead sem estágio correspondente
             if (!grouped["sem_situacao"]) grouped["sem_situacao"] = [];
             grouped["sem_situacao"].push(lead);
         }
@@ -87,13 +89,13 @@ function LeadListPage() {
       setLeadsByStage(grouped);
 
     } catch (err) {
-      const errMsg = err.message || "Falha ao carregar dados.";
+      const errMsg = err.message || "Falha ao carregar dados para o Kanban.";
       setError(errMsg);
       toast.error(errMsg);
     } finally {
       setIsLoading(false);
     }
-  }, []); // fetchData agora é estável
+  }, []);
 
   useEffect(() => {
     fetchData(activeFilters);
@@ -105,9 +107,9 @@ function LeadListPage() {
     setActiveFilters(newFilters);
   }, []);
 
-  // Handlers para os Modais (Descarte, Delete, Tags)
+  // Handlers para os Modais
   const handleOpenDiscardModal = useCallback((lead) => { setDiscardTargetLead({ lead }); setIsDiscardModalOpen(true); }, []);
-  const handleCloseDiscardModal = useCallback(() => { if (!isProcessingAction) { setIsDiscardModalOpen(false); setDiscardTargetLead(null); } }, [isProcessingAction]);
+  const handleCloseDiscardModal = useCallback(() => { setIsDiscardModalOpen(false); setDiscardTargetLead(null); }, []);
   const handleConfirmDiscard = useCallback(async (discardData) => {
     if (!discardTargetLead?.lead) return;
     setIsProcessingAction(true);
@@ -120,50 +122,39 @@ function LeadListPage() {
     finally { setIsProcessingAction(false); }
   }, [discardTargetLead, forceRefresh, handleCloseDiscardModal]);
 
-  // --- LÓGICA COMPLETADA ---
-  const handleReactivateLead = useCallback(async (leadToReactivate) => {
+  const handleReactivateLead = useCallback(async (lead) => {
     if (isProcessingAction) return;
     const situacaoAtendimento = leadStages.find(s => s.nome === "Em Atendimento" || s.nome === "Novo");
     if (!situacaoAtendimento) {
-        toast.error("Erro: Status padrão para reativação (Ex: 'Em Atendimento') não encontrado.");
-        return;
+      toast.error("Erro: Status padrão para reativação (Ex: 'Em Atendimento') não encontrado."); return;
     }
     setIsProcessingAction(true);
     try {
-        await updateLead(leadToReactivate._id, { situacao: situacaoAtendimento._id });
-        toast.success(`Lead "${leadToReactivate.nome}" reativado para "${situacaoAtendimento.nome}"!`);
-        forceRefresh();
-    } catch (err) {
-        toast.error(err.message || "Falha ao reativar lead.");
-    } finally {
-        setIsProcessingAction(false);
-    }
+      await updateLead(lead._id, { situacao: situacaoAtendimento._id });
+      toast.success(`Lead "${lead.nome}" reativado para "${situacaoAtendimento.nome}"!`);
+      forceRefresh();
+    } catch (err) { toast.error(err.message || "Falha ao reativar lead."); }
+    finally { setIsProcessingAction(false); }
   }, [isProcessingAction, leadStages, forceRefresh]);
   
   const handleOpenDeleteModal = useCallback((lead) => { setDeleteTargetLeadForModal(lead); setIsDeleteModalOpen(true); }, []);
   const handleCloseDeleteModal = useCallback(() => { if (!isProcessingAction) { setIsDeleteModalOpen(false); setDeleteTargetLeadForModal(null); } }, [isProcessingAction]);
-
-  // --- LÓGICA COMPLETADA ---
   const handleConfirmDelete = useCallback(async () => {
     if (!deleteTargetLeadForModal?._id) return;
     setIsProcessingAction(true);
     try {
-        await deleteLead(deleteTargetLeadForModal._id);
-        toast.success(`Lead "${deleteTargetLeadForModal.nome}" excluído!`);
-        handleCloseDeleteModal();
-        forceRefresh();
-    } catch (err) {
-        console.error('Erro ao deletar lead:', err);
-        toast.error('Erro ao excluir o lead. Tente novamente.');
-    } finally {
-        setIsProcessingAction(false);
-    }
+      await deleteLead(deleteTargetLeadForModal._id);
+      toast.success(`Lead "${deleteTargetLeadForModal.nome}" excluído!`);
+      handleCloseDeleteModal();
+      forceRefresh();
+    } catch (err) { console.error('Erro ao deletar lead:', err); toast.error('Erro ao excluir o lead.'); }
+    finally { setIsProcessingAction(false); }
   }, [deleteTargetLeadForModal, forceRefresh, handleCloseDeleteModal]);
-  
+
   const handleOpenTagsModal = useCallback((lead) => { setSelectedLeadForTags(lead); setIsTagsModalOpen(true); }, []);
   const handleCloseTagsModal = useCallback(() => { setIsTagsModalOpen(false); setSelectedLeadForTags(null); }, []);
-  
-  // Handler para Drag-and-Drop
+
+  // Handler do Drag-and-Drop
   const onDragEnd = async (result) => {
     const { source, destination, draggableId: leadId } = result;
     if (!destination || (source.droppableId === destination.droppableId && source.index === destination.index)) return;
@@ -171,45 +162,37 @@ function LeadListPage() {
     const leadToMove = allLeadsRaw.find(l => l._id === leadId);
     if (!leadToMove) return;
 
-    if (destination.droppableId === stageIdDescartado) {
-      handleOpenDiscardModal(leadToMove); return;
+    const finishStageId = destination.droppableId;
+    if (finishStageId === stageIdDescartado) {
+      handleOpenDiscardModal(leadToMove);
+      return;
     }
-    
-    // Atualização otimista da UI
-    const newStartLeads = [...(leadsByStage[source.droppableId] || [])];
-    const newFinishLeads = source.droppableId === destination.droppableId ? newStartLeads : [...(leadsByStage[destination.droppableId] || [])];
-    const [movedItem] = newStartLeads.splice(source.index, 1);
-    newFinishLeads.splice(destination.index, 0, movedItem);
 
-    setLeadsByStage(prev => ({
-      ...prev,
-      [source.droppableId]: newStartLeads,
-      [destination.droppableId]: newFinishLeads,
-    }));
+    // Atualização Otimista da UI
+    const newStartLeads = [...(leadsByStage[source.droppableId] || [])];
+    const [movedItem] = newStartLeads.splice(source.index, 1);
+    const newFinishLeads = source.droppableId === finishStageId ? newStartLeads : [...(leadsByStage[destination.droppableId] || [])];
+    newFinishLeads.splice(destination.index, 0, movedItem);
+    setLeadsByStage(prev => ({ ...prev, [source.droppableId]: newStartLeads, [destination.droppableId]: newFinishLeads }));
 
     // Chamada à API
     try {
       setIsProcessingAction(true);
-      const targetStage = leadStages.find(s => s._id === destination.droppableId);
-      toast.info(`Movendo lead para "${targetStage?.nome || ''}"...`);
-      const updatedLeadFromApi = await updateLead(leadId, { situacao: destination.droppableId });
-      toast.success("Lead atualizado!");
-      
-      // Sincroniza o `allLeadsRaw` com a resposta da API
-      setAllLeadsRaw(prevAll => prevAll.map(l => l._id === updatedLeadFromApi.data._id ? updatedLeadFromApi.data : l)); // Assumindo que a API retorna o lead atualizado em .data
+      const targetStage = leadStages.find(s => s._id === finishStageId);
+      const updatedLeadFromApi = await updateLead(leadId, { situacao: finishStageId });
+      toast.success(`Lead "${updatedLeadFromApi.nome}" movido para "${targetStage?.nome || ''}"!`);
+      setAllLeadsRaw(prevAll => prevAll.map(l => l._id === updatedLeadFromApi._id ? updatedLeadFromApi : l));
     } catch (err) {
-      toast.error(err.message || "Falha ao atualizar o lead.");
-      fetchData(activeFilters); // Reverte para o estado do servidor
+      toast.error(err.message || "Falha ao atualizar situação.");
+      fetchData(activeFilters); // Reverte em caso de erro
     } finally {
       setIsProcessingAction(false);
     }
   };
 
-  // --- LÓGICA COMPLETADA ---
   if (isLoading) {
     return <div className="admin-page loading"><p>Carregando Funil de Leads...</p></div>;
   }
-  // --- LÓGICA COMPLETADA ---
   if (error) {
     return <div className="admin-page error-page"><p className="error-message">{error}</p></div>;
   }
@@ -244,10 +227,11 @@ function LeadListPage() {
                               {...providedCard.dragHandleProps}
                               className={`lead-card ${snapshotCard.isDragging ? 'dragging' : ''}`}
                             >
-                              <div className="lead-card-header" onClick={() => navigate(`/leads/${lead._id}`)}><h4>{lead.nome}</h4></div>
-                              <div className="lead-card-body" onClick={() => navigate(`/leads/${lead._id}`)}>
+                              <div className="lead-card-header" onClick={() => navigate(`/leads/${lead._id}`)}>
+                                <h4>{lead.nome}</h4>
+                              </div>
+                              <div className="lead-card-body">
                                 <p className="lead-card-contato">{lead.contato || 'Sem contato'}</p>
-                                <p className="lead-card-email">{lead.email || 'Sem email'}</p>
                                 <div className="card-tags-container">
                                   {(lead.tags || []).slice(0, 3).map(tag => (<span key={tag} className="card-tag">{tag}</span>))}
                                   {(lead.tags?.length > 3) && <span className="card-tag more-tags">...</span>}
@@ -256,6 +240,7 @@ function LeadListPage() {
                               <div className="lead-card-footer">
                                 <small>Atualizado: {new Date(lead.updatedAt).toLocaleDateString('pt-BR')}</small>
                                 <div className="lead-card-actions">
+                                  <button onClick={() => navigate(`/leads/${lead._id}`)} className="action-icon" title="Detalhes">🔍</button>
                                   <button onClick={() => handleOpenTagsModal(lead)} className="action-icon" title="Gerenciar Tags">🏷️</button>
                                   {lead.situacao?.nome?.toLowerCase() === 'descartado' ? (
                                     <button onClick={() => handleReactivateLead(lead)} className="action-icon" disabled={isProcessingAction} title="Reativar">♻️</button>
@@ -270,6 +255,9 @@ function LeadListPage() {
                         </Draggable>
                       ))}
                       {provided.placeholder}
+                      {(!leadsByStage[stage._id] || leadsByStage[stage._id]?.length === 0) && !isLoading &&(
+                        <p className="kanban-empty-column">Nenhum lead aqui.</p>
+                      )}
                     </div>
                   </div>
                 )}
@@ -278,6 +266,8 @@ function LeadListPage() {
           </div>
         </DragDropContext>
       </div>
+      
+      {/* Modais */}
       <LeadTagsModal isOpen={isTagsModalOpen} onClose={handleCloseTagsModal} lead={selectedLeadForTags} onTagsSaved={forceRefresh} />
       <DiscardLeadModal isOpen={isDiscardModalOpen} onClose={handleCloseDiscardModal} onSubmit={handleConfirmDiscard} leadName={discardTargetLead?.lead?.nome} isProcessing={isProcessingAction} />
       <ConfirmModal isOpen={isDeleteModalOpen} onClose={handleCloseDeleteModal} onConfirm={handleConfirmDelete} title="Confirmar Exclusão" message={`Excluir permanentemente o lead "${deleteTargetLeadForModal?.nome || ''}"?`} isProcessing={isProcessingAction} />
