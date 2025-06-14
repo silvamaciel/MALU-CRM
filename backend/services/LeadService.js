@@ -78,87 +78,97 @@ const logHistory = async (leadId, userId, action, details) => {
   }
 };
 
-const getLeads = async (queryParams = {}, companyId) => {
-  if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
-    throw new Error(
-      "ID da empresa inválido ou não fornecido para buscar leads."
-    );
-  }
-  try {
-    console.log(`[getLeads] Empresa: ${companyId}, Query Params:`, queryParams);
-    let page = parseInt(queryParams.page, 10) || 1;
-    let limit = parseInt(queryParams.limit, 10) || 10;
-    limit = Math.min(Math.max(1, limit), 100);
-    page = Math.max(1, page);
+/**
+ * Busca leads de uma empresa com filtros avançados e paginação.
+ * @param {string} companyId - ID da empresa.
+ * @param {object} queryParams - Parâmetros da query (filtros e paginação).
+ * @returns {Promise<object>} Objeto com leads e dados de paginação.
+ */
+const getLeads = async (companyId, queryParams = {}) => {
+    if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+        throw new Error("ID da empresa inválido ou não fornecido para buscar leads.");
+    }
+
+    // Paginação
+    const page = parseInt(queryParams.page, 10) || 1;
+    const limit = parseInt(queryParams.limit, 10) || 1000; // Limite alto para Kanban, ajuste se necessário
     const skip = (page - 1) * limit;
-    const queryConditions = { company: companyId }; // Filtro base por empresa
-    const filters = queryParams;
 
-    // Adiciona filtros opcionais
-    if (filters.nome)
-      queryConditions.nome = { $regex: filters.nome, $options: "i" };
-    if (filters.email)
-      queryConditions.email = { $regex: filters.email, $options: "i" };
-    if (filters.situacao && mongoose.Types.ObjectId.isValid(filters.situacao))
-      queryConditions.situacao = filters.situacao;
-    if (filters.origem && mongoose.Types.ObjectId.isValid(filters.origem))
-      queryConditions.origem = filters.origem;
-    if (
-      filters.responsavel &&
-      mongoose.Types.ObjectId.isValid(filters.responsavel)
-    )
-      queryConditions.responsavel = filters.responsavel;
+    // Condições da Query
+    const queryConditions = { company: companyId };
 
-    // Filtro de Data
-    const dateQuery = {};
-    if (filters.dataInicio) {
-      try {
-        const d = new Date(filters.dataInicio);
-        d.setUTCHours(0, 0, 0, 0);
-        if (!isNaN(d)) dateQuery.$gte = d;
-      } catch (e) {
-        console.warn("Erro Data Inicio", e);
-      }
+    // VVVVV LÓGICA DE FILTROS AVANÇADOS ATUALIZADA VVVVV
+    
+    // Filtro unificado por Nome, Email ou CPF (busca textual)
+    if (queryParams.termoBusca && queryParams.termoBusca.trim() !== '') {
+        const searchTerm = queryParams.termoBusca.trim();
+        const searchRegex = { $regex: searchTerm, $options: 'i' }; // 'i' para case-insensitive (busca aproximada)
+        const cpfLimpo = searchTerm.replace(/\D/g, "");
+
+        queryConditions.$or = [
+            { nome: searchRegex },
+            { email: searchRegex },
+        ];
+        // Adiciona busca por CPF ao $or se for um CPF válido
+        if (cpfLimpo.length > 0) {
+             queryConditions.$or.push({ cpf: cpfLimpo });
+        }
     }
-    if (filters.dataFim) {
-      try {
-        const d = new Date(filters.dataFim);
-        d.setUTCHours(23, 59, 59, 999);
-        if (!isNaN(d)) dateQuery.$lte = d;
-      } catch (e) {
-        console.warn("Erro Data Fim", e);
-      }
+    
+    // Filtros por ID (Origem, Responsável) - Você disse que estes já funcionam, ótimo!
+    if (queryParams.origem && mongoose.Types.ObjectId.isValid(queryParams.origem)) {
+        queryConditions.origem = queryParams.origem;
     }
-    if (Object.keys(dateQuery).length > 0)
-      queryConditions.createdAt = dateQuery;
+    if (queryParams.responsavel && mongoose.Types.ObjectId.isValid(queryParams.responsavel)) {
+        queryConditions.responsavel = queryParams.responsavel;
+    }
 
-    console.log(
-      "[getLeads] Condições Query MongoDB:",
-      JSON.stringify(queryConditions, null, 2)
-    );
+    // Filtro por Tags (recebe uma string de tags separadas por vírgula)
+    if (queryParams.tags && queryParams.tags.trim() !== '') {
+        // Converte a string "vip, investidor" em um array ["vip", "investidor"]
+        const tagsArray = queryParams.tags.split(',').map(tag => tag.trim().toLowerCase()).filter(Boolean);
+        if (tagsArray.length > 0) {
+            // $all busca leads que contenham TODAS as tags fornecidas.
+            // Se preferir buscar leads com QUALQUER UMA das tags, use $in: tagsArray
+            queryConditions.tags = { $all: tagsArray };
+        }
+    }
 
-    // Busca e Contagem
-    const [totalLeads, leads] = await Promise.all([
-      Lead.countDocuments(queryConditions),
-      Lead.find(queryConditions)
-        .populate("situacao", "nome ordem")
-        .populate("origem", "nome")
-        .populate("responsavel", "nome perfil")
-        .populate("motivoDescarte", "nome")
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit),
-    ]);
+    // Filtro por Intervalo de Datas (baseado em createdAt)
+    if (queryParams.dataInicio || queryParams.dataFim) {
+        queryConditions.createdAt = {};
+        if (queryParams.dataInicio) {
+            // Adiciona T00:00:00.000Z para garantir que pega desde o início do dia
+            queryConditions.createdAt.$gte = new Date(queryParams.dataInicio + "T00:00:00.000Z");
+        }
+        if (queryParams.dataFim) {
+            // Adiciona T23:59:59.999Z para garantir que pega até o final do dia
+            queryConditions.createdAt.$lte = new Date(queryParams.dataFim + "T23:59:59.999Z");
+        }
+    }
 
-    const totalPages = Math.ceil(totalLeads / limit);
-    console.log(
-      `[getLeads] Empresa ${companyId}: ${leads.length}/${totalLeads} leads (Pág ${page}/${totalPages})`
-    );
-    return { leads, totalLeads, currentPage: page, totalPages, limit };
-  } catch (err) {
-    console.error(`[getLeads] Erro para empresa ${companyId}:`, err);
-    throw new Error("Erro ao buscar os leads.");
-  }
+    // ^^^^^ FIM DA LÓGICA DE FILTROS ^^^^^
+
+    console.log("[getLeads] Condições Query MongoDB:", JSON.stringify(queryConditions, null, 2));
+
+    try {
+        const totalLeads = await Lead.countDocuments(queryConditions);
+        const totalPages = Math.ceil(totalLeads / limit) || 1;
+        
+        const leads = await Lead.find(queryConditions)
+            .populate('situacao', 'nome ordem')
+            .populate('origem', 'nome')
+            .populate('responsavel', 'nome perfil')
+            .sort({ updatedAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .lean();
+            
+        return { leads, totalLeads, totalPages, currentPage: page };
+    } catch (error) {
+        console.error(`[getLeads] Erro ao buscar leads para empresa ${companyId}:`, error);
+        throw new Error('Erro ao buscar os leads.');
+    }
 };
 
 const getLeadById = async (id, companyId) => {
