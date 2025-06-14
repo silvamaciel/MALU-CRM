@@ -32,6 +32,7 @@ function LeadListPage() {
   const [activeFilters, setActiveFilters] = useState({});
   const [origensList, setOrigensList] = useState([]);
   const [usuariosList, setUsuariosList] = useState([]);
+  const [showFilters, setShowFilters] = useState(false);
   
   // States de UI e Modais
   const [isLoading, setIsLoading] = useState(true);
@@ -106,6 +107,10 @@ function LeadListPage() {
   const handleFilterChange = useCallback((newFilters) => {
     setActiveFilters(newFilters);
   }, []);
+
+  const toggleFiltersVisibility = () => {
+    setShowFilters(prev => !prev);
+  };
 
   // Handlers para os Modais
   const handleOpenDiscardModal = useCallback((lead) => { setDiscardTargetLead({ lead }); setIsDiscardModalOpen(true); }, []);
@@ -201,15 +206,27 @@ function LeadListPage() {
     <div className="admin-page lead-list-page kanban-board-page">
       <header className="page-header">
         <h1>Funil de Leads</h1>
-        <Link to="/leads/novo" className="button primary-button">+ Novo Lead</Link>
+        <div className="header-actions-kanban"> {/* Um container para os botões do header */}
+            <button onClick={toggleFiltersVisibility} className="button outline-button">
+                Filtros {showFilters ? '▲' : '▼'}
+            </button>
+            <Link to="/leads/novo" className="button primary-button">
+                + Novo Lead
+            </Link>
+        </div>
       </header>
       <div className="page-content">
-        <KanbanFilters 
-            origensList={origensList}
-            usuariosList={usuariosList}
-            onFilterChange={handleFilterChange}
-            isProcessing={isLoading}
-        />
+
+        <div className={`filters-wrapper ${showFilters ? 'open' : 'closed'}`}>
+            <KanbanFilters 
+                origensList={origensList}
+                usuariosList={usuariosList}
+                onFilterChange={handleFilterChange}
+                isProcessing={isLoading}
+            />
+        </div>
+
+
         <DragDropContext onDragEnd={onDragEnd}>
           <div className="kanban-container">
             {leadStages.map(stage => (

@@ -80,3 +80,23 @@
        opacity: 0.7;
        cursor: not-allowed;
   }
+
+  .header-actions-kanban {
+    display: flex;
+    gap: 10px;
+}
+
+.filters-wrapper {
+  overflow: hidden;
+  transition: max-height 0.4s ease-in-out, opacity 0.4s ease-in-out;
+}
+
+.filters-wrapper.closed {
+  max-height: 0;
+  opacity: 0;
+}
+
+.filters-wrapper.open {
+  max-height: 500px; /* Um valor alto o suficiente para caber todos os filtros */
+  opacity: 1;
+}
