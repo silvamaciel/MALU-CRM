@@ -1,102 +1,83 @@
-/* src/components/LeadFilters/LeadFilters.css */
 .lead-filters-container {
-    background-color: #f8f9fa;
-    padding: 1rem 1.5rem;
+    background-color: #ffffff;
+    padding: 1rem;
     border-radius: 8px;
-    margin-bottom: 2rem;
-    border: 1px solid #dee2e6;
-  }
-  
-  .lead-filters-form {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Layout responsivo */
-    gap: 1rem 1.5rem; /* Espaçamento vertical e horizontal */
-    align-items: flex-end; /* Alinha itens na parte inferior */
-  }
-  
-  .filter-group {
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e7eaf3;
+}
+
+.lead-filters-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end; /* Alinha itens na base */
+    gap: 1rem;
+}
+
+.lead-filters-form .filter-group {
     display: flex;
     flex-direction: column;
-  }
-  
-  .filter-group label {
-    margin-bottom: 0.4rem;
+    flex-grow: 1;
+    min-width: 180px; /* Largura mínima para cada grupo de filtro */
+}
+.lead-filters-form .filter-group.text-search {
+    flex-grow: 2; /* Faz o campo de busca ser maior */
+}
+
+.lead-filters-form .filter-group label {
+    font-size: 0.8em;
     font-weight: 500;
-    font-size: 0.85em;
-    color: #495057;
-  }
-  
-  .filter-group input[type="text"],
-  .filter-group input[type="email"],
-  .filter-group input[type="date"],
-  .filter-group select {
+    margin-bottom: 5px;
+    color: #525f7f;
+}
+
+.lead-filters-form input[type="text"],
+.lead-filters-form input[type="date"],
+.lead-filters-form select {
     width: 100%;
-    padding: 0.5rem 0.75rem;
-    border: 1px solid #ced4da;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #dee2e6;
     border-radius: 4px;
-    font-size: 0.95em;
-    background-color: white;
-    transition: border-color 0.2s ease;
-  }
-  .filter-group input:focus,
-  .filter-group select:focus {
-     border-color: #80bdff;
-     outline: 0;
-     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-  }
-  .filter-group input:disabled,
-  .filter-group select:disabled {
-      background-color: #e9ecef;
-      opacity: 0.7;
-      cursor: not-allowed;
-  }
-  
-  
-  .filter-group select {
-      cursor: pointer;
-  }
-  
-  .clear-button-group {
-      /* Opcional: Alinhar botão na mesma linha visualmente */
-       padding-bottom: 0.5rem; /* Ajuste para alinhar com inputs */
-  }
-  
-  .clear-filters-button {
-    padding: 0.5rem 1rem;
     font-size: 0.9em;
-    background-color: #6c757d;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    width: 100%; /* Ocupa espaço no grid */
-  }
-  
-  .clear-filters-button:hover:not(:disabled) {
-    background-color: #5a6268;
-  }
-  .clear-filters-button:disabled {
-       opacity: 0.7;
-       cursor: not-allowed;
-  }
+    background-color: #f8f9fe;
+    transition: all 0.2s ease-in-out;
+}
+.lead-filters-form input:focus,
+.lead-filters-form select:focus {
+    border-color: #5e72e4;
+    background-color: #fff;
+    box-shadow: 0 0 0 2px rgba(94, 114, 228, 0.2);
+    outline: none;
+}
 
-  .header-actions-kanban {
+.lead-filters-form .date-range {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+}
+.lead-filters-form .date-range span {
+    color: #8898aa;
+}
+.lead-filters-form .date-range input {
+    flex: 1;
+}
+
+.lead-filters-form .filter-actions {
     display: flex;
-    gap: 10px;
+    align-items: center;
+    gap: 0.75rem;
+    padding-bottom: 2px; /* Pequeno ajuste de alinhamento */
 }
 
-.filters-wrapper {
-  overflow: hidden;
-  transition: max-height 0.4s ease-in-out, opacity 0.4s ease-in-out;
+.lead-filters-form .button-link {
+    font-size: 0.85em;
+    color: #8898aa;
+    text-decoration: none;
+    background: none;
+    border: none;
+    cursor: pointer;
 }
-
-.filters-wrapper.closed {
-  max-height: 0;
-  opacity: 0;
-}
-
-.filters-wrapper.open {
-  max-height: 500px; /* Um valor alto o suficiente para caber todos os filtros */
-  opacity: 1;
+.lead-filters-form .button-link:hover {
+    color: #5e72e4;
+    text-decoration: underline;
 }
