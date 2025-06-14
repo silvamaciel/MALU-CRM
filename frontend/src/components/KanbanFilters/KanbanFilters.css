@@ -1,4 +1,4 @@
-.lead-filters-container {
+.kanban-filters-container {
     background-color: #ffffff;
     padding: 1rem;
     border-radius: 8px;
@@ -7,33 +7,33 @@
     border: 1px solid #e7eaf3;
 }
 
-.lead-filters-form {
+.kanban-filters-form {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-end; /* Alinha itens na base */
     gap: 1rem;
 }
 
-.lead-filters-form .filter-group {
+.kanban-filters-form .filter-group {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
     min-width: 180px; /* Largura mínima para cada grupo de filtro */
 }
-.lead-filters-form .filter-group.text-search {
+.kanban-filters-form .filter-group.text-search {
     flex-grow: 2; /* Faz o campo de busca ser maior */
 }
 
-.lead-filters-form .filter-group label {
+.kanban-filters-form .filter-group label {
     font-size: 0.8em;
     font-weight: 500;
     margin-bottom: 5px;
     color: #525f7f;
 }
 
-.lead-filters-form input[type="text"],
-.lead-filters-form input[type="date"],
-.lead-filters-form select {
+.kanban-filters-form input[type="text"],
+.kanban-filters-form input[type="date"],
+.kanban-filters-form select {
     width: 100%;
     padding: 0.6rem 0.75rem;
     border: 1px solid #dee2e6;
@@ -42,34 +42,34 @@
     background-color: #f8f9fe;
     transition: all 0.2s ease-in-out;
 }
-.lead-filters-form input:focus,
-.lead-filters-form select:focus {
+.kanban-filters-form input:focus,
+.kanban-filters-form select:focus {
     border-color: #5e72e4;
     background-color: #fff;
     box-shadow: 0 0 0 2px rgba(94, 114, 228, 0.2);
     outline: none;
 }
 
-.lead-filters-form .date-range {
+.kanban-filters-form .date-range {
     flex-direction: row;
     align-items: center;
     gap: 0.5rem;
 }
-.lead-filters-form .date-range span {
+.kanban-filters-form .date-range span {
     color: #8898aa;
 }
-.lead-filters-form .date-range input {
+.kanban-filters-form .date-range input {
     flex: 1;
 }
 
-.lead-filters-form .filter-actions {
+.kanban-filters-form .filter-actions {
     display: flex;
     align-items: center;
     gap: 0.75rem;
     padding-bottom: 2px; /* Pequeno ajuste de alinhamento */
 }
 
-.lead-filters-form .button-link {
+.kanban-filters-form .button-link {
     font-size: 0.85em;
     color: #8898aa;
     text-decoration: none;
@@ -77,7 +77,7 @@
     border: none;
     cursor: pointer;
 }
-.lead-filters-form .button-link:hover {
+.kanban-filters-form .button-link:hover {
     color: #5e72e4;
     text-decoration: underline;
 }
