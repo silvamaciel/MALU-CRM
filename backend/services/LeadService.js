@@ -84,7 +84,7 @@ const logHistory = async (leadId, userId, action, details) => {
  * @param {object} queryParams - Parâmetros da query (filtros e paginação).
  * @returns {Promise<object>} Objeto com leads e dados de paginação.
  */
-const getLeads = async (companyId, queryParams = {}) => {
+const getLeads = async (queryParams = {}, companyId) => {
     if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
         throw new Error("ID da empresa inválido ou não fornecido para buscar leads.");
     }
