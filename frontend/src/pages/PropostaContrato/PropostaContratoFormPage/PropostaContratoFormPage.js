@@ -228,12 +228,18 @@ function PropostaContratoFormPage() {
     const renderStep = () => {
         const stepProps = { formData, setFormData, isSaving };
         switch (currentStep) {
-            case 1: return <StepAdquirentes {...stepProps} />;
-            case 2: return <StepFinanceiro {...stepProps} />;
-            case 3: return <StepCorretagem {...stepProps} brokerContactsList={brokerContactsList} />;
-            case 4: return <StepContrato {...stepProps} modelosContrato={modelosContrato} montarDadosParaTemplate={montarDadosParaTemplate} reservaBase={reservaBase || propostaBase} />;
-            case 5: return <StepResumo {...stepProps} reservaBase={reservaBase || propostaBase} />;
-            default: return <StepAdquirentes {...stepProps} />;
+            case 1:
+                return <StepAdquirentes {...stepProps} />;
+            case 2:
+                return <StepFinanceiro {...stepProps} usuariosCRM={usuariosCRM} />;
+            case 3:
+                return <StepCorretagem {...stepProps} brokerContactsList={brokerContactsList} />;
+            case 4:
+                return <StepContrato {...stepProps} modelosContrato={modelosContrato} montarDadosParaTemplate={montarDadosParaTemplate} reservaBase={reservaBase || propostaBase} />;
+            case 5:
+                return <StepResumo {...stepProps} reservaBase={reservaBase || propostaBase} />;
+            default:
+                return <StepAdquirentes {...stepProps} />;
         }
     };
 
