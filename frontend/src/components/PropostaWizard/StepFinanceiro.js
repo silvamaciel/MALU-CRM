@@ -1,7 +1,6 @@
-// src/components/PropostaWizard/StepFinanceiro.js
 import React from 'react';
 import { toast } from 'react-toastify';
-import './StepFinanceiro.css'; // Criaremos este CSS a seguir
+import './StepFinanceiro.css';
 
 const TIPO_PARCELA_OPCOES = [
   "ATO", "PARCELA MENSAL", "PARCELA BIMESTRAL", "PARCELA TRIMESTRAL", 
@@ -9,7 +8,7 @@ const TIPO_PARCELA_OPCOES = [
 ];
 
 function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM }) {
-    // Handler para campos de primeiro nível nesta etapa
+    // Handler para campos de primeiro nível nesta etapa (valorPropostaContrato, responsavelNegociacao, etc.)
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -46,11 +45,11 @@ function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM }) {
         list.splice(index, 1);
         setFormData(prev => ({ ...prev, planoDePagamento: list }));
     };
-
+    
     return (
         <div className="wizard-step">
             <h3>Etapa 2: Dados da Proposta e Pagamento</h3>
-
+            
             <div className="form-section">
                 <h4>Valores e Responsáveis</h4>
                 <div className="form-row">
@@ -58,6 +57,8 @@ function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM }) {
                         <label htmlFor="valorPropostaContrato">Valor da Proposta (R$)*</label>
                         <input type="number" id="valorPropostaContrato" name="valorPropostaContrato" value={formData.valorPropostaContrato} onChange={handleChange} required step="0.01" min="0" disabled={isSaving}/>
                     </div>
+                    
+                    {/* VVVVV DROPDOWN ADICIONADO AQUI VVVVV */}
                     <div className="form-group">
                         <label htmlFor="responsavelNegociacao">Responsável pela Negociação (CRM)*</label>
                         <select
@@ -78,6 +79,7 @@ function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM }) {
                             ))}
                         </select>
                     </div>
+                    {/* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */}
                 </div>
                 <div className="form-row">
                     <div className="form-group">
