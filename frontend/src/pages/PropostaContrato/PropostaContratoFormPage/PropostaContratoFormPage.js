@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 import { getReservaByIdApi, createPropostaContratoApi } from "../../../api/propostaContratoApi";
 import { getModelosContrato } from "../../../api/modeloContratoApi";
 import { getUsuarios } from "../../../api/users";
-import { getBrokerContactsApi } from "../../../api/brokerContactApi";
+import { getBrokerContacts } from "../../../api/brokerContacts";
 
 // Editor Rich Text
 import ReactQuill from "react-quill";
@@ -252,7 +252,7 @@ function PropostaContratoFormPage() {
             setLoadingInitialData(true);
             try {
                 const [reservaData, modelosData, usuariosDataResult, brokersData] = await Promise.all([
-                    getReservaByIdApi(reservaId), getModelosContrato(), getUsuarios({ ativo: true }), getBrokerContactsApi({ ativo: true })
+                    getReservaByIdApi(reservaId), getModelosContrato(), getUsuarios({ ativo: true }), getBrokerContacts({ ativo: true })
                 ]);
                 
                 setReservaBase(reservaData);
