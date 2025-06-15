@@ -1,6 +1,6 @@
 // src/components/PropostaWizard/StepResumo.js
 import React from 'react';
-import './StepResumo.'; // Criaremos este CSS
+import './StepResumo.css'; // Criaremos este CSS
 import './WizardSteps.css';
 
 
