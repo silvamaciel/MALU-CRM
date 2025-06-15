@@ -6,7 +6,7 @@ import { toast } from 'react-toastify';
 import { getReservaByIdApi, createPropostaContratoApi, updatePropostaContratoApi, getPropostaContratoByIdApi } from '../../../api/propostaContratoApi';
 import { getModelosContrato } from '../../../api/modeloContratoApi';
 import { getUsuarios } from '../../../api/users';
-import { getBrokerContactsApi } from '../../../api/brokerContactApi';
+import { getBrokerContacts } from '../../../api/brokerContacts';
 
 // Componentes das Etapas do Wizard
 import StepAdquirentes from '../../../components/PropostaWizard/StepAdquirentes';
@@ -76,7 +76,7 @@ function PropostaContratoFormPage() {
             try {
                 // Busca dados comuns a ambos os modos (criar e editar)
                 const [modelosData, usuariosDataResult, brokersData] = await Promise.all([
-                    getModelosContrato(), getUsuarios({ ativo: true }), getBrokerContactsApi({ ativo: true })
+                    getModelosContrato(), getUsuarios({ ativo: true }), getBrokerContacts({ ativo: true })
                 ]);
                 setModelosContrato(modelosData.modelos || []);
                 setUsuariosCRM(usuariosDataResult || []);
