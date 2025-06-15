@@ -118,11 +118,18 @@ function PropostaContratoFormPage() {
                     initialFormData = {
                         ...formData,
                         adquirentes: [{
-                            nome: reservaData.lead?.nome || '', cpf: reservaData.lead?.cpf || '', rg: reservaData.lead?.rg || '',
-                            nacionalidade: reservaData.lead?.nacionalidade || 'Brasileiro(a)', estadoCivil: reservaData.lead?.estadoCivil || '',
-                            profissao: reservaData.lead?.profissao || '', isPrincipal: true
-                        }, ...(reservaData.lead?.coadquirentes || [])],
-                        valorPropostaContrato: reservaData.unidade?.precoTabela || '',
+                        nome: reservaData.lead?.nome || '',
+                        cpf: reservaData.lead?.cpf || '',
+                        rg: reservaData.lead?.rg || '',
+                        nacionalidade: reservaData.lead?.nacionalidade || 'Brasileiro(a)',
+                        estadoCivil: reservaData.lead?.estadoCivil || '',
+                        profissao: reservaData.lead?.profissao || '',
+                        email: reservaData.lead?.email || '',
+                        contato: reservaData.lead?.contato || '',
+                        endereco: reservaData.lead?.endereco || '',
+                        nascimento: reservaData.lead?.nascimento || '',
+                        isPrincipal: true
+                    }, ...(reservaData.lead?.coadquirentes || [])],
                         responsavelNegociacao: reservaData.lead?.responsavel?._id || reservaData.lead?.responsavel || '',
                     };
                 } else {
