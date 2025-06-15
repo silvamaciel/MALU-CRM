@@ -50,6 +50,7 @@ function PropostaContratoFormPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [formError, setFormError] = useState("");
     const [pageTitle, setPageTitle] = useState("Nova Proposta/Contrato");
+    
 
     // Função auxiliar para montar objeto de dados para o template
     const montarDadosParaTemplate = useCallback((currentFormData, baseData) => {
