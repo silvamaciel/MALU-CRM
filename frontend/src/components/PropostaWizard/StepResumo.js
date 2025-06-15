@@ -67,4 +67,5 @@ function StepResumo({ formData, reservaBase }) {
     );
 }
 
+
 export default StepResumo;
