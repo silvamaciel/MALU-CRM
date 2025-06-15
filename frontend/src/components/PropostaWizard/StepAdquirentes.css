@@ -1,0 +1,45 @@
+/* src/components/PropostaWizard/StepAdquirentes.css */
+
+.wizard-step {
+  width: 100%;
+}
+
+.wizard-step h3 {
+  font-size: 1.5em;
+  color: #007bff;
+  margin-top: 0;
+  margin-bottom: 25px;
+}
+
+.adquirente-form-section {
+  padding: 20px;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  background-color: #fff;
+}
+
+.adquirente-form-section.principal {
+  border-left: 4px solid #007bff;
+}
+
+.adquirente-form-section.coadquirente {
+  border-left: 4px solid #6c757d;
+}
+
+.adquirente-form-section h4 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 1.1em;
+  color: #343a40;
+}
+
+.coadquirente-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.coadquirente-header .delete-link {
+    font-size: 0.85em;
+    color: #dc3545;
+}
