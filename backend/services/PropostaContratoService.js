@@ -225,7 +225,7 @@ const createPropostaContrato = async (reservaId, propostaContratoData, companyId
         // 8. Atualizar Status do Lead
         console.log(`[PropContSvc] Atualizando Lead ${reserva.lead._id}...`);
 
-        const nomeEstagioProposta = "Proposta Emitida"; // Ou o nome que você definiu
+        const nomeEstagioProposta = "Em Reserva"; // Ou o nome que você definiu
         let situacaoProposta = await LeadStage.findOne(
             { company: companyId, nome: { $regex: new RegExp(`^${nomeEstagioProposta}$`, "i") } }
         ).session(session).lean(); // Busca primeiro, usando a sessão e .lean() para performance
@@ -612,7 +612,7 @@ const updateStatusPropostaContrato = async (propostaContratoId, novoStatus, dado
         // Lógica específica baseada no NOVO status
         if (novoStatus === "Assinado") {
             propostaContrato.dataAssinaturaCliente = dadosAdicionais.dataAssinaturaCliente ? new Date(dadosAdicionais.dataAssinaturaCliente) : new Date();
-            leadStatusNomeAlvo = "Contrato Assinado"; // Ou o nome do seu estágio
+            leadStatusNomeAlvo = "Em Reserva"; // Ou o nome do seu estágio
         } else if (novoStatus === "Vendido") {
             propostaContrato.dataVendaEfetivada = dadosAdicionais.dataVendaEfetivada ? new Date(dadosAdicionais.dataVendaEfetivada) : new Date();
             propostaContrato.dataAssinaturaCliente = propostaContrato.dataAssinaturaCliente || new Date(); // Garante data de assinatura se não houver
