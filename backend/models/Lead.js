@@ -12,8 +12,11 @@ const coadquirenteSchema = new Schema({
         enum: ["Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)", "União Estável", "Outro"]
     },
     profissao: { type: String, trim: true },
-    // Adicione mais campos se necessário para o coadquirente
-}, { _id: false });
+    email: { type: String, trim: true, lowercase: true },
+    contato: { type: String, trim: true },
+    endereco: { type: String, trim: true },
+    nascimento: { type: Date },
+  }, { _id: false });
 
 
 const leadSchema = new Schema(

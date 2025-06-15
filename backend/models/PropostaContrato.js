@@ -59,6 +59,9 @@ const adquirenteSnapshotSchema = new Schema({
       type: String,
       required: [true, "O contato do lead é obrigatório."],
     },
+    endereco: { type: String, trim: true },
+    nascimento: { type: Date },
+
 }, { _id: false });
 
 
