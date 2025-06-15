@@ -143,22 +143,86 @@ function PropostaContratoFormPage() {
 
     // Handler final de submissão
     const handleSubmit = async (e) => {
-        e.preventDefault(); setIsSaving(true); setFormError('');
-        try {
-            // Prepara os dados finais para enviar
-            const dataToSubmit = { ...formData, /* formatação final de números/datas */ };
-            if (isEditMode) {
-                await updatePropostaContratoApi(propostaContratoId, dataToSubmit);
-                toast.success("Proposta/Contrato atualizada!");
-                navigate(`/propostas-contratos/${propostaContratoId}`);
-            } else {
-                const result = await createPropostaContratoApi(reservaId, dataToSubmit);
-                toast.success("Proposta/Contrato criada com sucesso!");
-                navigate(`/propostas-contratos/${result._id}`); // Navega para detalhes da nova proposta
-            }
-        } catch (err) { /* ... tratamento de erro ... */ }
-        finally { setIsSaving(false); }
+    e.preventDefault();
+    setFormError(''); // Limpa erros anteriores
+
+    // --- VALIDAÇÃO FRONEND ANTES DE ENVIAR ---
+    if (!formData.adquirentes || formData.adquirentes.length === 0 || !formData.adquirentes[0].nome) {
+        toast.error("Dados do Adquirente Principal (Nome) são obrigatórios. Volte para a Etapa 1.");
+        setCurrentStep(1); // Opcional: Leva o usuário de volta para a etapa com erro
+        return;
+    }
+    if (!formData.valorPropostaContrato || parseFloat(formData.valorPropostaContrato) <= 0) {
+        toast.error("O Valor da Proposta é obrigatório e deve ser maior que zero. Volte para a Etapa 2.");
+        setCurrentStep(2);
+        return;
+    }
+    if (!formData.responsavelNegociacao) {
+        toast.error("O Responsável pela Negociação é obrigatório. Volte para a Etapa 3 (ou onde o campo estiver).");
+        // Ajuste o setCurrentStep para a etapa correta do responsável
+        return;
+    }
+    if (!formData.modeloContratoUtilizado) {
+        toast.error("A seleção de um Modelo de Contrato é obrigatória. Volte para a Etapa 4.");
+        setCurrentStep(4);
+        return;
+    }
+    // Validação para o plano de pagamento
+    const planoPagamentoValido = formData.planoDePagamento.every(p => p.valorUnitario && p.vencimentoPrimeira);
+    if (!planoPagamentoValido) {
+        toast.error("Todas as parcelas no Plano de Pagamento devem ter Valor e Vencimento. Volte para a Etapa 2.");
+        setCurrentStep(2);
+        return;
+    }
+    // --- FIM DA VALIDAÇÃO ---
+
+
+    setIsSaving(true);
+
+    // Prepara os dados para enviar ao backend
+    const dataToSubmit = {
+        modeloContratoUtilizado: formData.modeloContratoUtilizado,
+        valorPropostaContrato: parseFloat(formData.valorPropostaContrato) || 0,
+        valorEntrada: formData.valorEntrada ? parseFloat(formData.valorEntrada) : null,
+        condicoesPagamentoGerais: formData.condicoesPagamentoGerais,
+        dadosBancariosParaPagamento: formData.dadosBancariosParaPagamento,
+        planoDePagamento: formData.planoDePagamento
+          .map(p => ({
+            ...p,
+            quantidade: Number(p.quantidade) || 1,
+            valorUnitario: Number(p.valorUnitario) || 0,
+          }))
+          .filter(p => p.valorUnitario > 0 && p.vencimentoPrimeira),
+        corretagem: formData.corretagem?.valorCorretagem ? {
+            ...formData.corretagem,
+            valorCorretagem: Number(formData.corretagem.valorCorretagem) || 0,
+        } : null,
+        corpoContratoHTMLGerado: formData.corpoContratoHTMLGerado,
+        responsavelNegociacao: formData.responsavelNegociacao,
+        observacoesInternasProposta: formData.observacoesInternasProposta,
+        statusPropostaContrato: formData.statusPropostaContrato,
+        dataProposta: formData.dataProposta,
+        adquirentesSnapshot: formData.adquirentes // O backend espera o snapshot, podemos enviar o array diretamente
     };
+
+    try {
+        let result;
+        if (isEditMode) {
+            result = await updatePropostaContratoApi(propostaContratoId, dataToSubmit);
+            toast.success("Proposta/Contrato atualizada com sucesso!");
+        } else {
+            result = await createPropostaContratoApi(reservaId, dataToSubmit);
+            toast.success("Proposta/Contrato criada com sucesso!");
+        }
+        navigate(`/propostas-contratos/${result._id || propostaContratoId}`);
+    } catch (err) {
+        const errMsg = err.error || err.message || "Erro ao salvar Proposta/Contrato.";
+        setFormError(errMsg);
+        toast.error(errMsg);
+    } finally {
+        setIsSaving(false);
+    }
+};
     
     // Função para renderizar a etapa correta
     const renderStep = () => {
