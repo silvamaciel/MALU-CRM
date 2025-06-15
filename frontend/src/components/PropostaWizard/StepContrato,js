@@ -2,6 +2,7 @@
 import React from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css'; // Importa o CSS do editor
+import './WizardSteps.css';
 
 // Configurações do Editor (pode movê-las para um arquivo de configuração se preferir)
 const quillModules = {

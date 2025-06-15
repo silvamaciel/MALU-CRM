@@ -1,6 +1,9 @@
 // src/components/PropostaWizard/StepCorretagem.js
 import React from 'react';
 
+import './WizardSteps.css';
+import './StepCorretagem.css';
+
 function StepCorretagem({ formData, setFormData, isSaving, brokerContactsList }) {
     // Handler específico para os campos do sub-objeto 'corretagem'
     const handleCorretagemChange = (e) => {

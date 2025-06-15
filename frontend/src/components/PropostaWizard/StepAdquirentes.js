@@ -1,6 +1,7 @@
 // src/components/PropostaWizard/StepAdquirentes.js
 import React from 'react';
 import './StepAdquirentes.css'; // Criaremos este CSS
+import './WizardSteps.css';
 
 const ESTADO_CIVIL_OPCOES = ["Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)", "União Estável", "Outro"];
 

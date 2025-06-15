@@ -1,6 +1,7 @@
 // src/components/PropostaWizard/StepFinanceiro.js
 import React from 'react';
 import { toast } from 'react-toastify';
+import './WizardSteps.css';
 // Importe o CSS que criaremos a seguir
 
 
