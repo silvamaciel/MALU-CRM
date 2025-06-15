@@ -24,6 +24,15 @@ const getSummary = async (req, res) => {
     }
 };
 
+
+const getFinancialSummaryController = asyncHandler(async (req, res, next) => {
+    const companyId = req.user.company;
+    const summary = await DashboardService.getFinancialSummary(companyId);
+    res.status(200).json({ success: true, data: summary });
+});
+
+
 module.exports = {
     getSummary,
+    getFinancialSummaryController
 };

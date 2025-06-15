@@ -166,6 +166,97 @@ const getDashboardSummary = async (companyId) => {
     }
 };
 
+
+/**
+ * Gera um resumo financeiro com dados de Propostas/Contratos.
+ * @param {string} companyId - ID da empresa.
+ * @returns {Promise<object>} Objeto com os dados financeiros agregados.
+ */
+const getFinancialSummary = async (companyId) => {
+    console.log(`[DashboardService] Buscando resumo FINANCEIRO para Empresa: ${companyId}`);
+    if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+        throw new Error("ID da empresa inválido.");
+    }
+
+    try {
+        const hoje = new Date();
+        const inicioDoMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+        const inicioSeisMesesAtras = new Date(hoje.getFullYear(), hoje.getMonth() - 5, 1); // Para o gráfico de vendas mensais
+
+        // Usamos $facet para rodar múltiplas pipelines de agregação independentes em uma única chamada
+        const result = await PropostaContrato.aggregate([
+            {
+                $match: {
+                    company: new mongoose.Types.ObjectId(companyId)
+                }
+            },
+            {
+                $facet: {
+                    // KPI: Vendas e Ticket Médio do Mês Atual
+                    "vendasMesAtual": [
+                        { $match: { statusPropostaContrato: "Vendido", dataVendaEfetivada: { $gte: inicioDoMes } } },
+                        { $group: {
+                            _id: null,
+                            valorTotalVendido: { $sum: "$valorPropostaContrato" },
+                            numeroDeVendas: { $sum: 1 }
+                        }}
+                    ],
+                    // KPI: Valor Total em Propostas Ativas
+                    "propostasAtivas": [
+                        { $match: { statusPropostaContrato: { $in: ["Em Elaboração", "Aguardando Aprovações", "Aguardando Assinatura Cliente", "Assinado"] } } },
+                        { $group: {
+                            _id: null,
+                            valorTotalEmPropostas: { $sum: "$valorPropostaContrato" },
+                            numeroDePropostas: { $sum: 1 }
+                        }}
+                    ],
+                    // Gráfico: Vendas por Mês (últimos 6 meses)
+                    "vendasPorMes": [
+                        { $match: { statusPropostaContrato: "Vendido", dataVendaEfetivada: { $gte: inicioSeisMesesAtras } } },
+                        { $group: {
+                            _id: { year: { $year: "$dataVendaEfetivada" }, month: { $month: "$dataVendaEfetivada" } },
+                            totalVendido: { $sum: "$valorPropostaContrato" },
+                            count: { $sum: 1 }
+                        }},
+                        { $sort: { "_id.year": 1, "_id.month": 1 } }
+                    ],
+                    // Gráfico: Funil de Vendas por Valor ($)
+                    "funilPorValor": [
+                        { $match: { statusPropostaContrato: { $nin: ["Recusado", "Cancelado", "Distrato Realizado"] } } },
+                        { $group: {
+                            _id: "$statusPropostaContrato",
+                            valorTotal: { $sum: "$valorPropostaContrato" },
+                            count: { $sum: 1 }
+                        }}
+                    ]
+                }
+            }
+        ]);
+
+        console.log("[DashboardService] Resumo Financeiro Gerado.");
+        // Extrai e formata os resultados do facet
+        const vendasMes = result[0].vendasMesAtual[0] || { valorTotalVendido: 0, numeroDeVendas: 0 };
+        const propostasAtivas = result[0].propostasAtivas[0] || { valorTotalEmPropostas: 0, numeroDePropostas: 0 };
+        
+        const summary = {
+            valorTotalVendidoMes: vendasMes.valorTotalVendido,
+            numeroDeVendasMes: vendasMes.numeroDeVendas,
+            ticketMedioMes: vendasMes.numeroDeVendas > 0 ? vendasMes.valorTotalVendido / vendasMes.numeroDeVendas : 0,
+            valorTotalEmPropostasAtivas: propostasAtivas.valorTotalEmPropostas,
+            numeroDePropostasAtivas: propostasAtivas.numeroDePropostas,
+            vendasPorMes: result[0].vendasPorMes,
+            funilPorValor: result[0].funilPorValor
+        };
+
+        return summary;
+
+    } catch (error) {
+        console.error(`[DashboardService] Erro ao gerar resumo financeiro para empresa ${companyId}:`, error);
+        throw new Error('Erro ao gerar resumo financeiro.');
+    }
+};
+
 module.exports = {
     getDashboardSummary,
+    getFinancialSummary
 };

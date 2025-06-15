@@ -7,5 +7,8 @@ const { protect } = require('../middlewares/authMiddleware');
 // GET /api/dashboard/summary
 router.get('/summary', protect, dashboardController.getSummary);
 
+router.get('/financeiro', protect, dashboardController.getFinancialSummaryController);
+
+
 
 module.exports = router;
