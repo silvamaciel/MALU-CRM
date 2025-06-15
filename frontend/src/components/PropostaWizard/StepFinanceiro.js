@@ -1,22 +1,21 @@
 // src/components/PropostaWizard/StepFinanceiro.js
 import React from 'react';
 import { toast } from 'react-toastify';
-import './StepFinanceiro.css';
+import './StepFinanceiro.css'; // Criaremos este CSS a seguir
 
 const TIPO_PARCELA_OPCOES = [
   "ATO", "PARCELA MENSAL", "PARCELA BIMESTRAL", "PARCELA TRIMESTRAL", 
   "PARCELA SEMESTRAL", "INTERCALADA", "ENTREGA DE CHAVES", "FINANCIAMENTO", "OUTRA"
 ];
 
-// <<< O COMPONENTE AGORA RECEBE 'usuariosCRM' COMO PROP >>>
 function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM }) {
-    // Handler para campos de primeiro nível (valorPropostaContrato, responsavelNegociacao, etc.)
+    // Handler para campos de primeiro nível nesta etapa
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    // Handlers para o Plano de Pagamento Dinâmico (como antes)
+    // Handlers para o Plano de Pagamento Dinâmico
     const handlePlanoDePagamentoChange = (index, event) => {
         const { name, value } = event.target;
         const list = [...formData.planoDePagamento];
@@ -55,20 +54,9 @@ function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM }) {
             <div className="form-section">
                 <h4>Valores e Responsáveis</h4>
                 <div className="form-row">
-                   
                     <div className="form-group">
                         <label htmlFor="valorPropostaContrato">Valor da Proposta (R$)*</label>
-                        <input
-                            type="number"
-                            id="valorPropostaContrato"
-                            name="valorPropostaContrato"
-                            value={formData.valorPropostaContrato}
-                            onChange={handleChange}
-                            required
-                            step="0.01"
-                            min="0"
-                            disabled={isSaving}
-                        />
+                        <input type="number" id="valorPropostaContrato" name="valorPropostaContrato" value={formData.valorPropostaContrato} onChange={handleChange} required step="0.01" min="0" disabled={isSaving}/>
                     </div>
                     <div className="form-group">
                         <label htmlFor="responsavelNegociacao">Responsável pela Negociação (CRM)*</label>
@@ -90,7 +78,6 @@ function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM }) {
                             ))}
                         </select>
                     </div>
-                    
                 </div>
                 <div className="form-row">
                     <div className="form-group">
@@ -106,10 +93,23 @@ function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM }) {
 
             <div className="form-section">
                 <h4>Plano de Pagamento Detalhado*</h4>
-                {/* ... Seu JSX do plano de pagamento dinâmico como antes ... */}
                 {formData.planoDePagamento.map((parcela, index) => (
                     <div key={index} className="parcela-item-row">
-                        {/* ... inputs para tipo, quantidade, valor, vencimento ... */}
+                        <div className="parcela-header">
+                            <p className="parcela-title">Parcela {index + 1}</p>
+                            {formData.planoDePagamento.length > 1 && (
+                                <button type="button" onClick={() => handleRemoveParcela(index)} className="button-link delete-link" disabled={isSaving}>Remover</button>
+                            )}
+                        </div>
+                        <div className="form-row">
+                            <div className="form-group"><label>Tipo</label><select name="tipoParcela" value={parcela.tipoParcela} onChange={(e) => handlePlanoDePagamentoChange(index, e)} required disabled={isSaving}>{TIPO_PARCELA_OPCOES.map(opt => <option key={opt} value={opt}>{opt}</option>)}</select></div>
+                            <div className="form-group"><label>Quantidade</label><input type="number" name="quantidade" value={parcela.quantidade} onChange={(e) => handlePlanoDePagamentoChange(index, e)} min="1" required disabled={isSaving}/></div>
+                        </div>
+                        <div className="form-row">
+                            <div className="form-group"><label>Valor Unitário (R$)</label><input type="number" name="valorUnitario" value={parcela.valorUnitario} onChange={(e) => handlePlanoDePagamentoChange(index, e)} step="0.01" min="0" required disabled={isSaving}/></div>
+                            <div className="form-group"><label>1º Vencimento</label><input type="date" name="vencimentoPrimeira" value={parcela.vencimentoPrimeira} onChange={(e) => handlePlanoDePagamentoChange(index, e)} required disabled={isSaving}/></div>
+                        </div>
+                        <div className="form-group full-width"><label>Observação</label><input type="text" name="observacao" value={parcela.observacao} onChange={(e) => handlePlanoDePagamentoChange(index, e)} disabled={isSaving}/></div>
                     </div>
                 ))}
                 <button type="button" onClick={handleAddParcela} className="button outline-button" disabled={isSaving}>+ Adicionar Parcela</button>

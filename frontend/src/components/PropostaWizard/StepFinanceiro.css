@@ -1,5 +1,5 @@
 /* src/components/PropostaWizard/StepFinanceiro.css */
-/* Este CSS pode depender de classes que você já tem em PropostaContratoFormPage.css, como .form-section, .form-row, .form-group */
+/* Este CSS pode depender de classes genéricas como .form-section, .form-row, .form-group que estão no seu PropostaContratoFormPage.css */
 
 .parcela-item-row {
   border: 1px solid #e9ecef;
@@ -9,29 +9,30 @@
   background-color: #fdfdfd;
 }
 
-.parcela-item-row .coadquirente-header { /* Reutilizando estilo do StepAdquirentes */
+.parcela-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 15px;
 }
 
-.parcela-item-row .parcela-title {
+.parcela-title {
   margin: 0;
   font-weight: 600;
   color: #495057;
 }
 
-.parcela-item-row .delete-link {
-    font-size: 0.85em;
-    color: #dc3545;
-    background: none;
-    border: none;
-    cursor: pointer;
-    text-decoration: underline;
+.delete-link { /* Para o botão "Remover" */
+  font-size: 0.85em;
+  color: #dc3545;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
 }
-.parcela-item-row .delete-link:hover {
-    color: #a71d2a;
+.delete-link:hover {
+  color: #a71d2a;
 }
 
-/* O outline-button para "Adicionar Parcela" deve estar no seu CSS principal ou no PropostaContratoFormPage.css */
+/* O .outline-button para "+ Adicionar Parcela" deve estar no seu CSS principal ou PropostaContratoFormPage.css */
