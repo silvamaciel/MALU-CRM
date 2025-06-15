@@ -18,6 +18,8 @@ import "./PropostaContratoFormPage.css";
 // Constantes de Opções para Selects
 const ESTADO_CIVIL_OPCOES = ["Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)", "União Estável", "Outro"];
 const TIPO_PARCELA_OPCOES = ["ATO", "PARCELA MENSAL", "PARCELA BIMESTRAL", "PARCELA TRIMESTRAL", "PARCELA SEMESTRAL", "INTERCALADA", "ENTREGA DE CHAVES", "FINANCIAMENTO", "OUTRA"];
+const STATUS_PROPOSTA_OPCOES = ["Em Elaboração", "Aguardando Aprovações", "Aguardando Assinatura Cliente", "Assinado", "Vendido", "Recusado", "Cancelado", "Distrato Realizado"];
+
 const quillModules = {
     toolbar: [
       [{ header: [1, 2, 3, false] }], ['bold', 'italic', 'underline'],
@@ -26,6 +28,21 @@ const quillModules = {
     ],
 };
 const quillFormats = ["header", "bold", "italic", "underline", "list", "bullet", "align", "color", "background"];
+
+
+const preencherTemplateContrato = (templateHtml = "", dados = {}) => {
+  let corpoProcessado = templateHtml;
+  if (dados && typeof dados === 'object') {
+    for (const key in dados) {
+      const placeholder = `{{${key}}}`;
+      corpoProcessado = corpoProcessado.replace(
+        new RegExp(placeholder.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'),
+        dados[key] !== null && dados[key] !== undefined ? dados[key] : ''
+      );
+    }
+  }
+  return corpoProcessado;
+};
 
 // ----------------------------------------------------------------
 // --- COMPONENTES DAS ETAPAS DO WIZARD ---
