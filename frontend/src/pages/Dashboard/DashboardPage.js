@@ -1,53 +1,24 @@
-import React, { useState, useEffect, useCallback } from 'react';
+// src/pages/Dashboard/DashboardPage.js
+import React, { useState } from 'react';
 import './DashboardPage.css';
-import { getLeadSummaryApi, getFinancialSummaryApi } from '../../api/dashboardApi';
 import LeadSummaryDashboard from '../../components/Dashboard/LeadSummaryDashboard/LeadSummaryDashboard';
-import FinancialDashboard from '../../components/Dashboard/FinancialDashboard/FinancialDashboard';
-
+import FinancialDashboard from '../../components/Dashboard/FinancialDashboard/FinancialDashboard'; // Você ainda o tem para a outra visão
 
 function DashboardPage() {
-    const [activeView, setActiveView] = useState('leads'); // 'leads' ou 'financeiro'
-    const [timeFilter, setTimeFilter] = useState('month'); // 'month', 'year', 'all'
-    
-    const [dashboardData, setDashboardData] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    const fetchData = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            let data;
-            if (activeView === 'leads') {
-                data = await getLeadSummaryApi(timeFilter);
-            } else { // activeView === 'financeiro'
-                data = await getFinancialSummaryApi(timeFilter);
-            }
-            setDashboardData(data);
-        } catch (err) {
-            setError(err.message || "Falha ao carregar dados do dashboard.");
-        } finally {
-            setLoading(false);
-        }
-    }, [activeView, timeFilter]);
-
-    useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+    const [activeView, setActiveView] = useState('leads');
+    const [timeFilter, setTimeFilter] = useState('month');
 
     return (
         <div className="admin-page dashboard-page">
             <header className="page-header">
                 <h1>Dashboard</h1>
                 <div className="dashboard-controls">
+                    {/* Botões para alternar a VISÃO */}
                     <div className="view-toggle-buttons">
-                        <button onClick={() => setActiveView('leads')} className={`button ${activeView === 'leads' ? 'primary-button' : 'outline-button'}`}>
-                            Visão de Leads
-                        </button>
-                        <button onClick={() => setActiveView('financeiro')} className={`button ${activeView === 'financeiro' ? 'primary-button' : 'outline-button'}`}>
-                            Visão Financeira
-                        </button>
+                        <button onClick={() => setActiveView('leads')} className={`button ${activeView === 'leads' ? 'primary-button' : 'outline-button'}`}>Visão de Leads</button>
+                        <button onClick={() => setActiveView('financeiro')} className={`button ${activeView === 'financeiro' ? 'primary-button' : 'outline-button'}`}>Visão Financeira</button>
                     </div>
+                    {/* Botões para alternar o PERÍODO */}
                     <div className="time-filter-buttons">
                         <button onClick={() => setTimeFilter('month')} className={`button small-button ${timeFilter === 'month' ? 'active' : ''}`}>Este Mês</button>
                         <button onClick={() => setTimeFilter('year')} className={`button small-button ${timeFilter === 'year' ? 'active' : ''}`}>Este Ano</button>
@@ -56,11 +27,9 @@ function DashboardPage() {
                 </div>
             </header>
             <div className="page-content">
-                {activeView === 'leads' ? (
-                    <LeadSummaryDashboard data={dashboardData} loading={loading} error={error} />
-                ) : (
-                    <FinancialDashboard data={dashboardData} loading={loading} error={error} />
-                )}
+                {/* Renderiza o componente de dashboard correto, passando o filtro */}
+                {activeView === 'leads' && <LeadSummaryDashboard filter={timeFilter} />}
+                {activeView === 'financeiro' && <FinancialDashboard filter={timeFilter} />}
             </div>
         </div>
     );
