@@ -24,7 +24,7 @@ const getFinancialSummaryController = asyncHandler(async (req, res, next) => {
 const getAdvancedMetricsController = asyncHandler(async (req, res, next) => {
     const companyId = req.user.company;
     const { filter } = req.query;
-    const summary = await DashboardService.getAdvancedMetrics(companyId, filter);
+    const summary = await dashboardService.getAdvancedMetrics(companyId, filter);
     res.status(200).json({ success: true, data: summary });
 });
 
