@@ -95,3 +95,37 @@
 .chart-container-line {
      min-height: 300px; 
 }
+
+
+/* Em src/pages/Dashboard/DashboardPage.css */
+/* ... seus estilos existentes ... */
+
+.dashboard-controls {
+    margin-top: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.view-toggle-buttons, .time-filter-buttons {
+    display: flex;
+    gap: 8px;
+    background-color: #f0f2f5;
+    padding: 5px;
+    border-radius: 6px;
+}
+
+.time-filter-buttons .button.small-button {
+    background-color: #fff;
+    color: #555;
+    border: 1px solid #ddd;
+}
+
+.time-filter-buttons .button.small-button.active {
+    background-color: #007bff;
+    color: #fff;
+    border-color: #007bff;
+    font-weight: 600;
+}
