@@ -17,3 +17,14 @@ export const getDashboardSummary = async () => {
         throw error.response?.data || new Error('Falha ao buscar dados do dashboard.');
     }
 };
+
+
+export const getFinancialSummaryApi = async () => {
+    try {
+        const response = await axiosInstance.get(`${API_URL}/financeiro`);
+        return response.data.data; // Retorna o objeto com todos os KPIs e dados de gráficos
+    } catch (error) {
+        console.error("Erro ao buscar resumo financeiro:", error.response?.data || error.message);
+        throw error.response?.data || new Error("Falha ao buscar o resumo financeiro.");
+    }
+};
