@@ -5,6 +5,8 @@ const LeadStage = require('../models/LeadStage');
 const User = require('../models/User');
 const Origem = require('../models/origem'); 
 
+const PropostaContrato = require('../models/PropostaContrato');
+
 /**
  * Busca dados resumidos para o dashboard de uma empresa específica.
  * @param {string} companyId - ID da empresa.
