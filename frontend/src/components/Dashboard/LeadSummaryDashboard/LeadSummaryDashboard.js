@@ -44,24 +44,39 @@ function LeadSummaryDashboard({ data, loading, error }) {
                 <div className="chart-wrapper">
                     <h3>Leads por Situação</h3>
                     <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={leadsByStageData} layout="vertical" /* ... */ >
-                            {/* ... seus Bar, XAxis, YAxis ... */}
+                        <BarChart data={leadsByStageData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis type="number" />
+                            <YAxis type="category" dataKey="name" width={120} />
+                            <Tooltip />
+                            <Legend />
+                            <Bar dataKey="Leads" fill="#8884d8" />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
                 <div className="chart-wrapper">
                     <h3>Leads por Origem</h3>
                     <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={leadsByOrigemData} /* ... */ >
-                            {/* ... seus Bar, XAxis, YAxis ... */}
+                        <BarChart data={leadsByOrigemData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" />
+                            <YAxis />
+                            <Tooltip />
+                            <Legend />
+                            <Bar dataKey="Leads" fill="#82ca9d" />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
                 <div className="chart-wrapper full-width-chart">
                     <h3>Leads por Responsável</h3>
                     <ResponsiveContainer width="100%" height={300}>
-                         <BarChart data={leadsByResponsavelData} /* ... */ >
-                            {/* ... seus Bar, XAxis, YAxis ... */}
+                         <BarChart data={leadsByResponsavelData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" />
+                            <YAxis />
+                            <Tooltip />
+                            <Legend />
+                            <Bar dataKey="Leads" fill="#ffc658" />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
