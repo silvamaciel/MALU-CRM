@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { getFinancialSummaryApi } from '../../../api/dashboardApi';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, FunnelChart, Funnel, LabelList } from 'recharts';
-import './FinancialDashboard.css';
+import './DashboardFinanceiro.css';
 
 // Funções Helper para formatar dados
 const formatCurrency = (value) => {
