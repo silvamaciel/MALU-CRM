@@ -56,10 +56,12 @@ function DashboardPage() {
                     </div>
                 </div>
             </header>
-           <div className="page-content">
-                {activeView === 'leads' && <LeadSummaryDashboard filter={timeFilter} />}
-                {activeView === 'financeiro' && <FinancialDashboard filter={timeFilter} />}
-                {activeView === 'advanced' && <AdvancedDashboard filter={timeFilter} />}
+            <div className="page-content">
+                {activeView === 'leads' ? (
+                    <LeadSummaryDashboard data={dashboardData} loading={loading} error={error} />
+                ) : (
+                    <AdvancedDashboard data={dashboardData} loading={loading} error={error} />
+                )}
             </div>
         </div>
     );
