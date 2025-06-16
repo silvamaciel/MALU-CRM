@@ -314,8 +314,137 @@ const getAdvancedMetrics = async (companyId, filter = 'month') => {
     }
 };
 
+
+/**
+ * Gera um resumo financeiro detalhado com base em filtros.
+ * @param {string} companyId - ID da empresa.
+ * @param {object} filters - Filtros: { dataInicio, dataFim, responsavelId, statusComissao }
+ */
+const getDetailedFinancialSummary = async (companyId, filters = {}) => {
+    console.log(`[DashboardService] Buscando resumo FINANCEIRO DETALHADO para Empresa: ${companyId}`);
+    
+    // --- 1. Montar o $match principal ---
+    const initialMatch = {
+        company: new mongoose.Types.ObjectId(companyId),
+        statusPropostaContrato: 'Vendido' // Apenas vendas concretizadas
+    };
+
+    // Aplicar filtros de data (na data da venda)
+    if (filters.dataInicio || filters.dataFim) {
+        initialMatch.dataVendaEfetivada = {};
+        if (filters.dataInicio) {
+            initialMatch.dataVendaEfetivada.$gte = new Date(filters.dataInicio + "T00:00:00.000Z");
+        }
+        if (filters.dataFim) {
+            initialMatch.dataVendaEfetivada.$lte = new Date(filters.dataFim + "T23:59:59.999Z");
+        }
+    }
+
+    // Aplicar filtro de responsável pela negociação
+    if (filters.responsavelId && mongoose.Types.ObjectId.isValid(filters.responsavelId)) {
+        initialMatch.responsavelNegociacao = new mongoose.Types.ObjectId(filters.responsavelId);
+    }
+
+    // Aplicar filtro de status da comissão
+    if (filters.statusComissao) {
+        initialMatch['corretagem.statusComissao'] = filters.statusComissao;
+    }
+    
+    console.log("[DashboardService] Condições de Match da Agregação:", JSON.stringify(initialMatch, null, 2));
+
+    try {
+        const results = await PropostaContrato.aggregate([
+            { $match: initialMatch },
+            {
+                $facet: {
+                    // Facet 1: Para os KPIs principais (Total Vendido e Comissões)
+                    "kpiGerais": [
+                        {
+                            $group: {
+                                _id: null,
+                                totalVendido: { $sum: "$valorPropostaContrato" },
+                                totalComissao: { $sum: { $ifNull: ["$corretagem.valorCorretagem", 0] } }
+                            }
+                        }
+                    ],
+                    // Facet 2: Para o gráfico de vendas ao longo do tempo
+                    "vendasAoLongoDoTempo": [
+                        {
+                            $group: {
+                                _id: { $dateToString: { format: "%Y-%m", date: "$dataVendaEfetivada" } },
+                                valorVendido: { $sum: "$valorPropostaContrato" }
+                            }
+                        },
+                        { $sort: { _id: 1 } },
+                        { $project: { _id: 0, data: "$_id", valor: "$valorVendido" } }
+                    ],
+                    // Facet 3: Para a tabela de comissões por responsável
+                    "comissoesPorResponsavel": [
+                        {
+                            $group: {
+                                _id: "$responsavelNegociacao",
+                                totalVendido: { $sum: "$valorPropostaContrato" },
+                                comissaoTotal: { $sum: { $ifNull: ["$corretagem.valorCorretagem", 0] } },
+                                comissaoPaga: { 
+                                    $sum: {
+                                        $cond: [{ $eq: ["$corretagem.statusComissao", "Paga"] }, { $ifNull: ["$corretagem.valorCorretagem", 0] }, 0]
+                                    }
+                                },
+                                comissaoAPagar: {
+                                    $sum: {
+                                        $cond: [{ $eq: ["$corretagem.statusComissao", "A Pagar"] }, { $ifNull: ["$corretagem.valorCorretagem", 0] }, 0]
+                                    }
+                                },
+                                totalVendas: { $sum: 1 }
+                            }
+                        },
+                        {
+                            $lookup: { // Busca o nome do responsável
+                                from: "users",
+                                localField: "_id",
+                                foreignField: "_id",
+                                as: "responsavelInfo"
+                            }
+                        },
+                        { $unwind: "$responsavelInfo" },
+                        {
+                            $project: {
+                                _id: 0,
+                                responsavelId: "$_id",
+                                responsavelNome: "$responsavelInfo.nome",
+                                totalVendido: 1,
+                                comissaoTotal: 1,
+                                comissaoPaga: 1,
+                                comissaoAPagar: 1,
+                                totalVendas: 1
+                            }
+                        }
+                    ]
+                }
+            }
+        ]);
+
+        const kpiData = results[0].kpiGerais[0] || { totalVendido: 0, totalComissao: 0 };
+        
+        const finalSummary = {
+            totalVendido: kpiData.totalVendido,
+            totalComissao: kpiData.totalComissao,
+            vendasAoLongoDoTempo: results[0].vendasAoLongoDoTempo,
+            comissoesPorResponsavel: results[0].comissoesPorResponsavel,
+        };
+        
+        console.log("[DashboardService] Resumo financeiro detalhado gerado.");
+        return finalSummary;
+
+    } catch (error) {
+        console.error(`[DashboardService] ERRO ao gerar resumo financeiro detalhado:`, error);
+        throw new Error('Erro ao gerar resumo financeiro detalhado.');
+    }
+};
+
 module.exports = {
     getLeadSummary,
     getFinancialSummary,
-    getAdvancedMetrics
+    getAdvancedMetrics,
+    getDetailedFinancialSummary
 };

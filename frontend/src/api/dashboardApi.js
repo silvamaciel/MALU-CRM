@@ -37,3 +37,17 @@ export const getAdvancedMetricsApi = async (filter = 'month') => {
         throw error.response?.data || new Error("Falha ao buscar métricas avançadas.");
     }
 };
+
+/**
+ * Busca o resumo financeiro detalhado com filtros.
+ * @param {object} filters - Objeto com filtros { dataInicio, dataFim, responsavelId, statusComissao }
+ */
+export const getDetailedFinancialSummaryApi = async (filters = {}) => {
+    try {
+        const response = await axiosInstance.get('/dashboard/financeiro-detalhado', { params: filters });
+        return response.data.data;
+    } catch (error) {
+        console.error("Erro ao buscar resumo financeiro detalhado:", error.response?.data || error.message);
+        throw error.response?.data || new Error("Falha ao buscar resumo financeiro detalhado.");
+    }
+};

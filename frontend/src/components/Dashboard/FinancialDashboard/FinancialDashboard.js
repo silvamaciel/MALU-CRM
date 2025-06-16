@@ -1,93 +1,67 @@
-// src/components/Dashboard/FinancialDashboard/FinancialDashboard.js
-import React, { useState, useEffect } from 'react';
-import { getFinancialSummaryApi } from '../../../api/dashboardApi';
+import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
+import { getFinancialSummaryApi } from '../../../api/dashboardApi'; // A função de API
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, FunnelChart, Funnel, LabelList } from 'recharts';
-import './FInancialDashboard.css';
+import './FinancialDashboard.css'; // O CSS que já criamos
 
-const formatCurrency = (value) => {
-    if (typeof value !== 'number') return 'R$ 0,00';
-    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-};
+// ... (suas funções helper: formatCurrency, formatSalesByMonthData, formatFunnelData)
 
-// Helper para formatar dados do gráfico de vendas mensais
-const formatSalesByMonthData = (data) => {
-    const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-    return data.map(item => ({
-        name: `<span class="math-inline">\{monthNames\[item\.\_id\.month \- 1\]\}/</span>{String(item._id.year).slice(2)}`,
-        "Valor Vendido": item.totalVendido,
-        "Qtd. Vendas": item.count,
-    }));
-};
-
-// Helper para formatar dados do funil
-const formatFunnelData = (data) => {
-    // Ordem do funil
-    const funnelOrder = ["Em Elaboração", "Aguardando Aprovações", "Aguardando Assinatura Cliente", "Assinado", "Vendido"];
-    const colorPalette = ["#8884d8", "#83a6ed", "#8dd1e1", "#82ca9d", "#a4de6c"];
-
-    const formatted = data
-        .map((item, index) => ({
-            name: item._id,
-            value: item.valorTotal,
-            count: item.count,
-            fill: colorPalette[index % colorPalette.length]
-        }))
-        .sort((a, b) => funnelOrder.indexOf(a.name) - funnelOrder.indexOf(b.name));
-
-    return formatted;
-};
-
-
-function FinancialDashboard() {
-    const [summary, setSummary] = useState(null);
+function FinancialDashboard({ filter }) { // <<< Recebe apenas o 'filter' como prop
+    // VVVVV Estados internos para gerenciar dados, loading e erro VVVVV
+    const [summaryData, setSummaryData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+    // VVVVV useEffect para buscar os dados sempre que o filtro mudar VVVVV
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
+            setError(null);
             try {
-                const data = await getFinancialSummaryApi();
-                setSummary(data);
+                const data = await getFinancialSummaryApi(filter);
+                setSummaryData(data);
             } catch (err) {
-                setError(err.message || "Erro ao carregar dados.");
-                toast.error(err.message || "Erro ao carregar dados.");
+                setError(err.message || "Erro ao carregar dados financeiros.");
+                toast.error(err.message || "Erro ao carregar dados financeiros.");
+                setSummaryData(null); // Limpa dados em caso de erro
             } finally {
                 setLoading(false);
             }
         };
         fetchData();
-    }, []);
+    }, [filter]); // <<< Dispara a busca sempre que a prop 'filter' mudar
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     if (loading) {
         return <div className="loading-message">Carregando dados financeiros...</div>;
     }
 
-    if (error || !summary) {
+    if (error || !summaryData) {
         return <div className="error-message">{error || "Não foi possível carregar os dados financeiros."}</div>;
     }
 
-    const salesByMonthData = formatSalesByMonthData(summary.vendasPorMes);
-    const funnelData = formatFunnelData(summary.funilPorValor);
+    // A lógica de formatação e renderização continua a mesma, usando 'summaryData'
+    const salesByMonthData = formatSalesByMonthData(summaryData.vendasPorMes);
+    const funnelData = formatFunnelData(summaryData.funilPorValor);
 
     return (
         <div className="financial-dashboard">
             <div className="kpi-card-container">
                 <div className="kpi-card">
-                    <span className="kpi-value">{formatCurrency(summary.valorTotalVendidoMes)}</span>
-                    <span className="kpi-label">Vendido no Mês</span>
+                    <span className="kpi-value">{formatCurrency(summaryData.valorTotalVendidoPeriodo)}</span>
+                    <span className="kpi-label">Vendido no Período</span>
                 </div>
                 <div className="kpi-card">
-                    <span className="kpi-value">{summary.numeroDeVendasMes}</span>
-                    <span className="kpi-label">Nº de Vendas no Mês</span>
+                    <span className="kpi-value">{summaryData.numeroDeVendasPeriodo}</span>
+                    <span className="kpi-label">Nº de Vendas no Período</span>
                 </div>
                 <div className="kpi-card">
-                    <span className="kpi-value">{formatCurrency(summary.ticketMedioMes)}</span>
-                    <span className="kpi-label">Ticket Médio no Mês</span>
+                    <span className="kpi-value">{formatCurrency(summaryData.ticketMedioPeriodo)}</span>
+                    <span className="kpi-label">Ticket Médio no Período</span>
                 </div>
                 <div className="kpi-card">
-                    <span className="kpi-value">{formatCurrency(summary.valorTotalEmPropostasAtivas)}</span>
+                    <span className="kpi-value">{formatCurrency(summaryData.valorTotalEmPropostasAtivas)}</span>
                     <span className="kpi-label">Valor em Propostas Ativas</span>
                 </div>
             </div>

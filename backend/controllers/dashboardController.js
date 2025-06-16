@@ -28,10 +28,17 @@ const getAdvancedMetricsController = asyncHandler(async (req, res, next) => {
     res.status(200).json({ success: true, data: summary });
 });
 
+const getDetailedFinancialSummaryController = asyncHandler(async (req, res, next) => {
+    const companyId = req.user.company;
+    const summary = await DashboardService.getDetailedFinancialSummary(companyId, req.query);
+    res.status(200).json({ success: true, data: summary });
+});
+
 
 
 module.exports = {
     getSummary,
     getFinancialSummaryController,
-    getAdvancedMetricsController
+    getAdvancedMetricsController,
+    getDetailedFinancialSummaryController
 };

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import './DashboardPage.css';
 import LeadSummaryDashboard from '../../components/Dashboard/LeadSummaryDashboard/LeadSummaryDashboard';
-import FinancialDashboard from '../../components/Dashboard/FinancialDashboard/FinancialDashboard'; // Você ainda o tem para a outra visão
+import FinancialDashboard from '../../components/Dashboard/FinancialDashboard/FinancialDashboard';
 
 function DashboardPage() {
     const [activeView, setActiveView] = useState('leads');
