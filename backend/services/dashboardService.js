@@ -119,77 +119,146 @@ const getLeadSummary = async (companyId, filter = 'month') => {
  */
 const getFinancialSummary = async (companyId, filter = 'month') => {
     console.log(`[DashboardService] Buscando resumo FINANCEIRO para Empresa: ${companyId} com filtro: ${filter}`);
+
     if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
         throw new Error("ID da empresa inválido.");
     }
 
-    const salesDateFilter = {};
     const hoje = new Date();
-    if (filter === 'month') {
-        salesDateFilter.dataVendaEfetivada = { $gte: new Date(hoje.getFullYear(), hoje.getMonth(), 1) };
-    } else if (filter === 'year') {
-        salesDateFilter.dataVendaEfetivada = { $gte: new Date(hoje.getFullYear(), 0, 1) };
-    }
-    
+    const salesDateFilter = {
+        dataVendaEfetivada: {
+            $gte: filter === 'month'
+                ? new Date(hoje.getFullYear(), hoje.getMonth(), 1)
+                : new Date(hoje.getFullYear(), 0, 1)
+        }
+    };
+
+    const baseMatch = { company: new mongoose.Types.ObjectId(companyId) };
+
     try {
-        const result = await PropostaContrato.aggregate([
-            { $match: { company: new mongoose.Types.ObjectId(companyId) } },
+        const [result] = await PropostaContrato.aggregate([
+            { $match: baseMatch },
             {
                 $facet: {
-                    "vendasNoPeriodo": [
+                    vendasNoPeriodo: [
                         { $match: { statusPropostaContrato: "Vendido", ...salesDateFilter } },
-                        { $group: {
-                            _id: null,
-                            valorTotalVendido: { $sum: "$valorPropostaContrato" },
-                            numeroDeVendas: { $sum: 1 }
-                        }}
+                        {
+                            $group: {
+                                _id: null,
+                                valorTotalVendido: { $sum: "$valorPropostaContrato" },
+                                numeroDeVendas: { $sum: 1 },
+                                totalComissao: { $sum: { $ifNull: ["$corretagem.valorCorretagem", 0] } },
+                                totalComissaoPaga: {
+                                    $sum: {
+                                        $cond: [
+                                            { $eq: ["$corretagem.statusComissao", "Paga"] },
+                                            { $ifNull: ["$corretagem.valorCorretagem", 0] },
+                                            0
+                                        ]
+                                    }
+                                },
+                                totalComissaoAPagar: {
+                                    $sum: {
+                                        $cond: [
+                                            { $eq: ["$corretagem.statusComissao", "A Pagar"] },
+                                            { $ifNull: ["$corretagem.valorCorretagem", 0] },
+                                            0
+                                        ]
+                                    }
+                                }
+                            }
+                        }
                     ],
-                    "propostasAtivas": [
-                        { $match: { statusPropostaContrato: { $in: ["Em Elaboração", "Aguardando Aprovações", "Aguardando Assinatura Cliente", "Assinado"] } } },
-                        { $group: {
-                            _id: null,
-                            valorTotalEmPropostas: { $sum: "$valorPropostaContrato" },
-                            numeroDePropostas: { $sum: 1 }
-                        }}
+                    propostasAtivas: [
+                        {
+                            $match: {
+                                statusPropostaContrato: {
+                                    $in: [
+                                        "Em Elaboração",
+                                        "Aguardando Aprovações",
+                                        "Aguardando Assinatura Cliente",
+                                        "Assinado"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: null,
+                                valorTotalEmPropostas: { $sum: "$valorPropostaContrato" },
+                                numeroDePropostas: { $sum: 1 }
+                            }
+                        }
                     ],
-                    "vendasPorMes": [
-                        { $match: { statusPropostaContrato: "Vendido", dataVendaEfetivada: { $gte: new Date(hoje.getFullYear(), hoje.getMonth() - 5, 1) } } },
-                        { $group: {
-                            _id: { year: { $year: "$dataVendaEfetivada" }, month: { $month: "$dataVendaEfetivada" } },
-                            totalVendido: { $sum: "$valorPropostaContrato" },
-                            count: { $sum: 1 }
-                        }},
+                    vendasPorMes: [
+                        {
+                            $match: {
+                                statusPropostaContrato: "Vendido",
+                                dataVendaEfetivada: {
+                                    $gte: new Date(hoje.getFullYear(), hoje.getMonth() - 5, 1)
+                                }
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: {
+                                    year: { $year: "$dataVendaEfetivada" },
+                                    month: { $month: "$dataVendaEfetivada" }
+                                },
+                                totalVendido: { $sum: "$valorPropostaContrato" },
+                                count: { $sum: 1 }
+                            }
+                        },
                         { $sort: { "_id.year": 1, "_id.month": 1 } }
                     ],
-                    "funilPorValor": [
-                        { $match: { statusPropostaContrato: { $nin: ["Recusado", "Cancelado", "Distrato Realizado"] } } },
-                        { $group: {
-                            _id: "$statusPropostaContrato",
-                            valorTotal: { $sum: "$valorPropostaContrato" },
-                            count: { $sum: 1 }
-                        }}
+                    funilPorValor: [
+                        {
+                            $match: {
+                                statusPropostaContrato: {
+                                    $nin: ["Recusado", "Cancelado", "Distrato Realizado"]
+                                }
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: "$statusPropostaContrato",
+                                valorTotal: { $sum: "$valorPropostaContrato" },
+                                count: { $sum: 1 }
+                            }
+                        }
                     ]
                 }
             }
         ]);
-        
-        console.log("[DashboardService] Resumo Financeiro Gerado.");
-        const vendas = result[0].vendasNoPeriodo[0] || { valorTotalVendido: 0, numeroDeVendas: 0 };
-        const propostasAtivas = result[0].propostasAtivas[0] || { valorTotalEmPropostas: 0, numeroDePropostas: 0 };
-        
-        const summary = {
+
+        const vendas = result.vendasNoPeriodo[0] || {
+            valorTotalVendido: 0,
+            numeroDeVendas: 0,
+            totalComissao: 0,
+            totalComissaoPaga: 0,
+            totalComissaoAPagar: 0
+        };
+
+        const propostasAtivas = result.propostasAtivas[0] || {
+            valorTotalEmPropostas: 0,
+            numeroDePropostas: 0
+        };
+
+        return {
             valorTotalVendidoPeriodo: vendas.valorTotalVendido,
             numeroDeVendasPeriodo: vendas.numeroDeVendas,
             ticketMedioPeriodo: vendas.numeroDeVendas > 0 ? vendas.valorTotalVendido / vendas.numeroDeVendas : 0,
+            totalComissao: vendas.totalComissao,
+            totalComissaoPaga: vendas.totalComissaoPaga,
+            totalComissaoAPagar: vendas.totalComissaoAPagar,
             valorTotalEmPropostasAtivas: propostasAtivas.valorTotalEmPropostas,
             numeroDePropostasAtivas: propostasAtivas.numeroDePropostas,
-            vendasPorMes: result[0].vendasPorMes,
-            funilPorValor: result[0].funilPorValor
+            vendasPorMes: result.vendasPorMes,
+            funilPorValor: result.funilPorValor
         };
-        return summary;
 
     } catch (error) {
-        console.error(`[DashboardService] ERRO DETALHADO ao gerar resumo financeiro para empresa ${companyId}:`, error);
+        console.error(`[DashboardService] ERRO DETALHADO ao gerar resumo financeiro:`, error);
         throw new Error('Erro ao gerar resumo financeiro.');
     }
 };
