@@ -29,30 +29,70 @@ const getLeadSummary = async (companyId, filter = 'month') => {
         const inicioDoAno = new Date(hoje.getFullYear(), 0, 1);
         dateQuery.$gte = inicioDoAno;
     }
-    
+
     const matchConditions = { company: new mongoose.Types.ObjectId(companyId) };
     if (Object.keys(dateQuery).length > 0) {
         matchConditions.createdAt = dateQuery;
     }
     
     try {
-        const totalLeads = await Lead.countDocuments(matchConditions);
+        const summary = await Lead.aggregate([
+            { $match: matchConditions },
+            {
+                $facet: {
+                    // Contagem total de leads no período
+                    "totalLeads": [
+                        { $count: "count" }
+                    ],
+                    // Contagem de leads por situação (stage)
+                    "leadsByStage": [
+                        { $group: { _id: "$situacao", count: { $sum: 1 } } },
+                        { $lookup: { from: 'leadstages', localField: '_id', foreignField: '_id', as: 'stageDetails' } },
+                        { $unwind: "$stageDetails" },
+                        { $project: { _id: 1, nome: "$stageDetails.nome", count: 1, ordem: "$stageDetails.ordem" } },
+                        { $sort: { ordem: 1, nome: 1 } }
+                    ],
+                    // Contagem de leads por origem
+                    "leadsByOrigem": [
+                        { $group: { _id: "$origem", count: { $sum: 1 } } },
+                        { $lookup: { from: 'origens', localField: '_id', foreignField: '_id', as: 'origemDetails' } },
+                        { $unwind: "$origemDetails" },
+                        { $project: { _id: 1, nome: "$origemDetails.nome", count: 1 } },
+                        { $sort: { count: -1 } }
+                    ],
+                    // Contagem de leads por responsável
+                    "leadsByResponsavel": [
+                        { $group: { _id: "$responsavel", count: { $sum: 1 } } },
+                        { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'userDetails' } },
+                        { $unwind: "$userDetails" },
+                        { $project: { _id: 1, nome: "$userDetails.nome", count: 1 } },
+                        { $sort: { count: -1 } }
+                    ],
+                    // Lista de leads recentes
+                    "leadsRecentes": [
+                        { $sort: { createdAt: -1 } },
+                        { $limit: 5 },
+                        { $lookup: { from: 'users', localField: 'responsavel', foreignField: '_id', as: 'responsavelDetails' } },
+                        { $unwind: { path: "$responsavelDetails", preserveNullAndEmptyArrays: true } },
+                        { $project: { nome: 1, responsavelNome: "$responsavelDetails.nome", createdAt: 1 } }
+                    ]
+                }
+            }
+        ]);
 
-        const stages = await LeadStage.find({ company: companyId, ativo: true }).lean();
-        const leadsByStagePromises = stages.map(stage => 
-            Lead.countDocuments({ ...matchConditions, situacao: stage._id })
-        );
-        const leadsByStageCounts = await Promise.all(leadsByStagePromises);
+        // Formata o resultado final
+        const formattedSummary = {
+            totalLeads: summary[0].totalLeads[0]?.count || 0,
+            leadsByStage: summary[0].leadsByStage,
+            leadsByOrigem: summary[0].leadsByOrigem,
+            leadsByResponsavel: summary[0].leadsByResponsavel,
+            leadsRecentes: summary[0].leadsRecentes
+        };
 
-        const leadsByStage = stages.map((stage, index) => ({
-            _id: stage._id,
-            nome: stage.nome,
-            count: leadsByStageCounts[index]
-        }));
+        return formattedSummary;
 
-        return { totalLeads, leadsByStage };
     } catch (error) {
-        console.error(`[DashboardService] Erro ao gerar resumo de leads para empresa ${companyId}:`, error);
+        console.error(`[DashboardService] ERRO DETALHADO ao gerar resumo de leads para empresa ${companyId}:`, error);
         throw new Error('Erro ao gerar resumo de leads.');
     }
 };
