@@ -501,7 +501,7 @@ const updateLead = async (id, leadData, companyId, userId) => {
   // Origem
   if (origem !== undefined) {
     if (!mongoose.Types.ObjectId.isValid(origem)) throw new Error("Origem inválida.");
-    const origemDoc = await LeadOrigin.findOne({ _id: origem, company: companyId });
+    const origemDoc = await Origem.findOne({ _id: origem, company: companyId });
     if (!origemDoc) throw new Error("Origem não encontrada.");
     updateFields.origem = origem;
   }
