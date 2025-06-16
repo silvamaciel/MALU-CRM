@@ -1,13 +1,12 @@
-// src/pages/Dashboard/DashboardPage.js
 import React, { useState, useEffect, useCallback } from 'react';
 import './DashboardPage.css';
-import { getLeadSummaryApi, getFinancialSummaryApi } from '../../api/dashboard';
+import { getLeadSummaryApi, getFinancialSummaryApi } from '../../api/dashboardApi';
 import LeadSummaryDashboard from '../../components/Dashboard/LeadSummaryDashboard/LeadSummaryDashboard';
 import FinancialDashboard from '../../components/Dashboard/FinancialDashboard/FinancialDashboard';
 
 function DashboardPage() {
-    const [activeView, setActiveView] = useState('leads'); 
-    const [timeFilter, setTimeFilter] = useState('month'); 
+    const [activeView, setActiveView] = useState('leads'); // 'leads' ou 'financeiro'
+    const [timeFilter, setTimeFilter] = useState('month'); // 'month', 'year', 'all'
     
     const [dashboardData, setDashboardData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -65,4 +64,5 @@ function DashboardPage() {
         </div>
     );
 }
+
 export default DashboardPage;
