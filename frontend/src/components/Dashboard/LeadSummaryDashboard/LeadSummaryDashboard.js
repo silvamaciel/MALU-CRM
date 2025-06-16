@@ -15,15 +15,10 @@ function LeadSummaryDashboard({ data, loading, error }) {
     if (loading) {
         return <div className="loading-message">Carregando resumo de leads...</div>;
     }
-
-    if (error) {
-        return <div className="error-message">{error}</div>;
+    if (error || !data) {
+        return <div className="error-message">{error || "Não foi possível carregar os dados."}</div>;
     }
-
-    if (!data) {
-        return <div className="loading-message">Selecione um período para ver os dados.</div>;
-    }
-
+    
     const leadsByStageData = formatDataForChart(data.leadsByStage);
     const leadsByOrigemData = formatDataForChart(data.leadsByOrigem);
     const leadsByResponsavelData = formatDataForChart(data.leadsByResponsavel);
@@ -32,49 +27,41 @@ function LeadSummaryDashboard({ data, loading, error }) {
         <div className="lead-summary-dashboard">
             <div className="kpi-card-container">
                 <div className="kpi-card">
-                    <span className="kpi-value">{data.totalLeads || 0}</span>
+                    <span className="kpi-value">{data.totalLeadsPeriodo || 0}</span>
                     <span className="kpi-label">Total de Leads no Período</span>
                 </div>
-                {/* Adicione outros KPIs se desejar */}
+                <div className="kpi-card">
+                    <span className="kpi-value">{data.descartadosPeriodo || 0}</span>
+                    <span className="kpi-label">Descartados no Período</span>
+                </div>
+                <div className="kpi-card">
+                    <span className="kpi-value">{data.leadsUltimos7Dias || 0}</span>
+                    <span className="kpi-label">Leads nos Últimos 7 Dias</span>
+                </div>
             </div>
 
             <div className="charts-container">
                 <div className="chart-wrapper">
                     <h3>Leads por Situação</h3>
                     <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={leadsByStageData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis type="number" />
-                            <YAxis type="category" dataKey="name" width={120} />
-                            <Tooltip />
-                            <Legend />
-                            <Bar dataKey="Leads" fill="#8884d8" />
+                        <BarChart data={leadsByStageData} layout="vertical" /* ... */ >
+                            {/* ... seus Bar, XAxis, YAxis ... */}
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
                 <div className="chart-wrapper">
                     <h3>Leads por Origem</h3>
                     <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={leadsByOrigemData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" />
-                            <YAxis />
-                            <Tooltip />
-                            <Legend />
-                            <Bar dataKey="Leads" fill="#82ca9d" />
+                        <BarChart data={leadsByOrigemData} /* ... */ >
+                            {/* ... seus Bar, XAxis, YAxis ... */}
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
                 <div className="chart-wrapper full-width-chart">
                     <h3>Leads por Responsável</h3>
                     <ResponsiveContainer width="100%" height={300}>
-                         <BarChart data={leadsByResponsavelData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" />
-                            <YAxis />
-                            <Tooltip />
-                            <Legend />
-                            <Bar dataKey="Leads" fill="#ffc658" />
+                         <BarChart data={leadsByResponsavelData} /* ... */ >
+                            {/* ... seus Bar, XAxis, YAxis ... */}
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
