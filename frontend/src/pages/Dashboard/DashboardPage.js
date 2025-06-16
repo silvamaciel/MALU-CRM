@@ -3,6 +3,8 @@ import './DashboardPage.css';
 import { getLeadSummaryApi, getFinancialSummaryApi } from '../../api/dashboardApi';
 import LeadSummaryDashboard from '../../components/Dashboard/LeadSummaryDashboard/LeadSummaryDashboard';
 import FinancialDashboard from '../../components/Dashboard/FinancialDashboard/FinancialDashboard';
+import AdvancedDashboard from '../../components/Dashboard/AdvancedDashboard/AdvancedDashboard';
+
 
 function DashboardPage() {
     const [activeView, setActiveView] = useState('leads'); // 'leads' ou 'financeiro'
@@ -54,12 +56,10 @@ function DashboardPage() {
                     </div>
                 </div>
             </header>
-            <div className="page-content">
-                {activeView === 'leads' ? (
-                    <LeadSummaryDashboard data={dashboardData} loading={loading} error={error} />
-                ) : (
-                    <FinancialDashboard data={dashboardData} loading={loading} error={error} />
-                )}
+           <div className="page-content">
+                {activeView === 'leads' && <LeadSummaryDashboard filter={timeFilter} />}
+                {activeView === 'financeiro' && <FinancialDashboard filter={timeFilter} />}
+                {activeView === 'advanced' && <AdvancedDashboard filter={timeFilter} />}
             </div>
         </div>
     );

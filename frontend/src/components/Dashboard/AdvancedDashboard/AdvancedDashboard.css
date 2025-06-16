@@ -1,0 +1,7 @@
+/* src/components/Dashboard/AdvancedDashboard/AdvancedDashboard.css */
+/* Este arquivo pode reusar estilos de DashboardComponents.css */
+.advanced-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
