@@ -1,7 +1,7 @@
 // src/components/Dashboard/LeadSummaryDashboard/LeadSummaryDashboard
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { getDashboardSummary } from '../../../api/dashboard';
+import { getLeadSummary } from '../../../api/dashboard';
 // import { toast } from 'react-toastify'; // Removido import não usado
 import {
     Chart as ChartJS, ArcElement, Tooltip, Legend, Title, CategoryScale, LinearScale, BarElement, PointElement, LineElement
@@ -39,7 +39,7 @@ function DashboardPage() {
     const fetchSummary = useCallback(async () => {
         setIsLoading(true); setError(null);
         try {
-            const data = await getDashboardSummary();
+            const data = await getLeadSummary();
             setSummaryData({
                  totalActiveLeads: data.totalActiveLeads ?? 0,
                  leadsByStatus: Array.isArray(data.leadsByStatus) ? data.leadsByStatus : [],
