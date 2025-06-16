@@ -10,5 +10,10 @@ router.get('/summary', protect, dashboardController.getSummary);
 router.get('/financeiro', protect, dashboardController.getFinancialSummaryController);
 
 
+router.get('/advanced-metrics', protect, dashboardController.getAdvancedMetricsController);
+
+
+
+
 
 module.exports = router;

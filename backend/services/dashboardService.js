@@ -194,7 +194,128 @@ const getFinancialSummary = async (companyId, filter = 'month') => {
     }
 };
 
+
+
+/**
+ * Gera métricas avançadas de conversão, tempo e funil.
+ * @param {string} companyId - ID da empresa.
+ * @param {string} filter - 'month', 'year', ou 'all'.
+ */
+const getAdvancedMetrics = async (companyId, filter = 'month') => {
+    console.log(`[DashboardService] Buscando métricas AVANÇADAS para Empresa: ${companyId} com filtro: ${filter}`);
+    if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+        throw new Error("ID da empresa inválido.");
+    }
+
+    // --- Definição dos Intervalos de Data ---
+    const hoje = new Date();
+    let dateRangeMatch = {}; // Filtro de data para leads criados no período
+    if (filter === 'month') {
+        dateRangeMatch = { createdAt: { $gte: new Date(hoje.getFullYear(), hoje.getMonth(), 1) } };
+    } else if (filter === 'year') {
+        dateRangeMatch = { createdAt: { $gte: new Date(hoje.getFullYear(), 0, 1) } };
+    }
+    
+    // --- IDs dos Estágios Chave ---
+    const stages = await LeadStage.find({ company: companyId }).select('nome _id').lean();
+    const vendidoStageId = stages.find(s => s.nome.toLowerCase() === 'vendido')?._id;
+    const novoStageId = stages.find(s => s.nome.toLowerCase() === 'novo')?._id;
+    const emAtendimentoStageId = stages.find(s => s.nome.toLowerCase().includes('em atendimento'))?._id;
+    const propostaStageId = stages.find(s => s.nome.toLowerCase().includes('proposta'))?._id;
+
+
+    try {
+        const results = await Lead.aggregate([
+            {
+                $match: { company: new mongoose.Types.ObjectId(companyId), ...dateRangeMatch }
+            },
+            {
+                $facet: {
+                    // Métrica 1: Taxa de Conversão e Métrica 2: Tempo Médio de Conversão
+                    "conversionMetrics": [
+                        { $match: { situacao: vendidoStageId, dataVendaEfetivada: { $exists: true, $ne: null } } },
+                        {
+                            $project: {
+                                conversionTime: {
+                                    $dateDiff: {
+                                        startDate: "$createdAt",
+                                        endDate: "$dataVendaEfetivada",
+                                        unit: "day"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: null,
+                                avgConversionTime: { $avg: "$conversionTime" },
+                                soldLeadsCount: { $sum: 1 }
+                            }
+                        }
+                    ],
+                    // Métrica 3: Leads por Dia da Semana / Hora do Dia
+                    "leadsByDayHour": [
+                        {
+                            $project: {
+                                dayOfWeek: { $dayOfWeek: { date: "$createdAt", timezone: "America/Sao_Paulo" } }, // 1=Dom, 2=Seg, ...
+                                hour: { $hour: { date: "$createdAt", timezone: "America/Sao_Paulo" } }
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: { day: "$dayOfWeek", hour: "$hour" },
+                                count: { $sum: 1 }
+                            }
+                        },
+                        { $sort: { "_id.day": 1, "_id.hour": 1 } }
+                    ],
+                     // Métrica 4: Funil de Conversão de Estágios (Snapshot de quantos estão em cada estágio)
+                    "stageFunnel": [
+                        { $group: { _id: "$situacao", count: { $sum: 1 } } }
+                    ],
+                    // Total de leads para o cálculo da taxa de conversão
+                    "totalLeadsCount": [
+                        { $count: "count" }
+                    ]
+                }
+            }
+        ]);
+
+        const conversionData = results[0].conversionMetrics[0] || { avgConversionTime: 0, soldLeadsCount: 0 };
+        const totalLeads = results[0].totalLeadsCount[0]?.count || 0;
+
+        // Montando o funil com os estágios específicos
+        const stageCounts = results[0].stageFunnel.reduce((acc, item) => {
+            acc[item._id] = item.count;
+            return acc;
+        }, {});
+
+        const funnelData = [
+            { name: 'Novo', value: stageCounts[novoStageId] || 0 },
+            { name: 'Em Atendimento', value: stageCounts[emAtendimentoStageId] || 0 },
+            { name: 'Proposta', value: stageCounts[propostaStageId] || 0 },
+            { name: 'Vendido', value: stageCounts[vendidoStageId] || 0 },
+        ];
+
+
+        const finalSummary = {
+            conversionRate: totalLeads > 0 ? (conversionData.soldLeadsCount / totalLeads) * 100 : 0,
+            avgConversionTime: conversionData.avgConversionTime || 0,
+            leadsByDayHour: results[0].leadsByDayHour.map(item => ({ day: item._id.day, hour: item._id.hour, count: item.count })),
+            stageFunnelData: funnelData
+        };
+
+        console.log("[DashboardService] Métricas avançadas geradas.");
+        return finalSummary;
+
+    } catch (error) {
+        console.error(`[DashboardService] ERRO ao gerar métricas avançadas:`, error);
+        throw new Error('Erro ao gerar métricas avançadas.');
+    }
+};
+
 module.exports = {
     getLeadSummary,
-    getFinancialSummary
+    getFinancialSummary,
+    getAdvancedMetrics
 };
