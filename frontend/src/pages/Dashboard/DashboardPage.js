@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './DashboardPage.css';
-import { getLeadSummaryApi, getFinancialSummaryApi } from '../../api/dashboardApi';
+import { getLeadSummaryApi, getFinancialSummaryApi } from '../../api/dashboard';
 import LeadSummaryDashboard from '../../components/Dashboard/LeadSummaryDashboard/LeadSummaryDashboard';
 import FinancialDashboard from '../../components/Dashboard/FinancialDashboard/FinancialDashboard';
 
