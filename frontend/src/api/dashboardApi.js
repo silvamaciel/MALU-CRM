@@ -26,3 +26,14 @@ export const getFinancialSummaryApi = async (filter = 'month') => {
         throw error.response?.data || new Error("Falha ao buscar o resumo financeiro.");
     }
 };
+
+
+export const getAdvancedMetricsApi = async (filter = 'month') => {
+    try {
+        const response = await axiosInstance.get(`${API_URL}/advanced-metrics`, { params: { filter } });
+        return response.data.data;
+    } catch (error) {
+        console.error("Erro ao buscar métricas avançadas:", error.response?.data || error.message);
+        throw error.response?.data || new Error("Falha ao buscar métricas avançadas.");
+    }
+};

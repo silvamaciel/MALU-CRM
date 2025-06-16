@@ -1,6 +1,6 @@
 // src/components/Dashboard/FinancialDashboard/FinancialDashboard.js
 import React, { useState, useEffect } from 'react';
-import { getFinancialSummaryApi } from '../../../api/dashboard';
+import { getFinancialSummaryApi } from '../../../api/dashboardApi';
 import { toast } from 'react-toastify';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, FunnelChart, Funnel, LabelList } from 'recharts';
 import './FInancialDashboard.css';
