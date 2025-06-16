@@ -1,5 +1,6 @@
 // controllers/dashboardController.js
 const dashboardService = require('../services/dashboardService');
+const asyncHandler = require("../middlewares/asyncHandler");
 
 /**
  * Controller para buscar os dados resumidos do dashboard.
