@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { getFinancialSummaryApi } from '../../../api/dashboard';
 import { toast } from 'react-toastify';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, FunnelChart, Funnel, LabelList } from 'recharts';
-import './FinancialDashboard.css';
+import './FInancialDashboard.css';
 
 const formatCurrency = (value) => {
     if (typeof value !== 'number') return 'R$ 0,00';
