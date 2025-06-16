@@ -97,10 +97,6 @@ function FinancialDashboard({ filter }) {
                     <span className="kpi-value">{formatCurrency(summaryData.totalComissaoAPagar)}</span>
                     <span className="kpi-label">Comissões a Pagar</span>
                 </div>
-                <div className="kpi-card">
-                    <span className="kpi-value">{formatCurrency(summaryData.totalComissaoPaga)}</span>
-                    <span className="kpi-label">Comissões Pagas</span>
-                </div>
             </div>
 
             {/* ==== GRÁFICOS ==== */}
