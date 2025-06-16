@@ -1,7 +1,7 @@
 // src/components/Dashboard/LeadSummaryDashboard/LeadSummaryDashboard
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { getDashboardSummary } from '../../api/dashboard';
+import { getDashboardSummary } from '../../../api/dashboard';
 // import { toast } from 'react-toastify'; // Removido import não usado
 import {
     Chart as ChartJS, ArcElement, Tooltip, Legend, Title, CategoryScale, LinearScale, BarElement, PointElement, LineElement
