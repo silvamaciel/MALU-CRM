@@ -747,7 +747,7 @@ const importLeadsFromCSV = async (fileBuffer, companyId, createdByUserId) => {
         const readableStream = stream.Readable.from(fileBuffer);
 
         readableStream
-            .pipe(csv()) // O csv-parser assume que a primeira linha é o cabeçalho
+            .pipe(csv({ delimiter: ';' })) 
             .on('data', (row) => {
                 processedRowCount++;
                 console.log(`[LeadSvc Import] Processando linha ${processedRowCount}:`, row);
