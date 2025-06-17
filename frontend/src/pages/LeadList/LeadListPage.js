@@ -12,12 +12,13 @@ import { getUsuarios } from "../../api/users";
 // Componentes
 import DiscardLeadModal from "../../components/DiscardLeadModal/DiscardLeadModal";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
-import KanbanFilters from "../../components/KanbanFilters/KanbanFilters"; // Assumindo que você criou este para os filtros do Kanban
+import KanbanFilters from "../../components/KanbanFilters/KanbanFilters"; 
 import LeadTagsModal from '../../components/LeadTagsModal/LeadTagsModal';
+import ImportCSVModal from '../../components/ImportCSVModal/ImportCSVModal';
 
 // Estilos
 import "./LeadListPage.css";
-import "./Kanban.css"; // CSS para o Kanban
+import "./Kanban.css";
 
 function LeadListPage() {
   const navigate = useNavigate();
@@ -47,6 +48,8 @@ function LeadListPage() {
 
   const [isTagsModalOpen, setIsTagsModalOpen] = useState(false);
   const [selectedLeadForTags, setSelectedLeadForTags] = useState(null);
+
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Função para buscar TODOS os dados da página
   const fetchData = useCallback(async (filters = {}) => {
@@ -207,6 +210,7 @@ function LeadListPage() {
             Filtros {showFilters ? '▲' : '▼'}
           </button>
           <Link to="/leads/novo" className="button primary-button">+ Novo Lead</Link>
+          <button onClick={() => setIsImportModalOpen(true)} className="button"> Importar CSV </button>
         </div>
       </header>
       <div className="page-content">
@@ -277,6 +281,7 @@ function LeadListPage() {
       <LeadTagsModal isOpen={isTagsModalOpen} onClose={handleCloseTagsModal} lead={selectedLeadForTags} onTagsSaved={forceRefresh} />
       <DiscardLeadModal isOpen={isDiscardModalOpen} onClose={handleCloseDiscardModal} onSubmit={handleConfirmDiscard} leadName={discardTargetLead?.lead?.nome} isProcessing={isProcessingAction} />
       <ConfirmModal isOpen={isDeleteModalOpen} onClose={handleCloseDeleteModal} onConfirm={handleConfirmDelete} title="Confirmar Exclusão" message={`Excluir permanentemente o lead "${deleteTargetLeadForModal?.nome || ''}"?`} isProcessing={isProcessingAction} />
+      <ImportCSVModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} onImportSuccess={forceRefresh} />
     </div>
   );
 }

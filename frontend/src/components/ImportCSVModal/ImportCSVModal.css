@@ -1,0 +1,35 @@
+/* src/components/ImportCSVModal/ImportCSVModal.css */
+.dropzone {
+    border: 2px dashed #007bff;
+    border-radius: 6px;
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+.dropzone.active, .dropzone:hover {
+    background-color: #e7f3ff;
+}
+.dropzone p {
+    margin: 0;
+    color: #555;
+    font-size: 0.95em;
+}
+.preview-section {
+    margin-top: 20px;
+}
+.preview-section h4 {
+    margin-bottom: 10px;
+}
+.import-result-section {
+    padding: 10px;
+}
+.import-result-section .error-details {
+    max-height: 150px;
+    overflow-y: auto;
+    background: #fff3f3;
+    border: 1px solid #ffc8c8;
+    padding: 10px;
+    margin-top: 10px;
+    font-size: 0.9em;
+}

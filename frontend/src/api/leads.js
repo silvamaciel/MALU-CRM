@@ -156,3 +156,29 @@ export const getLeadHistory = async (leadId) => {
     return []; // Retorna vazio para não quebrar a UI que espera um array
   }
 };
+
+
+/**
+ * Faz o upload de um arquivo CSV para importação de leads.
+ * @param {File} file - O arquivo CSV selecionado pelo usuário.
+ * @returns {Promise<object>} O resumo da importação retornado pelo backend.
+ */
+export const importLeadsFromCSVApi = async (file) => {
+    if (!file) throw new Error("Nenhum arquivo selecionado.");
+
+    const formData = new FormData();
+    // 'csvfile' deve corresponder ao nome esperado pelo multer no backend
+    formData.append('csvfile', file); 
+
+    try {
+        const response = await axiosInstance.post('/leads/importar-csv', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data', // Essencial para upload de arquivos
+            },
+        });
+        return response.data.data; // Retorna o objeto de resumo
+    } catch (error) {
+        console.error("Erro ao importar CSV:", error.response?.data || error.message);
+        throw error.response?.data || new Error("Falha ao importar o arquivo CSV.");
+    }
+};
