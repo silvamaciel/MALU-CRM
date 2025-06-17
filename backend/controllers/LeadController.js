@@ -3,6 +3,10 @@
 const leadService = require('../services/LeadService');
 const leadHistoryService = require('../services/leadHistoryService'); 
 const mongoose = require('mongoose'); 
+const asyncHandler = require("../middlewares/asyncHandler");
+const ErrorResponse = require('../utils/errorResponse');
+
+
 
 const getLeads = async (req, res) => {
     try {
@@ -147,6 +151,23 @@ const getLeadHistory = async (req, res) => {
     }
 };
 
+const importLeadsFromCSVController = asyncHandler(async (req, res, next) => {
+    const companyId = req.user.company;
+    const createdByUserId = req.user._id;
+
+    if (!req.file) {
+        return next(new ErrorResponse('Nenhum arquivo CSV foi enviado.', 400));
+    }
+    
+    console.log(`[LeadCtrl Import] Recebido arquivo CSV para importação: ${req.file.originalname}`);
+
+    const fileBuffer = req.file.buffer;
+
+    const summary = await LeadService.importLeadsFromCSV(fileBuffer, companyId, createdByUserId);
+    
+    res.status(200).json({ success: true, data: summary });
+});
+
 
 module.exports = {
     getLeads,
@@ -155,5 +176,6 @@ module.exports = {
     updateLead,
     deleteLead,
     descartarLead,
-    getLeadHistory
+    getLeadHistory,
+    importLeadsFromCSVController
 };

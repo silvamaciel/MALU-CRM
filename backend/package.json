@@ -20,12 +20,14 @@
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "cpf-cnpj-validator": "^1.0.3",
+    "csv-parser": "^3.2.0",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "google-auth-library": "^9.15.1",
     "google-libphonenumber": "^3.2.40",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.13.2",
+    "multer": "^2.0.1",
     "puppeteer-core": "^24.9.0"
   },
   "devDependencies": {
