@@ -722,21 +722,24 @@ const descartarLead = async (id, dados, companyId, userId) => {
 const importLeadsFromCSV = async (fileBuffer, companyId, createdByUserId) => {
     console.log(`[LeadSvc Import] Iniciando importação de CSV para Company: ${companyId}`);
     
-    // --- 1. Preparar Cache de Dados (como antes) ---
+    // --- 1. Preparar Cache de Dados ---
     const [allStages, allOrigins, existingLeads] = await Promise.all([
         LeadStage.find({ company: companyId, ativo: true }).lean(),
         Origem.find({ company: companyId, ativo: true }).lean(),
         Lead.find({ company: companyId }).select('email contato').lean()
     ]);
+    console.log(`[LeadSvc Import] ${allStages.length} estágios encontrados.`);
+    console.log(`[LeadSvc Import] ${allOrigins.length} origens encontradas.`);
+    console.log(`[LeadSvc Import] ${existingLeads.length} leads existentes carregados.`);
+
     const stagesMap = new Map(allStages.map(s => [s.nome.toLowerCase(), s._id]));
     const originsMap = new Map(allOrigins.map(o => [o.nome.toLowerCase(), o._id]));
     const existingEmails = new Set(existingLeads.map(l => l.email).filter(Boolean));
     const existingContatos = new Set(existingLeads.map(l => l.contato).filter(Boolean));
     
     // --- 2. Auto-detecção de Delimitador ---
-    let detectedDelimiter = ','; // Padrão é vírgula
+    let detectedDelimiter = ',';
     try {
-        // Pega um pequeno trecho do início do buffer para ler o cabeçalho
         const headerChunk = fileBuffer.toString('utf8', 0, 500); 
         const firstLine = headerChunk.split(/\r?\n/)[0];
         
@@ -747,8 +750,9 @@ const importLeadsFromCSV = async (fileBuffer, companyId, createdByUserId) => {
             detectedDelimiter = ';';
         }
         console.log(`[LeadSvc Import] Delimitador detectado: '${detectedDelimiter}'`);
+        console.log(`[LeadSvc Import] Primeira linha do arquivo: ${firstLine}`);
     } catch (e) {
-        console.warn("[LeadSvc Import] Não foi possível detectar o delimitador, usando ',' como padrão.");
+        console.warn("[LeadSvc Import] Falha ao detectar delimitador, fallback para ','");
     }
 
     // --- 3. Processar o CSV ---
@@ -760,26 +764,26 @@ const importLeadsFromCSV = async (fileBuffer, companyId, createdByUserId) => {
         const readableStream = stream.Readable.from(fileBuffer);
 
         readableStream
-            .pipe(csv({ delimiter: detectedDelimiter })) // <<< USA O DELIMITADOR DETECTADO
+            .pipe(csv({ delimiter: detectedDelimiter }))
             .on('data', (row) => {
                 processedRowCount++;
-                // Garante que a primeira chave (que pode ter caracteres estranhos) seja tratada
+
                 const headerKeys = Object.keys(row);
                 const firstKey = headerKeys[0];
                 const firstValue = row[firstKey];
-                delete row[firstKey]; // Remove a chave antiga
-                row.nome = firstValue; // Assume que a primeira coluna é sempre 'nome'
+                delete row[firstKey];
+                row.nome = firstValue;
 
                 const { nome, email, telefone, origem, situacao } = row;
 
+                console.log(`[LeadSvc Import][Linha ${processedRowCount}] Dados brutos:`, row);
+
                 if (!nome || !telefone) {
                     importErrors.push({ line: processedRowCount, error: "Campos 'nome' e 'telefone' são obrigatórios.", data: row });
+                    console.warn(`[LeadSvc Import][Linha ${processedRowCount}] Erro: Nome ou telefone ausente`);
                     return;
                 }
-                
-                // ... (O resto da sua lógica de validação de duplicados, busca de IDs, etc., continua aqui)
-                
-                // Monta o objeto do lead para criação
+
                 leadsToCreate.push({
                     nome: nome.trim(),
                     email: email?.trim().toLowerCase(),
@@ -791,27 +795,33 @@ const importLeadsFromCSV = async (fileBuffer, companyId, createdByUserId) => {
                     tags: ['importado-csv']
                 });
 
-                // ... (Lógica para adicionar a existingEmails/existingContatos para evitar duplicatas no mesmo arquivo)
+                console.log(`[LeadSvc Import][Linha ${processedRowCount}] Lead preparado para inserção.`);
             })
             .on('end', async () => {
-                console.log(`[LeadSvc Import] Parsing do CSV finalizado. ${leadsToCreate.length} leads válidos para inserção.`);
+                console.log(`[LeadSvc Import] Parsing do CSV finalizado. ${leadsToCreate.length} leads válidos para inserção de um total de ${processedRowCount} linhas.`);
+
                 try {
                     if (leadsToCreate.length > 0) {
                         await Lead.insertMany(leadsToCreate, { ordered: false });
+                        console.log(`[LeadSvc Import] Leads inseridos com sucesso.`);
                     }
-                    
+
                     const summary = {
                         totalRows: processedRowCount,
                         importedCount: leadsToCreate.length,
                         errorCount: importErrors.length,
                         errors: importErrors
                     };
+
+                    console.log(`[LeadSvc Import] Resumo da importação:`, summary);
                     resolve(summary);
                 } catch (dbError) {
+                    console.error(`[LeadSvc Import] Erro ao salvar no banco:`, dbError);
                     reject(new Error("Erro ao salvar os leads no banco de dados."));
                 }
             })
             .on('error', (streamError) => {
+                console.error("[LeadSvc Import] Erro ao processar CSV:", streamError);
                 reject(new Error("Erro ao ler o arquivo CSV."));
             });
     });
