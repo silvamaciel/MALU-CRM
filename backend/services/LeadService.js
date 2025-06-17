@@ -756,6 +756,7 @@ const importLeadsFromCSV = async (fileBuffer, companyId, createdByUserId) => {
     for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         const lineNumber = i + 2; // +1 pelo índice 0, +1 pelo cabeçalho pulado
+        console.log(`[LeadSvc Import DEBUG] Conteúdo do 'row' na linha ${lineNumber}:`, JSON.stringify(row, null, 2));
 
         try {
             // Monta o objeto leadData exatamente como a função createLead espera
