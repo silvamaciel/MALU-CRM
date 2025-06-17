@@ -721,7 +721,7 @@ const descartarLead = async (id, dados, companyId, userId) => {
  * @returns {Promise<object>} Um resumo da importação.
  */
 const importLeadsFromCSV = async (fileBuffer, companyId, createdByUserId) => {
-    console.log(`[LeadSvc Import] Iniciando importação de CSV para Company: ${companyId}`);
+    console.log(`[LeadSvc Import] Iniciando importação de CSV (usando createLead) para Company: ${companyId}`);
     
     // Lista para armazenar as linhas lidas do CSV
     const rows = [];
@@ -729,12 +729,16 @@ const importLeadsFromCSV = async (fileBuffer, companyId, createdByUserId) => {
     // Promise para garantir que a leitura do arquivo termine antes de continuarmos
     await new Promise((resolve, reject) => {
         const readableStream = stream.Readable.from(fileBuffer);
+
         readableStream
             .pipe(csv({
                 delimiter: ';', // Forçando ponto e vírgula, que é o formato do seu arquivo
                 mapHeaders: ({ header }) => header.trim().toLowerCase(), // Limpa os cabeçalhos
             }))
-            .on('data', (data) => rows.push(data))
+            .on('data', (data) => {
+                // Apenas adiciona a linha lida ao array de rows
+                rows.push(data);
+            })
             .on('end', () => {
                 console.log(`[LeadSvc Import] Parsing do CSV finalizado. ${rows.length} linhas de dados encontradas.`);
                 resolve();
@@ -755,23 +759,27 @@ const importLeadsFromCSV = async (fileBuffer, companyId, createdByUserId) => {
 
         try {
             // Monta o objeto leadData exatamente como a função createLead espera
+            // A chave 'telefone' do CSV é mapeada para a chave 'contato' que createLead espera
             const leadDataParaCriar = {
                 nome: row.nome,
                 email: row.email,
-                contato: row.telefone, // O CSV tem 'telefone', mas createLead pode esperar 'contato'
+                contato: row.telefone, // << Mapeando a coluna 'telefone' para o campo 'contato'
                 cpf: row.cpf,
                 origem: row.origem, // createLead vai precisar buscar o ID a partir do nome
                 situacao: row.situacao, // createLead vai precisar buscar o ID a partir do nome
                 comentario: row.comentario,
+                tags: ['importado-csv'], // Adiciona uma tag padrão
                 // Adicione outros campos do seu CSV aqui
             };
 
             // Chama a função createLead que já existe e funciona!
+            // A própria createLead vai lidar com duplicados, defaults, etc.
             await createLead(leadDataParaCriar, companyId, createdByUserId);
             importedCount++;
             
         } catch (error) {
-            console.error(`[LeadSvc Import] Erro na linha ${lineNumber}:`, error.message);
+            // Se createLead lançar um erro (ex: duplicado, nome/contato faltando), nós o capturamos aqui
+            console.error(`[LeadSvc Import] Erro ao processar linha ${lineNumber}:`, error.message);
             importErrors.push({
                 line: lineNumber,
                 error: error.message, // A mensagem de erro virá da própria função createLead
