@@ -714,7 +714,7 @@ const descartarLead = async (id, dados, companyId, userId) => {
 
 
 /**
- * Importa leads de um buffer de arquivo CSV, detectando o delimitador.
+ * Importa leads de um buffer de arquivo CSV, chamando o serviço createLead para cada um.
  * @param {Buffer} fileBuffer - O buffer do arquivo CSV.
  * @param {string} companyId - ID da empresa.
  * @param {string} createdByUserId - ID do usuário que está fazendo a importação.
@@ -723,117 +723,73 @@ const descartarLead = async (id, dados, companyId, userId) => {
 const importLeadsFromCSV = async (fileBuffer, companyId, createdByUserId) => {
     console.log(`[LeadSvc Import] Iniciando importação de CSV para Company: ${companyId}`);
     
-    // --- 1. Preparar Cache de Dados (como antes) ---
-    const [allStages, allOrigins, existingLeads] = await Promise.all([
-        LeadStage.find({ company: companyId, ativo: true }).lean(),
-        Origem.find({ company: companyId, ativo: true }).lean(),
-        Lead.find({ company: companyId, ativo: true }).select('email contato').lean()
-    ]);
-    const stagesMap = new Map(allStages.map(s => [s.nome.trim().toLowerCase(), s._id]));
-    const originsMap = new Map(allOrigins.map(o => [o.nome.trim().toLowerCase(), o._id]));
-    const existingEmails = new Set(existingLeads.map(l => l.email).filter(Boolean));
-    const existingContatos = new Set(existingLeads.map(l => l.contato).filter(Boolean));
-    
-    console.log(`[LeadSvc Import] Cache de dados preparado: ${stagesMap.size} situações, ${originsMap.size} origens.`);
+    // Lista para armazenar as linhas lidas do CSV
+    const rows = [];
 
-    // --- 2. Auto-detecção de Delimitador (como antes) ---
-    let detectedDelimiter = ',';
-    try {
-        const headerChunk = fileBuffer.toString('utf8', 0, 500);
-        const firstLine = headerChunk.split(/\r?\n/)[0];
-        console.log(`[LeadSvc Import] Primeira linha do arquivo: ${firstLine}`);
-        const semicolonCount = (firstLine.match(/;/g) || []).length;
-        if (semicolonCount > 0) {
-            detectedDelimiter = ';';
-        }
-        console.log(`[LeadSvc Import] Delimitador detectado: '${detectedDelimiter}'`);
-    } catch (e) {
-        console.warn("[LeadSvc Import] Não foi possível detectar o delimitador, usando ',' como padrão.");
-    }
-
-    // --- 3. Processar o CSV ---
-    const leadsToCreate = [];
-    const importErrors = [];
-    let processedRowCount = 0;
-
-    return new Promise((resolve, reject) => {
-        const utf8String = fileBuffer.toString('utf8').replace(/^\uFEFF/, ''); // remove BOM
-        const readableStream = stream.Readable.from(utf8String);
-
+    // Promise para garantir que a leitura do arquivo termine antes de continuarmos
+    await new Promise((resolve, reject) => {
+        const readableStream = stream.Readable.from(fileBuffer);
         readableStream
-            .pipe(csvParser({ separator: ';', skipEmptyLines: true, headers: true }))
-            .on('data', (row) => {
-                processedRowCount++;
-                console.log(`[LeadSvc Import] Processando linha ${processedRowCount} (dados brutos):`, row);
-
-                // Agora 'row' terá as chaves em minúsculas: row.nome, row.email, etc.
-                const { nome, email, telefone, cpf, origem, situacao, comentario } = row;
-
-                if (!nome || !telefone) {
-                    importErrors.push({ line: processedRowCount + 1, error: "Campos 'nome' e 'telefone' são obrigatórios.", data: row });
-                    return;
-                }
-
-                const emailTrimmed = email?.trim().toLowerCase();
-                const telefoneTrimmed = telefone?.trim();
-
-                if (emailTrimmed && existingEmails.has(emailTrimmed)) {
-                    importErrors.push({ line: processedRowCount + 1, error: `Email '${email}' já existe.`, data: row });
-                    return;
-                }
-                if (telefoneTrimmed && existingContatos.has(telefoneTrimmed)) {
-                    importErrors.push({ line: processedRowCount + 1, error: `Telefone '${telefone}' já existe.`, data: row });
-                    return;
-                }
-
-                let situacaoId = situacao ? stagesMap.get(situacao.trim().toLowerCase()) : stagesMap.get('novo');
-                let origemId = origem ? originsMap.get(origem.trim().toLowerCase()) : originsMap.get('importação csv');
-
-                if (!situacaoId) {
-                    importErrors.push({ line: processedRowCount + 1, error: `Situação '${situacao}' inválida.`, data: row });
-                    return;
-                }
-
-                leadsToCreate.push({
-                    nome: nome.trim(),
-                    email: emailTrimmed || null,
-                    contato: telefoneTrimmed,
-                    cpf: cpf?.trim() || null,
-                    comentario: comentario?.trim() || null,
-                    situacao: situacaoId,
-                    origem: origemId,
-                    company: companyId,
-                    createdBy: createdByUserId,
-                    tags: ['importado-csv', `importado-em-${new Date().toLocaleDateString('pt-BR')}`]
-                });
-
-                if (emailTrimmed) existingEmails.add(emailTrimmed);
-                if (telefoneTrimmed) existingContatos.add(telefoneTrimmed);
+            .pipe(csv({
+                delimiter: ';', // Forçando ponto e vírgula, que é o formato do seu arquivo
+                mapHeaders: ({ header }) => header.trim().toLowerCase(), // Limpa os cabeçalhos
+            }))
+            .on('data', (data) => rows.push(data))
+            .on('end', () => {
+                console.log(`[LeadSvc Import] Parsing do CSV finalizado. ${rows.length} linhas de dados encontradas.`);
+                resolve();
             })
-            .on('end', async () => {
-                console.log(`[LeadSvc Import] Parsing do CSV finalizado. ${leadsToCreate.length} leads válidos para inserção de um total de ${processedRowCount} linhas de dados.`);
-                try {
-                    if (leadsToCreate.length > 0) {
-                        await Lead.insertMany(leadsToCreate, { ordered: false });
-                    }
-                    
-                    const summary = {
-                        totalRows: processedRowCount,
-                        importedCount: leadsToCreate.length,
-                        errorCount: importErrors.length,
-                        errors: importErrors
-                    };
-                    console.log("[LeadSvc Import] Importação concluída.", summary);
-                    resolve(summary);
-                } catch (dbError) {
-                    console.error("[LeadSvc Import] Erro na inserção em massa no banco de dados:", dbError);
-                    reject(new Error("Erro ao salvar os leads no banco de dados."));
-                }
-            })
-            .on('error', (streamError) => {
-                reject(new Error("Erro ao ler o arquivo CSV."));
+            .on('error', (error) => {
+                console.error("[LeadSvc Import] Erro ao ler o stream do CSV:", error);
+                reject(new Error("Falha na leitura do arquivo CSV."));
             });
     });
+
+    // Agora que temos todas as linhas em 'rows', processamos uma a uma
+    let importedCount = 0;
+    const importErrors = [];
+
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const lineNumber = i + 2; // +1 pelo índice 0, +1 pelo cabeçalho pulado
+
+        try {
+            // Monta o objeto leadData exatamente como a função createLead espera
+            const leadDataParaCriar = {
+                nome: row.nome,
+                email: row.email,
+                contato: row.telefone, // O CSV tem 'telefone', mas createLead pode esperar 'contato'
+                cpf: row.cpf,
+                origem: row.origem, // createLead vai precisar buscar o ID a partir do nome
+                situacao: row.situacao, // createLead vai precisar buscar o ID a partir do nome
+                comentario: row.comentario,
+                // Adicione outros campos do seu CSV aqui
+            };
+
+            // Chama a função createLead que já existe e funciona!
+            await createLead(leadDataParaCriar, companyId, createdByUserId);
+            importedCount++;
+            
+        } catch (error) {
+            console.error(`[LeadSvc Import] Erro na linha ${lineNumber}:`, error.message);
+            importErrors.push({
+                line: lineNumber,
+                error: error.message, // A mensagem de erro virá da própria função createLead
+                data: row
+            });
+        }
+    }
+    
+    // Retorna o resumo final
+    const summary = {
+        totalRows: rows.length,
+        importedCount: importedCount,
+        errorCount: importErrors.length,
+        errors: importErrors
+    };
+    
+    console.log("[LeadSvc Import] Importação concluída.", summary);
+    return summary;
 };
 
 // --- EXPORTS ---
