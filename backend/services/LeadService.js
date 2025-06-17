@@ -760,10 +760,7 @@ const importLeadsFromCSV = async (fileBuffer, companyId, createdByUserId) => {
         const readableStream = stream.Readable.from(utf8String);
 
         readableStream
-            .pipe(csv({
-                delimiter: detectedDelimiter,
-                mapHeaders: ({ header }) => header.trim().toLowerCase()
-            }))
+            .pipe(csvParser({ separator: ';', skipEmptyLines: true, headers: true }))
             .on('data', (row) => {
                 processedRowCount++;
                 console.log(`[LeadSvc Import] Processando linha ${processedRowCount} (dados brutos):`, row);
