@@ -163,7 +163,7 @@ const importLeadsFromCSVController = asyncHandler(async (req, res, next) => {
 
     const fileBuffer = req.file.buffer;
 
-    const summary = await LeadService.importLeadsFromCSV(fileBuffer, companyId, createdByUserId);
+    const summary = await leadService.importLeadsFromCSV(fileBuffer, companyId, createdByUserId);
     
     res.status(200).json({ success: true, data: summary });
 });
@@ -190,10 +190,6 @@ const downloadCSVTemplateController = asyncHandler(async (req, res, next) => {
             nome: 'Ex: João da Silva',
             email: 'exemplo@email.com',
             telefone: '+5583999998888',
-            cpf: '111.222.333-44',
-            origem: 'Facebook', // Nomes exatos das suas origens
-            situacao: 'Novo',     // Nomes exatos das suas situações
-            comentario: 'Cliente interessado no empreendimento X.'
         }];
 
         // Usa o Papaparse para converter o JSON (array de objetos) em uma string CSV
