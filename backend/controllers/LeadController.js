@@ -5,7 +5,7 @@ const leadHistoryService = require('../services/leadHistoryService');
 const mongoose = require('mongoose'); 
 const asyncHandler = require("../middlewares/asyncHandler");
 const ErrorResponse = require('../utils/errorResponse');
-
+const Papa = require('papaparse');
 
 
 const getLeads = async (req, res) => {
@@ -169,6 +169,54 @@ const importLeadsFromCSVController = asyncHandler(async (req, res, next) => {
 });
 
 
+const downloadCSVTemplateController = asyncHandler(async (req, res, next) => {
+    console.log("[LeadCtrl Template] Requisição para gerar template CSV.");
+
+    try {
+        // Define os dados do cabeçalho.
+        // Adicione aqui TODAS as colunas que seu sistema pode importar.
+        const fields = [
+            'nome',       // Obrigatório
+            'email',      // Opcional, mas recomendado
+            'telefone',   // Obrigatório
+            'cpf',        // Opcional
+            'origem',     // Opcional (se não fornecido, o sistema pode usar um default)
+            'situacao',   // Opcional (se não fornecido, o sistema pode usar um default)
+            'comentario'  // Opcional
+        ];
+
+        // Cria um exemplo de linha para guiar o usuário
+        const exampleData = [{
+            nome: 'Ex: João da Silva',
+            email: 'exemplo@email.com',
+            telefone: '+5583999998888',
+            cpf: '111.222.333-44',
+            origem: 'Facebook', // Nomes exatos das suas origens
+            situacao: 'Novo',     // Nomes exatos das suas situações
+            comentario: 'Cliente interessado no empreendimento X.'
+        }];
+
+        // Usa o Papaparse para converter o JSON (array de objetos) em uma string CSV
+        const csvString = Papa.unparse({
+            fields: fields,
+            data: exampleData
+        });
+
+        // Configura os headers da resposta para forçar o download
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=modelo_importacao_leads.csv');
+
+        // Envia a string CSV como resposta
+        res.status(200).send(csvString);
+        console.log("[LeadCtrl Template] Template CSV enviado com sucesso.");
+
+    } catch (error) {
+        console.error("[LeadCtrl Template] Erro ao gerar template CSV:", error);
+        return next(new ErrorResponse('Falha ao gerar o arquivo de modelo.', 500));
+    }
+});
+
+
 module.exports = {
     getLeads,
     getLeadById,
@@ -177,5 +225,6 @@ module.exports = {
     deleteLead,
     descartarLead,
     getLeadHistory,
-    importLeadsFromCSVController
+    importLeadsFromCSVController,
+    downloadCSVTemplateController
 };

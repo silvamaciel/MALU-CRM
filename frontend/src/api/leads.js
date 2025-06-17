@@ -182,3 +182,20 @@ export const importLeadsFromCSVApi = async (file) => {
         throw error.response?.data || new Error("Falha ao importar o arquivo CSV.");
     }
 };
+
+
+/**
+ * Faz o download do arquivo CSV modelo do backend.
+ * @returns {Promise<Blob>} O arquivo CSV como um Blob.
+ */
+export const downloadCSVTemplateApi = async () => {
+    try {
+        const response = await axiosInstance.get('/leads/csv-template', {
+            responseType: 'blob', // Essencial para tratar a resposta como um arquivo
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Erro ao baixar modelo CSV:", error);
+        throw new Error("Falha ao baixar o arquivo modelo.");
+    }
+};

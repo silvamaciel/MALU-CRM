@@ -3,7 +3,7 @@ import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import Papa from 'papaparse'; // Para parsing do CSV no frontend
 import { toast } from 'react-toastify';
-import { importLeadsFromCSVApi } from '../../api/leads';
+import { importLeadsFromCSVApi, downloadCSVTemplateApi } from '../../api/leads';
 import './ImportCSVModal.css';
 
 function ImportCSVModal({ isOpen, onClose, onImportSuccess }) {
@@ -13,6 +13,7 @@ function ImportCSVModal({ isOpen, onClose, onImportSuccess }) {
     const [isUploading, setIsUploading] = useState(false);
     const [importResult, setImportResult] = useState(null);
     const [error, setError] = useState('');
+    const [isDownloadingTemplate, setIsDownloadingTemplate] = useState(false);
 
     const resetState = () => {
         setFile(null);
@@ -28,6 +29,30 @@ function ImportCSVModal({ isOpen, onClose, onImportSuccess }) {
         onClose();
     };
 
+    const handleDownloadTemplate = async () => {
+        setIsDownloadingTemplate(true);
+        toast.info("Preparando modelo para download...");
+        try {
+            const csvBlob = await downloadCSVTemplateApi();
+            
+            // Lógica para criar link e iniciar download no navegador
+            const url = window.URL.createObjectURL(csvBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'modelo_importacao_leads.csv');
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+        } catch (error) {
+            toast.error(error.message || "Não foi possível baixar o modelo.");
+        } finally {
+            setIsDownloadingTemplate(false);
+        }
+    };
+
+    
     const onDrop = useCallback(acceptedFiles => {
         const selectedFile = acceptedFiles[0];
         if (selectedFile && selectedFile.type === 'text/csv') {
@@ -88,6 +113,7 @@ function ImportCSVModal({ isOpen, onClose, onImportSuccess }) {
                 {/* Seção de Resultado */}
                 {importResult ? (
                     <div className="import-result-section">
+                        
                         <h4>Resumo da Importação</h4>
                         <p><strong>Total de Linhas Processadas:</strong> {importResult.totalRows}</p>
                         <p style={{color: 'green'}}><strong>Leads Importados com Sucesso:</strong> {importResult.importedCount}</p>
@@ -111,6 +137,12 @@ function ImportCSVModal({ isOpen, onClose, onImportSuccess }) {
                 ) : (
                 <>
                     {/* Seção de Upload e Preview */}
+                    <div className="template-download-section">
+                        <p>Não sabe por onde começar? Baixe nosso modelo CSV, preencha com seus dados e depois suba o arquivo.</p>
+                        <button type="button" onClick={handleDownloadTemplate} className="button outline-button" disabled={isDownloadingTemplate}>
+                            {isDownloadingTemplate ? 'Baixando...' : 'Baixar Planilha Modelo'}
+                        </button>
+                    </div>
                     <div {...getRootProps({ className: `dropzone ${isDragActive ? 'active' : ''}` })}>
                         <input {...getInputProps()} />
                         {file ? (

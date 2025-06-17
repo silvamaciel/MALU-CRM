@@ -33,3 +33,18 @@
     margin-top: 10px;
     font-size: 0.9em;
 }
+
+.template-download-section {
+    background-color: #f0f8ff; /* Azul claro suave */
+    border: 1px solid #cce5ff;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+.template-download-section p {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 0.9em;
+    color: #333;
+}
