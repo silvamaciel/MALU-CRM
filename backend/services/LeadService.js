@@ -11,6 +11,7 @@ const origemService = require("./origemService");
 
 const stream = require('stream');
 const csv = require('csv-parser');
+const csvParser = require('csv-parser');
 
 const cpfcnpj = require("cpf-cnpj-validator");
 const {
