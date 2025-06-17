@@ -764,10 +764,10 @@ const importLeadsFromCSV = async (fileBuffer, companyId, createdByUserId) => {
             const leadDataParaCriar = {
                 nome: row.nome,
                 email: row.email,
-                contato: row.telefone, // << Mapeando a coluna 'telefone' para o campo 'contato'
+                contato: row.telefone, 
                 cpf: row.cpf,
-                origem: row.origem, // createLead vai precisar buscar o ID a partir do nome
-                situacao: row.situacao, // createLead vai precisar buscar o ID a partir do nome
+                origem: row.origem, 
+                situacao: row.situacao, 
                 comentario: row.comentario,
                 tags: ['importado-csv'], // Adiciona uma tag padrão
                 // Adicione outros campos do seu CSV aqui
