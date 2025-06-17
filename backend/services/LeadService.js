@@ -756,16 +756,14 @@ const importLeadsFromCSV = async (fileBuffer, companyId, createdByUserId) => {
     let processedRowCount = 0;
 
     return new Promise((resolve, reject) => {
-        const readableStream = stream.Readable.from(fileBuffer);
+        const utf8String = fileBuffer.toString('utf8').replace(/^\uFEFF/, ''); // remove BOM
+        const readableStream = stream.Readable.from(utf8String);
 
         readableStream
-            // VVVVV ATUALIZE AS OPÇÕES DO CSV-PARSER AQUI VVVVV
             .pipe(csv({
                 delimiter: detectedDelimiter,
-                // mapHeaders: Limpa e padroniza cada cabeçalho lido do arquivo
                 mapHeaders: ({ header }) => header.trim().toLowerCase()
             }))
-            // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
             .on('data', (row) => {
                 processedRowCount++;
                 console.log(`[LeadSvc Import] Processando linha ${processedRowCount} (dados brutos):`, row);
