@@ -777,9 +777,42 @@ const importLeadsFromCSV = async (fileBuffer, companyId, createdByUserId) => {
                     importErrors.push({ line: processedRowCount + 1, error: "Campos 'nome' e 'telefone' são obrigatórios.", data: row });
                     return;
                 }
-                
-                // ... (O resto da sua lógica de validação e criação do objeto lead continua aqui)
-                
+
+                const emailTrimmed = email?.trim().toLowerCase();
+                const telefoneTrimmed = telefone?.trim();
+
+                if (emailTrimmed && existingEmails.has(emailTrimmed)) {
+                    importErrors.push({ line: processedRowCount + 1, error: `Email '${email}' já existe.`, data: row });
+                    return;
+                }
+                if (telefoneTrimmed && existingContatos.has(telefoneTrimmed)) {
+                    importErrors.push({ line: processedRowCount + 1, error: `Telefone '${telefone}' já existe.`, data: row });
+                    return;
+                }
+
+                let situacaoId = situacao ? stagesMap.get(situacao.trim().toLowerCase()) : stagesMap.get('novo');
+                let origemId = origem ? originsMap.get(origem.trim().toLowerCase()) : originsMap.get('importação csv');
+
+                if (!situacaoId) {
+                    importErrors.push({ line: processedRowCount + 1, error: `Situação '${situacao}' inválida.`, data: row });
+                    return;
+                }
+
+                leadsToCreate.push({
+                    nome: nome.trim(),
+                    email: emailTrimmed || null,
+                    contato: telefoneTrimmed,
+                    cpf: cpf?.trim() || null,
+                    comentario: comentario?.trim() || null,
+                    situacao: situacaoId,
+                    origem: origemId,
+                    company: companyId,
+                    createdBy: createdByUserId,
+                    tags: ['importado-csv', `importado-em-${new Date().toLocaleDateString('pt-BR')}`]
+                });
+
+                if (emailTrimmed) existingEmails.add(emailTrimmed);
+                if (telefoneTrimmed) existingContatos.add(telefoneTrimmed);
             })
             .on('end', async () => {
                 console.log(`[LeadSvc Import] Parsing do CSV finalizado. ${leadsToCreate.length} leads válidos para inserção de um total de ${processedRowCount} linhas de dados.`);
@@ -806,7 +839,6 @@ const importLeadsFromCSV = async (fileBuffer, companyId, createdByUserId) => {
             });
     });
 };
-
 
 // --- EXPORTS ---
 module.exports = {

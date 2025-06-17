@@ -20,7 +20,7 @@ function Sidebar({ userData, handleLogout, closeMobileSidebar }) {
     return (
         <aside className="sidebar">
             <div className="sidebar-header">
-                <h3>CRM Nobrega</h3>
+                <h3>Malu CRM</h3>
             </div>
             <nav className="sidebar-nav">
                 <ul>
