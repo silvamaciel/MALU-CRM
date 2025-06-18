@@ -715,13 +715,27 @@ const descartarLead = async (id, dados, companyId, userId) => {
  * e chamando o serviço createLead para cada linha.
  */
 const importLeadsFromCSV = async (fileBuffer, companyId, createdByUserId) => {
-    console.log(`[LeadSvc Import] Iniciando importação de CSV (usando createLead) para Company: ${companyId}`);
+    console.log(`[LeadSvc Import] Iniciando importação de CSV para Company: ${companyId}`);
+    
+    // --- 1. Preparar Cache de Dados para Validação ---
+    const [allStages, allOrigins, existingLeads] = await Promise.all([
+        LeadStage.find({ company: companyId, ativo: true }).lean(),
+        Origem.find({ company: companyId, ativo: true }).lean(),
+        // VVVVV BUSCA TAMBÉM O CPF PARA VERIFICAÇÃO DE DUPLICADOS VVVVV
+        Lead.find({ company: companyId, ativo: true }).select('email contato cpf').lean()
+    ]);
 
-    // --- Pré-carrega dados para checar duplicados ---
-    const existingLeads = await Lead.find({ company: companyId, ativo: true }).select('email contato').lean();
+    const stagesMap = new Map(allStages.map(s => [s.nome.trim().toLowerCase(), s._id]));
+    const originsMap = new Map(allOrigins.map(o => [o.nome.trim().toLowerCase(), o._id]));
+    
+    // Cria Sets para verificação RÁPIDA de duplicados
     const existingEmails = new Set(existingLeads.map(l => l.email).filter(Boolean));
     const existingContatos = new Set(existingLeads.map(l => l.contato).filter(Boolean));
+    const existingCpfs = new Set(existingLeads.map(l => l.cpf).filter(Boolean)); // <<< NOVO SET PARA CPFs
+    
+    console.log(`[LeadSvc Import] Cache preparado: ${stagesMap.size} situações, ${originsMap.size} origens. ${existingEmails.size} emails, ${existingContatos.size} contatos e ${existingCpfs.size} CPFs existentes.`);
 
+    // --- 2. Ler e Parsear o Arquivo CSV ---
     const lines = fileBuffer.toString('utf8').split(/\r?\n/);
     const headerLine = lines.shift()?.trim();
     if (!headerLine) {
@@ -730,60 +744,64 @@ const importLeadsFromCSV = async (fileBuffer, companyId, createdByUserId) => {
     const delimiter = headerLine.includes(';') ? ';' : ',';
     const headers = headerLine.split(delimiter).map(h => h.trim().toLowerCase());
     console.log(`[LeadSvc Import] Cabeçalhos detectados: [${headers.join(', ')}]. Delimitador: '${delimiter}'`);
-
+    
     const dataRows = lines.filter(line => line.trim() !== '');
-
+    
+    // --- 3. Processar, Validar e Preparar Leads para Criação ---
     let importedCount = 0;
     const importErrors = [];
 
     for (let i = 0; i < dataRows.length; i++) {
         const line = dataRows[i];
         const lineNumber = i + 2;
-
+        
         const values = line.split(delimiter);
         const row = headers.reduce((obj, header, index) => {
             obj[header] = values[index]?.trim() || '';
             return obj;
         }, {});
 
-        console.log(`[LeadSvc Import DEBUG] Linha ${lineNumber} parseada como:`, row);
-
         try {
-            const nomeFormatado = row.nome?.trim();
+            // --- Validação de campos obrigatórios ---
+            if (!row.nome || !row.telefone) {
+                throw new Error("Campos 'nome' e 'telefone' são obrigatórios.");
+            }
+            
+            // --- Pré-processamento e formatação dos dados ---
+            const nomeFormatado = row.nome.trim();
             const emailFormatado = row.email?.trim().toLowerCase() || null;
-
+            
             let contatoFormatado = null;
-            if (row.telefone && row.telefone.trim()) {
-                try {
-                    const phoneNumber = phoneUtil.parseAndKeepRawInput(String(row.telefone).trim(), 'BR');
-                    if (phoneUtil.isValidNumber(phoneNumber)) {
-                        contatoFormatado = phoneUtil.format(phoneNumber, PNF.E164);
-                    } else {
-                        throw new Error(`Número de telefone inválido: ${row.telefone}`);
-                    }
-                } catch (e) {
-                    throw new Error(`Formato de telefone não reconhecido: ${row.telefone}`);
+            if (row.telefone?.trim()) {
+                const phoneNumber = phoneUtil.parseAndKeepRawInput(String(row.telefone).trim(), 'BR');
+                if (phoneUtil.isValidNumber(phoneNumber)) {
+                    contatoFormatado = phoneUtil.format(phoneNumber, PNF.E164);
+                } else {
+                    throw new Error(`Número de telefone inválido: ${row.telefone}`);
                 }
             }
-
-            // --- Validação de duplicados ---
+            
+            let cpfFormatado = null;
+            if (row.cpf?.trim()) {
+                const cpfLimpo = String(row.cpf).replace(/\D/g, "");
+                if (cpfLimpo) {
+                     if (!cpfcnpj.cpf.isValid(cpfLimpo)) throw new Error(`CPF inválido: ${row.cpf}`);
+                     cpfFormatado = cpfLimpo;
+                }
+            }
+            
+            // --- VALIDAÇÃO COMPLETA DE DUPLICADOS ---
             if (emailFormatado && existingEmails.has(emailFormatado)) {
                 throw new Error(`Email '${emailFormatado}' já existe no sistema.`);
             }
             if (contatoFormatado && existingContatos.has(contatoFormatado)) {
                 throw new Error(`Telefone '${contatoFormatado}' já existe no sistema.`);
             }
-
-            // Valida e formata CPF
-            let cpfFormatado = null;
-            if (row.cpf && row.cpf.trim()) {
-                const cpfLimpo = String(row.cpf).replace(/\D/g, "");
-                if (cpfLimpo) {
-                    if (!cpfcnpj.cpf.isValid(cpfLimpo)) throw new Error(`CPF inválido: ${row.cpf}`);
-                    cpfFormatado = cpfLimpo;
-                }
+            if (cpfFormatado && existingCpfs.has(cpfFormatado)) { // <<< VALIDAÇÃO DE CPF ADICIONADA
+                throw new Error(`CPF '${row.cpf}' já existe no sistema.`);
             }
 
+            // Monta o objeto final para chamar a função createLead
             const leadDataParaCriar = {
                 nome: nomeFormatado,
                 email: emailFormatado,
@@ -792,19 +810,17 @@ const importLeadsFromCSV = async (fileBuffer, companyId, createdByUserId) => {
                 origem: row.origem,
                 situacao: row.situacao,
                 comentario: row.comentario,
-                tags: ['importado-csv'],
+                tags: ['importado-csv']
             };
-
-            if (!leadDataParaCriar.nome || !leadDataParaCriar.contato) {
-                throw new Error("Nome e Contato são obrigatórios e devem ser válidos.");
-            }
-
+            
+            // Chama a função createLead que já existe e é robusta
             await createLead(leadDataParaCriar, companyId, createdByUserId);
             importedCount++;
 
-            // Atualiza cache local pra evitar duplicados no mesmo arquivo
-            if (emailFormatado) existingEmails.add(emailFormatado);
-            if (contatoFormatado) existingContatos.add(contatoFormatado);
+            // Adiciona os novos dados aos Sets para evitar duplicatas DENTRO do mesmo arquivo
+            if(emailFormatado) existingEmails.add(emailFormatado);
+            if(contatoFormatado) existingContatos.add(contatoFormatado);
+            if(cpfFormatado) existingCpfs.add(cpfFormatado); // <<< ADICIONADO AO SET
 
         } catch (error) {
             console.error(`[LeadSvc Import] Erro ao processar linha ${lineNumber}:`, error.message);
@@ -815,17 +831,19 @@ const importLeadsFromCSV = async (fileBuffer, companyId, createdByUserId) => {
             });
         }
     }
-
+    
+    // --- 4. Retorna o Resumo Final ---
     const summary = {
         totalRows: dataRows.length,
-        importedCount,
+        importedCount, // Já foi incrementado no loop
         errorCount: importErrors.length,
         errors: importErrors
     };
-
+    
     console.log("[LeadSvc Import] Importação concluída.", summary);
     return summary;
 };
+
 // --- EXPORTS ---
 module.exports = {
   getLeads,
