@@ -29,18 +29,8 @@
 }
 
 .admin-table-container {
-  width: 100%;
-  overflow-x: auto;
-}
-
-.admin-table-container table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.admin-table-container th,
-.admin-table-container td {
-  padding: 8px 12px;
-  text-align: left;
-  white-space: nowrap; /* Evita quebra de linha */
+    overflow-x: auto;
+    margin-top: 1.5rem;
+    border: 1px solid #e9ecef; /* Borda sutil em volta da tabela */
+    border-radius: 6px;
 }
