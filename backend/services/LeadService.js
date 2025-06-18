@@ -260,7 +260,7 @@ const createLead = async (leadData, companyId, userId) => {
 
     // 3. Lógica para buscar/definir IDs de relacionamentos
     let responsavelIdFinal = responsavel || userId || await getDefaultAdminUserIdForCompany(companyId);
-    let situacaoIdFinal = situacao ? (await LeadStage.findOne({_id: situacao, company: companyId}))?._id : await getDefaultLeadStageIdForCompany(companyId, "Novo");
+    let situacaoIdFinal = situacao ? (await LeadStage.findOne({_id: situacao, company: companyId}))?._id : await LeadStage.findOne({ company: companyId, ativo: true, nome: { $ne: "Descartado" } }).sort({ ordem: 1 }).lean();
     let origemIdFinal = origem ? (await Origem.findOne({_id: origem, company: companyId}))?._id : (await origemService.findOrCreateOrigem({ nome: "Sistema Gestor" }, companyId))?._id;
 
     if (!responsavelIdFinal) console.warn(`[createLead] Não foi possível definir um responsável para o lead.`);
