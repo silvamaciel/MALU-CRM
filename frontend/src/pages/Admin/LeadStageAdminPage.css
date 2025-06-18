@@ -27,3 +27,20 @@
   color: #aaa;
   cursor: grab;
 }
+
+.admin-table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.admin-table-container table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table-container th,
+.admin-table-container td {
+  padding: 8px 12px;
+  text-align: left;
+  white-space: nowrap; /* Evita quebra de linha */
+}
