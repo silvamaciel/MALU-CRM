@@ -149,3 +149,10 @@
     border-radius: 3px;
     font-weight: 500;
 }
+
+.filters-wrapper.closed {
+  display: none;
+}
+.filters-wrapper.open {
+  display: block; /* ou flex/grid dependendo do layout */
+}
