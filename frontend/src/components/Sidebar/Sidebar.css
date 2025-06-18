@@ -1,6 +1,6 @@
 /* src/components/Sidebar/Sidebar.css */
 .sidebar {
-  max-width: 20vw;
+  width: 240px;
   flex-shrink: 0;
   background-color: #343a40;
   color: #adb5bd;
