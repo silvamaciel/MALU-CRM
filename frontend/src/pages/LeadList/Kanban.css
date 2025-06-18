@@ -152,7 +152,11 @@
 
 .filters-wrapper.closed {
   display: none;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+
 }
 .filters-wrapper.open {
   display: block; /* ou flex/grid dependendo do layout */
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+
 }
