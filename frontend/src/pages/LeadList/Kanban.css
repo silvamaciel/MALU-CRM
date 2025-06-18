@@ -14,15 +14,15 @@
 }
 
 .kanban-column {
-  flex: 0 0 320px; /* Largura da coluna */
+  flex: 0 0 240px; /* Largura da coluna */
   max-width: 320px;
   background-color: #f0f2f5; /* Fundo da coluna mais suave */
-  border-radius: 6px;
+  border-radius: 10px;
   padding: 0; /* Padding será interno ao título e conteúdo */
   display: flex;
   flex-direction: column; /* Título em cima, conteúdo abaixo */
   max-height: calc(100vh - 280px); /* Altura máxima da coluna, permite scroll interno */
-  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.24);
 }
 
 .kanban-column.dragging-over {

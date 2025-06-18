@@ -181,9 +181,6 @@ const getFacebookIntegrationStatus = async (companyId) => {
         console.log(`[IntegSvc getStatus] Nome da Página obtido: ${pageName}`);
       } catch (fbApiError) {
         console.error(`[IntegSvc getStatus] Falha ao buscar nome da Página ${company.facebookPageId}. Token pode estar inválido/expirado.`, fbApiError.response?.data?.error || fbApiError.message);
-        // Retorna que está "conectado" pelo ID, mas com aviso sobre o nome.
-        // Ou poderia retornar isConnected: false se o token não funcionar mais para buscar nome.
-        // Por enquanto, se o ID está lá, consideramos conectado.
       }
       return { isConnected: true, pageId: company.facebookPageId, pageName: pageName, linkedForms: company.linkedFacebookForms || [] };
     } else {
