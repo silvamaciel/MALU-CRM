@@ -150,9 +150,55 @@ const deleteOrigem = async (id, companyId) => { // <<< Aceita companyId
     }
 };
 
+
+/**
+ * Encontra uma Origem pelo nome para uma empresa, ou a cria se não existir.
+ * @param {object} origemData - { nome: string, descricao?: string }
+ * @param {string} companyId - O ID da empresa.
+ * @returns {Promise<Origem>} O documento da origem encontrado ou criado.
+ */
+const findOrCreateOrigem = async (origemData, companyId) => {
+    if (!origemData || !origemData.nome) {
+        throw new Error("O nome da origem é obrigatório para encontrar ou criar.");
+    }
+    if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+        throw new Error("ID da Empresa inválido.");
+    }
+
+    const nomeOrigem = origemData.nome.trim();
+    console.log(`[OrigemSvc] Buscando ou criando origem '${nomeOrigem}' para Company: ${companyId}`);
+
+    // Procura por uma origem com o mesmo nome (case-insensitive) para a empresa
+    let origem = await Origem.findOne({
+        nome: { $regex: new RegExp(`^${nomeOrigem}$`, 'i') },
+        company: companyId
+    });
+
+    // Se encontrou, retorna o documento existente
+    if (origem) {
+        console.log(`[OrigemSvc] Origem '${nomeOrigem}' encontrada com ID: ${origem._id}`);
+        return origem;
+    }
+
+    // Se não encontrou, cria uma nova
+    console.log(`[OrigemSvc] Origem '${nomeOrigem}' não encontrada. Criando uma nova...`);
+    origem = new Origem({
+        nome: nomeOrigem,
+        descricao: origemData.descricao || `Origem criada automaticamente via importação/sistema.`,
+        company: companyId,
+        ativo: true
+    });
+    
+    await origem.save();
+    console.log(`[OrigemSvc] Origem '${nomeOrigem}' criada com sucesso com ID: ${origem._id}`);
+    return origem;
+};
+
+
 module.exports = {
     getAllOrigens,
     createOrigem,
     updateOrigem,
     deleteOrigem,
+    findOrCreateOrigem
 };
