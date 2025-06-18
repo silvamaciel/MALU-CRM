@@ -2,7 +2,7 @@
 
 /* Estilo geral para páginas de administração */
 .admin-page {
-    padding: o.5rem;
+    padding: 1rem;
     max-width: 95vw; /* Largura máxima da área de conteúdo admin */
     margin: 2rem auto; /* Centraliza na tela */
     background-color: #ffffff; /* Fundo branco */
