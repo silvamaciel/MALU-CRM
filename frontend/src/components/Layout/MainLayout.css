@@ -30,3 +30,9 @@
     height: 100%;
     padding: 20px 25px;
 }
+
+
+
+.main-content{
+  max-height: 100vh;
+}
