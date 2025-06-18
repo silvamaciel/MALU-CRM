@@ -11,9 +11,8 @@
 
 /* ===== SIDEBAR ===== */
 .sidebar {
-  width: 240px;
+  width: 220px;
   flex-shrink: 0;
-  /* removido background-color e box-shadow para manter o visual original */
 }
 
 /* ===== CONTENT WRAPPER ===== */
@@ -24,7 +23,7 @@
   min-width: 0;
   background-color: #f4f7f6;
   overflow-y: auto;
-  padding: 1.5rem 2rem;
+  padding: 1rem 1rem;
   box-sizing: border-box;
 }
 
