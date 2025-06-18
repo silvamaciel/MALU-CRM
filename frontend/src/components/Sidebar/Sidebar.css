@@ -1,121 +1,69 @@
-/* src/components/Sidebar/Sidebar.css */
+/* ===== MAIN LAYOUT CONTAINER ===== */
+.main-layout {
+  display: flex;
+  flex-direction: row;
+  width: 100vw;
+  max-width: 100vw;
+  min-height: 100vh;
+  background-color: #f4f6f9;
+  overflow-x: hidden;
+}
+
+/* ===== SIDEBAR ===== */
 .sidebar {
   width: 240px;
   flex-shrink: 0;
-  background-color: #343a40;
-  color: #adb5bd;
+  /* removido background-color e box-shadow para manter o visual original */
+}
+
+/* ===== CONTENT WRAPPER ===== */
+.content-wrapper {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  position: sticky; /* Mantém sticky em desktop */
-  top: 0;
-  transition: transform 0.3s ease-in-out, left 0.3s ease-in-out; /* Animação */
-  z-index: 1020; 
+  flex-grow: 1;
+  min-width: 0;
+  background-color: #f4f7f6;
+  overflow-y: auto;
+  padding: 1.5rem 2rem;
+  box-sizing: border-box;
 }
-  
-  .sidebar-header {
-    padding: 1.5rem 1rem;
-    text-align: center;
-    border-bottom: 1px solid #495057;
-  }
-  
-  .sidebar-header h3 {
-    color: #fff;
-    margin: 0;
-    font-size: 1.4em;
-  }
-  
-  .sidebar-nav {
-    flex-grow: 1; /* Ocupa espaço entre header e footer */
-    padding-top: 1rem;
-  }
-  
-  .sidebar-nav ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  
-  .sidebar-nav li a {
-    display: block;
-    padding: 0.8rem 1.5rem;
-    color: #adb5bd;
-    text-decoration: none;
-    transition: background-color 0.2s ease, color 0.2s ease;
-    border-left: 3px solid transparent; /* Para indicar link ativo */
-  }
-  
-  .sidebar-nav li a:hover {
-    background-color: #495057;
-    color: #fff;
-  }
-  
-  /* Estilo do link ativo (definido pelo NavLink) */
-  .sidebar-nav li a.active {
-    background-color: #0d6efd; /* Azul */
-    color: #fff;
-    font-weight: 500;
-    border-left-color: #fff; /* Barra branca indicando ativo */
-  }
-  
-  /* Seção Admin */
-  .admin-section {
-      margin-top: 1.5rem;
-      border-top: 1px solid #495057;
-      padding-top: 0.5rem;
-  }
-  .admin-section-title {
-      display: block;
-      padding: 0.8rem 1.5rem;
-      font-size: 0.8em;
-      text-transform: uppercase;
-      color: #6c757d;
-      font-weight: 600;
-  }
-  .admin-section ul li a {
-      padding-left: 2.5rem; /* Indentação para links admin */
-      font-size: 0.95em;
-  }
-  
-  
-  /* Footer da Sidebar */
-  .sidebar-footer {
-    padding: 1rem 1.5rem;
-    border-top: 1px solid #495057;
-  }
-  .user-info {
-      margin-bottom: 1rem;
-      font-size: 0.9em;
-  }
-  .user-info span { display: block; }
-  .user-info small { color: #6c757d; }
-  
-  .logout-button {
-    width: 100%;
-    padding: 0.6rem;
-    background-color: #dc3545; /* Vermelho */
-    border: none;
-    color: white;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9em;
-    text-align: center;
-  }
-  .logout-button:hover {
-    background-color: #c82333;
+
+/* ===== MOBILE RESPONSIVO ===== */
+@media (max-width: 768px) {
+  .main-layout {
+    flex-direction: column;
+    width: 100vw;
   }
 
-  @media (max-width: 991.98px) {
-    .sidebar {
-      position: fixed; 
-      transform: translateX(-100%);
-      top: 0;
-      bottom: 0;
-      height: 100%;
-    }
-  
-    .main-layout.mobile-sidebar-open .sidebar {
-        transform: translateX(0);
-        box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-    }
+  .sidebar {
+    width: 100%;
   }
+
+  .content-wrapper {
+    width: 100%;
+    padding: 1rem;
+  }
+}
+
+/* ===== MOBILE SIDEBAR OVERLAY ===== */
+.mobile-sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 1010;
+  display: none;
+  cursor: pointer;
+}
+
+.main-layout.mobile-sidebar-open .mobile-sidebar-overlay {
+  display: block;
+}
+
+@media (min-width: 992px) {
+  .mobile-sidebar-overlay {
+    display: none !important;
+  }
+}
