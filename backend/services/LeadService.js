@@ -721,69 +721,63 @@ const descartarLead = async (id, dados, companyId, userId) => {
  * @returns {Promise<object>} Um resumo da importação.
  */
 const importLeadsFromCSV = async (fileBuffer, companyId, createdByUserId) => {
-    console.log(`[LeadSvc Import] Iniciando importação de CSV (usando createLead) para Company: ${companyId}`);
+    console.log(`[LeadSvc Import] Iniciando importação de CSV para Company: ${companyId}`);
     
-    // Lista para armazenar as linhas lidas do CSV
-    const rows = [];
+    // Divide o buffer do arquivo em linhas, tratando finais de linha de Windows (\r\n) e Linux (\n)
+    const lines = fileBuffer.toString('utf8').split(/\r?\n/);
+    
+    // Pega o cabeçalho (primeira linha) e remove para processar apenas as linhas de dados
+    const headerLine = lines.shift()?.trim();
+    if (!headerLine) {
+        throw new Error("Arquivo CSV está vazio ou não contém um cabeçalho.");
+    }
 
-    // Promise para garantir que a leitura do arquivo termine antes de continuarmos
-    await new Promise((resolve, reject) => {
-        const readableStream = stream.Readable.from(fileBuffer);
+    // Detecta o delimitador e limpa os cabeçalhos
+    const delimiter = headerLine.includes(';') ? ';' : ',';
+    const headers = headerLine.split(delimiter).map(h => h.trim().toLowerCase());
+    console.log(`[LeadSvc Import] Cabeçalhos detectados: [${headers.join(', ')}]. Delimitador: '${delimiter}'`);
 
-        readableStream
-            .pipe(csv({
-                delimiter: ';', // Forçando ponto e vírgula, que é o formato do seu arquivo
-                mapHeaders: ({ header }) => header.trim().toLowerCase(), // Limpa os cabeçalhos
-            }))
-            .on('data', (data) => {
-                // Apenas adiciona a linha lida ao array de rows
-                rows.push(data);
-            })
-            .on('end', () => {
-                console.log(`[LeadSvc Import] Parsing do CSV finalizado. ${rows.length} linhas de dados encontradas.`);
-                resolve();
-            })
-            .on('error', (error) => {
-                console.error("[LeadSvc Import] Erro ao ler o stream do CSV:", error);
-                reject(new Error("Falha na leitura do arquivo CSV."));
-            });
-    });
-
-    // Agora que temos todas as linhas em 'rows', processamos uma a uma
+    const dataRows = lines.filter(line => line.trim() !== ''); // Ignora linhas vazias
+    
     let importedCount = 0;
     const importErrors = [];
 
-    for (let i = 0; i < rows.length; i++) {
-        const row = rows[i];
+    for (let i = 0; i < dataRows.length; i++) {
+        const line = dataRows[i];
         const lineNumber = i + 2; // +1 pelo índice 0, +1 pelo cabeçalho pulado
-        console.log(`[LeadSvc Import DEBUG] Conteúdo do 'row' na linha ${lineNumber}:`, JSON.stringify(row, null, 2));
+        
+        const values = line.split(delimiter);
+        
+        // Cria um objeto 'row' a partir dos cabeçalhos e valores
+        const row = headers.reduce((obj, header, index) => {
+            obj[header] = values[index]?.trim() || '';
+            return obj;
+        }, {});
+
+        console.log(`[LeadSvc Import DEBUG] Linha ${lineNumber} parseada como:`, row);
 
         try {
             // Monta o objeto leadData exatamente como a função createLead espera
-            // A chave 'telefone' do CSV é mapeada para a chave 'contato' que createLead espera
             const leadDataParaCriar = {
                 nome: row.nome,
                 email: row.email,
-                contato: row.telefone, 
+                contato: row.telefone, // Mapeando a coluna 'telefone' para o campo 'contato'
                 cpf: row.cpf,
-                origem: row.origem, 
-                situacao: row.situacao, 
+                origem: row.origem,
+                situacao: row.situacao,
                 comentario: row.comentario,
-                tags: ['importado-csv'], // Adiciona uma tag padrão
-                // Adicione outros campos do seu CSV aqui
+                tags: ['importado-csv'],
             };
-
+            
             // Chama a função createLead que já existe e funciona!
-            // A própria createLead vai lidar com duplicados, defaults, etc.
             await createLead(leadDataParaCriar, companyId, createdByUserId);
             importedCount++;
             
         } catch (error) {
-            // Se createLead lançar um erro (ex: duplicado, nome/contato faltando), nós o capturamos aqui
             console.error(`[LeadSvc Import] Erro ao processar linha ${lineNumber}:`, error.message);
             importErrors.push({
                 line: lineNumber,
-                error: error.message, // A mensagem de erro virá da própria função createLead
+                error: error.message,
                 data: row
             });
         }
@@ -791,7 +785,7 @@ const importLeadsFromCSV = async (fileBuffer, companyId, createdByUserId) => {
     
     // Retorna o resumo final
     const summary = {
-        totalRows: rows.length,
+        totalRows: dataRows.length,
         importedCount: importedCount,
         errorCount: importErrors.length,
         errors: importErrors
