@@ -158,3 +158,58 @@
   background-color: rgba(255, 255, 255, 0.3);
   border-radius: 10px;
 }
+
+
+
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background-color: #343a40;
+  color: #adb5bd;
+  
+  /* VVVVV LÓGICA DE FLEXBOX PARA CONTROLE DE ALTURA VVVVV */
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* Altura total da janela de visualização */
+  /* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
+
+  position: sticky; /* Mantém sticky em desktop */
+  top: 0;
+  transition: transform 0.3s ease-in-out, left 0.3s ease-in-out;
+  z-index: 1020; 
+}
+  
+.sidebar-header {
+    padding: 1.5rem 1rem;
+    text-align: center;
+    border-bottom: 1px solid #495057;
+    flex-shrink: 0; /* Impede que o header encolha */
+}
+
+.sidebar-nav {
+    /* VVVVV LÓGICA PARA PERMITIR SCROLL VVVVV */
+    flex-grow: 1; /* Faz esta área crescer para ocupar o espaço disponível */
+    overflow-y: auto; /* CRUCIAL: Adiciona a barra de rolagem vertical APENAS se necessário */
+    overflow-x: hidden; /* Garante que não haja scroll horizontal */
+    padding-top: 1rem;
+    padding-bottom: 20px; /* Um respiro no final da lista */
+    /* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
+}
+
+/* Estilos para a barra de rolagem (opcional, mas melhora a aparência) */
+.sidebar-nav::-webkit-scrollbar {
+  width: 6px;
+}
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+}
+
+.sidebar-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #495057;
+    flex-shrink: 0; /* Impede que o footer encolha */
+}
