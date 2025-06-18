@@ -216,7 +216,7 @@ function LeadStageAdminPage() {
       {error && <p className="error-message">{error}</p>}
 
       {!isLoading && !error && (
-        <>
+        <div className="admin-table-container">
           <DragDropContext onDragEnd={onDragEnd}>
             <Droppable droppableId="stagesDroppable">
               {(provided) => (
@@ -300,7 +300,7 @@ function LeadStageAdminPage() {
               {isSavingOrder ? "Salvando ordem..." : "Salvar nova ordem"}
             </button>
           )}
-        </>
+        </div>
       )}
 
       {/* --- Modal/Formulário Simples para Adicionar/Editar --- */}
