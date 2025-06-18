@@ -1,39 +1,52 @@
-/* src/components/Layout/MainLayout.css */
+/* ===== MAIN LAYOUT CONTAINER ===== */
 .main-layout {
   display: flex;
+  flex-direction: row;
   min-height: 100vh;
+  background-color: #f4f6f9;
 }
 
-.main-content {
-  flex-grow: 1;
-  overflow-y: auto;
-  padding: 1.5rem 2rem;
-  box-sizing: border-box;
-}
-
-.content-wrapper {
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
-  /* width: calc(100% - 240px);*/
-  position: relative; 
-  background-color: #f4f7f6;
-}
-
+/* ===== MOBILE RESPONSIVO ===== */
 @media (max-width: 768px) {
   .main-layout {
-    
     flex-direction: column;
   }
 
   .main-content {
     padding: 1rem;
   }
-
- 
 }
 
+/* ===== CONTENT AREA ===== */
+.main-content,
+.main-layout-content {
+  flex-grow: 1;
+  box-sizing: border-box;
+  padding: 1.5rem 2rem;
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background-color: #f4f7f6;
+}
 
+/* Mobile content padding */
+@media (max-width: 991.98px) {
+  .main-content,
+  .main-layout-content {
+    padding: 1rem;
+  }
+}
+
+/* ===== CONTENT WRAPPER ===== */
+.content-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  position: relative;
+  background-color: #f4f7f6;
+}
+
+/* ===== MOBILE SIDEBAR OVERLAY ===== */
 .mobile-sidebar-overlay {
   position: fixed;
   top: 0;
