@@ -782,6 +782,7 @@ const importLeadsFromCSV = async (fileBuffer, companyId, createdByUserId) => {
                 origem: row.origem,
                 situacao: row.situacao,
                 comentario: row.comentario,
+                tags: ['importado-csv'],
             };
 
             // A validação de 'Nome e Contato são obrigatórios' agora é feita com os dados formatados
