@@ -196,203 +196,139 @@ const getLeadById = async (id, companyId) => {
 
 
 /**
- * Cria um novo Lead, incluindo dados de coadquirentes.
- * @param {object} leadData - Dados do lead, incluindo os novos campos e o array 'coadquirentes'.
+ * Cria um novo Lead com validação completa.
+ * @param {object} leadData - Dados do lead, incluindo coadquirentes e tags.
  * @param {string} companyId - ID da empresa.
  * @param {string|null} userId - ID do usuário que está criando.
  * @returns {Promise<Lead>} O lead criado.
  */
 const createLead = async (leadData, companyId, userId) => {
-  console.log(`[createLead] Iniciando criação. Empresa: ${companyId}, Usuário: ${userId}`);
-
-  if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
-    throw new Error("ID da Empresa inválido.");
-  }
-  if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-    throw new Error("ID do Usuário inválido.");
-  }
-
-  const {
-    nome,
-    contato,
-    email,
-    nascimento,
-    endereco,
-    cpf,
-    rg,
-    nacionalidade,
-    estadoCivil,
-    profissao,
-    situacao,
-    origem,
-    tags,
-    responsavel,
-    comentario,
-    coadquirentes
-  } = leadData;
-
-  if (!nome || !contato) {
-    throw new Error("Nome e Contato são obrigatórios.");
-  }
-
-  let formattedPhoneNumber = null;
-  try {
-    const phoneNumber = phoneUtil.parseAndKeepRawInput(contato, null);
-    if (phoneUtil.isValidNumber(phoneNumber)) {
-      formattedPhoneNumber = phoneUtil.format(phoneNumber, PNF.E164);
-    } else {
-      throw new Error(`Número de contato inválido: ${contato}`);
+    console.log(`[createLead] Iniciando criação. Empresa: ${companyId}, Usuário: ${userId || 'Sistema'}`);
+    
+    if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+        throw new Error("ID da Empresa inválido.");
     }
-  } catch (e) {
-    throw new Error(`Formato de contato não reconhecido: ${contato}`);
-  }
-
-  let cpfLimpo = null;
-  if (cpf) {
-    cpfLimpo = cpf.replace(/\D/g, "");
-    if (!cpfcnpj.cpf.isValid(cpfLimpo)) {
-      throw new Error(`CPF inválido: ${cpf}`);
+    if (userId && !mongoose.Types.ObjectId.isValid(userId)) {
+        throw new Error("ID do Usuário criador inválido.");
     }
-  }
 
-  let situacaoIdFinal = null;
-  let origemIdFinal = null;
-  let responsavelIdFinal =
-    leadData.responsavel ||
-    userId ||
-    (await getDefaultAdminUserIdForCompany(companyId));
+    const {
+        nome, contato, email, cpf, rg, nacionalidade, estadoCivil, profissao,
+        nascimento, endereco, comentario, origem, responsavel, situacao,
+        tags, coadquirentes
+    } = leadData;
 
-  if (responsavel && mongoose.Types.ObjectId.isValid(responsavelIdFinal)) {
-    const doc = await User.findOne({
-      _id: responsavel,
-      company: companyId,
-    }).lean();
-    if (!doc) throw new Error(`Responsável ID inválido ou não pertence à empresa.`);
-    responsavelIdFinal = doc._id;
-  } else {
-    const currentUser = await User.findById(userId).lean();
-    if (!currentUser || !currentUser.company.equals(companyId)) {
-      throw new Error("Usuário logado inválido ou não pertence a esta empresa.");
+    if (!nome || !contato) {
+        throw new Error("Nome e Contato são obrigatórios.");
     }
-    responsavelIdFinal = currentUser._id;
-  }
 
-  if (situacao && mongoose.Types.ObjectId.isValid(situacao)) {
-    const doc = await LeadStage.findOne({
-      _id: situacao,
-      company: companyId,
-    }).lean();
-    if (!doc) throw new Error(`Situação ID inválida ou não pertence à empresa.`);
-    situacaoIdFinal = doc._id;
-  } else {
-    const doc = await LeadStage.findOne({
-      company: companyId,
-      nome: { $ne: "Descartado" },
-      ativo: true,
-    }).sort({ ordem: 1 }).lean();
-    if (!doc) throw new Error(`Nenhuma situação padrão ativa encontrada.`);
-    situacaoIdFinal = doc._id;
-  }
+    // 1. Formatação e Validação dos Dados de Entrada
+    let formattedPhoneNumber = null;
+    try {
+        const phoneNumber = phoneUtil.parseAndKeepRawInput(String(contato), 'BR');
+        if (phoneUtil.isValidNumber(phoneNumber)) {
+            formattedPhoneNumber = phoneUtil.format(phoneNumber, PNF.E164);
+        } else { throw new Error(`Número de contato inválido: ${contato}`); }
+    } catch (e) { throw new Error(`Formato de contato não reconhecido: ${contato}`); }
+    
+    const emailFormatado = email?.trim().toLowerCase() || null;
+    let cpfLimpo = null;
+    if (cpf) {
+        cpfLimpo = String(cpf).replace(/\D/g, "");
+        if (cpfLimpo && !cpfcnpj.cpf.isValid(cpfLimpo)) throw new Error(`CPF inválido: ${cpf}`);
+        if (cpfLimpo === "") cpfLimpo = null;
+    }
 
-  if (origem && mongoose.Types.ObjectId.isValid(origem)) {
-    const doc = await Origem.findOne({
-      _id: origem,
-      company: companyId,
-    }).lean();
-    if (!doc) throw new Error(`Origem fornecida inválida ou não pertence à empresa.`);
-    origemIdFinal = doc._id;
-  } else {
-    const nomeDefault = "Sistema Gestor";
-    let defaultOrigin = await Origem.findOne({
-      nome: nomeDefault,
-      company: companyId,
+    // 2. Validação de Duplicados no Banco de Dados
+    console.log("[createLead] Verificando duplicados...");
+    const duplicateQuery = { company: companyId, $or: [] };
+    if (formattedPhoneNumber) duplicateQuery.$or.push({ contato: formattedPhoneNumber });
+    if (emailFormatado) duplicateQuery.$or.push({ email: emailFormatado });
+    if (cpfLimpo) duplicateQuery.$or.push({ cpf: cpfLimpo });
+
+    if (duplicateQuery.$or.length > 0) {
+        const existingLead = await Lead.findOne(duplicateQuery);
+        if (existingLead) {
+            let errorMessage = "Já existe um lead com estes dados: ";
+            if (existingLead.contato === formattedPhoneNumber) errorMessage += `Telefone (${contato}). `;
+            if (existingLead.email === emailFormatado) errorMessage += `Email (${email}). `;
+            if (existingLead.cpf === cpfLimpo) errorMessage += `CPF (${cpf}). `;
+            throw new Error(errorMessage.trim());
+        }
+    }
+    console.log("[createLead] Nenhuma duplicidade encontrada.");
+
+    // 3. Lógica para buscar/definir IDs de relacionamentos
+    let responsavelIdFinal = responsavel || userId || await getDefaultAdminUserIdForCompany(companyId);
+    let situacaoIdFinal = situacao ? (await LeadStage.findOne({_id: situacao, company: companyId}))?._id : await getDefaultLeadStageIdForCompany(companyId, "Novo");
+    let origemIdFinal = origem ? (await Origem.findOne({_id: origem, company: companyId}))?._id : (await origemService.findOrCreateOrigem({ nome: "Cadastro Manual" }, companyId))?._id;
+
+    if (!responsavelIdFinal) console.warn(`[createLead] Não foi possível definir um responsável para o lead.`);
+    if (!situacaoIdFinal) throw new Error("Não foi possível definir uma situação válida para o lead.");
+    if (!origemIdFinal) throw new Error("Não foi possível definir uma origem válida para o lead.");
+
+    // 4. Processamento de Tags e Coadquirentes
+    let processedTags = [];
+    if (Array.isArray(tags)) {
+        processedTags = [...new Set(tags.map(tag => tag.trim().toLowerCase()).filter(Boolean))];
+    }
+    
+    let processedCoadquirentes = [];
+    if (Array.isArray(coadquirentes)) {
+        processedCoadquirentes = coadquirentes.map(co => {
+            if (!co.nome) throw new Error("O nome de cada coadquirente é obrigatório.");
+            const coCpfLimpo = co.cpf ? String(co.cpf).replace(/\D/g, "") : null;
+            if (coCpfLimpo && !cpfcnpj.cpf.isValid(coCpfLimpo)) throw new Error(`CPF do coadquirente '${co.nome}' é inválido.`);
+            return {
+                nome: co.nome.trim(),
+                cpf: coCpfLimpo,
+                rg: co.rg?.trim() || null,
+                nacionalidade: co.nacionalidade?.trim() || 'Brasileiro(a)',
+                estadoCivil: co.estadoCivil?.trim() || null,
+                profissao: co.profissao?.trim() || null,
+                email: co.email?.trim().toLowerCase() || null,
+                contato: co.contato?.trim() || null,
+                endereco: co.endereco?.trim() || null,
+                nascimento: co.nascimento || null,
+            };
+        });
+    }
+
+    // 5. Criação do Novo Lead
+    const novoLead = new Lead({
+        nome: nome.trim(),
+        contato: formattedPhoneNumber,
+        email: emailFormatado,
+        cpf: cpfLimpo,
+        rg: rg?.trim() || null,
+        nacionalidade: nacionalidade?.trim() || 'Brasileiro(a)',
+        estadoCivil: estadoCivil?.trim() || null,
+        profissao: profissao?.trim() || null,
+        nascimento: nascimento || null,
+        endereco: endereco?.trim() || null,
+        coadquirentes: processedCoadquirentes,
+        tags: processedTags,
+        comentario: comentario || null,
+        situacao: situacaoIdFinal,
+        origem: origemIdFinal,
+        responsavel: responsavelIdFinal,
+        company: companyId,
+        createdBy: userId,
+        ativo: true
     });
 
-    if (!defaultOrigin) {
-      try {
-        defaultOrigin = await origemService.createOrigem(
-          {
-            nome: nomeDefault,
-            descricao: "Lead cadastrado diretamente pelo sistema.",
-          },
-          companyId
-        );
-      } catch (creationError) {
-        throw new Error(`Erro ao criar origem padrão: ${creationError.message}`);
-      }
+    try {
+        const leadSalvo = await novoLead.save();
+        console.log(`[createLead] Lead criado com sucesso: ${leadSalvo._id}`);
+        await logHistory(leadSalvo._id, userId, "CRIACAO", "Lead criado no sistema.");
+        return leadSalvo;
+    } catch (error) {
+        console.error(`[createLead] Falha ao salvar lead no banco:`, error);
+        if (error.code === 11000) {
+            throw new Error("Lead duplicado detectado pelo banco de dados (Email, Contato ou CPF).");
+        }
+        throw new Error(error.message || "Erro ao salvar lead.");
     }
-
-    origemIdFinal = defaultOrigin._id;
-  }
-
-  let processedTags = [];
-  if (Array.isArray(tags)) {
-    processedTags = tags
-      .filter(tag => typeof tag === 'string' && tag.trim() !== '')
-      .map(tag => tag.trim().toLowerCase());
-    processedTags = [...new Set(processedTags)];
-  } else if (typeof tags === 'string' && tags.trim() !== '') {
-    processedTags = tags.split(',')
-      .map(tag => tag.trim().toLowerCase())
-      .filter(tag => tag.length > 0);
-    processedTags = [...new Set(processedTags)];
-  }
-
-  // --- Validação de Coadquirentes ---
-  let processedCoadquirentes = [];
-  if (Array.isArray(coadquirentes)) {
-    processedCoadquirentes = coadquirentes.map(co => {
-      if (!co.nome) throw new Error("O nome de cada coadquirente é obrigatório.");
-      const coCpfLimpo = co.cpf ? String(co.cpf).replace(/\D/g, "") : null;
-      if (coCpfLimpo && !cpfcnpj.cpf.isValid(coCpfLimpo)) {
-        throw new Error(`CPF do coadquirente '${co.nome}' é inválido.`);
-      }
-      return {
-        nome: co.nome.trim(),
-        cpf: coCpfLimpo || null,
-        rg: co.rg?.trim() || null,
-        nacionalidade: co.nacionalidade?.trim() || 'Brasileiro(a)',
-        estadoCivil: co.estadoCivil?.trim() || null,
-        profissao: co.profissao?.trim() || null,
-      };
-    });
-  }
-
-  const novoLead = new Lead({
-    nome: nome.trim(),
-    contato: formattedPhoneNumber,
-    email: email ? email.trim().toLowerCase() : null,
-    nascimento: nascimento || null,
-    endereco: endereco || null,
-    cpf: cpfLimpo,
-    rg: rg?.trim() || null,
-    nacionalidade: nacionalidade?.trim() || 'Brasileiro(a)',
-    estadoCivil: estadoCivil?.trim() || null,
-    profissao: profissao?.trim() || null,
-    situacao: situacaoIdFinal,
-    motivoDescarte: null,
-    comentario: comentario || null,
-    origem: origemIdFinal,
-    tags: processedTags,
-    responsavel: responsavelIdFinal,
-    company: companyId,
-    createdBy: userId,
-    ativo: true,
-    coadquirentes: processedCoadquirentes,
-  });
-
-  try {
-    const leadSalvo = await novoLead.save();
-    console.log(`[createLead] Lead criado com sucesso: ${leadSalvo._id}`);
-    await logHistory(leadSalvo._id, userId, "CRIACAO", "Lead criado.");
-    return leadSalvo;
-  } catch (error) {
-    console.error(`[createLead] Falha ao salvar lead:`, error);
-    if (error.code === 11000) {
-      throw new Error("Lead duplicado: já existe um lead com estes dados.");
-    }
-    throw new Error(error.message || "Erro ao salvar lead.");
-  }
 };
 
 
