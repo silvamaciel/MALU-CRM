@@ -1,42 +1,172 @@
-/* src/pages/LeadList/Kanban.css */
+/* === PAGE CONTAINER === */
+.lead-list-page {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 1rem 2rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+}
+
+.lead-list-page h1 {
+  text-align: center;
+  color: #343a40;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid #dee2e6;
+  padding-bottom: 0.5rem;
+}
+
+/* === STATUS MESSAGES === */
+.loading-message,
+.error-message {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.1em;
+  border-radius: 5px;
+  margin: 1rem 0;
+}
+
+.loading-message {
+  color: #495057;
+}
+
+.error-message {
+  color: #721c24;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+}
+
+/* === ADD BUTTON === */
+.add-lead-button-container {
+  text-align: left;
+  margin-bottom: 1.5rem;
+}
+
+.add-lead-button {
+  display: inline-block;
+  padding: 0.7rem 1.3rem;
+  background-color: #007bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  font-weight: bold;
+  text-align: center;
+  transition: background-color 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.add-lead-button:hover {
+  background-color: #0056b3;
+}
+
+/* === PAGINAÇÃO === */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  list-style: none;
+  padding: 1rem 0;
+  margin-top: 2rem;
+  border-top: 1px solid #eee;
+  flex-wrap: wrap;
+}
+
+.page-item {
+  margin: 0 0.3rem;
+}
+
+.page-link {
+  padding: 0.5rem 0.8rem;
+  border: 1px solid #dee2e6;
+  color: #007bff;
+  cursor: pointer;
+  text-decoration: none;
+  border-radius: 4px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  background-color: white;
+  font-size: 0.9em;
+}
+
+.page-link:hover {
+  background-color: #e9ecef;
+  border-color: #ced4da;
+}
+
+.page-item.active .page-link {
+  background-color: #007bff;
+  border-color: #007bff;
+  color: white;
+  z-index: 1;
+}
+
+.page-item.disabled .page-link {
+  color: #6c757d;
+  pointer-events: none;
+  background-color: #fff;
+  border-color: #dee2e6;
+}
+
+.page-item.break .page-link {
+  cursor: default;
+  border: none;
+  background-color: transparent;
+}
+
+/* === KANBAN BOARD === */
 .kanban-board-page .page-content {
   overflow-x: auto;
-  padding-bottom: 20px; /* Espaço para scrollbar horizontal não cobrir conteúdo */
+  padding: 0 0 20px;
 }
 
 .kanban-container {
   display: flex;
   flex-direction: row;
   gap: 16px;
-  padding: 10px 0;
-  min-height: calc(100vh - 250px); /* Ajuste conforme altura do seu header/footer */
-  align-items: flex-start; /* Colunas começam do topo */
+  overflow-x: auto;
+  padding: 10px 0 20px;
+  min-height: calc(100vh - 250px);
+  align-items: flex-start;
+}
+
+.kanban-container::-webkit-scrollbar {
+  height: 10px;
+}
+.kanban-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+.kanban-container::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+.kanban-container::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
 }
 
 .kanban-column {
-  flex: 0 0 320px; /* Largura da coluna */
+  flex: 0 0 320px;
   max-width: 320px;
-  background-color: #f0f2f5; /* Fundo da coluna mais suave */
+  background-color: #f0f2f5;
   border-radius: 6px;
-  padding: 0; /* Padding será interno ao título e conteúdo */
+  padding: 0;
   display: flex;
-  flex-direction: column; /* Título em cima, conteúdo abaixo */
-  max-height: calc(100vh - 280px); /* Altura máxima da coluna, permite scroll interno */
+  flex-direction: column;
+  max-height: calc(100vh - 280px);
   box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
 }
-
 .kanban-column.dragging-over {
-  background-color: #e6f0ff; /* Azul claro suave ao arrastar sobre */
+  background-color: #e6f0ff;
 }
 
 .kanban-column-title {
-  font-size: 1.05em; /* Um pouco maior */
+  font-size: 1.05em;
   font-weight: 600;
   padding: 12px 15px;
   margin: 0;
   border-bottom: 1px solid #d1d9e0;
-  color: #172b4d; /* Azul escuro para texto */
-  background-color: #e9ecef; /* Fundo levemente diferente para o título */
+  color: #172b4d;
+  background-color: #e9ecef;
   border-top-left-radius: 6px;
   border-top-right-radius: 6px;
 }
@@ -44,10 +174,21 @@
 .kanban-column-content {
   flex-grow: 1;
   min-height: 80px;
-  overflow-y: auto; /* Scroll vertical se muitos cards */
+  overflow-y: auto;
   padding: 10px;
 }
 
+.kanban-empty-column {
+  text-align: center;
+  color: #7a869a;
+  font-style: italic;
+  padding: 20px;
+  border: 2px dashed #d1d9e0;
+  border-radius: 4px;
+  margin: 10px;
+}
+
+/* === LEAD CARDS === */
 .lead-card {
   background-color: #ffffff;
   border-radius: 4px;
@@ -61,7 +202,6 @@
 .lead-card:hover {
   border-color: #007bff;
 }
-
 .lead-card.dragging {
   background-color: #f8f9fa;
   transform: rotate(2deg);
@@ -69,7 +209,7 @@
 }
 
 .lead-card-header {
-  cursor: pointer; /* Indica que o header é clicável para detalhes */
+  cursor: pointer;
 }
 .lead-card-header:hover h4 {
   color: #0056b3;
@@ -77,8 +217,7 @@
 
 .lead-card h4 {
   font-size: 1em;
-  margin-top: 0;
-  margin-bottom: 8px;
+  margin: 0 0 8px;
   color: #172b4d;
   font-weight: 500;
 }
@@ -117,7 +256,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 1.1em; /* Ajuste o tamanho dos ícones/emojis */
+  font-size: 1.1em;
   padding: 2px;
   color: #5e6c84;
 }
@@ -125,27 +264,18 @@
   color: #007bff;
 }
 
-.kanban-empty-column {
-  text-align: center;
-  color: #7a869a;
-  font-style: italic;
-  padding: 20px;
-  border: 2px dashed #d1d9e0;
-  border-radius: 4px;
-  margin: 10px;
-}
-
+/* === TAGS === */
 .card-tags-container {
-    margin-top: 8px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 .card-tag {
-    background-color: #e9ecef;
-    color: #495057;
-    font-size: 0.75em;
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-weight: 500;
+  background-color: #e9ecef;
+  color: #495057;
+  font-size: 0.75em;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 500;
 }

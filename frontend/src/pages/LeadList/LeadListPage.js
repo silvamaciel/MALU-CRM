@@ -17,7 +17,6 @@ import LeadTagsModal from '../../components/LeadTagsModal/LeadTagsModal';
 import ImportCSVModal from '../../components/ImportCSVModal/ImportCSVModal';
 
 // Estilos
-import "./LeadListPage.css";
 import "./Kanban.css";
 
 function LeadListPage() {
