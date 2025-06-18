@@ -711,41 +711,31 @@ const descartarLead = async (id, dados, companyId, userId) => {
 
 
 /**
- * Importa leads de um buffer de arquivo CSV, chamando o serviço createLead para cada um.
- * @param {Buffer} fileBuffer - O buffer do arquivo CSV.
- * @param {string} companyId - ID da empresa.
- * @param {string} createdByUserId - ID do usuário que está fazendo a importação.
- * @returns {Promise<object>} Um resumo da importação.
+ * Importa leads de um buffer de arquivo CSV, pré-processando os dados
+ * e chamando o serviço createLead para cada linha.
  */
 const importLeadsFromCSV = async (fileBuffer, companyId, createdByUserId) => {
-    console.log(`[LeadSvc Import] Iniciando importação de CSV para Company: ${companyId}`);
+    console.log(`[LeadSvc Import] Iniciando importação de CSV (usando createLead) para Company: ${companyId}`);
     
-    // Divide o buffer do arquivo em linhas, tratando finais de linha de Windows (\r\n) e Linux (\n)
     const lines = fileBuffer.toString('utf8').split(/\r?\n/);
-    
-    // Pega o cabeçalho (primeira linha) e remove para processar apenas as linhas de dados
     const headerLine = lines.shift()?.trim();
     if (!headerLine) {
         throw new Error("Arquivo CSV está vazio ou não contém um cabeçalho.");
     }
-
-    // Detecta o delimitador e limpa os cabeçalhos
     const delimiter = headerLine.includes(';') ? ';' : ',';
     const headers = headerLine.split(delimiter).map(h => h.trim().toLowerCase());
     console.log(`[LeadSvc Import] Cabeçalhos detectados: [${headers.join(', ')}]. Delimitador: '${delimiter}'`);
-
-    const dataRows = lines.filter(line => line.trim() !== ''); // Ignora linhas vazias
+    
+    const dataRows = lines.filter(line => line.trim() !== '');
     
     let importedCount = 0;
     const importErrors = [];
 
     for (let i = 0; i < dataRows.length; i++) {
         const line = dataRows[i];
-        const lineNumber = i + 2; // +1 pelo índice 0, +1 pelo cabeçalho pulado
+        const lineNumber = i + 2;
         
         const values = line.split(delimiter);
-        
-        // Cria um objeto 'row' a partir dos cabeçalhos e valores
         const row = headers.reduce((obj, header, index) => {
             obj[header] = values[index]?.trim() || '';
             return obj;
@@ -754,19 +744,52 @@ const importLeadsFromCSV = async (fileBuffer, companyId, createdByUserId) => {
         console.log(`[LeadSvc Import DEBUG] Linha ${lineNumber} parseada como:`, row);
 
         try {
-            // Monta o objeto leadData exatamente como a função createLead espera
+            // --- PRÉ-PROCESSAMENTO E FORMATAÇÃO DOS DADOS DA LINHA ---
+            const nomeFormatado = row.nome?.trim();
+            const emailFormatado = row.email?.trim().toLowerCase() || null;
+            
+            let contatoFormatado = null;
+            if (row.telefone && row.telefone.trim()) {
+                try {
+                    // Valida e formata o telefone usando 'BR' como região padrão
+                    const phoneNumber = phoneUtil.parseAndKeepRawInput(String(row.telefone).trim(), 'BR');
+                    if (phoneUtil.isValidNumber(phoneNumber)) {
+                        contatoFormatado = phoneUtil.format(phoneNumber, PNF.E164); // Formato E.164 (+55...)
+                    } else {
+                        // Se não for válido, lança um erro que será pego pelo catch principal deste loop
+                        throw new Error(`Número de telefone inválido: ${row.telefone}`);
+                    }
+                } catch (e) {
+                    throw new Error(`Formato de telefone não reconhecido: ${row.telefone}`);
+                }
+            }
+            
+            let cpfFormatado = null;
+            if (row.cpf && row.cpf.trim()) {
+                const cpfLimpo = String(row.cpf).replace(/\D/g, "");
+                if (cpfLimpo) {
+                     if (!cpfcnpj.cpf.isValid(cpfLimpo)) throw new Error(`CPF inválido: ${row.cpf}`);
+                     cpfFormatado = cpfLimpo;
+                }
+            }
+
+            // Monta o objeto com os dados JÁ FORMATADOS
             const leadDataParaCriar = {
-                nome: row.nome,
-                email: row.email,
-                contato: row.telefone, // Mapeando a coluna 'telefone' para o campo 'contato'
-                cpf: row.cpf,
+                nome: nomeFormatado,
+                email: emailFormatado,
+                contato: contatoFormatado,
+                cpf: cpfFormatado,
                 origem: row.origem,
                 situacao: row.situacao,
                 comentario: row.comentario,
-                tags: ['importado-csv'],
             };
-            
-            // Chama a função createLead que já existe e funciona!
+
+            // A validação de 'Nome e Contato são obrigatórios' agora é feita com os dados formatados
+            if (!leadDataParaCriar.nome || !leadDataParaCriar.contato) {
+                throw new Error("Nome e Contato são obrigatórios e devem ser válidos.");
+            }
+
+            // Chama a função createLead, que agora recebe dados limpos
             await createLead(leadDataParaCriar, companyId, createdByUserId);
             importedCount++;
             
@@ -780,7 +803,6 @@ const importLeadsFromCSV = async (fileBuffer, companyId, createdByUserId) => {
         }
     }
     
-    // Retorna o resumo final
     const summary = {
         totalRows: dataRows.length,
         importedCount: importedCount,
