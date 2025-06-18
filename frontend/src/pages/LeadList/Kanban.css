@@ -115,18 +115,19 @@
 
 /* === KANBAN BOARD === */
 .kanban-board-page .page-content {
-  overflow-x: auto;
-  padding: 0 0 20px;
+    flex-grow: 1; /* Ocupa todo o espaço vertical restante */
+    overflow-y: hidden; /* O scroll vertical fica nas colunas */
+    display: flex;
+    flex-direction: column;
 }
 
 .kanban-container {
   display: flex;
   flex-direction: row;
   gap: 16px;
+  padding: 10px 0 20px 0;
   overflow-x: auto;
-  padding: 10px 0 20px;
-  min-height: calc(100vh - 250px);
-  align-items: flex-start;
+  flex-grow: 1; 
 }
 
 .kanban-container::-webkit-scrollbar {
