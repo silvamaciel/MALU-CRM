@@ -1,121 +1,38 @@
 /* src/components/Sidebar/Sidebar.css */
+
+/* Garante que o container do sidebar ocupe 100% da altura da tela */
 .sidebar {
-  width: 240px;
-  flex-shrink: 0;
-  background-color: #343a40;
-  color: #adb5bd;
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  position: sticky; /* Mantém sticky em desktop */
+  height: 100vh; /* Altura total da janela de visualização */
+  position: sticky; /* Mantém o sidebar fixo enquanto a página principal rola */
   top: 0;
-  transition: transform 0.3s ease-in-out, left 0.3s ease-in-out; /* Animação */
-  z-index: 1020; 
 }
-  
-  .sidebar-header {
-    padding: 1.5rem 1rem;
-    text-align: center;
-    border-bottom: 1px solid #495057;
-  }
-  
-  .sidebar-header h3 {
-    color: #fff;
-    margin: 0;
-    font-size: 1.4em;
-  }
-  
-  .sidebar-nav {
-    flex-grow: 1; /* Ocupa espaço entre header e footer */
-    padding-top: 1rem;
-  }
-  
-  .sidebar-nav ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  
-  .sidebar-nav li a {
-    display: block;
-    padding: 0.8rem 1.5rem;
-    color: #adb5bd;
-    text-decoration: none;
-    transition: background-color 0.2s ease, color 0.2s ease;
-    border-left: 3px solid transparent; /* Para indicar link ativo */
-  }
-  
-  .sidebar-nav li a:hover {
-    background-color: #495057;
-    color: #fff;
-  }
-  
-  /* Estilo do link ativo (definido pelo NavLink) */
-  .sidebar-nav li a.active {
-    background-color: #0d6efd; /* Azul */
-    color: #fff;
-    font-weight: 500;
-    border-left-color: #fff; /* Barra branca indicando ativo */
-  }
-  
-  /* Seção Admin */
-  .admin-section {
-      margin-top: 1.5rem;
-      border-top: 1px solid #495057;
-      padding-top: 0.5rem;
-  }
-  .admin-section-title {
-      display: block;
-      padding: 0.8rem 1.5rem;
-      font-size: 0.8em;
-      text-transform: uppercase;
-      color: #6c757d;
-      font-weight: 600;
-  }
-  .admin-section ul li a {
-      padding-left: 2.5rem; /* Indentação para links admin */
-      font-size: 0.95em;
-  }
-  
-  
-  /* Footer da Sidebar */
-  .sidebar-footer {
-    padding: 1rem 1.5rem;
-    border-top: 1px solid #495057;
-  }
-  .user-info {
-      margin-bottom: 1rem;
-      font-size: 0.9em;
-  }
-  .user-info span { display: block; }
-  .user-info small { color: #6c757d; }
-  
-  .logout-button {
-    width: 100%;
-    padding: 0.6rem;
-    background-color: #dc3545; /* Vermelho */
-    border: none;
-    color: white;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9em;
-    text-align: center;
-  }
-  .logout-button:hover {
-    background-color: #c82333;
-  }
 
-  @media (max-width: 991.98px) {
-    .sidebar {
-      position: fixed; 
-      transform: translateX(-100%);
-      top: 0;
-      bottom: 0;
-      height: 100%;
-    }
-  
-    .main-layout.mobile-sidebar-open .sidebar {
-        transform: translateX(0);
-        box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-    }
-  }
+/* O header e o footer terão altura automática */
+.sidebar-header {
+  flex-shrink: 0; /* Impede que o header encolha */
+}
+.sidebar-footer {
+  flex-shrink: 0; /* Impede que o footer encolha */
+}
+
+/* A área de navegação vai ocupar todo o espaço restante e terá o scroll */
+.sidebar-nav {
+  flex-grow: 1; /* Faz esta área crescer para ocupar o espaço disponível */
+  overflow-y: auto; /* CRUCIAL: Adiciona a barra de rolagem vertical APENAS se necessário */
+  overflow-x: hidden; /* Garante que não haja scroll horizontal */
+  padding-bottom: 20px; /* Um respiro no final da lista */
+}
+
+/* Estilos para a barra de rolagem (opcional, mas melhora a aparência) */
+.sidebar-nav::-webkit-scrollbar {
+  width: 6px;
+}
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+}
