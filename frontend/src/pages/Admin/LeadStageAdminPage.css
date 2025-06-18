@@ -1,4 +1,28 @@
 /* Em LeadStageAdminPage.css */
+
+.admin-table-container {
+    overflow-x: auto;
+    margin-top: 1.5rem;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    display: block; /* ESSENCIAL em mobile */
+    width: 100%;     /* Garante que respeita o container pai */
+}
+
+.admin-table-container table {
+    min-width: 600px; /* Ou maior, se necessário */
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-table-container th,
+.admin-table-container td {
+    white-space: nowrap; /* Não deixa quebrar o texto */
+    padding: 8px 12px;
+    text-align: left;
+}
+
+
 .situacoes-sortable-list {
   list-style: none;
   padding: 0;
@@ -28,9 +52,3 @@
   cursor: grab;
 }
 
-.admin-table-container {
-    overflow-x: auto;
-    margin-top: 1.5rem;
-    border: 1px solid #e9ecef; /* Borda sutil em volta da tabela */
-    border-radius: 6px;
-}
