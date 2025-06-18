@@ -14,7 +14,7 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 //import './AdminPages.css';
-import './AdminPages.css';
+import './LeadStageAdminPage.css'; 
 
 const reorder = (list, startIndex, endIndex) => {
   const result = Array.from(list);
