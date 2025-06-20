@@ -137,43 +137,41 @@ const createReserva = async (reservaData, leadId, imovelId, tipoImovel, companyI
  * @param {object} queryParams - Parâmetros da query (filtros e paginação).
  */
 const getReservasByCompany = async (companyId, queryParams = {}) => {
-    console.log(`[ReservaService] Buscando reservas para Company: ${companyId}, Query Params:`, queryParams);
+  console.log(`[ReservaService] Buscando reservas para Company: ${companyId}, Query Params:`, queryParams);
 
-    const page = parseInt(queryParams.page, 10) || 1;
-    const limit = parseInt(queryParams.limit, 10) || 10;
-    const skip = (page - 1) * limit;
-    
-    const queryConditions = { company: companyId };
-    // TODO: Adicionar lógica de filtros aqui no futuro, se necessário
+  const page = parseInt(queryParams.page, 10) || 1;
+  const limit = parseInt(queryParams.limit, 10) || 10;
+  const skip = (page - 1) * limit;
 
-    console.log("[ReservaService] Condições da Query MongoDB:", queryConditions);
+  const queryConditions = { company: companyId };
+  // Filtros adicionais podem entrar aqui
 
-    try {
-        const [totalReservas, reservas] = await Promise.all([
-            Reserva.countDocuments(queryConditions),
-            Reserva.find(queryConditions)
-            .populate('lead', 'nome email contato')
-            .populate('createdBy', 'nome')
-            .populate({
-            path: 'imovel',
-            model: doc => doc.tipoImovel,
-            populate: { path: 'empreendimento', select: 'nome' }
-            })
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit)
-            .lean()
-        ]);
-        
-        const totalPages = Math.ceil(totalReservas / limit) || 1;
-        console.log(`[ReservaService] ${totalReservas} reservas encontradas para Company: ${companyId}`);
-        
-        return { reservas, total: totalReservas, totalPages, currentPage: page };
+  try {
+    const [totalReservas, reservas] = await Promise.all([
+      Reserva.countDocuments(queryConditions),
+      Reserva.find(queryConditions)
+        .populate('lead', 'nome email contato')
+        .populate('createdBy', 'nome')
+        .populate('imovel') // refPath do schema vai resolver o model correto
+        .populate({
+          path: 'imovel.empreendimento', // popula empreendimento dentro de imovel (só se existir)
+          select: 'nome'
+        })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()
+    ]);
 
-    } catch (error) {
-        console.error("[ReservaService] Erro ao buscar reservas:", error);
-        throw new Error("Erro ao buscar reservas.");
-    }
+    const totalPages = Math.ceil(totalReservas / limit) || 1;
+    console.log(`[ReservaService] ${totalReservas} reservas encontradas para Company: ${companyId}`);
+
+    return { reservas, total: totalReservas, totalPages, currentPage: page };
+
+  } catch (error) {
+    console.error("[ReservaService] Erro ao buscar reservas:", error);
+    throw new Error("Erro ao buscar reservas.");
+  }
 };
 
 /**
@@ -184,41 +182,46 @@ const getReservasByCompany = async (companyId, queryParams = {}) => {
  * @returns {Promise<Reserva|null>} A reserva encontrada ou null.
  */
 const getReservaById = async (reservaId, companyId) => {
-    if (!mongoose.Types.ObjectId.isValid(reservaId) || !mongoose.Types.ObjectId.isValid(companyId)) {
-        throw new Error("ID da Reserva ou da Empresa inválido.");
+  if (!mongoose.Types.ObjectId.isValid(reservaId) || !mongoose.Types.ObjectId.isValid(companyId)) {
+    throw new Error("ID da Reserva ou da Empresa inválido.");
+  }
+
+  console.log(`[ReservaService] Buscando Reserva ID: ${reservaId} para Company: ${companyId}`);
+
+  try {
+    const reserva = await Reserva.findOne({ _id: reservaId, company: companyId })
+      .populate({
+        path: 'lead',
+        select: 'nome email contato cpf rg estadoCivil profissao nacionalidade endereco coadquirentes'
+      })
+      .populate({
+        path: 'createdBy',
+        select: 'nome email'
+      })
+      .populate('imovel') // Mongoose resolve com base no tipoImovel via refPath
+      .populate({
+        path: 'imovel.empreendimento',
+        select: 'nome localizacao'
+      })
+      .lean();
+
+    if (!reserva) {
+      console.log(`[ReservaService] Reserva ID: ${reservaId} não encontrada para Company: ${companyId}.`);
+      return null;
     }
-    console.log(`[ReservaService] Buscando Reserva ID: ${reservaId} para Company: ${companyId}`);
 
-    try {
-        const reserva = await Reserva.findOne({ _id: reservaId, company: companyId })
-            .populate({
-                path: 'lead',
-                select: 'nome email contato cpf rg estadoCivil profissao nacionalidade endereco coadquirentes'
-            })
-            .populate({
-                path: 'imovel',
-                populate: { 
-                    path: 'empreendimento', 
-                    select: 'nome localizacao'
-                }
-            })
-            .populate({ path: 'createdBy', select: 'nome email' })
-            .lean();
+    const empresaVendedora = await Company.findById(companyId)
+      .select('nome razaoSocial cnpj endereco representanteLegalNome representanteLegalCPF')
+      .lean();
 
-        if (!reserva) {
-            console.log(`[ReservaService] Reserva ID: ${reservaId} não encontrada para Company: ${companyId}.`);
-            return null;
-        }
+    reserva.companyData = empresaVendedora || {};
 
-        const empresaVendedora = await Company.findById(companyId).select('nome razaoSocial cnpj endereco representanteLegalNome representanteLegalCPF').lean();
-        reserva.companyData = empresaVendedora || {};
+    return reserva;
 
-        return reserva;
-
-    } catch (error) {
-        console.error(`[ReservaService] Erro ao buscar reserva ${reservaId}:`, error);
-        throw new Error("Erro ao buscar reserva por ID.");
-    }
+  } catch (error) {
+    console.error(`[ReservaService] Erro ao buscar reserva ${reservaId}:`, error);
+    throw new Error("Erro ao buscar reserva por ID.");
+  }
 };
 
 
