@@ -17,6 +17,8 @@ const { logHistory } = require('./LeadService');
  * @param {string} creatingUserId - ID do usuário.
  */
 const createReserva = async (reservaData, leadId, imovelId, tipoImovel, companyId, creatingUserId) => {
+
+  const { validadeReserva, valorSinal, observacoesReserva } = reservaData;
   console.log('[DEBUG] reservaData:', reservaData);
   console.log(`[ReservaService] Iniciando reserva para Lead ${leadId}, Imóvel ${imovelId}, Tipo ${tipoImovel}`);
   
