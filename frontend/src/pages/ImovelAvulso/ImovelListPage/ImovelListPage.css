@@ -102,3 +102,21 @@
 .status-badge.status-reservado { background-color: #ffc107; color: #212529; }
 .status-badge.status-vendido { background-color: #007bff; }
 .status-badge.status-inativo { background-color: #6c757d; }
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.filters-wrapper {
+  overflow: hidden;
+  transition: max-height 0.4s ease-out, opacity 0.3s ease-out;
+}
+.filters-wrapper.closed {
+  max-height: 0;
+  opacity: 0;
+}
+.filters-wrapper.open {
+  max-height: 500px;
+  opacity: 1;
+}

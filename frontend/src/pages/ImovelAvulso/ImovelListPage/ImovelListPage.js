@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { getImoveisApi, deleteImovelApi } from '../../../api/imovelAvulsoApi';
 import ConfirmModal from '../../../components/ConfirmModal/ConfirmModal';
+import ImovelFilters from '../../../components/ImovelFilters/ImovelFilters';
+
 import './ImovelListPage.css';
 
 const formatCurrency = (value) => {
@@ -16,17 +18,19 @@ function ImovelListPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     // Adicionar states para filtros e paginação no futuro
+
+    const [filters, setFilters] = useState({}); // <<< NOVO ESTADO PARA FILTROS
+    const [showFilters, setShowFilters] = useState(false);
     
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const fetchImoveis = useCallback(async () => {
+    const fetchImoveis = useCallback(async (currentFilters) => {
         setLoading(true);
         setError(null);
         try {
-            // TODO: Adicionar lógica de filtros aqui
-            const data = await getImoveisApi(); 
+            const data = await getImoveisApi(currentFilters);
             setImoveis(data.imoveis || []);
         } catch (err) {
             setError(err.message || "Falha ao carregar imóveis.");
@@ -36,10 +40,16 @@ function ImovelListPage() {
         }
     }, []);
 
-    useEffect(() => {
-        fetchImoveis();
-    }, [fetchImoveis]);
 
+     useEffect(() => {
+        fetchImoveis(filters);
+    }, [filters, fetchImoveis]);
+
+    const handleFilterChange = useCallback((newFilters) => {
+        setFilters(newFilters);
+    }, []);
+
+    
     const handleOpenDeleteModal = (imovel) => {
         setDeleteTarget(imovel);
         setIsDeleteModalOpen(true);
@@ -68,12 +78,23 @@ function ImovelListPage() {
             <header className="page-header">
                 <h1>Imóveis Avulsos</h1>
                 <Link to="/imoveis-avulsos/novo" className="button primary-button">+ Adicionar Imóvel</Link>
+                <button onClick={() => setShowFilters(prev => !prev)} className="button outline-button">
+                        Filtros {showFilters ? '▲' : '▼'}
+                    </button>
             </header>
             <div className="page-content">
+
+                <div className={`filters-wrapper ${showFilters ? 'open' : ''}`}>
+                    <ImovelFilters
+                        onFilterChange={handleFilterChange}
+                        isProcessing={loading}
+                    />
+                </div>
+
+
                 {error && <p className="error-message">{error}</p>}
                 
-                {/* TODO: Adicionar componente de filtros aqui */}
-                
+                                
                 <div className="table-responsive">
                     <table className="data-table">
                         <thead>
