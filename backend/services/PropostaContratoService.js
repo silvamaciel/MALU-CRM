@@ -15,6 +15,69 @@ const puppeteer = require('puppeteer-core');
 const DiscardReason = require('../models/DiscardReason');
 
 
+
+
+const montarDadosParaTemplate = (propostaData, leadDoc, imovelDoc, empresaVendedora) => {
+    const formatCurrency = v => v ? `R$ ${parseFloat(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'R$ 0,00';
+    const formatDate = d => d ? new Date(d).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '';
+
+    const dados = {
+        // Empresa
+        vendedor_nome_fantasia: empresaVendedora.nome || '',
+        vendedor_razao_social: empresaVendedora.razaoSocial || empresaVendedora.nome || '',
+        vendedor_cnpj: empresaVendedora.cnpj || '',
+        vendedor_endereco_completo: `${empresaVendedora.endereco?.logradouro || ''}, ${empresaVendedora.endereco?.numero || ''} - ${empresaVendedora.endereco?.bairro || ''}, ${empresaVendedora.endereco?.cidade || ''}/${empresaVendedora.endereco?.uf || ''}`,
+        vendedor_representante_nome: empresaVendedora.representanteLegalNome || '',
+        vendedor_representante_cpf: empresaVendedora.representanteLegalCPF || '',
+
+        // Proposta
+        proposta_valor_total_formatado: formatCurrency(propostaData.valorPropostaContrato),
+        proposta_valor_entrada_formatado: propostaData.valorEntrada ? formatCurrency(propostaData.valorEntrada) : 'N/A',
+        data_proposta_extenso: formatDate(propostaData.dataProposta || new Date()),
+
+        // Imóvel
+        imovel_identificador: imovelDoc.identificador || imovelDoc.titulo || '',
+        empreendimento_nome: imovelDoc.empreendimento?.nome || 'Imóvel Avulso',
+        imovel_endereco_completo: imovelDoc.empreendimento
+            ? `${imovelDoc.empreendimento?.localizacao?.logradouro || ''}, ${imovelDoc.empreendimento?.localizacao?.numero || ''}`
+            : `${imovelDoc.endereco?.logradouro || ''}, ${imovelDoc.endereco?.numero || ''}`
+    };
+
+    const adquirentes = [
+        {
+            ...leadDoc
+        },
+        ...(leadDoc.coadquirentes || [])
+    ];
+
+    let blocoHtmlCoadquirentes = '';
+
+    adquirentes.forEach((adq, index) => {
+        const prefixo = index === 0 ? 'lead_principal' : `coadquirente${index}`;
+        dados[`${prefixo}_nome`] = adq.nome || '';
+        dados[`${prefixo}_cpf`] = adq.cpf || '';
+        dados[`${prefixo}_rg`] = adq.rg || '';
+        dados[`${prefixo}_nacionalidade`] = adq.nacionalidade || '';
+        dados[`${prefixo}_estadoCivil`] = adq.estadoCivil || '';
+        dados[`${prefixo}_profissao`] = adq.profissao || '';
+        if (index > 0) {
+            blocoHtmlCoadquirentes += `
+                <div>
+                    <p><strong>Nome:</strong> ${adq.nome}<br>
+                    <strong>CPF:</strong> ${adq.cpf}<br>
+                    <strong>RG:</strong> ${adq.rg}<br>
+                    <strong>Profissão:</strong> ${adq.profissao}</p>
+                </div>
+            `;
+        }
+    });
+
+    dados['bloco_html_coadquirentes'] = blocoHtmlCoadquirentes;
+    return dados;
+};
+
+
+
 /**
  * Cria uma nova Proposta/Contrato a partir de uma Reserva ativa.
  * @param {string} reservaId - ID da Reserva ativa.
@@ -23,299 +86,140 @@ const DiscardReason = require('../models/DiscardReason');
  * @param {string} creatingUserId - ID do Usuário do CRM que está criando.
  * @returns {Promise<PropostaContrato>} A Proposta/Contrato criada.
  */
-const createPropostaContrato = async (reservaId, propostaContratoData, companyId, creatingUserId) => {
-    console.log(`[PropContSvc] Criando Proposta/Contrato da Reserva ${reservaId} usando Modelo ID ${propostaContratoData.modeloContratoUtilizado}`);
-
-    console.log(`[PropContSvc] Iniciando createPropostaContrato.`);
-    console.log(`[PropContSvc] Reserva ID: ${reservaId}`);
-    // VVVVV LOG IMPORTANTE AQUI VVVVV
-    console.log("[PropContSvc] propostaContratoData RECEBIDO PELO SERVIÇO:", JSON.stringify(propostaContratoData, null, 2));
-    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    console.log(`[PropContSvc] Company ID: ${companyId}, Creating User ID: ${creatingUserId}`);
-
-    // Validações básicas
-    if (!mongoose.Types.ObjectId.isValid(reservaId) ||
-        !mongoose.Types.ObjectId.isValid(companyId) ||
-        !mongoose.Types.ObjectId.isValid(creatingUserId)) {
-        throw new Error("IDs inválidos fornecidos (Reserva, Empresa ou Usuário Criador).");
-    }
-    if (!propostaContratoData || typeof propostaContratoData !== 'object') {
-        throw new Error("Dados da proposta/contrato são obrigatórios.");
-    }
-    if (!propostaContratoData.valorPropostaContrato || typeof propostaContratoData.valorPropostaContrato !== 'number') {
-        throw new Error("Valor da Proposta/Contrato é obrigatório e deve ser um número.");
-    }
-     if (!propostaContratoData.responsavelNegociacao || !mongoose.Types.ObjectId.isValid(propostaContratoData.responsavelNegociacao)) {
-        throw new Error("Responsável pela Negociação (ID de Usuário válido) é obrigatório.");
-    }
-
-
+const createPropostaContrato = async (reservaId, propostaData, companyId, creatingUserId) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
-        // 1. Buscar a Reserva e seus dados populados
-        console.log("[PropContSvc] Buscando Reserva, Lead, Unidade, Empreendimento...");
-        const reserva = await Reserva.findOne({ _id: reservaId, company: companyId, statusReserva: "Ativa" })
-            .populate('lead')
-            .populate('unidade')
-            .populate('empreendimento')
+        // 1. Buscar Reserva + Lead + Imóvel (polimórfico)
+        const reserva = await Reserva.findById(reservaId)
+            .populate({
+                path: 'lead',
+                model: 'Lead'
+            })
+            .populate({
+                path: 'imovel',
+                populate: { path: 'empreendimento' }
+            })
             .session(session);
 
-        if (!reserva) {
-            throw new Error(`Reserva ativa com ID ${reservaId} não encontrada para esta empresa.`);
+        if (!reserva || !reserva.lead || !reserva.imovel) {
+            throw new Error("Reserva, Lead ou Imóvel não encontrado.");
         }
-        if (!reserva.lead || !reserva.unidade || !reserva.empreendimento) {
-            throw new Error("Dados da reserva (Lead, Unidade ou Empreendimento) estão incompletos.");
-        }
-        console.log("[PropContSvc] Reserva e dados associados encontrados.");
-
-        // 2. Buscar dados da Empresa Vendedora (Company logada)
-        const empresaVendedora = await Company.findById(companyId).lean().session(session);
-        if (!empresaVendedora) {
-            throw new Error("Empresa vendedora não encontrada.");
-        }
-        console.log("[PropContSvc] Empresa vendedora encontrada.");
-
-
-        // 3. Buscar o Modelo de Contrato selecionado
-        if (!propostaContratoData.modeloContratoUtilizado || !mongoose.Types.ObjectId.isValid(propostaContratoData.modeloContratoUtilizado)) {
-            throw new Error("ID do Modelo de Contrato válido é obrigatório.");
-        }
-        console.log("[PropContSvc] Nenhuma proposta existente para esta reserva.");
-
-        const modeloContrato = await ModeloContrato.findOne({ 
-            _id: propostaContratoData.modeloContratoUtilizado, // <<< USE O NOME CORRETO AQUI
-            company: companyId, 
-            ativo: true 
-        }).lean();
-        if (!modeloContrato) {
-            throw new Error("Modelo de Contrato selecionado não encontrado, inativo ou não pertence a esta empresa.");
+        if (reserva.statusReserva !== 'Ativa') {
+            throw new Error(`Reserva não está ativa. Status atual: ${reserva.statusReserva}`);
         }
 
-        console.log(`[PropContSvc] Modelo de Contrato '${modeloContrato.nomeModelo}' encontrado.`);
+        // 2. Buscar Empresa e Modelo de Contrato
+        const [empresaVendedora, modeloContrato] = await Promise.all([
+            Company.findById(companyId).lean().session(session),
+            ModeloContrato.findOne({
+                _id: propostaData.modeloContratoUtilizado,
+                company: companyId,
+                ativo: true
+            }).lean().session(session)
+        ]);
 
-        // 4. Montar o objeto de dados para substituir os placeholders no template
-        // Este objeto precisa conter todas as chaves que seus placeholders esperam (ex: {{lead_nome}})
-        const dadosParaTemplate = {
-            // Dados do Vendedor (Empresa do CRM)
-            vendedor_nome_fantasia: empresaVendedora.nome,
-            vendedor_razao_social: empresaVendedora.razaoSocial || empresaVendedora.nome,
-            vendedor_cnpj: empresaVendedora.cnpj, // Adicionar formatação se necessário
-            vendedor_endereco_completo: `${empresaVendedora.endereco?.logradouro || ''}, ${empresaVendedora.endereco?.numero || ''} - ${empresaVendedora.endereco?.bairro || ''}, ${empresaVendedora.endereco?.cidade || ''}/${empresaVendedora.endereco?.uf || ''} - CEP: ${empresaVendedora.endereco?.cep || ''}`,
-            vendedor_representante_nome: empresaVendedora.representanteLegalNome || '', // Adicionar ao Company Model
-            vendedor_representante_cpf: empresaVendedora.representanteLegalCPF || '',   // Adicionar ao Company Model
+        if (!empresaVendedora) throw new Error("Empresa vendedora não encontrada.");
+        if (!modeloContrato) throw new Error("Modelo de Contrato inválido ou inativo.");
 
-            // Dados do Comprador (Lead)
-            lead_nome: reserva.lead.nome,
-            lead_cpf: reserva.lead.cpf || '', // Adicionar formatação se necessário
-            lead_rg: reserva.lead.rg || '', // Adicionar 'rg' ao Lead Model
-            lead_endereco_completo: reserva.lead.endereco || '',
-            lead_estado_civil: reserva.lead.estadoCivil || '', // Adicionar 'estadoCivil' ao Lead Model
-            lead_profissao: reserva.lead.profissao || '',     // Adicionar 'profissao' ao Lead Model
-            lead_nacionalidade: reserva.lead.nacionalidade || 'Brasileiro(a)', // Adicionar 'nacionalidade' ao Lead Model
-            lead_email: reserva.lead.email || '',
-            lead_telefone: reserva.lead.contato || '', // Já formatado
+        // 3. Montar dados para template com coadquirentes
+        const dadosTemplate = montarDadosParaTemplate(propostaData, reserva.lead, reserva.imovel, empresaVendedora);
 
-            // Dados do Imóvel (Empreendimento e Unidade)
-            empreendimento_nome: reserva.empreendimento.nome,
-            unidade_identificador: reserva.unidade.identificador,
-            unidade_tipologia: reserva.unidade.tipologia,
-            unidade_area_privativa: reserva.unidade.areaUtil ? `${reserva.unidade.areaUtil}m²` : '_m²',
-            empreendimento_endereco_completo: `${reserva.empreendimento.localizacao?.logradouro || ''}, ${reserva.empreendimento.localizacao?.numero || ''} - ${reserva.empreendimento.localizacao?.bairro || ''}, ${reserva.empreendimento.localizacao?.cidade || ''}/${reserva.empreendimento.localizacao?.uf || ''}`,
-            unidade_memorial_incorporacao: reserva.empreendimento.memorialIncorporacao || 'Não Registrado', // Adicionar ao Empreendimento Model
-            unidade_matricula: reserva.unidade.matriculaImovel || 'Não Registrado', // Adicionar ao Unidade Model
-
-            // Dados da Transação (da propostaContratoData)
-            proposta_valor_total_formatado: `R$ ${propostaContratoData.valorPropostaContrato.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-            proposta_valor_entrada_formatado: propostaContratoData.valorEntrada ? `R$ ${propostaContratoData.valorEntrada.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'N/A',
-            proposta_condicoes_pagamento_gerais: propostaContratoData.condicoesPagamentoGerais || '',
-            
-            // Dados Bancários para Pagamento (do propostaContratoData)
-            pagamento_banco_nome: propostaContratoData.dadosBancariosParaPagamento?.bancoNome || '_',
-            pagamento_agencia: propostaContratoData.dadosBancariosParaPagamento?.agencia || '_',
-            pagamento_conta_corrente: propostaContratoData.dadosBancariosParaPagamento?.contaCorrente || '_',
-            pagamento_cnpj_favorecido: propostaContratoData.dadosBancariosParaPagamento?.cnpjPagamento || '_',
-            pagamento_pix: propostaContratoData.dadosBancariosParaPagamento?.pix || '_',
-
-            // Plano de Pagamento (transformar em uma tabela HTML ou string formatada)
-            plano_pagamento_string_formatada: (propostaContratoData.planoDePagamento || [])
-                .map(p => `${p.quantidade}x ${p.tipoParcela} de R$ ${p.valorUnitario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (1º Venc: ${new Date(p.vencimentoPrimeira).toLocaleDateString('pt-BR')}) ${p.observacao || ''}`)
-                .join('\n'),
-            
-            // Corretagem
-            corretagem_valor_formatado: propostaContratoData.corretagem?.valorCorretagem ? `R$ ${propostaContratoData.corretagem.valorCorretagem.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'N/A',
-            // Para corretor_nome, etc., precisaria buscar o BrokerContact
-            corretagem_condicoes: propostaContratoData.corretagem?.condicoesPagamentoCorretagem || '_',
-
-            // Outros
-            data_proposta_extenso: new Date(propostaContratoData.dataProposta || Date.now()).toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' }),
-            cidade_contrato: empresaVendedora.endereco?.cidade || '_',
-        };
-
-        console.log("[PropContSvc] Corpo do contrato HTML preparado/processado.");
-
-        // Se precisar de dados do BrokerContact, buscar aqui:
-        if (propostaContratoData.corretagem?.corretorPrincipal) {
-            const BrokerContactModel = mongoose.model('BrokerContact'); // Assumindo que o modelo é 'BrokerContact'
-            const corretor = await BrokerContactModel.findById(propostaContratoData.corretagem.corretorPrincipal).lean();
-            if (corretor) {
-                dadosParaTemplate.corretor_principal_nome = corretor.nome;
-                dadosParaTemplate.corretor_principal_cpf_cnpj = corretor.cpfCnpj; // Assumindo campo
-                dadosParaTemplate.corretor_principal_creci = corretor.registroProfissional; // Assumindo campo
-            }
-            console.log(`[PropContSvc] Corretor Principal ${corretor.nome} validado.`);
-
-        }
-
-        // 5
         let corpoContratoProcessado = modeloContrato.conteudoHTMLTemplate;
-        for (const key in dadosParaTemplate) {
-            const placeholder = `{{${key}}}`;
-            // Use uma regex global para substituir todas as ocorrências
-            corpoContratoProcessado = corpoContratoProcessado.replace(new RegExp(placeholder.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), dadosParaTemplate[key] || '');
+        for (const key in dadosTemplate) {
+            const valor = dadosTemplate[key];
+            const regex = new RegExp(`{{${key}}}`, 'g');
+            corpoContratoProcessado = corpoContratoProcessado.replace(regex, valor);
         }
 
-        
+        // 4. Criar snapshot de adquirentes
+        const adquirentesSnapshot = [
+            {
+                nome: reserva.lead.nome,
+                cpf: reserva.lead.cpf,
+                rg: reserva.lead.rg,
+                nacionalidade: reserva.lead.nacionalidade,
+                estadoCivil: reserva.lead.estadoCivil,
+                profissao: reserva.lead.profissao
+            },
+            ...(reserva.lead.coadquirentes || [])
+        ];
 
-        //6. Preparar dados para o novo PropostaContrato
-        const dadosParaNovaProposta = {
-            ...propostaContratoData,
+        // 5. Montar proposta
+        const proposta = new PropostaContrato({
+            ...propostaData,
             lead: reserva.lead._id,
             reserva: reserva._id,
-            unidade: reserva.unidade._id,
-            empreendimento: reserva.empreendimento._id,
+            imovel: reserva.imovel._id,
+            tipoImovel: reserva.tipoImovel,
             company: companyId,
             createdBy: creatingUserId,
-            modeloContratoUtilizado: propostaContratoData.modeloContratoUtilizado,
-            corpoContratoHTMLGerado: corpoContratoProcessado, // <<< HTML COM DADOS PREENCHIDOS
+            modeloContratoUtilizado: propostaData.modeloContratoUtilizado,
+            corpoContratoHTMLGerado: corpoContratoProcessado,
 
-            empreendimentoNomeSnapshot: reserva.empreendimento.nome,
-            unidadeIdentificadorSnapshot: reserva.unidade.identificador,
-            unidadeTipologiaSnapshot: reserva.unidade.tipologia,
-            unidadeAreaUtilSnapshot: reserva.unidade.areaUtil,
-            precoTabelaUnidadeNoMomento: reserva.unidade.precoTabela,
-            
-            vendedorNomeFantasia: empresaVendedora.nome,
-            vendedorRazaoSocial: empresaVendedora.razaoSocial || empresaVendedora.nome,
-            vendedorCnpj: empresaVendedora.cnpj,
-            vendedorEndereco: `${empresaVendedora.endereco?.logradouro || ''}, ${empresaVendedora.endereco?.numero || ''} - ${empresaVendedora.endereco?.bairro || ''}, ${empresaVendedora.endereco?.cidade || ''}/${empresaVendedora.endereco?.uf || ''}`,
-            vendedorRepresentanteNome: empresaVendedora.representanteLegalNome || null,
-            vendedorRepresentanteCpf: empresaVendedora.representanteLegalCPF || null,
+            // Snapshots
+            adquirentesSnapshot,
+            empreendimentoNomeSnapshot: reserva.tipoImovel === 'Unidade' ? reserva.imovel.empreendimento?.nome : 'Imóvel Avulso',
+            unidadeIdentificadorSnapshot: reserva.tipoImovel === 'Unidade' ? reserva.imovel.identificador : reserva.imovel.titulo,
+            precoTabelaUnidadeNoMomento: reserva.imovel.precoTabela || reserva.imovel.preco
+        });
 
-            statusPropostaContrato: propostaContratoData.statusPropostaContrato || "Em Elaboração",
-            dataProposta: propostaContratoData.dataProposta || new Date(),
-        };
+        const propostaSalva = await proposta.save({ session });
 
-       console.log("[PropContSvc DEBUG] Objeto dadosParaNovaProposta montado:", JSON.stringify(dadosParaNovaProposta, null, 2));
-
-
-        const novaPropostaContrato = new PropostaContrato(dadosParaNovaProposta);
-                console.log("[PropContSvc DEBUG] Tentando salvar nova PropostaContrato...");
-
-        const propostaSalva = await novaPropostaContrato.save({ session });
-                console.log("[PropContSvc DEBUG] Tentando salvar nova PropostaContrato...");
-
-        // 7. Atualizar Status da Reserva
-        console.log(`[PropContSvc] Atualizando Reserva ${reserva._id}...`);
-        reserva.statusReserva = "ConvertidaEmProposta";
+        // 6. Atualizar Reserva, Lead e Imóvel
+        reserva.statusReserva = 'ConvertidaEmProposta';
         reserva.propostaId = propostaSalva._id;
         await reserva.save({ session });
 
-        // 8. Atualizar Status do Lead
-        console.log(`[PropContSvc] Atualizando Lead ${reserva.lead._id}...`);
+        const nomeEstagio = 'Proposta Emitida';
+        let leadStage = await LeadStage.findOne({
+            company: companyId,
+            nome: { $regex: new RegExp(`^${nomeEstagio}$`, 'i') }
+        }).session(session);
 
-        const nomeEstagioProposta = "Em Reserva"; // Ou o nome que você definiu
-        let situacaoProposta = await LeadStage.findOne(
-            { company: companyId, nome: { $regex: new RegExp(`^${nomeEstagioProposta}$`, "i") } }
-        ).session(session).lean(); // Busca primeiro, usando a sessão e .lean() para performance
-
-        if (!situacaoProposta) {
-            console.log(`[PropContSvc] Estágio '${nomeEstagioProposta}' não encontrado para Company ${companyId}. Criando...`);
-            try {
-                const novoEstagioProposta = new LeadStage({
-                    nome: nomeEstagioProposta,
-                    company: companyId,
-                    ativo: true,
-                    descricao: "Proposta comercial/contrato gerado para o lead."
-                });
-                situacaoProposta = await novoEstagioProposta.save({ session });
-                console.log(`[PropContSvc] Estágio '${nomeEstagioProposta}' criado com ID: ${situacaoProposta._id}`);
-            } catch (creationError) {
-                
-                console.error(`[PropContSvc] Falha ao tentar criar estágio padrão '${nomeEstagioProposta}':`, creationError);
-        
-                throw new Error(`Falha ao criar/encontrar estágio de lead '${nomeEstagioProposta}'. ${creationError.message}`);
-            }
-        }
-        
-        if (!situacaoProposta || !situacaoProposta._id) { // Checagem extra de segurança
-            throw new Error (`Estágio '${nomeEstagioProposta}' não pôde ser encontrado ou criado para a empresa.`);
-        }
-        
-        console.log(`[PropContSvc] Usando Estágio '${nomeEstagioProposta}' (ID: ${situacaoProposta._id}) para o Lead.`);
-
-        const oldLeadStatusId = reserva.lead.situacao; // Supondo que reserva.lead foi populado
-        
-        if (reserva.lead && typeof reserva.lead.save === 'function') {
-             reserva.lead.situacao = situacaoProposta._id;
-             await reserva.lead.save({session});
-        } else { // Se reserva.lead é um objeto lean, ou para garantir, buscamos e salvamos
-            const leadDocParaAtualizar = await Lead.findById(reserva.lead._id || reserva.lead).session(session);
-            if(leadDocParaAtualizar){
-                leadDocParaAtualizar.situacao = situacaoProposta._id;
-                await leadDocParaAtualizar.save({session});
-                console.log(`[PropContSvc] Lead ${leadDocParaAtualizar._id} atualizado para status ${situacaoProposta.nome}.`);
-
-            } else {
-                throw new Error("Lead da reserva não encontrado para atualização de status.");
-            }
+        if (!leadStage) {
+            leadStage = new LeadStage({
+                nome: nomeEstagio,
+                company: companyId,
+                ativo: true,
+                descricao: 'Lead com proposta emitida'
+            });
+            await leadStage.save({ session });
         }
 
+        reserva.lead.situacao = leadStage._id;
+        await reserva.lead.save({ session });
 
+        reserva.imovel.status = 'Proposta';
+        await reserva.imovel.save({ session });
 
-        // 9. Atualizar Status da Unidade (opcional, pode manter "Reservada" ou mudar para "Com Proposta")
-        reserva.unidade.statusUnidade = "Proposta"; // Exemplo
-         await reserva.unidade.save({ session }); 
-        // ^^^ Se unidade foi populada e não lean, senão:
-        const unidadeDoc = await Unidade.findById(reserva.unidade._id).session(session);
-        if (unidadeDoc) {
-            unidadeDoc.statusUnidade = "Proposta";
-            await unidadeDoc.save({session});
-        }
-
-
-        // 10. Registrar no Histórico do Lead
-        const leadStatusAntigoNome = await LeadStage.findById(oldLeadStatusId).select('nome').lean();
+        // 7. Log de histórico
         await logHistory(
             reserva.lead._id,
             creatingUserId,
-            "PROPOSTA_CONTRATO_CRIADA",
-            `Proposta/Contrato (ID: ${propostaSalva._id}) criada para unidade ${reserva.unidade.identificador}. Lead movido de "${leadStatusAntigoNome?.nome || 'N/A'}" para "${situacaoProposta.nome}".`,
+            'PROPOSTA_CONTRATO_CRIADA',
+            `Proposta/Contrato criado com ID ${propostaSalva._id}`,
             { propostaContratoId: propostaSalva._id, reservaId: reserva._id },
-            null, // newValue
-            'PropostaContrato', // entityType
-            propostaSalva._id,  // entityId
+            null,
+            'PropostaContrato',
+            propostaSalva._id,
             session
         );
-            console.log("[PropContSvc] Histórico registrado.");
 
         await session.commitTransaction();
-        console.log(`[PropContSvc] Proposta/Contrato ${propostaSalva._id} criada com sucesso.`);
         return propostaSalva;
 
-    } catch (error) {
+    } catch (err) {
         await session.abortTransaction();
-        console.error("[PropContSvc] Erro ao criar Proposta/Contrato:", error);
-        // Tratar erro de índice único para reserva._id em PropostaContrato se já existir
-        if (error.code === 11000 && error.message.includes("reserva_1")) { // Assumindo que 'reserva' é unique
-            throw new Error(`Já existe uma proposta/contrato vinculada a esta reserva.`);
-        }
-        throw new Error(error.message || "Erro interno ao criar a Proposta/Contrato.");
+        console.error('[PropContSvc] Erro ao criar proposta:', err);
+        throw new Error(err.message || 'Erro interno ao criar proposta.');
     } finally {
         session.endSession();
     }
 };
+
+
 
 const preencherTemplateContrato = (templateHtml = "", dados = {}) => {
   let corpoProcessado = templateHtml;

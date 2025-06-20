@@ -108,6 +108,10 @@ function App() {
                 <Route path="/empreendimentos/:empreendimentoId/unidades/novo" element={<UnidadeFormPage />} />
                 <Route path="/empreendimentos/:empreendimentoId/unidades/:unidadeId/editar" element={<UnidadeFormPage />} />
 
+                <Route path="/imoveis-avulsos" element={<ImovelListPage />} />
+                <Route path="/imoveis-avulsos/novo" element={<ImovelFormPage />} />
+                <Route path="/imoveis-avulsos/:id/editar" element={<ImovelFormPage />} />
+
                 <Route path="/reservas" element={<ReservaListPage />} />
 
                 <Route path="/reservas/:reservaId/proposta-contrato/novo" element={<PropostaContratoFormPage />} />
