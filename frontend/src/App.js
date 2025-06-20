@@ -31,6 +31,8 @@ import ModeloContratoListPage from './pages/Admin/ModeloContrato/ModeloContratoL
 import ModeloContratoFormPage from './pages/Admin/ModeloContrato/ModeloContratoFormPage/ModeloContratoFormPage';
 import PropostaContratoFormPage from './pages/PropostaContrato/PropostaContratoFormPage/PropostaContratoFormPage';
 import PropostaContratoDetailPage from './pages/PropostaContrato/PropostaContratoDetailPage/PropostaContratoDetailPage';
+import ImovelListPage from './pages/ImovelAvulso/ImovelListPage/ImovelListPage';
+import ImovelFormPage from './pages/ImovelAvulso/ImovelFormPage/ImovelFormPage';
 
 
 
