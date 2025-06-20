@@ -69,15 +69,12 @@ const createReserva = async (reservaData, leadId, imovelId, tipoImovel, companyI
         }
 
         const reserva = new Reserva({
+            ...reservaData, 
             lead: leadId,
             imovel: imovelId,
-            tipoImovel,
+            tipoImovel: tipoImovel,
             company: companyId,
             createdBy: creatingUserId,
-            dataReserva: reservaData.dataReserva || new Date(),
-            validadeReserva: validade,
-            valorSinal: reservaData.valorSinal || null,
-            observacoesReserva: reservaData.observacoesReserva || null,
             statusReserva: "Ativa"
         });
 
