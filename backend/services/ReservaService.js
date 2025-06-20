@@ -46,7 +46,7 @@ const createReserva = async (reservaData, leadId, imovelId, tipoImovel, companyI
         const ImovelModel = mongoose.model(tipoImovel);
         const imovel = await ImovelModel.findOne({ _id: imovelId, company: companyId }).session(session);
         if (!imovel) throw new Error(`${tipoImovel} não encontrado ou não pertence à empresa.`);
-        if (imovel.status !== 'Disponível') throw new Error(`Imóvel não disponível. Status atual: ${imovel.status}.`);
+        if (imovel.statusUnidade !== 'Disponível') throw new Error(`Imóvel não disponível. Status atual: ${imovel.status}.`);
 
         // --- 3. Buscar ou Criar Estágio "Em Reserva" ---
         let stageReserva = await LeadStage.findOne({
