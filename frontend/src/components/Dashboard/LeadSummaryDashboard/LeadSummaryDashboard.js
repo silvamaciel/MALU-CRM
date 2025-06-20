@@ -56,7 +56,7 @@ function LeadSummaryDashboard({ filter }) {
     if (error || !summaryData || !advancedData) return <div className="error-message">{error || "Não foi possível carregar os dados."}</div>;
 
     const leadsByStageData = formatDataForChart(summaryData.leadsByStage);
-    const leadsByOrigemData = formatDataForChart(summaryData.leadsByOrigem);
+    const leadsByOrigemData = formatDataForChart(summaryData.leadsByOrigemData);
     const leadsByResponsavelData = formatDataForChart(summaryData.leadsByResponsavel);
     const heatmapData = formatHeatmapData(advancedData.leadsByDayHour);
 
