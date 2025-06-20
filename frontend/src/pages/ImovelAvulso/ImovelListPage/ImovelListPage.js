@@ -78,9 +78,6 @@ function ImovelListPage() {
             <header className="page-header">
                 <h1>Imóveis Avulsos</h1>
                 <Link to="/imoveis-avulsos/novo" className="button primary-button">+ Adicionar Imóvel</Link>
-                <button onClick={() => setShowFilters(prev => !prev)} className="button outline-button">
-                        Filtros {showFilters ? '▲' : '▼'}
-                    </button>
             </header>
             <div className="page-content">
 
@@ -93,8 +90,8 @@ function ImovelListPage() {
 
 
                 {error && <p className="error-message">{error}</p>}
-                
-                                
+
+
                 <div className="table-responsive">
                     <table className="data-table">
                         <thead>
