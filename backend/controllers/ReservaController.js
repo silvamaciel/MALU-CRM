@@ -1,7 +1,8 @@
 // backend/controllers/ReservaController.js
 const asyncHandler = require('../middlewares/asyncHandler');
 const ReservaService = require('../services/ReservaService');
-const ErrorResponse = require('../utils/errorResponse'); // Sua classe de erro customizada
+const ErrorResponse = require('../utils/errorResponse');
+const mongoose = require('mongoose');
 
 /**
  * @desc    Criar uma nova Reserva (polimórfica)
@@ -15,57 +16,56 @@ const createReservaController = asyncHandler(async (req, res, next) => {
     const { 
         leadId, 
         imovelId, 
-        tipoImovel, 
+        tipoImovel,
         validadeReserva, 
         valorSinal, 
         observacoesReserva 
     } = req.body;
 
-    // A validação agora checa pelos campos polimórficos
     if (!leadId || !imovelId || !tipoImovel || !validadeReserva) {
-        return next(new ErrorResponse('Campos obrigatórios para reserva: leadId, imovelId, tipoImovel, validadeReserva.', 400));
+        return next(
+            new ErrorResponse(
+                'Campos obrigatórios: leadId, imovelId, tipoImovel, validadeReserva.',
+                400
+            )
+        );
     }
-    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
+    
     const reservaData = { validadeReserva, valorSinal, observacoesReserva };
 
-    // Chama o serviço com os novos parâmetros
     const novaReserva = await ReservaService.createReserva(
-        reservaData,
-        leadId,
-        imovelId,
-        tipoImovel,
-        companyId,
-        creatingUserId
+        reservaData,      // 1º argumento: dados da reserva
+        leadId,           // 2º argumento: ID do lead
+        imovelId,         // 3º argumento: ID do imóvel (Unidade ou ImovelAvulso)
+        tipoImovel,       // 4º argumento: 'Unidade' ou 'ImovelAvulso'
+        companyId,        // 5º argumento: ID da empresa
+        creatingUserId    // 6º argumento: ID do usuário criando
     );
     
     res.status(201).json({ success: true, data: novaReserva });
 });
+
 
 /**
  * Controller para listar todas as reservas da empresa, com filtros e paginação.
  */
 const getReservasController = asyncHandler(async (req, res, next) => {
     const companyId = req.user.company;
-    const { page = 1, limit = 10, ...filters } = req.query; // Pega page, limit e outros filtros da query
-        
-    const paginationOptions = { page: parseInt(page, 10), limit: parseInt(limit, 10) };
-    delete filters.page;
-    delete filters.limit;
+    const queryParams = req.query;
+    
+    console.log(`[ReservaCtrl] Recebido GET /api/reservas para Company ${companyId} com filtros:`, queryParams);
 
-    console.log(`[ReservaCtrl] Recebido GET /api/reservas para Company ${companyId} com filtros:`, filters, `e paginação:`, paginationOptions);
-
-    const result = await ReservaService.getReservasByCompany(companyId, filters, paginationOptions);
+    const result = await ReservaService.getReservasByCompany(companyId, queryParams);
     res.status(200).json({ success: true, ...result });
 });
 
 
 /**
- * Controller para listar reservas por id, com filtros e paginação.
+ * Controller para buscar uma reserva por id.
  */
 const getReservaByIdController = asyncHandler(async (req, res, next) => {
-    const companyId = req.user.company; // Ou verificar se a reserva pertence à company
-    const reserva = await ReservaService.getReservaById(req.params.id, companyId); // Crie esta função no ReservaService
+    const companyId = req.user.company;
+    const reserva = await ReservaService.getReservaById(req.params.id, companyId);
     if (!reserva) {
         return next(new ErrorResponse(`Reserva com ID ${req.params.id} não encontrada.`, 404));
     }
