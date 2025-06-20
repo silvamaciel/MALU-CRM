@@ -66,7 +66,12 @@ const createReserva = async (reservaData, companyId, creatingUserId) => {
 
         // --- 4. Criar Reserva ---
         const validade = new Date(validadeReserva);
-        if (!validade || validade <= new Date()) {
+        // Normaliza as datas para comparar só a parte do dia (sem horas)
+        const hoje = new Date();
+        hoje.setHours(0,0,0,0);
+        validade.setHours(0,0,0,0);
+
+        if (!validade || validade < hoje) {
             throw new Error("Validade da reserva inválida.");
         }
 
