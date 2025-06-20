@@ -1,0 +1,104 @@
+/* src/pages/ImovelAvulso/ImovelListPage/ImovelListPage.css */
+
+.imovel-list-page .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.imovel-list-page .page-header h1 {
+  margin: 0;
+  font-size: 1.8em;
+  color: #333;
+}
+
+.imovel-list-page .table-responsive {
+  overflow-x: auto;
+}
+
+.imovel-list-page .data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background-color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.imovel-list-page .data-table th,
+.imovel-list-page .data-table td {
+  border-bottom: 1px solid #ddd;
+  padding: 12px 15px;
+  text-align: left;
+  font-size: 0.95em;
+  vertical-align: middle;
+}
+.imovel-list-page .data-table tr td {
+    color: #555;
+}
+
+
+.imovel-list-page .data-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #495057;
+  text-transform: uppercase;
+  font-size: 0.85em;
+}
+
+.imovel-list-page .data-table tr:hover {
+  background-color: #f1f3f5;
+}
+
+.imovel-list-page .actions-cell {
+    white-space: nowrap;
+    text-align: right;
+}
+
+.imovel-list-page .actions-cell .button-link {
+  margin-left: 10px;
+  padding: 5px 10px; 
+  font-size: 0.9em;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.imovel-list-page .actions-cell .button-link.edit-link {
+  background-color: #ffc107;
+  color: #212529;
+  border-color: #ffc107;
+}
+.imovel-list-page .actions-cell .button-link.edit-link:hover {
+  background-color: #e0a800;
+  border-color: #d39e00;
+}
+
+.imovel-list-page .actions-cell .button-link.delete-link {
+  background-color: #f8d7da;
+  color: #721c24;
+  border-color: #f5c6cb;
+}
+.imovel-list-page .actions-cell .button-link.delete-link:hover {
+  background-color: #f1b0b7;
+  border-color: #eea2a9;
+}
+
+.status-badge {
+    padding: 0.25em 0.6em;
+    font-size: 0.85em;
+    font-weight: 600;
+    border-radius: 0.25rem;
+    color: #fff;
+    display: inline-block;
+}
+.status-badge.status-disponível { background-color: #28a745; }
+.status-badge.status-reservado { background-color: #ffc107; color: #212529; }
+.status-badge.status-vendido { background-color: #007bff; }
+.status-badge.status-inativo { background-color: #6c757d; }
