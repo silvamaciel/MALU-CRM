@@ -6,7 +6,7 @@ const Unidade = require('../models/Unidade');
 const Empreendimento = require('../models/Empreendimento');
 const LeadStage = require('../models/LeadStage');
 const { logHistory } = require('./LeadService');
-
+require('../models/ImovelAvulso');
 /**
  * Cria uma nova reserva para um Imóvel (Unidade ou Avulso).
  * @param {object} reservaData - Dados da reserva (validade, sinal, etc.).
