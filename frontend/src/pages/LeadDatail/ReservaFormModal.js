@@ -140,7 +140,7 @@ function ReservaFormModal({ leadId, leadNome, companyId, onClose }) {
 
                 <form onSubmit={handleSubmit}>
                     {/* Tipo de imóvel */}
-                    <div className="form-group">
+                    <div className="form-group tipo-imovel-selector">
                         <label>Tipo de imóvel:</label>
                         <div>
                             <button
