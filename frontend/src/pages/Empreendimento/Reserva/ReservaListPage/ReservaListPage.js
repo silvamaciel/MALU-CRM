@@ -102,7 +102,7 @@ function ReservaListPage() {
                                 {reservas.map(res => (
                                     <tr key={res._id}>
                                     <td>{res.lead?.nome || 'N/A'}</td>
-                                    <td>{res.imovel?.empreendimento?.nome || 'Avulso'}</td>
+                                    {res.tipoImovel === 'Unidade' ? res.imovel?.empreendimento?.nome || 'N/A' : res.imovel?.titulo || 'N/A'}
                                     <td>{res.imovel?.identificador || res.imovel?.titulo || 'N/A'}</td>
                                     <td>{formatDate(res.dataReserva)}</td>
                                     <td>{formatDate(res.validadeReserva)}</td>
