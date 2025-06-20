@@ -177,17 +177,49 @@ const getReservasByCompany = async (companyId, queryParams = {}) => {
     }
 };
 
+/**
+ * Busca uma reserva específica por ID, garantindo que pertence à empresa,
+ * e popula os campos de forma polimórfica.
+ * @param {string} reservaId - ID da Reserva.
+ * @param {string} companyId - ID da Empresa.
+ * @returns {Promise<Reserva|null>} A reserva encontrada ou null.
+ */
 const getReservaById = async (reservaId, companyId) => {
+    if (!mongoose.Types.ObjectId.isValid(reservaId) || !mongoose.Types.ObjectId.isValid(companyId)) {
+        throw new Error("ID da Reserva ou da Empresa inválido.");
+    }
+    console.log(`[ReservaService] Buscando Reserva ID: ${reservaId} para Company: ${companyId}`);
 
-    const reserva = await Reserva.findOne({ _id: reservaId, company: companyId })
-        .populate('lead', 'nome email contato cpf endereco estadoCivil profissao nacionalidade company') // Popula mais campos do lead
-        .populate({ 
-            path: 'unidade', 
-            select: 'identificador tipologia areaUtil precoTabela statusUnidade empreendimento',
-            populate: { path: 'empreendimento', select: 'nome localizacao' } // Popula o empreendimento dentro da unidade
-        })
-        .lean();
-    return reserva;
+    try {
+        const reserva = await Reserva.findOne({ _id: reservaId, company: companyId })
+            .populate({
+                path: 'lead',
+                select: 'nome email contato cpf rg estadoCivil profissao nacionalidade endereco coadquirentes'
+            })
+            .populate({
+                path: 'imovel',
+                populate: { 
+                    path: 'empreendimento', 
+                    select: 'nome localizacao'
+                }
+            })
+            .populate({ path: 'createdBy', select: 'nome email' })
+            .lean();
+
+        if (!reserva) {
+            console.log(`[ReservaService] Reserva ID: ${reservaId} não encontrada para Company: ${companyId}.`);
+            return null;
+        }
+
+        const empresaVendedora = await Company.findById(companyId).select('nome razaoSocial cnpj endereco representanteLegalNome representanteLegalCPF').lean();
+        reserva.companyData = empresaVendedora || {};
+
+        return reserva;
+
+    } catch (error) {
+        console.error(`[ReservaService] Erro ao buscar reserva ${reservaId}:`, error);
+        throw new Error("Erro ao buscar reserva por ID.");
+    }
 };
 
 
