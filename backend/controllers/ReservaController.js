@@ -11,36 +11,30 @@ const ErrorResponse = require('../utils/errorResponse'); // Sua classe de erro c
 const createReservaController = asyncHandler(async (req, res, next) => {
     const companyId = req.user.company;
     const creatingUserId = req.user._id;
-    
-    // Desestrutura todos os campos do corpo da requisição
-    const { 
-        leadId, 
-        imovelId, 
-        tipoImovel,
-        validadeReserva, 
-        valorSinal, 
-        observacoesReserva 
-    } = req.body;
 
-    // Validação principal
+    const reservaData = req.body;
+
+    const { leadId, imovelId, tipoImovel, validadeReserva } = reservaData;
+
+    // Validação mínima no controller (fail-fast)
     if (!leadId || !imovelId || !tipoImovel || !validadeReserva) {
-        return next(new ErrorResponse('Campos obrigatórios: leadId, imovelId, tipoImovel, validadeReserva.', 400));
+        return next(
+            new ErrorResponse(
+                'Campos obrigatórios: leadId, imovelId, tipoImovel, validadeReserva.',
+                400
+            )
+        );
     }
-    
-    // Agrupa os dados específicos da reserva
-    const reservaData = { validadeReserva, valorSinal, observacoesReserva };
 
     const novaReserva = await ReservaService.createReserva(
         reservaData,
-        leadId,
-        imovelId,
-        tipoImovel,
         companyId,
         creatingUserId
     );
-    
+
     res.status(201).json({ success: true, data: novaReserva });
 });
+
 
 /**
  * Controller para listar todas as reservas da empresa, com filtros e paginação.
