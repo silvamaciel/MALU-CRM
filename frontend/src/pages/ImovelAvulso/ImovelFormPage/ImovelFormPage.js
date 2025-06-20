@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { createImovelApi, getImovelByIdApi, updateImovelApi } from '../../../api/imovelAvulsoApi';
 import { getUsuarios } from '../../../api/users';
@@ -14,25 +14,16 @@ function ImovelFormPage() {
     const isEditMode = Boolean(id);
 
     const [formData, setFormData] = useState({
-        titulo: '',
-        descricao: '',
-        tipoImovel: TIPO_IMOVEL_OPCOES[0],
-        status: STATUS_IMOVEL_OPCOES[0],
-        quartos: 0,
-        suites: 0,
-        banheiros: 0,
-        vagasGaragem: 0,
-        areaTotal: '',
-        preco: '',
+        titulo: '', descricao: '', tipoImovel: '', status: '',
+        quartos: 0, suites: 0, banheiros: 0, vagasGaragem: 0,
+        areaTotal: '', preco: '',
         endereco: { logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', uf: '', cep: '' },
-        responsavel: '',
-        fotos: [], // Array para as fotos
+        responsavel: '', fotos: [],
     });
 
     const [responsaveisList, setResponsaveisList] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    // Carrega dados para edição ou para os dropdowns
     useEffect(() => {
         const loadData = async () => {
             setLoading(true);
@@ -44,10 +35,16 @@ function ImovelFormPage() {
                     const imovelData = await getImovelByIdApi(id);
                     setFormData({
                         ...imovelData,
-                        responsavel: imovelData.responsavel?._id || imovelData.responsavel,
+                        responsavel: imovelData.responsavel?._id || imovelData.responsavel || '',
                         endereco: imovelData.endereco || { logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', uf: '', cep: '' },
                         fotos: imovelData.fotos || [],
                     });
+                } else {
+                    setFormData(prev => ({
+                        ...prev,
+                        tipoImovel: TIPO_IMOVEL_OPCOES[0],
+                        status: STATUS_IMOVEL_OPCOES[0],
+                    }));
                 }
             } catch (err) {
                 toast.error("Falha ao carregar dados: " + err.message);
@@ -80,10 +77,7 @@ function ImovelFormPage() {
     };
 
     const handleAddFoto = () => {
-        setFormData(prev => ({
-            ...prev,
-            fotos: [...prev.fotos, { url: '', descricao: '' }]
-        }));
+        setFormData(prev => ({ ...prev, fotos: [...prev.fotos, { url: '', descricao: '' }] }));
     };
 
     const handleRemoveFoto = (index) => {
@@ -96,7 +90,6 @@ function ImovelFormPage() {
         e.preventDefault();
         setLoading(true);
         try {
-            // Filtra fotos vazias antes de enviar
             const dataToSubmit = {
                 ...formData,
                 fotos: formData.fotos.filter(foto => foto.url && foto.url.trim() !== '')
@@ -116,8 +109,6 @@ function ImovelFormPage() {
             setLoading(false);
         }
     };
-    
-    if (loading && !isEditMode) return <div className="admin-page loading"><p>Carregando formulário...</p></div>
 
     return (
         <div className="admin-page imovel-form-page">
@@ -125,71 +116,91 @@ function ImovelFormPage() {
                 <h1>{isEditMode ? 'Editar Imóvel Avulso' : 'Novo Imóvel Avulso'}</h1>
             </header>
             <div className="page-content">
-                <form onSubmit={handleSubmit} className="form-container">
-                    
-                    <div className="form-section">
-                        <h3>Informações Principais</h3>
-                        <div className="form-group full-width"><label>Título do Anúncio*</label><input type="text" name="titulo" value={formData.titulo} onChange={handleChange} required disabled={loading}/></div>
-                        <div className="form-group full-width"><label>Descrição</label><textarea name="descricao" value={formData.descricao} onChange={handleChange} rows="4" disabled={loading}></textarea></div>
-                        <div className="form-row">
-                            <div className="form-group"><label>Tipo de Imóvel*</label><select name="tipoImovel" value={formData.tipoImovel} onChange={handleChange} required disabled={loading}>{TIPO_IMOVEL_OPCOES.map(o=><option key={o} value={o}>{o}</option>)}</select></div>
-                            <div className="form-group"><label>Status*</label><select name="status" value={formData.status} onChange={handleChange} disabled={loading}>{STATUS_IMOVEL_OPCOES.map(o=><option key={o} value={o}>{o}</option>)}</select></div>
-                            <div className="form-group"><label>Responsável*</label><select name="responsavel" value={formData.responsavel} onChange={handleChange} required disabled={loading}><option value="">Selecione...</option>{responsaveisList.map(u=><option key={u._id} value={u._id}>{u.nome}</option>)}</select></div>
+                <div className={`form-wrapper ${loading ? 'form-loading' : ''}`}>
+                    {loading && (
+                        <div className="loading-overlay" role="status" aria-live="polite">
+                            <div className="loading-spinner"></div>
+                            <p>Carregando Dados...</p>
                         </div>
-                    </div>
+                    )}
 
-                    <div className="form-section">
-                        <h3>Características</h3>
-                        <div className="form-row">
-                            <div className="form-group"><label>Quartos</label><input type="number" name="quartos" value={formData.quartos} onChange={handleChange} min="0" disabled={loading}/></div>
-                            <div className="form-group"><label>Suítes</label><input type="number" name="suites" value={formData.suites} onChange={handleChange} min="0" disabled={loading}/></div>
-                            <div className="form-group"><label>Banheiros</label><input type="number" name="banheiros" value={formData.banheiros} onChange={handleChange} min="0" disabled={loading}/></div>
-                            <div className="form-group"><label>Vagas de Garagem</label><input type="number" name="vagasGaragem" value={formData.vagasGaragem} onChange={handleChange} min="0" disabled={loading}/></div>
-                        </div>
-                    </div>
-
-                    <div className="form-section">
-                        <h3>Valores e Medidas</h3>
-                        <div className="form-row">
-                            <div className="form-group"><label>Preço (R$)*</label><input type="number" name="preco" value={formData.preco} onChange={handleChange} required step="0.01" min="0" disabled={loading}/></div>
-                            <div className="form-group"><label>Área Total (m²)*</label><input type="number" name="areaTotal" value={formData.areaTotal} onChange={handleChange} required step="0.01" min="0" disabled={loading}/></div>
-                        </div>
-                    </div>
-
-                    <div className="form-section">
-                        <h3>Endereço</h3>
-                        <div className="form-row">
-                            <div className="form-group"><label>CEP</label><input type="text" name="cep" value={formData.endereco.cep} onChange={handleEnderecoChange} disabled={loading}/></div>
-                            <div className="form-group"><label>Logradouro</label><input type="text" name="logradouro" value={formData.endereco.logradouro} onChange={handleEnderecoChange} disabled={loading}/></div>
-                        </div>
-                        <div className="form-row">
-                            <div className="form-group"><label>Número</label><input type="text" name="numero" value={formData.endereco.numero} onChange={handleEnderecoChange} disabled={loading}/></div>
-                            <div className="form-group"><label>Complemento</label><input type="text" name="complemento" value={formData.endereco.complemento} onChange={handleEnderecoChange} disabled={loading}/></div>
-                            <div className="form-group"><label>Bairro</label><input type="text" name="bairro" value={formData.endereco.bairro} onChange={handleEnderecoChange} disabled={loading}/></div>
-                        </div>
-                        <div className="form-row">
-                            <div className="form-group"><label>Cidade*</label><input type="text" name="cidade" value={formData.endereco.cidade} onChange={handleEnderecoChange} required disabled={loading}/></div>
-                            <div className="form-group"><label>UF*</label><input type="text" name="uf" value={formData.endereco.uf} onChange={handleEnderecoChange} required maxLength="2" disabled={loading}/></div>
-                        </div>
-                    </div>
-                    
-                    <div className="form-section">
-                        <h3>Fotos</h3>
-                        {formData.fotos.map((foto, index) => (
-                            <div key={index} className="form-row photo-row">
-                                <div className="form-group" style={{flexGrow: 2}}><label>URL da Foto</label><input type="text" name="url" value={foto.url} onChange={(e) => handleFotoChange(index, e)} placeholder="https://exemplo.com/imagem.jpg"/></div>
-                                <div className="form-group" style={{flexGrow: 1}}><label>Descrição</label><input type="text" name="descricao" value={foto.descricao} onChange={(e) => handleFotoChange(index, e)} placeholder="Fachada"/></div>
-                                <button type="button" onClick={() => handleRemoveFoto(index)} className="button-link delete-link" style={{alignSelf: 'flex-end', marginBottom: '8px'}}>Remover</button>
+                    <form onSubmit={handleSubmit} className="form-container">
+                        {/* Informações Principais */}
+                        <div className="form-section">
+                            <h3>Informações Principais</h3>
+                            <div className="form-group full-width"><label>Título do Anúncio*</label><input type="text" name="titulo" value={formData.titulo} onChange={handleChange} required /></div>
+                            <div className="form-group full-width"><label>Descrição</label><textarea name="descricao" value={formData.descricao} onChange={handleChange} rows="4"></textarea></div>
+                            <div className="form-row">
+                                <div className="form-group"><label>Tipo de Imóvel*</label><select name="tipoImovel" value={formData.tipoImovel} onChange={handleChange} required>{TIPO_IMOVEL_OPCOES.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+                                <div className="form-group"><label>Status*</label><select name="status" value={formData.status} onChange={handleChange}>{STATUS_IMOVEL_OPCOES.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+                                <div className="form-group"><label>Responsável*</label><select name="responsavel" value={formData.responsavel} onChange={handleChange} required><option value="">Selecione...</option>{responsaveisList.map(u => <option key={u._id} value={u._id}>{u.nome}</option>)}</select></div>
                             </div>
-                        ))}
-                        <button type="button" onClick={handleAddFoto} className="button outline-button" style={{marginTop: '10px'}}>+ Adicionar Foto</button>
-                    </div>
+                        </div>
 
-                    <div className="form-actions">
-                        <button type="button" className="button cancel-button" onClick={() => navigate('/imoveis-avulsos')} disabled={loading}>Cancelar</button>
-                        <button type="submit" className="button submit-button" disabled={loading}>{loading ? 'Salvando...' : 'Salvar Imóvel'}</button>
-                    </div>
-                </form>
+                        {/* Características */}
+                        <div className="form-section">
+                            <h3>Características</h3>
+                            <div className="form-row">
+                                <div className="form-group"><label>Quartos</label><input type="number" name="quartos" value={formData.quartos} onChange={handleChange} min="0" /></div>
+                                <div className="form-group"><label>Suítes</label><input type="number" name="suites" value={formData.suites} onChange={handleChange} min="0" /></div>
+                                <div className="form-group"><label>Banheiros</label><input type="number" name="banheiros" value={formData.banheiros} onChange={handleChange} min="0" /></div>
+                                <div className="form-group"><label>Vagas de Garagem</label><input type="number" name="vagasGaragem" value={formData.vagasGaragem} onChange={handleChange} min="0" /></div>
+                            </div>
+                        </div>
+
+                        {/* Valores e Medidas */}
+                        <div className="form-section">
+                            <h3>Valores e Medidas</h3>
+                            <div className="form-row">
+                                <div className="form-group"><label>Preço (R$)*</label><input type="number" name="preco" value={formData.preco} onChange={handleChange} required step="0.01" min="0" /></div>
+                                <div className="form-group"><label>Área Total (m²)*</label><input type="number" name="areaTotal" value={formData.areaTotal} onChange={handleChange} required step="0.01" min="0" /></div>
+                            </div>
+                        </div>
+
+                        {/* Endereço */}
+                        <div className="form-section">
+                            <h3>Endereço</h3>
+                            <div className="form-row">
+                                <div className="form-group"><label>CEP</label><input type="text" name="cep" value={formData.endereco.cep} onChange={handleEnderecoChange} /></div>
+                                <div className="form-group"><label>Logradouro</label><input type="text" name="logradouro" value={formData.endereco.logradouro} onChange={handleEnderecoChange} /></div>
+                            </div>
+                            <div className="form-row">
+                                <div className="form-group"><label>Número</label><input type="text" name="numero" value={formData.endereco.numero} onChange={handleEnderecoChange} /></div>
+                                <div className="form-group"><label>Complemento</label><input type="text" name="complemento" value={formData.endereco.complemento} onChange={handleEnderecoChange} /></div>
+                                <div className="form-group"><label>Bairro</label><input type="text" name="bairro" value={formData.endereco.bairro} onChange={handleEnderecoChange} /></div>
+                            </div>
+                            <div className="form-row">
+                                <div className="form-group"><label>Cidade*</label><input type="text" name="cidade" value={formData.endereco.cidade} onChange={handleEnderecoChange} required /></div>
+                                <div className="form-group"><label>UF*</label><input type="text" name="uf" value={formData.endereco.uf} onChange={handleEnderecoChange} required maxLength="2" /></div>
+                            </div>
+                        </div>
+
+                        {/* Fotos */}
+                        <div className="form-section">
+                            <h3>Fotos</h3>
+                            {formData.fotos.map((foto, index) => (
+                                <div key={index} className="form-row photo-row">
+                                    <div className="form-group" style={{ flexGrow: 2 }}>
+                                        <label>URL da Foto</label>
+                                        <input type="text" name="url" value={foto.url} onChange={(e) => handleFotoChange(index, e)} />
+                                    </div>
+                                    <div className="form-group" style={{ flexGrow: 1 }}>
+                                        <label>Descrição</label>
+                                        <input type="text" name="descricao" value={foto.descricao} onChange={(e) => handleFotoChange(index, e)} />
+                                    </div>
+                                    <button type="button" onClick={() => handleRemoveFoto(index)} className="button-link delete-link">Remover</button>
+                                </div>
+                            ))}
+                            <button type="button" onClick={handleAddFoto} className="button outline-button">+ Adicionar Foto</button>
+                        </div>
+
+                        {/* Ações */}
+                        <div className="form-actions">
+                            <button type="button" className="button cancel-button" onClick={() => navigate('/imoveis-avulsos')} disabled={loading}>Cancelar</button>
+                            <button type="submit" className="button submit-button" disabled={loading}>{loading ? 'Salvando...' : 'Salvar Imóvel'}</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     );
