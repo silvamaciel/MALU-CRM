@@ -1,20 +1,5 @@
-// src/components/ImovelFilters/ImovelFilters.js
-import React, { useState, useEffect } from 'react';
-import './ImovelFilters.css'; // Criaremos este CSS a seguir
-
-// Hook customizado para debounce (atraso na execução de uma função)
-function useDebounce(value, delay) {
-    const [debouncedValue, setDebouncedValue] = useState(value);
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            setDebouncedValue(value);
-        }, delay);
-        return () => {
-            clearTimeout(handler);
-        };
-    }, [value, delay]);
-    return debouncedValue;
-}
+import React, { useState } from 'react';
+import './ImovelFilters.css';
 
 const TIPO_IMOVEL_OPCOES = ['Apartamento', 'Casa', 'Terreno', 'Sala Comercial', 'Loja', 'Galpão', 'Outro'];
 const STATUS_IMOVEL_OPCOES = ['Disponível', 'Reservado', 'Vendido', 'Inativo'];
@@ -28,30 +13,37 @@ function ImovelFilters({ onFilterChange, isProcessing }) {
         status: ''
     };
     const [filters, setFilters] = useState(initialState);
-    const debouncedFilters = useDebounce(filters, 500); // Filtra 500ms após o usuário parar de digitar
-
-    useEffect(() => {
-        const activeFilters = {};
-        for (const key in debouncedFilters) {
-            if (debouncedFilters[key]) {
-                activeFilters[key] = debouncedFilters[key];
-            }
-        }
-        onFilterChange(activeFilters);
-    }, [debouncedFilters, onFilterChange]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFilters(prev => ({ ...prev, [name]: value }));
     };
 
+    // Função chamada quando o formulário é submetido (clique no botão "Filtrar")
+    const handleApplyFilters = (e) => {
+        e.preventDefault(); // Previne o recarregamento da página
+        const activeFilters = {};
+        // Limpa chaves vazias antes de enviar
+        for (const key in filters) {
+            if (filters[key]) {
+                activeFilters[key] = filters[key];
+            }
+        }
+        if (typeof onFilterChange === 'function') {
+            onFilterChange(activeFilters);
+        }
+    };
+
     const handleClearFilters = () => {
         setFilters(initialState);
+        if (typeof onFilterChange === 'function') {
+            onFilterChange({}); // Notifica o pai para limpar os filtros
+        }
     };
 
     return (
         <div className="imovel-filters-container">
-            <form className="imovel-filters-form">
+            <form onSubmit={handleApplyFilters} className="imovel-filters-form">
                 <div className="filter-group">
                     <label>Cidade</label>
                     <input type="text" name="cidade" value={filters.cidade} onChange={handleChange} placeholder="Ex: João Pessoa" disabled={isProcessing} />
@@ -78,7 +70,10 @@ function ImovelFilters({ onFilterChange, isProcessing }) {
                         {STATUS_IMOVEL_OPCOES.map(o => <option key={o} value={o}>{o}</option>)}
                     </select>
                 </div>
-                <div className="filter-group actions-group">
+                <div className="filter-actions">
+                    <button type="submit" className="button primary-button small-button" disabled={isProcessing}>
+                        {isProcessing ? 'Buscando...' : 'Filtrar'}
+                    </button>
                     <button type="button" onClick={handleClearFilters} className="button-link" disabled={isProcessing}>
                         Limpar Filtros
                     </button>
