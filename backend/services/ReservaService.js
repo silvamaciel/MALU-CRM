@@ -16,7 +16,9 @@ const { logHistory } = require('./LeadService');
  * @param {string} companyId - ID da empresa.
  * @param {string} creatingUserId - ID do usuário.
  */
-const createReserva = async (reservaData, leadId, imovelId, tipoImovel, companyId, creatingUserId) => {
+const createReserva = async (reservaData, companyId, creatingUserId) => {
+    const { leadId, imovelId, tipoImovel, validadeReserva } = reservaData;
+
     console.log(`[ReservaService] Iniciando reserva para Lead ${leadId}, Imóvel ${imovelId}, Tipo ${tipoImovel}`);
 
     if (!['Unidade', 'ImovelAvulso'].includes(tipoImovel)) {
@@ -63,16 +65,16 @@ const createReserva = async (reservaData, leadId, imovelId, tipoImovel, companyI
         }
 
         // --- 4. Criar Reserva ---
-        const validade = new Date(reservaData.validadeReserva);
+        const validade = new Date(validadeReserva);
         if (!validade || validade <= new Date()) {
             throw new Error("Validade da reserva inválida.");
         }
 
         const reserva = new Reserva({
-            ...reservaData, 
+            ...reservaData,
             lead: leadId,
             imovel: imovelId,
-            tipoImovel: tipoImovel,
+            tipoImovel,
             company: companyId,
             createdBy: creatingUserId,
             statusReserva: "Ativa"
@@ -104,7 +106,6 @@ const createReserva = async (reservaData, leadId, imovelId, tipoImovel, companyI
                 oldLeadStatusId: oldStage,
                 newLeadStatusId: stageReserva._id
             }
-            // Adapte se quiser passar a `session`
         );
 
         await session.commitTransaction();
@@ -122,6 +123,7 @@ const createReserva = async (reservaData, leadId, imovelId, tipoImovel, companyI
         session.endSession();
     }
 };
+
 
 /**
  * Lista todas as reservas de uma empresa com paginação e filtros.
