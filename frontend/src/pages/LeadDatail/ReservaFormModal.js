@@ -102,8 +102,12 @@ function ReservaFormModal({ leadId, leadNome, companyId, onClose }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!imovelFinalId || !formData.validadeReserva) {
-            toast.error("Preencha os campos obrigatórios.");
+        if (!imovelFinalId) {
+            toast.error("Por favor, selecione um imóvel para a reserva.");
+            return;
+        }
+        if (!formData.validadeReserva) {
+            toast.error("A data de validade da reserva é obrigatória.");
             return;
         }
 

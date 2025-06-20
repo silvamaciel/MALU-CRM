@@ -12,24 +12,24 @@ const createReservaController = asyncHandler(async (req, res, next) => {
     const companyId = req.user.company;
     const creatingUserId = req.user._id;
     
+    // Desestrutura todos os campos do corpo da requisição
     const { 
         leadId, 
         imovelId, 
-        tipoImovel, 
+        tipoImovel,
         validadeReserva, 
         valorSinal, 
         observacoesReserva 
     } = req.body;
 
-    // A validação agora checa pelos campos polimórficos
+    // Validação principal
     if (!leadId || !imovelId || !tipoImovel || !validadeReserva) {
-        return next(new ErrorResponse('Campos obrigatórios para reserva: leadId, imovelId, tipoImovel, validadeReserva.', 400));
+        return next(new ErrorResponse('Campos obrigatórios: leadId, imovelId, tipoImovel, validadeReserva.', 400));
     }
-    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
+    
+    // Agrupa os dados específicos da reserva
     const reservaData = { validadeReserva, valorSinal, observacoesReserva };
 
-    // Chama o serviço com os novos parâmetros
     const novaReserva = await ReservaService.createReserva(
         reservaData,
         leadId,
