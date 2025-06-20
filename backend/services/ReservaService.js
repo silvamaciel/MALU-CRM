@@ -152,11 +152,16 @@ const getReservasByCompany = async (companyId, queryParams = {}) => {
         .populate('lead', 'nome email contato')
         .populate('createdBy', 'nome')
         .populate({
-          path: 'imovel',
-          model: doc => doc.tipoImovel, // resolve dinamicamente Unidade ou ImovelAvulso
-          populate: doc => doc.tipoImovel === 'Unidade'
-            ? { path: 'empreendimento', select: 'nome' }
-            : null
+        path: 'imovel',
+        match: { tipoImovel: 'Unidade' },
+        model: 'Unidade',
+        populate: { path: 'empreendimento', select: 'nome' }
+        })
+        // Popula se for ImovelAvulso (sem empreendimento)
+        .populate({
+        path: 'imovel',
+        match: { tipoImovel: 'ImovelAvulso' },
+        model: 'ImovelAvulso'
         })
         .sort({ createdAt: -1 })
         .skip(skip)
