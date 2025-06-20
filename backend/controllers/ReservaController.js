@@ -3,42 +3,42 @@ const asyncHandler = require('../middlewares/asyncHandler');
 const ReservaService = require('../services/ReservaService');
 const ErrorResponse = require('../utils/errorResponse'); // Sua classe de erro customizada
 
-/**  @desc    Criar uma nova reserva
-* @route   POST /api/reservas
-* @access  Privado (usuário logado da empresa)
-*/
+/**
+ * @desc    Criar uma nova Reserva (polimórfica)
+ * @route   POST /api/reservas
+ * @access  Privado
+ */
 const createReservaController = asyncHandler(async (req, res, next) => {
     const companyId = req.user.company;
     const creatingUserId = req.user._id;
     
-    // Dados esperados do corpo da requisição
     const { 
         leadId, 
-        unidadeId, 
-        empreendimentoId, 
-        validadeReserva, // Ex: "2025-12-31"
+        imovelId, 
+        tipoImovel, 
+        validadeReserva, 
         valorSinal, 
         observacoesReserva 
     } = req.body;
 
-    if (!leadId || !unidadeId || !empreendimentoId || !validadeReserva) {
-        return next(new ErrorResponse('Campos obrigatórios para reserva: leadId, unidadeId, empreendimentoId, validadeReserva.', 400));
+    // A validação agora checa pelos campos polimórficos
+    if (!leadId || !imovelId || !tipoImovel || !validadeReserva) {
+        return next(new ErrorResponse('Campos obrigatórios para reserva: leadId, imovelId, tipoImovel, validadeReserva.', 400));
     }
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    const reservaData = {
-        validadeReserva, 
-        valorSinal,
-        observacoesReserva
-    };
+    const reservaData = { validadeReserva, valorSinal, observacoesReserva };
 
+    // Chama o serviço com os novos parâmetros
     const novaReserva = await ReservaService.createReserva(
         reservaData,
         leadId,
-        unidadeId,
-        empreendimentoId,
+        imovelId,
+        tipoImovel,
         companyId,
         creatingUserId
     );
+    
     res.status(201).json({ success: true, data: novaReserva });
 });
 

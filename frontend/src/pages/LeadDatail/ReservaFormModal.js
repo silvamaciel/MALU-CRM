@@ -111,10 +111,9 @@ function ReservaFormModal({ leadId, leadNome, companyId, onClose }) {
         setError('');
         try {
             const payload = {
-                leadId,
+                leadId: leadId,
                 imovelId: imovelFinalId,
-                tipoImovel: tipoImovelSelecionado,
-                empreendimentoId: tipoImovelSelecionado === 'Unidade' ? selectedEmpreendimentoId : null,
+                tipoImovel: tipoImovelSelecionado, // 'Unidade' ou 'ImovelAvulso'
                 validadeReserva: formData.validadeReserva,
                 valorSinal: formData.valorSinal ? parseFloat(formData.valorSinal) : null,
                 observacoesReserva: formData.observacoesReserva,
