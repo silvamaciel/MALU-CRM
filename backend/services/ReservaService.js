@@ -152,15 +152,17 @@ const getReservasByCompany = async (companyId, queryParams = {}) => {
         const [totalReservas, reservas] = await Promise.all([
             Reserva.countDocuments(queryConditions),
             Reserva.find(queryConditions)
-                .populate('lead', 'nome email contato') // Popula o lead associado
-                // VVVVV POPULATE POLIMÓRFICO CORRIGIDO VVVVV
+                .populate('lead', 'nome email contato')
+                .populate('createdBy', 'nome')
                 .populate({
-                    path: 'imovel', // O caminho que armazena o ID
-                    // O Mongoose usará o campo 'tipoImovel' para saber qual coleção (Unidade ou ImovelAvulso) consultar
-                    populate: { path: 'empreendimento', select: 'nome' } // Tenta popular 'empreendimento' se o imóvel for uma 'Unidade'
+                    path: 'imovel',
+                    model: 'Unidade', // só popula se for Unidade
+                    populate: { path: 'empreendimento', select: 'nome' }
                 })
-                // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-                .populate('createdBy', 'nome') // Popula o usuário que criou a reserva
+                .populate({
+                    path: 'imovel',
+                    model: 'ImovelAvulso' // só popula se for Avulso
+                })
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit)
