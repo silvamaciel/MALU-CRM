@@ -101,40 +101,39 @@ function ReservaListPage() {
                             <tbody>
                                 {reservas.map(res => (
                                     <tr key={res._id}>
-                                        <td>{res.lead?.nome || 'N/A'}</td>
-                                        <td>{res.empreendimento?.nome || 'N/A'}</td>
-                                        <td>{res.imovel?.identificador || res.imovel?.titulo || 'N/A'}</td>
-                                        <td>{formatDate(res.dataReserva)}</td>
-                                        <td>{formatDate(res.validadeReserva)}</td>
-                                        <td>
-                                            <span className={`status-badge status-${String(res.statusReserva).toLowerCase().replace(/\s+/g, '-')}`}>
-                                                {res.statusReserva}
-                                            </span>
-                                        </td>
-                                        <td>{res.createdBy?.nome || 'N/A'}</td>
-                                        <td className="actions-cell">
+                                    <td>{res.lead?.nome || 'N/A'}</td>
+                                    <td>{res.imovel?.empreendimento?.nome || 'Avulso'}</td>
+                                    <td>{res.imovel?.identificador || res.imovel?.titulo || 'N/A'}</td>
+                                    <td>{formatDate(res.dataReserva)}</td>
+                                    <td>{formatDate(res.validadeReserva)}</td>
+                                    <td>
+                                        <span className={`status-badge status-${String(res.statusReserva).toLowerCase().replace(/\s+/g, '-')}`}>
+                                        {res.statusReserva}
+                                        </span>
+                                    </td>
+                                    <td>{res.createdBy?.nome || 'N/A'}</td>
+                                    <td className="actions-cell">
                                         {res.statusReserva === "Ativa" && (
-                                            <button 
-                                                onClick={() => handleGerarProposta(res._id)}
-                                                className="button primary-button small-button"
-                                            >
-                                                Gerar Proposta/Contrato
-                                            </button>
+                                        <button
+                                            onClick={() => handleGerarProposta(res._id)}
+                                            className="button primary-button small-button"
+                                        >
+                                            Gerar Proposta/Contrato
+                                        </button>
                                         )}
                                         {(res.statusReserva === "ConvertidaEmProposta" || res.propostaId) && (
-                                            <Link
-                                                to={`/propostas-contratos/${res.propostaId}`}
-                                                className="button-link view-link"
-                                                style={{marginLeft: res.statusReserva === "Ativa" ? '8px' : '0'}}
-                                            >
-                                                Visualizar Proposta
-                                            </Link>
+                                        <Link
+                                            to={`/propostas-contratos/${res.propostaId}`}
+                                            className="button-link view-link"
+                                            style={{ marginLeft: res.statusReserva === "Ativa" ? '8px' : '0' }}
+                                        >
+                                            Visualizar Proposta
+                                        </Link>
                                         )}
-                                        {/* Futuramente: Editar Proposta, Mudar Status da Proposta, etc. */}
                                     </td>
                                     </tr>
                                 ))}
-                            </tbody>
+                                </tbody>
                         </table>
                     </div>
                 )}
