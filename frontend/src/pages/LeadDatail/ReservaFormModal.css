@@ -123,3 +123,51 @@
     color: #6c757d;
     margin-top: 4px;
 }
+
+
+.tipo-imovel-selector {
+    margin-bottom: 1.5rem;
+}
+
+.tipo-imovel-selector label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.tipo-imovel-selector .button {
+    margin-right: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    color: #333;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.tipo-imovel-selector .button:hover {
+    background-color: #f4f4f4;
+}
+
+.tipo-imovel-selector .primary-button {
+    background-color: #007bff;
+    color: #fff;
+    border-color: #007bff;
+}
+
+.tipo-imovel-selector .primary-button:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+
+.tipo-imovel-selector .outline-button {
+    background-color: #fff;
+    color: #007bff;
+    border-color: #007bff;
+}
+
+.tipo-imovel-selector .outline-button:hover {
+    background-color: #e6f0ff;
+}
