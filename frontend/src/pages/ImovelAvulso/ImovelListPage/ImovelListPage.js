@@ -77,7 +77,13 @@ function ImovelListPage() {
         <div className="admin-page imovel-list-page">
             <header className="page-header">
                 <h1>Imóveis Avulsos</h1>
-                <Link to="/imoveis-avulsos/novo" className="button primary-button">+ Adicionar Imóvel</Link>
+                <div className="header-actions">
+                    <button onClick={() => setShowFilters(prev => !prev)} className="button outline-button">
+                        Filtros {showFilters ? '▲' : '▼'}
+                    </button>
+                    <Link to="/imoveis-avulsos/novo" className="button primary-button">+ Adicionar Imóvel</Link>
+                </div>
+                
             </header>
             <div className="page-content">
 
@@ -90,8 +96,8 @@ function ImovelListPage() {
 
 
                 {error && <p className="error-message">{error}</p>}
-
-
+                
+                                
                 <div className="table-responsive">
                     <table className="data-table">
                         <thead>

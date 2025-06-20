@@ -120,3 +120,30 @@
   max-height: 500px;
   opacity: 1;
 }
+
+.imovel-list-page .header-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* Estilos para a animação de exibir/ocultar filtros */
+.filters-wrapper {
+  overflow: hidden;
+  transition: max-height 0.4s ease-out, opacity 0.3s ease-out, margin-bottom 0.4s ease-out;
+}
+
+.filters-wrapper.closed {
+  max-height: 0;
+  opacity: 0;
+  margin-bottom: 0;
+  /* Garante que não haja bordas ou paddings visíveis quando fechado */
+  border-top: 0;
+  border-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.filters-wrapper.open {
+  max-height: 500px; /* Um valor alto o suficiente para caber todos os filtros */
+  opacity: 1;
+}
