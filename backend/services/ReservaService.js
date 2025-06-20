@@ -144,7 +144,6 @@ const getReservasByCompany = async (companyId, queryParams = {}) => {
   const skip = (page - 1) * limit;
 
   const queryConditions = { company: companyId };
-  // Filtros adicionais podem entrar aqui
 
   try {
     const [totalReservas, reservas] = await Promise.all([
@@ -152,10 +151,12 @@ const getReservasByCompany = async (companyId, queryParams = {}) => {
       Reserva.find(queryConditions)
         .populate('lead', 'nome email contato')
         .populate('createdBy', 'nome')
-        .populate('imovel') // refPath do schema vai resolver o model correto
         .populate({
-          path: 'imovel.empreendimento', // popula empreendimento dentro de imovel (só se existir)
-          select: 'nome'
+          path: 'imovel',
+          model: doc => doc.tipoImovel, // resolve dinamicamente Unidade ou ImovelAvulso
+          populate: doc => doc.tipoImovel === 'Unidade'
+            ? { path: 'empreendimento', select: 'nome' }
+            : null
         })
         .sort({ createdAt: -1 })
         .skip(skip)
@@ -173,6 +174,7 @@ const getReservasByCompany = async (companyId, queryParams = {}) => {
     throw new Error("Erro ao buscar reservas.");
   }
 };
+
 
 /**
  * Busca uma reserva específica por ID, garantindo que pertence à empresa,
