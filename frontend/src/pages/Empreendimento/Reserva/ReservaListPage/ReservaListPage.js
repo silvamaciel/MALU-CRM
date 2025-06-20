@@ -103,7 +103,7 @@ function ReservaListPage() {
                                     <tr key={res._id}>
                                         <td>{res.lead?.nome || 'N/A'}</td>
                                         <td>{res.empreendimento?.nome || 'N/A'}</td>
-                                        <td>{res.unidade?.identificador || 'N/A'}</td>
+                                        <td>{res.imovel?.identificador || res.imovel?.titulo || 'N/A'}</td>
                                         <td>{formatDate(res.dataReserva)}</td>
                                         <td>{formatDate(res.validadeReserva)}</td>
                                         <td>
