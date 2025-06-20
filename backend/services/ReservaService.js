@@ -152,21 +152,17 @@ const getReservasByCompany = async (companyId, queryParams = {}) => {
         const [totalReservas, reservas] = await Promise.all([
             Reserva.countDocuments(queryConditions),
             Reserva.find(queryConditions)
-                .populate('lead', 'nome email contato')
-                .populate('createdBy', 'nome')
-                .populate({
-                    path: 'imovel',
-                    model: 'Unidade', // só popula se for Unidade
-                    populate: { path: 'empreendimento', select: 'nome' }
-                })
-                .populate({
-                    path: 'imovel',
-                    model: 'ImovelAvulso' // só popula se for Avulso
-                })
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit)
-                .lean()
+            .populate('lead', 'nome email contato')
+            .populate('createdBy', 'nome')
+            .populate({
+            path: 'imovel',
+            model: doc => doc.tipoImovel,
+            populate: { path: 'empreendimento', select: 'nome' }
+            })
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .lean()
         ]);
         
         const totalPages = Math.ceil(totalReservas / limit) || 1;
