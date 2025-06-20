@@ -62,13 +62,14 @@ app.use('/api/integrations', require('./routes/integrationRoutes'));
 app.use('/api/webhooks', require('./routes/webhookRoutes'));
 
 app.use('/api/empreendimentos', require('./routes/empreendimentoRoutes')); 
+app.use('/api/imoveis-avulsos', require('./routes/imovelAvulsoRoutes'));
+
 
 app.use('/api/reservas', require('./routes/ReservaRoutes'));
 
 app.use('/api/propostas-contratos', require('./routes/propostaContratoRoutes'));
 
 app.use('/api/modelos-contrato', require('./routes/modeloContratoRoutes'));
-
 
 
 
