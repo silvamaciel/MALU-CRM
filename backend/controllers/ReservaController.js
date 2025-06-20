@@ -1,71 +1,71 @@
 // backend/controllers/ReservaController.js
 const asyncHandler = require('../middlewares/asyncHandler');
 const ReservaService = require('../services/ReservaService');
-const ErrorResponse = require('../utils/errorResponse');
-const mongoose = require('mongoose');
+const ErrorResponse = require('../utils/errorResponse'); // Sua classe de erro customizada
 
-/**
- * @desc    Criar uma nova Reserva (polimórfica)
- * @route   POST /api/reservas
- * @access  Privado
- */
+/**  @desc    Criar uma nova reserva
+* @route   POST /api/reservas
+* @access  Privado (usuário logado da empresa)
+*/
 const createReservaController = asyncHandler(async (req, res, next) => {
     const companyId = req.user.company;
     const creatingUserId = req.user._id;
     
+    // Dados esperados do corpo da requisição
     const { 
         leadId, 
-        imovelId, 
-        tipoImovel,
-        validadeReserva, 
+        unidadeId, 
+        empreendimentoId, 
+        validadeReserva, // Ex: "2025-12-31"
         valorSinal, 
         observacoesReserva 
     } = req.body;
 
-    if (!leadId || !imovelId || !tipoImovel || !validadeReserva) {
-        return next(
-            new ErrorResponse(
-                'Campos obrigatórios: leadId, imovelId, tipoImovel, validadeReserva.',
-                400
-            )
-        );
+    if (!leadId || !unidadeId || !empreendimentoId || !validadeReserva) {
+        return next(new ErrorResponse('Campos obrigatórios para reserva: leadId, unidadeId, empreendimentoId, validadeReserva.', 400));
     }
-    
-    const reservaData = { validadeReserva, valorSinal, observacoesReserva };
+
+    const reservaData = {
+        validadeReserva, 
+        valorSinal,
+        observacoesReserva
+    };
 
     const novaReserva = await ReservaService.createReserva(
-        reservaData,      // 1º argumento: dados da reserva
-        leadId,           // 2º argumento: ID do lead
-        imovelId,         // 3º argumento: ID do imóvel (Unidade ou ImovelAvulso)
-        tipoImovel,       // 4º argumento: 'Unidade' ou 'ImovelAvulso'
-        companyId,        // 5º argumento: ID da empresa
-        creatingUserId    // 6º argumento: ID do usuário criando
+        reservaData,
+        leadId,
+        unidadeId,
+        empreendimentoId,
+        companyId,
+        creatingUserId
     );
-    
     res.status(201).json({ success: true, data: novaReserva });
 });
-
 
 /**
  * Controller para listar todas as reservas da empresa, com filtros e paginação.
  */
 const getReservasController = asyncHandler(async (req, res, next) => {
     const companyId = req.user.company;
-    const queryParams = req.query;
-    
-    console.log(`[ReservaCtrl] Recebido GET /api/reservas para Company ${companyId} com filtros:`, queryParams);
+    const { page = 1, limit = 10, ...filters } = req.query; // Pega page, limit e outros filtros da query
+        
+    const paginationOptions = { page: parseInt(page, 10), limit: parseInt(limit, 10) };
+    delete filters.page;
+    delete filters.limit;
 
-    const result = await ReservaService.getReservasByCompany(companyId, queryParams);
+    console.log(`[ReservaCtrl] Recebido GET /api/reservas para Company ${companyId} com filtros:`, filters, `e paginação:`, paginationOptions);
+
+    const result = await ReservaService.getReservasByCompany(companyId, filters, paginationOptions);
     res.status(200).json({ success: true, ...result });
 });
 
 
 /**
- * Controller para buscar uma reserva por id.
+ * Controller para listar reservas por id, com filtros e paginação.
  */
 const getReservaByIdController = asyncHandler(async (req, res, next) => {
-    const companyId = req.user.company;
-    const reserva = await ReservaService.getReservaById(req.params.id, companyId);
+    const companyId = req.user.company; // Ou verificar se a reserva pertence à company
+    const reserva = await ReservaService.getReservaById(req.params.id, companyId); // Crie esta função no ReservaService
     if (!reserva) {
         return next(new ErrorResponse(`Reserva com ID ${req.params.id} não encontrada.`, 404));
     }
