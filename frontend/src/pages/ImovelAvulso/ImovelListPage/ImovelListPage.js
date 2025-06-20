@@ -87,7 +87,7 @@ function ImovelListPage() {
             </header>
             <div className="page-content">
 
-                <div className={`filters-wrapper ${showFilters ? 'open' : ''}`}>
+                <div className={`filters-wrapper ${showFilters ? 'open' : 'closed'}`}>
                     <ImovelFilters
                         onFilterChange={handleFilterChange}
                         isProcessing={loading}
