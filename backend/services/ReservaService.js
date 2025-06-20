@@ -131,59 +131,46 @@ const createReserva = async (reservaData, companyId, creatingUserId) => {
 
 
 /**
- * Lista todas as reservas de uma empresa com paginação e filtros.
+ * Busca reservas de uma empresa com filtros e paginação.
  * @param {string} companyId - ID da empresa.
- * @param {object} filters - Objeto com filtros (ex: { statusReserva: 'Ativa', empreendimentoId: '...' }).
- * @param {object} paginationOptions - Opções de paginação (page, limit).
- * @returns {Promise<{reservas: Array<Reserva>, total: number, page: number, pages: number}>}
+ * @param {object} queryParams - Parâmetros da query (filtros e paginação).
  */
-const getReservasByCompany = async (companyId, filters = {}, paginationOptions = { page: 1, limit: 10 }) => {
-    if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
-        throw new Error('ID da empresa inválido.');
-    }
+const getReservasByCompany = async (companyId, queryParams = {}) => {
+    console.log(`[ReservaService] Buscando reservas para Company: ${companyId}, Query Params:`, queryParams);
 
-    const page = parseInt(paginationOptions.page, 10) || 1;
-    const limit = parseInt(paginationOptions.limit, 10) || 10;
+    const page = parseInt(queryParams.page, 10) || 1;
+    const limit = parseInt(queryParams.limit, 10) || 10;
     const skip = (page - 1) * limit;
-
-    // Começa com as condições base
-    const queryConditions = { company: companyId, ...filters };
-
-    // Remove filtros com valores vazios ou nulos para não interferir na query
-    for (const key in queryConditions) {
-        if (queryConditions[key] === null || queryConditions[key] === undefined || queryConditions[key] === '') {
-            delete queryConditions[key];
-        }
-        // Converte IDs de filtro para ObjectId se forem strings válidas
-        if (['lead', 'empreendimento', 'unidade', 'createdBy'].includes(key) && 
-            queryConditions[key] && 
-            mongoose.Types.ObjectId.isValid(queryConditions[key])) {
-            queryConditions[key] = new mongoose.Types.ObjectId(queryConditions[key]);
-        }
-    }
     
-    console.log(`[ReservaService] Buscando reservas para Company: ${companyId}, Condições:`, queryConditions);
+    const queryConditions = { company: companyId };
+    // TODO: Adicionar lógica de filtros aqui no futuro, se necessário
+
+    console.log("[ReservaService] Condições da Query MongoDB:", queryConditions);
 
     try {
-        const reservas = await Reserva.find(queryConditions)
-            .populate({ path: 'lead', select: 'nome email contato' }) // Popula nome do lead
-            .populate({ path: 'unidade', select: 'identificador tipologia' }) // Popula identificador da unidade
-            .populate({ path: 'empreendimento', select: 'nome' }) // Popula nome do empreendimento
-            .populate({ path: 'createdBy', select: 'nome' }) // Popula nome do usuário que criou
-            .sort({ dataReserva: -1 }) // Ordena pelas mais recentes primeiro
-            .skip(skip)
-            .limit(limit)
-            .lean();
-
-        const totalReservas = await Reserva.countDocuments(queryConditions);
-
+        const [totalReservas, reservas] = await Promise.all([
+            Reserva.countDocuments(queryConditions),
+            Reserva.find(queryConditions)
+                .populate('lead', 'nome email contato') // Popula o lead associado
+                // VVVVV POPULATE POLIMÓRFICO CORRIGIDO VVVVV
+                .populate({
+                    path: 'imovel', // O caminho que armazena o ID
+                    // O Mongoose usará o campo 'tipoImovel' para saber qual coleção (Unidade ou ImovelAvulso) consultar
+                    populate: { path: 'empreendimento', select: 'nome' } // Tenta popular 'empreendimento' se o imóvel for uma 'Unidade'
+                })
+                // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                .populate('createdBy', 'nome') // Popula o usuário que criou a reserva
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean()
+        ]);
+        
+        const totalPages = Math.ceil(totalReservas / limit) || 1;
         console.log(`[ReservaService] ${totalReservas} reservas encontradas para Company: ${companyId}`);
-        return {
-            reservas,
-            total: totalReservas,
-            page,
-            pages: Math.ceil(totalReservas / limit) || 1
-        };
+        
+        return { reservas, total: totalReservas, totalPages, currentPage: page };
+
     } catch (error) {
         console.error("[ReservaService] Erro ao buscar reservas:", error);
         throw new Error("Erro ao buscar reservas.");
