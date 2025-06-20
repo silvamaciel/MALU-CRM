@@ -10,9 +10,11 @@ const mongoose = require('mongoose');
  * @access  Privado
  */
 const createReservaController = asyncHandler(async (req, res, next) => {
+    
     const companyId = req.user.company;
     const creatingUserId = req.user._id;
     
+    // 1. Desestrutura TODOS os campos necessários do corpo da requisição
     const { 
         leadId, 
         imovelId, 
@@ -22,6 +24,7 @@ const createReservaController = asyncHandler(async (req, res, next) => {
         observacoesReserva 
     } = req.body;
 
+    // 2. Validação mínima no controller
     if (!leadId || !imovelId || !tipoImovel || !validadeReserva) {
         return next(
             new ErrorResponse(
@@ -31,16 +34,20 @@ const createReservaController = asyncHandler(async (req, res, next) => {
         );
     }
     
+    // 3. Agrupa os dados específicos da reserva em um único objeto
     const reservaData = { validadeReserva, valorSinal, observacoesReserva };
 
+    // 4. VVVVV CHAMADA AO SERVIÇO CORRIGIDA VVVVV
+    // Passa cada parte da informação como um argumento separado, na ordem correta
     const novaReserva = await ReservaService.createReserva(
-        reservaData,      // 1º argumento: dados da reserva
-        leadId,           // 2º argumento: ID do lead
-        imovelId,         // 3º argumento: ID do imóvel (Unidade ou ImovelAvulso)
-        tipoImovel,       // 4º argumento: 'Unidade' ou 'ImovelAvulso'
-        companyId,        // 5º argumento: ID da empresa
-        creatingUserId    // 6º argumento: ID do usuário criando
+        reservaData,        // 1º argumento: dados da reserva
+        leadId,             // 2º argumento: ID do lead
+        imovelId,           // 3º argumento: ID do imóvel
+        tipoImovel,         // 4º argumento: 'Unidade' ou 'ImovelAvulso'
+        companyId,          // 5º argumento: ID da empresa
+        creatingUserId      // 6º argumento: ID do usuário criando
     );
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     
     res.status(201).json({ success: true, data: novaReserva });
 });
