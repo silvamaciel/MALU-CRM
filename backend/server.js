@@ -49,7 +49,6 @@ app.use((req, res, next) => {
 });
 
 
-
 // --rotas protegidas -- // 
 app.use('/api/leads', require('./routes/leadRoutes'));
 app.use('/api/leadstages', require('./routes/leadStageRoutes'));
