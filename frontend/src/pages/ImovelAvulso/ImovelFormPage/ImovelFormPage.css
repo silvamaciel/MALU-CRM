@@ -125,7 +125,6 @@
     filter: blur(1px) brightness(0.95);
     opacity: 0.6;
     pointer-events: none; 
-    position: relative;
 }
 
 /* O overlay que cobre o formulário enquanto carrega */
