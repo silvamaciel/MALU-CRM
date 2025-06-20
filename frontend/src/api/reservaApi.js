@@ -10,6 +10,7 @@ const API_URL = '/reservas'; // Base URL para endpoints de reserva
  * @returns {Promise<object>} A reserva criada.
  */
 export const createReservaApi = async (reservaPayload) => {
+    console.log("Payload da reserva:", reservaPayload);
     try {
         const response = await axiosInstance.post(API_URL, reservaPayload);
         return response.data.data; // O backend retorna { success: true, data: novaReserva }
