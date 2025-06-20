@@ -16,15 +16,13 @@ const { logHistory } = require('./LeadService');
  * @param {string} companyId - ID da empresa.
  * @param {string} creatingUserId - ID do usuário.
  */
-const createReserva = async (reservaData, companyId, creatingUserId) => {
-    console.log('[DEBUG] reservaData:', reservaData);
-    const { leadId, imovelId, tipoImovel, validadeReserva } = reservaData;
-
-    console.log(`[ReservaService] Iniciando reserva para Lead ${leadId}, Imóvel ${imovelId}, Tipo ${tipoImovel}`);
-
-    if (!['Unidade', 'ImovelAvulso'].includes(tipoImovel)) {
-        throw new Error("Tipo de imóvel inválido. Use 'Unidade' ou 'ImovelAvulso'.");
-    }
+const createReserva = async (reservaData, leadId, imovelId, tipoImovel, companyId, creatingUserId) => {
+  console.log('[DEBUG] reservaData:', reservaData);
+  console.log(`[ReservaService] Iniciando reserva para Lead ${leadId}, Imóvel ${imovelId}, Tipo ${tipoImovel}`);
+  
+  if (!['Unidade', 'ImovelAvulso'].includes(tipoImovel)) {
+    throw new Error("Tipo de imóvel inválido. Use 'Unidade' ou 'ImovelAvulso'.");
+  }
 
     const session = await mongoose.startSession();
     session.startTransaction();
