@@ -237,9 +237,12 @@ function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM, reservaB
         <button type="button" onClick={handleAddParcela} className="button outline-button" disabled={isSaving}>+ Adicionar Parcela</button>
 
         <div className="resumo-financeiro-diferenca">
-            <p>Total Entrada + Parcelas: <strong>{formatCurrency(totalParcelas)}</strong></p>
-            <p className={diferenca < 0 ? 'red' : 'green'}>
-                Diferença para Valor da Proposta: <strong>{formatCurrency(diferenca)}</strong>
+            <p>Total Entrada + Parcelas: <strong>{formatCurrency(valorEntrada + totalParcelas)}</strong></p>
+
+            <p className={diferenca < 0 ? 'red' : diferenca > 0 ? 'green' : ''}>
+                Diferença para Valor da Proposta: <strong>
+                {diferenca > 0 ? '+' : ''}{formatCurrency(diferenca)}
+                </strong>
             </p>
         </div>
       </div>
