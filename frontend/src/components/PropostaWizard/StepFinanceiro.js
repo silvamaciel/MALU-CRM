@@ -12,19 +12,18 @@ function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM, reservaB
 
   // Inicializar valor da proposta com valor do imóvel (apenas se ainda estiver zerado)
   useEffect(() => {
-  console.log('[DEBUG] reservaBase.imovel:', reservaBase?.imovel);
-
-  const precoImovel = reservaBase?.imovel?.precoTabela || reservaBase?.imovel?.preco || 0;
-  const propostaVazia = formData.valorPropostaContrato === undefined || formData.valorPropostaContrato === null;
-
-  if ((formData.valorPropostaContrato <= 0 || propostaVazia) && precoImovel > 0) {
-    setFormData(prev => ({
-      ...prev,
-      valorPropostaContrato: precoImovel
-    }));
-    console.log('[DEBUG] valorPropostaContrato setado com preco:', precoImovel);
-  }
-}, [reservaBase, formData.valorPropostaContrato, setFormData]);
+    if (
+      reservaBase?.imovel &&
+      (formData.valorPropostaContrato === undefined || formData.valorPropostaContrato === 0)
+    ) {
+      const preco = reservaBase.imovel.precoTabela || reservaBase.imovel.preco || 0;
+      setFormData(prev => ({
+        ...prev,
+        valorPropostaContrato: preco
+      }));
+      console.log('[DEBUG] valorPropostaContrato definido como:', preco);
+    }
+  }, [reservaBase?.imovel?.preco]);
 
   // Calcular total das parcelas
   useEffect(() => {
@@ -94,7 +93,7 @@ function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM, reservaB
               type="number"
               id="valorPropostaContrato"
               name="valorPropostaContrato"
-              value={formData.valorPropostaContrato}
+              value={formData.valorPropostaContrato || ''}
               onChange={handleChange}
               required
               step="0.01"
@@ -132,7 +131,7 @@ function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM, reservaB
               type="number"
               id="valorEntrada"
               name="valorEntrada"
-              value={formData.valorEntrada}
+              value={formData.valorEntrada || ''}
               onChange={handleChange}
               step="0.01"
               min="0"
