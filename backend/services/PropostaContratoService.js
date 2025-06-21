@@ -91,19 +91,17 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
     session.startTransaction();
 
     try {
+        console.log('[PropostaContrato] INICIANDO criação da proposta...');
+
         // 1. Buscar Reserva + Lead + Imóvel (polimórfico)
         const reserva = await Reserva.findById(reservaId)
-            .populate({
-                path: 'lead',
-                populate: { path: 'coadquirentes' }
-            })
-            .populate({
-                path: 'imovel',
-                populate: { path: 'empreendimento' }
-            })
+            .populate({ path: 'lead', populate: { path: 'coadquirentes' } })
+            .populate({ path: 'imovel', populate: { path: 'empreendimento' } })
             .session(session);
 
-        console.log('Reserva Lead com coadquirentes:', reserva.lead);
+        console.log('[PropostaContrato] Reserva encontrada:', reserva?._id);
+        console.log('[PropostaContrato] Lead:', reserva?.lead?._id);
+        console.log('[PropostaContrato] Imóvel:', reserva?.imovel?._id);
 
         if (!reserva || !reserva.lead || !reserva.imovel) {
             throw new Error("Reserva, Lead ou Imóvel não encontrado.");
@@ -123,6 +121,9 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
             }).lean().session(session)
         ]);
 
+        console.log('[PropostaContrato] Empresa:', empresaVendedora?._id);
+        console.log('[PropostaContrato] Modelo de Contrato:', modeloContrato?._id);
+
         if (!empresaVendedora) throw new Error("Empresa vendedora não encontrada.");
         if (!modeloContrato) throw new Error("Modelo de Contrato inválido ou inativo.");
 
@@ -138,14 +139,15 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
 
         // 4. Usar adquirentes vindos do frontend
         const adquirentesSnapshot = propostaData.adquirentesSnapshot;
+        console.log('[PropostaContrato] adquirentesSnapshot recebido:', adquirentesSnapshot);
 
-        // Validação extra: adquirentes obrigatórios e com contato
         if (!Array.isArray(adquirentesSnapshot) || adquirentesSnapshot.length === 0) {
             throw new Error('É necessário informar pelo menos um adquirente.');
         }
 
         const adquirentesInvalidos = adquirentesSnapshot.filter(a => !a.contato || a.contato.trim() === '');
         if (adquirentesInvalidos.length > 0) {
+            console.warn('[PropostaContrato] Adquirentes com contato faltando:', adquirentesInvalidos);
             throw new Error('Todos os adquirentes devem conter o campo "contato".');
         }
 
@@ -169,6 +171,7 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
         });
 
         const propostaSalva = await proposta.save({ session });
+        console.log('[PropostaContrato] Proposta criada com ID:', propostaSalva._id);
 
         // 6. Atualizar Reserva, Lead e Imóvel
         reserva.statusReserva = 'ConvertidaEmProposta';
@@ -182,6 +185,7 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
         }).session(session);
 
         if (!leadStage) {
+            console.log('[PropostaContrato] Criando novo LeadStage "Proposta Emitida"...');
             leadStage = new LeadStage({
                 nome: nomeEstagio,
                 company: companyId,
@@ -210,17 +214,19 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
             session
         );
 
+        console.log('[PropostaContrato] Proposta criada com sucesso.');
         await session.commitTransaction();
         return propostaSalva;
 
     } catch (err) {
         await session.abortTransaction();
-        console.error('[PropContSvc] Erro ao criar proposta:', err);
+        console.error('[PropostaContrato][ERRO] Falha ao criar proposta:', err);
         throw new Error(err.message || 'Erro interno ao criar proposta.');
     } finally {
         session.endSession();
     }
 };
+
 
 
 
