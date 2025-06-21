@@ -94,15 +94,15 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
     try {
         // 1. Buscar Reserva + Lead + Imóvel (polimórfico)
         const reserva = await Reserva.findById(reservaId)
-            .populate({
-                path: 'lead',
-                model: 'Lead'
-            })
-            .populate({
-                path: 'imovel',
-                populate: { path: 'empreendimento' }
-            })
-            .session(session);
+        .populate({
+            path: 'lead',
+            populate: { path: 'coadquirentes' } 
+        })
+        .populate({
+            path: 'imovel',
+            populate: { path: 'empreendimento' }
+        })
+        .session(session);
 
             console.log('Reserva Lead com coadquirentes:', reserva.lead);
 
