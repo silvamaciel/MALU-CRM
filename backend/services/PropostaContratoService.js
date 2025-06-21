@@ -87,28 +87,28 @@ const montarDadosParaTemplate = (propostaData, leadDoc, imovelDoc, empresaVended
  * @returns {Promise<PropostaContrato>} A Proposta/Contrato criada.
  */
 const createPropostaContrato = async (reservaId, propostaData, companyId, creatingUserId) => {
-    
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
         // 1. Buscar Reserva + Lead + Imóvel (polimórfico)
         const reserva = await Reserva.findById(reservaId)
-        .populate({
-            path: 'lead',
-            populate: { path: 'coadquirentes' } 
-        })
-        .populate({
-            path: 'imovel',
-            populate: { path: 'empreendimento' }
-        })
-        .session(session);
+            .populate({
+                path: 'lead',
+                populate: { path: 'coadquirentes' }
+            })
+            .populate({
+                path: 'imovel',
+                populate: { path: 'empreendimento' }
+            })
+            .session(session);
 
-            console.log('Reserva Lead com coadquirentes:', reserva.lead);
+        console.log('Reserva Lead com coadquirentes:', reserva.lead);
 
         if (!reserva || !reserva.lead || !reserva.imovel) {
             throw new Error("Reserva, Lead ou Imóvel não encontrado.");
         }
+
         if (reserva.statusReserva !== 'Ativa') {
             throw new Error(`Reserva não está ativa. Status atual: ${reserva.statusReserva}`);
         }
@@ -136,18 +136,18 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
             corpoContratoProcessado = corpoContratoProcessado.replace(regex, valor);
         }
 
-        // 4. Criar snapshot de adquirentes
-        const adquirentesSnapshot = [
-            {
-                nome: reserva.lead.nome,
-                cpf: reserva.lead.cpf,
-                rg: reserva.lead.rg,
-                nacionalidade: reserva.lead.nacionalidade,
-                estadoCivil: reserva.lead.estadoCivil,
-                profissao: reserva.lead.profissao
-            },
-            ...(reserva.lead.coadquirentes || [])
-        ];
+        // 4. Usar adquirentes vindos do frontend
+        const adquirentesSnapshot = propostaData.adquirentesSnapshot;
+
+        // Validação extra: adquirentes obrigatórios e com contato
+        if (!Array.isArray(adquirentesSnapshot) || adquirentesSnapshot.length === 0) {
+            throw new Error('É necessário informar pelo menos um adquirente.');
+        }
+
+        const adquirentesInvalidos = adquirentesSnapshot.filter(a => !a.contato || a.contato.trim() === '');
+        if (adquirentesInvalidos.length > 0) {
+            throw new Error('Todos os adquirentes devem conter o campo "contato".');
+        }
 
         // 5. Montar proposta
         const proposta = new PropostaContrato({
@@ -221,6 +221,7 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
         session.endSession();
     }
 };
+
 
 
 
