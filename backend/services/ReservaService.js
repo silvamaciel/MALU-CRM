@@ -152,9 +152,12 @@ const getReservasByCompany = async (companyId, queryParams = {}) => {
         .populate('lead', 'nome email contato')
         .populate('createdBy', 'nome')
         .populate({
-        path: 'imovel',
-        // remove model ou match — deixa o Mongoose usar o `refPath`
-        populate: { path: 'empreendimento', select: 'nome' } // isso só se aplicar se o imovel for Unidade
+          path: 'imovel',
+          populate: {
+            path: 'empreendimento',
+            select: 'nome',
+            strictPopulate: false // <- evita erro com ImovelAvulso
+          }
         })
         .sort({ createdAt: -1 })
         .skip(skip)
@@ -162,10 +165,26 @@ const getReservasByCompany = async (companyId, queryParams = {}) => {
         .lean()
     ]);
 
+    // Fallback: injeta empreendimento virtual como "Avulso" se for ImovelAvulso
+    reservas.forEach(res => {
+      if (res.tipoImovel === 'ImovelAvulso') {
+        res.empreendimento = { nome: 'Avulso' };
+      } else if (res.imovel?.empreendimento?.nome) {
+        res.empreendimento = res.imovel.empreendimento;
+      } else {
+        res.empreendimento = { nome: 'N/A' };
+      }
+    });
+
     const totalPages = Math.ceil(totalReservas / limit) || 1;
     console.log(`[ReservaService] ${totalReservas} reservas encontradas para Company: ${companyId}`);
 
-    return { reservas, total: totalReservas, totalPages, currentPage: page };
+    return {
+      reservas,
+      total: totalReservas,
+      totalPages,
+      currentPage: page
+    };
 
   } catch (error) {
     console.error("[ReservaService] Erro ao buscar reservas:", error);
