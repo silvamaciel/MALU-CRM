@@ -10,34 +10,34 @@ const TIPO_PARCELA_OPCOES = [
 function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM, reservaBase }) {
   const [totalParcelas, setTotalParcelas] = useState(0);
 
-  // Inicializar valor da proposta com valor do imóvel (apenas se ainda estiver zerado)
+  // Inicializa valores com base na reserva (valor do imóvel e entrada)
   useEffect(() => {
-    if (
-      reservaBase?.imovel &&
-      (formData.valorPropostaContrato === undefined || formData.valorPropostaContrato === 0)
-    ) {
+    if (reservaBase?.imovel && (!formData.valorPropostaContrato || formData.valorPropostaContrato === 0)) {
       const preco = reservaBase.imovel.precoTabela || reservaBase.imovel.preco || 0;
-      setFormData(prev => ({
-        ...prev,
-        valorPropostaContrato: preco
-      }));
+      setFormData(prev => ({ ...prev, valorPropostaContrato: preco }));
       console.log('[DEBUG] valorPropostaContrato definido como:', preco);
     }
-  }, [reservaBase?.imovel?.preco]);
 
-  // Calcular total das parcelas
+    if (reservaBase?.valorSinal && (!formData.valorEntrada || formData.valorEntrada === 0)) {
+      setFormData(prev => ({ ...prev, valorEntrada: reservaBase.valorSinal }));
+      console.log('[DEBUG] valorEntrada definida como:', reservaBase.valorSinal);
+    }
+  }, [reservaBase]);
+
+  // Recalcula total considerando entrada + parcelas
   useEffect(() => {
-    const total = formData.planoDePagamento.reduce((acc, p) => {
+    const totalParcelasSemEntrada = formData.planoDePagamento.reduce((acc, p) => {
       const quantidade = Number(p.quantidade || 0);
       const valorUnitario = Number(p.valorUnitario || 0);
       return acc + (quantidade * valorUnitario);
     }, 0);
-    setTotalParcelas(total);
-  }, [formData.planoDePagamento]);
+    const entrada = Number(formData.valorEntrada || 0);
+    setTotalParcelas(totalParcelasSemEntrada + entrada);
+  }, [formData.planoDePagamento, formData.valorEntrada]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    const parsed = name === 'valorPropostaContrato' || name === 'valorEntrada' ? parseFloat(value) : value;
+    const parsed = ['valorPropostaContrato', 'valorEntrada'].includes(name) ? parseFloat(value) : value;
     setFormData(prev => ({ ...prev, [name]: parsed }));
   };
 
@@ -45,7 +45,7 @@ function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM, reservaB
     const { name, value } = event.target;
     const list = [...formData.planoDePagamento];
     let processedValue = value;
-    if (name === 'quantidade' || name === 'valorUnitario') {
+    if (['quantidade', 'valorUnitario'].includes(name)) {
       processedValue = value === '' ? '' : Number(value);
     }
     list[index][name] = processedValue;
@@ -237,7 +237,7 @@ function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM, reservaB
         <button type="button" onClick={handleAddParcela} className="button outline-button" disabled={isSaving}>+ Adicionar Parcela</button>
 
         <div className="resumo-financeiro-diferenca">
-          <p>Total das Parcelas: <strong>{formatCurrency(totalParcelas)}</strong></p>
+          <p>Total Entrada + Parcelas: <strong>{formatCurrency(totalParcelas)}</strong></p>
           <p>Diferença para Valor da Proposta: <strong>{formatCurrency(diferenca)}</strong></p>
         </div>
       </div>
