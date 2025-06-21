@@ -48,3 +48,20 @@
 .button-link.delete-link:hover {
   color: #a71d2a;
 }
+
+
+.resumo-financeiro-diferenca p {
+  font-weight: bold;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+.resumo-financeiro-diferenca .green {
+  background-color: #e6f4ea;
+  color: #1b5e20;
+}
+
+.resumo-financeiro-diferenca .red {
+  background-color: #fdecea;
+  color: #b71c1c;
+}
