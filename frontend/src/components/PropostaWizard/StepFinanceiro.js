@@ -78,7 +78,7 @@ function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM, reservaB
     return number.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   };
 
-  const diferenca = (formData.valorPropostaContrato || 0) - totalParcelas;
+  const diferenca = totalParcelas- (formData.valorPropostaContrato || 0);
 
   return (
     <div className="wizard-step">
