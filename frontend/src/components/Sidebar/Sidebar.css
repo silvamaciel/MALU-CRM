@@ -14,7 +14,7 @@
 }
 
 .sidebar-header {
-  padding: 1.5rem 1rem;
+  padding: 0.2rem 0.3rem;
   text-align: center;
   border-bottom: 1px solid #495057;
   flex-shrink: 0; /* Evita encolher */
