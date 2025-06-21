@@ -1,8 +1,8 @@
 .sidebar {
   width: 240px;
   flex-shrink: 0;
-  background-color: #f5f3fa;
-  color: #5e4b8b;
+  background-color: #c3aeea; /* Fundo mais destacado */
+  color: #fefefe;
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -15,12 +15,12 @@
 .sidebar-header {
   padding: 1.5rem 1rem;
   text-align: center;
-  border-bottom: 1px solid #d3cce3;
+  border-bottom: 1px solid #b59be3;
   flex-shrink: 0;
 }
 
 .sidebar-header h3 {
-  color: #5e4b8b;
+  color: #ffffff;
   margin: 0;
   font-size: 1.4em;
 }
@@ -40,27 +40,27 @@
 .sidebar-nav li a {
   display: block;
   padding: 0.8rem 1.5rem;
-  color: #7c6b9c;
+  color: #f0e9fd;
   text-decoration: none;
   transition: background-color 0.2s ease, color 0.2s ease;
   border-left: 3px solid transparent;
 }
 
 .sidebar-nav li a:hover {
-  background-color: #e3d7f9;
-  color: #5e4b8b;
+  background-color: #b59be3;
+  color: #ffffff;
 }
 
 .sidebar-nav li a.active {
-  background-color: #9f8fe0;
-  color: white;
+  background-color: #a385d5;
+  color: #ffffff;
   font-weight: 500;
-  border-left-color: #5e4b8b;
+  border-left-color: #ffffff;
 }
 
 .admin-section {
   margin-top: 1.5rem;
-  border-top: 1px solid #d3cce3;
+  border-top: 1px solid #b59be3;
   padding-top: 0.5rem;
 }
 
@@ -69,7 +69,7 @@
   padding: 0.8rem 1.5rem;
   font-size: 0.8em;
   text-transform: uppercase;
-  color: #a09bb5;
+  color: #ede3fc;
   font-weight: 600;
 }
 
@@ -80,14 +80,14 @@
 
 .sidebar-footer {
   padding: 1rem 1.5rem;
-  border-top: 1px solid #d3cce3;
+  border-top: 1px solid #b59be3;
   flex-shrink: 0;
 }
 
 .user-info {
   margin-bottom: 1rem;
   font-size: 0.9em;
-  color: #7c6b9c;
+  color: #f0e9fd;
 }
 
 .user-info span {
@@ -95,7 +95,7 @@
 }
 
 .user-info small {
-  color: #b3a8c9;
+  color: #e0d5f5;
 }
 
 .logout-button {
