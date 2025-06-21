@@ -3,7 +3,8 @@ import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom'; // Só precisa de NavLink
 import './Sidebar.css';
 
-import maluIcon from "../../assets/maluicon.png";
+import maluIcon from "../../assets/malucrmhorizontal.png";
+
 
 // <<< Recebe closeMobileSidebar como prop >>>
 function Sidebar({ userData, handleLogout, closeMobileSidebar }) {
