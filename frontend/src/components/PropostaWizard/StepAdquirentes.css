@@ -39,7 +39,33 @@
   justify-content: space-between;
   align-items: center;
 }
+
 .coadquirente-header .delete-link {
-    font-size: 0.85em;
-    color: #dc3545;
+  font-size: 0.85em;
+  color: #dc3545;
+}
+
+
+.form-group .PhoneInput {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.form-group .PhoneInput input {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 1rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  margin-left: 6px;
+}
+
+.form-group .PhoneInputCountry {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  padding: 4px 8px;
+  background-color: #f8f9fa;
 }
