@@ -1,20 +1,30 @@
-// src/components/PropostaWizard/StepResumo.js
 import React from 'react';
-import './StepResumo.css'; // Criaremos este CSS
+import './StepResumo.css';
 import './WizardSteps.css';
 
-
 function StepResumo({ formData, reservaBase }) {
-
     const formatCurrency = (value) => {
         const number = parseFloat(value);
         if (isNaN(number)) return 'N/A';
         return number.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
     };
+
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         return new Date(dateString + "T00:00:00").toLocaleDateString('pt-BR');
     };
+
+    // Ajusta nome e unidade de acordo com o tipo do imóvel
+    const tipoImovel = reservaBase?.tipoImovel;
+    const nomeEmpreendimento =
+        tipoImovel === 'Unidade'
+            ? reservaBase?.empreendimento?.nome || 'N/A'
+            : reservaBase?.imovel?.titulo || 'N/A';
+
+    const identificadorUnidade =
+        tipoImovel === 'Unidade'
+            ? reservaBase?.unidade?.identificador || 'N/A'
+            : reservaBase?.imovel?.titulo || 'N/A';
 
     return (
         <div className="wizard-step">
@@ -34,14 +44,27 @@ function StepResumo({ formData, reservaBase }) {
 
                 <div className="resumo-section">
                     <h4>Imóvel</h4>
-                    <div className="resumo-item"><strong>Empreendimento:</strong> <span>{reservaBase?.empreendimento?.nome}</span></div>
-                    <div className="resumo-item"><strong>Unidade:</strong> <span>{reservaBase?.unidade?.identificador}</span></div>
+                    <div className="resumo-item">
+                        <strong>Empreendimento:</strong>
+                        <span>{nomeEmpreendimento}</span>
+                    </div>
+                    <div className="resumo-item">
+                        <strong>Unidade:</strong>
+                        <span>{identificadorUnidade}</span>
+                    </div>
                 </div>
 
                 <div className="resumo-section">
                     <h4>Financeiro</h4>
-                    <div className="resumo-item"><strong>Valor da Proposta:</strong> <span>{formatCurrency(formData.valorPropostaContrato)}</span></div>
-                    <div className="resumo-item"><strong>Valor da Entrada:</strong> <span>{formatCurrency(formData.valorEntrada)}</span></div>
+                    <div className="resumo-item">
+                        <strong>Valor da Proposta:</strong>
+                        <span>{formatCurrency(formData.valorPropostaContrato)}</span>
+                    </div>
+                    <div className="resumo-item">
+                        <strong>Valor da Entrada:</strong>
+                        <span>{formatCurrency(formData.valorEntrada)}</span>
+                    </div>
+
                     <h5>Plano de Pagamento:</h5>
                     {formData.planoDePagamento.map((p, i) => (
                         <p key={i} className="resumo-parcela">
@@ -50,11 +73,17 @@ function StepResumo({ formData, reservaBase }) {
                     ))}
                 </div>
 
-                 {formData.corretagem?.valorCorretagem > 0 && (
+                {formData.corretagem?.valorCorretagem > 0 && (
                     <div className="resumo-section">
                         <h4>Corretagem</h4>
-                        <div className="resumo-item"><strong>Valor:</strong> <span>{formatCurrency(formData.corretagem.valorCorretagem)}</span></div>
-                        <div className="resumo-item"><strong>Condições:</strong> <span>{formData.corretagem.condicoesPagamentoCorretagem || 'N/A'}</span></div>
+                        <div className="resumo-item">
+                            <strong>Valor:</strong>
+                            <span>{formatCurrency(formData.corretagem.valorCorretagem)}</span>
+                        </div>
+                        <div className="resumo-item">
+                            <strong>Condições:</strong>
+                            <span>{formData.corretagem.condicoesPagamentoCorretagem || 'N/A'}</span>
+                        </div>
                     </div>
                 )}
             </div>
@@ -66,6 +95,5 @@ function StepResumo({ formData, reservaBase }) {
         </div>
     );
 }
-
 
 export default StepResumo;
