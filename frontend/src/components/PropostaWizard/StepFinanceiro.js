@@ -12,17 +12,19 @@ function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM, reservaB
 
   // Inicializar valor da proposta com valor do imóvel (apenas se ainda estiver zerado)
   useEffect(() => {
-    console.log('[DEBUG] reservaBase.imovel:', reservaBase?.imovel);
+  console.log('[DEBUG] reservaBase.imovel:', reservaBase?.imovel);
 
-    if ((formData.valorPropostaContrato ?? 0) <= 0 && reservaBase?.imovel) {
-      const preco = reservaBase.imovel.precoTabela || reservaBase.imovel.preco || 0;
-      setFormData(prev => ({
-        ...prev,
-        valorPropostaContrato: preco
-      }));
-      console.log('[DEBUG] valorPropostaContrato inicializado com:', preco);
-    }
-  }, [reservaBase]);
+  const precoImovel = reservaBase?.imovel?.precoTabela || reservaBase?.imovel?.preco || 0;
+  const propostaVazia = formData.valorPropostaContrato === undefined || formData.valorPropostaContrato === null;
+
+  if ((formData.valorPropostaContrato <= 0 || propostaVazia) && precoImovel > 0) {
+    setFormData(prev => ({
+      ...prev,
+      valorPropostaContrato: precoImovel
+    }));
+    console.log('[DEBUG] valorPropostaContrato setado com preco:', precoImovel);
+  }
+}, [reservaBase, formData.valorPropostaContrato, setFormData]);
 
   // Calcular total das parcelas
   useEffect(() => {
