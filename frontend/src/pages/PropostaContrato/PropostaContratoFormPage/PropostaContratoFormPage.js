@@ -110,6 +110,8 @@ function PropostaContratoFormPage() {
                 } else if (reservaId) { // Modo Criação
                     setPageTitle("Carregando dados da Reserva...");
                     const reservaData = await getReservaByIdApi(reservaId);
+                 console.log('[DEBUG] Dados da reserva recebidos do backend:', reservaData);
+
                     if (!reservaData) throw new Error("Reserva base não encontrada.");
                     setReservaBase(reservaData);
                     baseDataForTemplate = reservaData;
