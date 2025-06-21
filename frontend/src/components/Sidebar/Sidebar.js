@@ -22,7 +22,7 @@ function Sidebar({ userData, handleLogout, closeMobileSidebar }) {
     return (
         <aside className="sidebar">
             <div className="sidebar-header">
-                <img src={maluIcon} alt="Malu CRM Logo" style={{ height: "240px" }} />
+                <img src={maluIcon} alt="Logo" style={{ height: "72px", margin: "0 auto" }} />
             </div>
             <nav className="sidebar-nav">
                 <ul>
