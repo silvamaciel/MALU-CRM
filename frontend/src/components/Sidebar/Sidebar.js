@@ -1,7 +1,6 @@
 // src/components/Sidebar/Sidebar.js
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom'; // Só precisa de NavLink
-import maluIcon from './assets/maluicon.png';
 import './Sidebar.css';
 
 // <<< Recebe closeMobileSidebar como prop >>>
