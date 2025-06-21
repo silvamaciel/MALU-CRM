@@ -238,7 +238,7 @@ function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM, reservaB
 
         <div className="resumo-financeiro-diferenca">
             <p>Total Entrada + Parcelas: <strong>{formatCurrency(totalParcelas)}</strong></p>
-            <p className={diferenca < 0 ? 'green' : 'red'}>
+            <p className={diferenca < 0 ? 'red' : 'green'}>
                 Diferença para Valor da Proposta: {diferenca > 0 ? '+' : ''}<strong>{formatCurrency(diferenca)}</strong>
             </p>
         </div>
