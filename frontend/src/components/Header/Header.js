@@ -3,7 +3,7 @@ import React from 'react';
 import './Header.css';
 
 // Recebe a função para alternar a sidebar vinda do MainLayout
-function Header({ onToggleSidebar }) {
+function Header({ onToggleSidebar, userData }) {
   return (
     <header className="main-header">
       {/* Botão Hambúrguer - Visível apenas em telas menores via CSS */}
@@ -12,7 +12,7 @@ function Header({ onToggleSidebar }) {
         <span className="hamburger-icon-line"></span>
         <span className="hamburger-icon-line"></span>
       </button>
-      <div className="header-title">Meu CRM</div>
+      <div className="header-title">Olá,{userData?.nome || 'Usuário'}!</div>
     </header>
   );
 }
