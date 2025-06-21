@@ -238,6 +238,7 @@ const getReservaById = async (reservaId, companyId) => {
 
     reserva.companyData = empresaVendedora || {};
 
+    console.log('[ReservaService] imovel:', reserva.imovel);
     return reserva;
 
   } catch (error) {
