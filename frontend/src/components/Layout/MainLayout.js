@@ -51,8 +51,7 @@ function MainLayout({ userData, handleLogout }) {
 
             <div className="content-wrapper">
                  {/* Passa a função de TOGGLE para o Header */}
-                 <Header onToggleSidebar={toggleMobileSidebar} />
-
+                 <Header onToggleSidebar={toggleMobileSidebar} userData={userData} />
                  <div className="main-content">
                     <Outlet />
                 </div>
