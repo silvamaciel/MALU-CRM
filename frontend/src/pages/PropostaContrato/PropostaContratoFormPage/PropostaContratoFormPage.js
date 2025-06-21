@@ -117,8 +117,14 @@ function PropostaContratoFormPage() {
                     baseDataForTemplate = reservaData;
                     setPageTitle(`Nova Proposta | Lead: ${reservaData.lead?.nome}`);
 
+                    let precoImovel = reservaData?.imovel?.preco || reservaData?.imovel?.precoTabela || 0;
+                    if ((formData.valorPropostaContrato ?? 0) <= 0 && precoImovel > 0) {
+                    console.log('[DEBUG] Inicializando valorPropostaContrato com preco do imóvel:', precoImovel);
+                    }
+
                     initialFormData = {
                         ...formData,
+                        valorPropostaContrato: (formData.valorPropostaContrato ?? 0) <= 0 ? precoImovel : formData.valorPropostaContrato,
                         adquirentes: [{
                         nome: reservaData.lead?.nome || '',
                         cpf: reservaData.lead?.cpf || '',
