@@ -153,15 +153,8 @@ const getReservasByCompany = async (companyId, queryParams = {}) => {
         .populate('createdBy', 'nome')
         .populate({
         path: 'imovel',
-        match: { tipoImovel: 'Unidade' },
-        model: 'Unidade',
-        populate: { path: 'empreendimento', select: 'nome' }
-        })
-        // Popula se for ImovelAvulso (sem empreendimento)
-        .populate({
-        path: 'imovel',
-        match: { tipoImovel: 'ImovelAvulso' },
-        model: 'ImovelAvulso'
+        // remove model ou match — deixa o Mongoose usar o `refPath`
+        populate: { path: 'empreendimento', select: 'nome' } // isso só se aplicar se o imovel for Unidade
         })
         .sort({ createdAt: -1 })
         .skip(skip)
