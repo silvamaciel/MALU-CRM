@@ -3,6 +3,8 @@ import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom'; // Só precisa de NavLink
 import './Sidebar.css';
 
+import '../../assets/maluicon.png'
+
 // <<< Recebe closeMobileSidebar como prop >>>
 function Sidebar({ userData, handleLogout, closeMobileSidebar }) {
     const isAdmin = userData?.perfil === 'admin';
@@ -20,7 +22,7 @@ function Sidebar({ userData, handleLogout, closeMobileSidebar }) {
     return (
         <aside className="sidebar">
             <div className="sidebar-header">
-                <img src="/frontend/public/android-chrome-192x192.png" alt="Malu CRM" />
+                <img src="../../assets/maluicon.png" alt="Malu CRM Logo" style={{ height: "48px" }} />
             </div>
             <nav className="sidebar-nav">
                 <ul>
