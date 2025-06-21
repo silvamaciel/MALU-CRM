@@ -87,6 +87,7 @@ const montarDadosParaTemplate = (propostaData, leadDoc, imovelDoc, empresaVended
  * @returns {Promise<PropostaContrato>} A Proposta/Contrato criada.
  */
 const createPropostaContrato = async (reservaId, propostaData, companyId, creatingUserId) => {
+    
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -102,6 +103,8 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
                 populate: { path: 'empreendimento' }
             })
             .session(session);
+
+            console.log('Reserva Lead com coadquirentes:', reserva.lead);
 
         if (!reserva || !reserva.lead || !reserva.imovel) {
             throw new Error("Reserva, Lead ou Imóvel não encontrado.");
