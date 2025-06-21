@@ -20,7 +20,7 @@ function Sidebar({ userData, handleLogout, closeMobileSidebar }) {
     return (
         <aside className="sidebar">
             <div className="sidebar-header">
-                <img src="frontend/src/assets/maluicon.png" alt="Malu CRM" />
+                <img src="/frontend/public/android-chrome-192x192.png" alt="Malu CRM" />
             </div>
             <nav className="sidebar-nav">
                 <ul>
