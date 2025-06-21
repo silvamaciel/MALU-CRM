@@ -42,16 +42,21 @@ function StepResumo({ formData, reservaBase }) {
                     ))}
                 </div>
 
-                <div className="resumo-section">
-                    <h4>Imóvel</h4>
-                    <div className="resumo-item">
-                        <strong>Empreendimento:</strong>
-                        <span>{nomeEmpreendimento}</span>
+                <div className="resumo-item">
+                    <strong>Empreendimento:</strong>
+                    <span>
+                        {reservaBase?.tipoImovel === 'Unidade'
+                        ? reservaBase?.empreendimento?.nome || 'N/A'
+                        : 'Imóvel Avulso'}
+                    </span>
                     </div>
                     <div className="resumo-item">
-                        <strong>Unidade:</strong>
-                        <span>{identificadorUnidade}</span>
-                    </div>
+                    <strong>Unidade:</strong>
+                    <span>
+                        {reservaBase?.tipoImovel === 'Unidade'
+                        ? reservaBase?.unidade?.identificador || 'N/A'
+                        : reservaBase?.unidade?.titulo || 'N/A'}
+                    </span>
                 </div>
 
                 <div className="resumo-section">

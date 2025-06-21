@@ -1,34 +1,48 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { NumericFormat } from 'react-number-format';
 import './StepFinanceiro.css';
 
 const TIPO_PARCELA_OPCOES = [
-  "ATO", "PARCELA MENSAL", "PARCELA BIMESTRAL", "PARCELA TRIMESTRAL", 
+  "ATO", "PARCELA MENSAL", "PARCELA BIMESTRAL", "PARCELA TRIMESTRAL",
   "PARCELA SEMESTRAL", "INTERCALADA", "ENTREGA DE CHAVES", "FINANCIAMENTO", "OUTRA"
 ];
 
-function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM, valorImovelAtual }) {
-  const [totalParcelas, setTotalParcelas] = useState(0);
-  const [diferenca, setDiferenca] = useState(0);
-
+function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM, reservaBase }) {
   useEffect(() => {
-    const total = formData.planoDePagamento.reduce((acc, parcela) => {
-      const qtd = Number(parcela.quantidade || 0);
-      const valor = Number(parcela.valorUnitario || 0);
-      return acc + (qtd * valor);
-    }, 0);
-    setTotalParcelas(total);
-    setDiferenca((formData.valorPropostaContrato || 0) - total);
-  }, [formData.planoDePagamento, formData.valorPropostaContrato]);
+    if (!formData.valorPropostaContrato && reservaBase?.unidade?.preco) {
+      setFormData(prev => ({
+        ...prev,
+        valorPropostaContrato: reservaBase.unidade.preco
+      }));
+    }
+  }, [formData.valorPropostaContrato, reservaBase, setFormData]);
 
-  const handleChange = (name, value) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const formatCurrency = (value) => {
+    const number = Number(value || 0);
+    return number.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   };
 
-  const handlePlanoDePagamentoChange = (index, name, value) => {
+  const parseCurrencyInput = (value) => {
+    if (typeof value === 'string') {
+      return Number(value.replace(/\./g, '').replace(',', '.').replace(/[^\d.-]/g, '')) || 0;
+    }
+    return Number(value) || 0;
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: name.includes("valor") ? parseCurrencyInput(value) : value
+    }));
+  };
+
+  const handlePlanoDePagamentoChange = (index, event) => {
+    const { name, value } = event.target;
     const list = [...formData.planoDePagamento];
-    list[index][name] = value;
+    list[index][name] = name.includes("valorUnitario") || name === 'quantidade'
+      ? parseCurrencyInput(value)
+      : value;
     setFormData(prev => ({ ...prev, planoDePagamento: list }));
   };
 
@@ -37,7 +51,13 @@ function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM, valorImo
       ...prev,
       planoDePagamento: [
         ...prev.planoDePagamento,
-        { tipoParcela: TIPO_PARCELA_OPCOES[1], quantidade: 1, valorUnitario: '', vencimentoPrimeira: '', observacao: '' }
+        {
+          tipoParcela: TIPO_PARCELA_OPCOES[1],
+          quantidade: 1,
+          valorUnitario: '',
+          vencimentoPrimeira: '',
+          observacao: ''
+        }
       ]
     }));
   };
@@ -52,6 +72,11 @@ function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM, valorImo
     setFormData(prev => ({ ...prev, planoDePagamento: list }));
   };
 
+  const valorProposta = Number(formData.valorPropostaContrato || 0);
+  const totalParcelas = formData.planoDePagamento.reduce((acc, p) => {
+    return acc + (Number(p.quantidade) * Number(p.valorUnitario || 0));
+  }, 0);
+
   return (
     <div className="wizard-step">
       <h3>Etapa 2: Dados da Proposta e Pagamento</h3>
@@ -61,18 +86,14 @@ function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM, valorImo
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="valorPropostaContrato">Valor da Proposta (R$)*</label>
-            <NumericFormat
+            <input
+              type="text"
               id="valorPropostaContrato"
-              thousandSeparator="."
-              decimalSeparator=","
-              prefix="R$ "
-              value={formData.valorPropostaContrato}
-              onValueChange={({ floatValue }) => handleChange("valorPropostaContrato", floatValue || 0)}
+              name="valorPropostaContrato"
+              value={formatCurrency(formData.valorPropostaContrato)}
+              onChange={handleChange}
+              required
               disabled={isSaving}
-              allowNegative={false}
-              decimalScale={2}
-              fixedDecimalScale
-              className="form-control"
             />
           </div>
 
@@ -82,7 +103,7 @@ function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM, valorImo
               id="responsavelNegociacao"
               name="responsavelNegociacao"
               value={formData.responsavelNegociacao}
-              onChange={(e) => handleChange("responsavelNegociacao", e.target.value)}
+              onChange={handleChange}
               required
               disabled={isSaving || !usuariosCRM || usuariosCRM.length === 0}
             >
@@ -100,19 +121,14 @@ function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM, valorImo
 
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="valorEntrada">Valor da Entrada/Sinal (R$)</label>
-            <NumericFormat
+            <label htmlFor="valorEntrada">Valor da Entrada/Sinal (R$) (Opcional)</label>
+            <input
+              type="text"
               id="valorEntrada"
-              thousandSeparator="."
-              decimalSeparator=","
-              prefix="R$ "
-              value={formData.valorEntrada}
-              onValueChange={({ floatValue }) => handleChange("valorEntrada", floatValue || 0)}
+              name="valorEntrada"
+              value={formatCurrency(formData.valorEntrada)}
+              onChange={handleChange}
               disabled={isSaving}
-              allowNegative={false}
-              decimalScale={2}
-              fixedDecimalScale
-              className="form-control"
             />
           </div>
         </div>
@@ -123,19 +139,10 @@ function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM, valorImo
             id="condicoesPagamentoGerais"
             name="condicoesPagamentoGerais"
             value={formData.condicoesPagamentoGerais}
-            onChange={(e) => handleChange("condicoesPagamentoGerais", e.target.value)}
+            onChange={handleChange}
             rows="3"
             disabled={isSaving}
-          />
-        </div>
-
-        <div className="info-dinamica">
-          <p><strong>Valor do Imóvel:</strong> R$ {Number(valorImovelAtual || 0).toLocaleString('pt-BR')}</p>
-          <p><strong>Total das Parcelas:</strong> R$ {totalParcelas.toLocaleString('pt-BR')}</p>
-          <p><strong>Diferença:</strong> <span style={{ color: diferenca === 0 ? 'green' : 'red' }}>
-            R$ {diferenca.toLocaleString('pt-BR')}
-          </span></p>
-          {diferenca !== 0 && <p style={{ color: 'orange' }}>⚠ O valor das parcelas não bate com o valor da proposta.</p>}
+          ></textarea>
         </div>
       </div>
 
@@ -146,15 +153,28 @@ function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM, valorImo
             <div className="parcela-header">
               <p className="parcela-title">Parcela {index + 1}</p>
               {formData.planoDePagamento.length > 1 && (
-                <button type="button" onClick={() => handleRemoveParcela(index)} className="button-link delete-link" disabled={isSaving}>Remover</button>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveParcela(index)}
+                  className="button-link delete-link"
+                  disabled={isSaving}
+                >Remover</button>
               )}
             </div>
 
             <div className="form-row">
               <div className="form-group">
                 <label>Tipo</label>
-                <select name="tipoParcela" value={parcela.tipoParcela} onChange={(e) => handlePlanoDePagamentoChange(index, 'tipoParcela', e.target.value)} required disabled={isSaving}>
-                  {TIPO_PARCELA_OPCOES.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                <select
+                  name="tipoParcela"
+                  value={parcela.tipoParcela}
+                  onChange={(e) => handlePlanoDePagamentoChange(index, e)}
+                  required
+                  disabled={isSaving}
+                >
+                  {TIPO_PARCELA_OPCOES.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
                 </select>
               </div>
 
@@ -164,7 +184,7 @@ function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM, valorImo
                   type="number"
                   name="quantidade"
                   value={parcela.quantidade}
-                  onChange={(e) => handlePlanoDePagamentoChange(index, 'quantidade', Number(e.target.value))}
+                  onChange={(e) => handlePlanoDePagamentoChange(index, e)}
                   min="1"
                   required
                   disabled={isSaving}
@@ -175,33 +195,57 @@ function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM, valorImo
             <div className="form-row">
               <div className="form-group">
                 <label>Valor Unitário (R$)</label>
-                <NumericFormat
-                  thousandSeparator="."
-                  decimalSeparator=","
-                  prefix="R$ "
-                  value={parcela.valorUnitario}
-                  onValueChange={({ floatValue }) => handlePlanoDePagamentoChange(index, 'valorUnitario', floatValue || 0)}
+                <input
+                  type="text"
+                  name="valorUnitario"
+                  value={formatCurrency(parcela.valorUnitario)}
+                  onChange={(e) => handlePlanoDePagamentoChange(index, e)}
+                  required
                   disabled={isSaving}
-                  allowNegative={false}
-                  decimalScale={2}
-                  fixedDecimalScale
-                  className="form-control"
                 />
               </div>
 
               <div className="form-group">
                 <label>1º Vencimento</label>
-                <input type="date" name="vencimentoPrimeira" value={parcela.vencimentoPrimeira} onChange={(e) => handlePlanoDePagamentoChange(index, 'vencimentoPrimeira', e.target.value)} required disabled={isSaving} />
+                <input
+                  type="date"
+                  name="vencimentoPrimeira"
+                  value={parcela.vencimentoPrimeira}
+                  onChange={(e) => handlePlanoDePagamentoChange(index, e)}
+                  required
+                  disabled={isSaving}
+                />
               </div>
             </div>
 
             <div className="form-group full-width">
               <label>Observação</label>
-              <input type="text" name="observacao" value={parcela.observacao} onChange={(e) => handlePlanoDePagamentoChange(index, 'observacao', e.target.value)} disabled={isSaving} />
+              <input
+                type="text"
+                name="observacao"
+                value={parcela.observacao}
+                onChange={(e) => handlePlanoDePagamentoChange(index, e)}
+                disabled={isSaving}
+              />
             </div>
           </div>
         ))}
-        <button type="button" onClick={handleAddParcela} className="button outline-button" disabled={isSaving}>+ Adicionar Parcela</button>
+
+        <button
+          type="button"
+          onClick={handleAddParcela}
+          className="button outline-button"
+          disabled={isSaving}
+        >
+          + Adicionar Parcela
+        </button>
+
+        <div className="form-group" style={{ marginTop: '20px' }}>
+          <label>Diferença entre valor da proposta e soma das parcelas:</label>
+          <p style={{ color: totalParcelas === valorProposta ? 'green' : 'red' }}>
+            {formatCurrency(valorProposta - totalParcelas)}
+          </p>
+        </div>
       </div>
     </div>
   );

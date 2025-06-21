@@ -1,38 +1,50 @@
-/* src/components/PropostaWizard/StepFinanceiro.css */
-/* Este CSS pode depender de classes genéricas como .form-section, .form-row, .form-group que estão no seu PropostaContratoFormPage.css */
+/* StepFinanceiro.css */
+
+.form-group p {
+  font-weight: bold;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+.form-group p.green {
+  background-color: #e6f4ea;
+  color: #1b5e20;
+}
+
+.form-group p.red {
+  background-color: #fdecea;
+  color: #b71c1c;
+}
 
 .parcela-item-row {
-  border: 1px solid #e9ecef;
-  padding: 15px;
+  border: 1px solid #ccc;
   border-radius: 6px;
-  margin-bottom: 15px;
-  background-color: #fdfdfd;
+  padding: 16px;
+  margin-bottom: 20px;
+  background-color: #f9f9f9;
 }
 
 .parcela-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
 }
 
 .parcela-title {
-  margin: 0;
-  font-weight: 600;
-  color: #495057;
+  font-weight: bold;
+  margin-bottom: 10px;
 }
 
-.delete-link { /* Para o botão "Remover" */
-  font-size: 0.85em;
+.button-link.delete-link {
   color: #dc3545;
   background: none;
   border: none;
   cursor: pointer;
-  text-decoration: underline;
+  font-size: 0.9rem;
   padding: 0;
-}
-.delete-link:hover {
-  color: #a71d2a;
+  text-decoration: underline;
 }
 
-/* O .outline-button para "+ Adicionar Parcela" deve estar no seu CSS principal ou PropostaContratoFormPage.css */
+.button-link.delete-link:hover {
+  color: #a71d2a;
+}
