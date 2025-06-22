@@ -259,30 +259,43 @@ const getPropostaContratoById = async (propostaContratoId, companyId) => {
     if (!mongoose.Types.ObjectId.isValid(propostaContratoId) || !mongoose.Types.ObjectId.isValid(companyId)) {
         throw new Error("ID da Proposta/Contrato ou da Empresa inválido.");
     }
+
     console.log(`[PropContSvc] Buscando Proposta/Contrato ID: ${propostaContratoId} para Company: ${companyId}`);
+
     try {
         const propostaContrato = await PropostaContrato.findOne({ _id: propostaContratoId, company: companyId })
             .populate({ path: 'lead', select: 'nome email contato cpf rg estadoCivil profissao nacionalidade' })
-            .populate({ path: 'unidade', select: 'identificador tipologia areaUtil empreendimento', populate: { path: 'empreendimento', select: 'nome localizacao memorialIncorporacao'} })
-            .populate({ path: 'empreendimento', select: 'nome localizacao memorialIncorporacao' }) // Pode já vir pelo populate da unidade
+            .populate({
+                path: 'imovel',
+                strictPopulate: false,
+                select: 'identificador titulo tipologia areaUtil empreendimento preco precoTabela',
+                populate: {
+                    path: 'empreendimento',
+                    select: 'nome localizacao memorialIncorporacao',
+                    strictPopulate: false
+                }
+            })
             .populate({ path: 'reserva', select: 'dataReserva validadeReserva valorSinal' })
             .populate({ path: 'modeloContratoUtilizado', select: 'nomeModelo tipoDocumento' })
             .populate({ path: 'responsavelNegociacao', select: 'nome email' })
             .populate({ path: 'createdBy', select: 'nome email' })
-            .populate({ path: 'corretagem.corretorPrincipal', model: 'BrokerContact', select: 'nome creci cpfCnpj contato email' }) // Populando corretor principal
-            .lean(); // Retorna objeto JS puro
+            .populate({ path: 'corretagem.corretorPrincipal', model: 'BrokerContact', select: 'nome creci cpfCnpj contato email' })
+            .lean();
 
         if (!propostaContrato) {
             console.log(`[PropContSvc] Proposta/Contrato ID: ${propostaContratoId} não encontrada para Company: ${companyId}.`);
             return null;
         }
-        // Adicionar dados da empresa vendedora explicitamente se não estiverem no snapshot ou se quiser sempre os mais atuais
+
         if (propostaContrato.company) {
-             const empresaVendedora = await Company.findById(propostaContrato.company).select('nome razaoSocial cnpj endereco representanteLegalNome representanteLegalCPF').lean();
-             propostaContrato.dadosEmpresaVendedora = empresaVendedora || {};
+            const empresaVendedora = await Company.findById(propostaContrato.company)
+                .select('nome razaoSocial cnpj endereco representanteLegalNome representanteLegalCPF')
+                .lean();
+            propostaContrato.dadosEmpresaVendedora = empresaVendedora || {};
         }
 
         return propostaContrato;
+
     } catch (error) {
         console.error(`[PropContSvc] Erro ao buscar Proposta/Contrato ${propostaContratoId}:`, error);
         throw new Error("Erro ao buscar Proposta/Contrato por ID.");
