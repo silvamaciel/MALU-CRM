@@ -1,3 +1,4 @@
+// src/components/PropostaWizard/StepResumo.js
 import React from 'react';
 import './StepResumo.css';
 import './WizardSteps.css';
@@ -13,18 +14,6 @@ function StepResumo({ formData, reservaBase }) {
         if (!dateString) return 'N/A';
         return new Date(dateString + "T00:00:00").toLocaleDateString('pt-BR');
     };
-
-    // Ajusta nome e unidade de acordo com o tipo do imóvel
-    const tipoImovel = reservaBase?.tipoImovel;
-    const nomeEmpreendimento =
-        tipoImovel === 'Unidade'
-            ? reservaBase?.empreendimento?.nome || 'N/A'
-            : reservaBase?.imovel?.titulo || 'N/A';
-
-    const identificadorUnidade =
-        tipoImovel === 'Unidade'
-            ? reservaBase?.unidade?.identificador || 'N/A'
-            : reservaBase?.imovel?.titulo || 'N/A';
 
     return (
         <div className="wizard-step">
@@ -42,21 +31,24 @@ function StepResumo({ formData, reservaBase }) {
                     ))}
                 </div>
 
-                <div className="resumo-item">
-                    <strong>Empreendimento:</strong>
-                    <span>
-                        {reservaBase?.tipoImovel === 'Unidade'
-                        ? reservaBase?.empreendimento?.nome || 'N/A'
-                        : 'Imóvel Avulso'}
-                    </span>
+                <div className="resumo-section">
+                    <h4>Empreendimento</h4>
+                    <div className="resumo-item">
+                        <strong>Empreendimento:</strong>
+                        <span>
+                            {reservaBase?.tipoImovel === 'Unidade'
+                                ? reservaBase?.imovel?.empreendimento?.nome || 'N/A'
+                                : reservaBase?.imovel?.titulo || 'N/A'}
+                        </span>
                     </div>
                     <div className="resumo-item">
-                    <strong>Unidade:</strong>
-                    <span>
-                        {reservaBase?.tipoImovel === 'Unidade'
-                        ? reservaBase?.unidade?.identificador || 'N/A'
-                        : reservaBase?.unidade?.titulo || 'N/A'}
-                    </span>
+                        <strong>Unidade:</strong>
+                        <span>
+                            {reservaBase?.tipoImovel === 'Unidade'
+                                ? reservaBase?.imovel?.unidade?.identificador || 'N/A'
+                                : reservaBase?.imovel?.titulo || 'N/A'}
+                        </span>
+                    </div>
                 </div>
 
                 <div className="resumo-section">
@@ -95,7 +87,10 @@ function StepResumo({ formData, reservaBase }) {
 
             <div className="resumo-section contract-preview">
                 <h4>Preview do Contrato</h4>
-                <div className="html-preview-container" dangerouslySetInnerHTML={{ __html: formData.corpoContratoHTMLGerado || '' }} />
+                <div
+                    className="html-preview-container"
+                    dangerouslySetInnerHTML={{ __html: formData.corpoContratoHTMLGerado || '' }}
+                />
             </div>
         </div>
     );
