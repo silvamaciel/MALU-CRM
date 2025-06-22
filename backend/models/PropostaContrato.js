@@ -4,161 +4,169 @@ const { Schema } = mongoose;
 
 // --- Parcelas ---
 const parcelaSchema = new Schema({
-    tipoParcela: {
-        type: String,
-        required: true,
-        enum: ["ATO", "PARCELA MENSAL", "PARCELA BIMESTRAL", "PARCELA TRIMESTRAL", "PARCELA SEMESTRAL", "INTERCALADA", "ENTREGA DE CHAVES", "FINANCIAMENTO", "OUTRA"],
-    },
-    quantidade: { type: Number, default: 1 },
-    valorUnitario: { type: Number, required: true },
-    vencimentoPrimeira: { type: Date, required: true },
-    observacao: { type: String, trim: true }
+  tipoParcela: {
+    type: String,
+    required: true,
+    enum: [
+      "ATO", "PARCELA MENSAL", "PARCELA BIMESTRAL",
+      "PARCELA TRIMESTRAL", "PARCELA SEMESTRAL", "INTERCALADA",
+      "ENTREGA DE CHAVES", "FINANCIAMENTO", "OUTRA"
+    ]
+  },
+  quantidade: { type: Number, default: 1 },
+  valorUnitario: { type: Number, required: true },
+  vencimentoPrimeira: { type: Date, required: true },
+  observacao: { type: String, trim: true }
 }, { _id: false });
 
 // --- Dados Bancários ---
 const dadosBancariosSchema = new Schema({
-    bancoNome: { type: String },
-    agencia: { type: String },
-    operacao: { type: String },
-    contaCorrente: { type: String },
-    cnpjPagamento: { type: String },
-    pix: { type: String }
+  bancoNome: { type: String },
+  agencia: { type: String },
+  operacao: { type: String },
+  contaCorrente: { type: String },
+  cnpjPagamento: { type: String },
+  pix: { type: String }
 }, { _id: false });
 
 // --- Corretagem ---
 const corretagemSchema = new Schema({
-    valorCorretagem: { type: Number, required: true },
-    corretorPrincipal: {
-        type: Schema.Types.ObjectId,
-        ref: 'BrokerContact',
-        required: false
-    },
-    corretoresEnvolvidos: [{
-        brokerContactId: { type: Schema.Types.ObjectId, ref: 'BrokerContact' },
-        percentualComissao: Number 
-     }],
-    condicoesPagamentoCorretagem: { type: String, trim: true },
-    observacoesCorretagem: { type: String, trim: true }
+  valorCorretagem: { type: Number, required: true },
+  corretorPrincipal: {
+    type: Schema.Types.ObjectId,
+    ref: 'BrokerContact',
+    required: false
+  },
+  corretoresEnvolvidos: [{
+    brokerContactId: { type: Schema.Types.ObjectId, ref: 'BrokerContact' },
+    percentualComissao: Number
+  }],
+  condicoesPagamentoCorretagem: { type: String, trim: true },
+  observacoesCorretagem: { type: String, trim: true }
 }, { _id: false });
 
 // --- Adquirente (Snapshot) ---
 const adquirenteSnapshotSchema = new Schema({
-    nome: { type: String, required: true, trim: true },
-    cpf: { type: String, trim: true },
-    rg: { type: String, trim: true },
-    nacionalidade: { type: String, trim: true },
-    estadoCivil: { type: String, trim: true },
-    profissao: { type: String, trim: true },
-    email: {
-        type: String,
-        required: false,
-        match: [/\S+@\S+\.\S+/, 'Email inválido.'],
-        trim: true,
-        lowercase: true
-    },
-    contato: {
-        type: String,
-        required: [true, "O contato do lead é obrigatório."]
-    },
-    endereco: { type: String, trim: true },
-    nascimento: { type: Date }
+  nome: { type: String, required: true, trim: true },
+  cpf: { type: String, trim: true },
+  rg: { type: String, trim: true },
+  nacionalidade: { type: String, trim: true },
+  estadoCivil: { type: String, trim: true },
+  profissao: { type: String, trim: true },
+  email: {
+    type: String,
+    required: false,
+    match: [/\S+@\S+\.\S+/, 'Email inválido.'],
+    trim: true,
+    lowercase: true
+  },
+  contato: {
+    type: String,
+    required: [true, "O contato do lead é obrigatório."]
+  },
+  endereco: { type: String, trim: true },
+  nascimento: { type: Date }
 }, { _id: false });
 
 // --- PropostaContrato ---
 const propostaContratoSchema = new Schema({
-    lead: { type: Schema.Types.ObjectId, ref: 'Lead', required: true, index: true },
-    reserva: { type: Schema.Types.ObjectId, ref: 'Reserva', required: true, unique: true, index: true },
-    imovel: {
-        type: Schema.Types.ObjectId,
-        required: true,
-        refPath: 'tipoImovel'
-    },
-    tipoImovel: {
-        type: String,
-        required: true,
-        enum: ['Unidade', 'ImovelAvulso']
-    },
-    company: { type: Schema.Types.ObjectId, ref: 'Company', required: true, index: true },
-    adquirentesSnapshot: {
-        type: [adquirenteSnapshotSchema],
-        required: true
-    },
-    modeloContratoUtilizado: {
-        type: Schema.Types.ObjectId,
-        ref: 'ModeloContrato',
-        required: true 
-    },
+  lead: { type: Schema.Types.ObjectId, ref: 'Lead', required: true, index: true },
+  reserva: { type: Schema.Types.ObjectId, ref: 'Reserva', required: true, unique: true, index: true },
+  imovel: {
+    type: Schema.Types.ObjectId,
+    required: true,
+    refPath: 'tipoImovel'
+  },
+  tipoImovel: {
+    type: String,
+    required: true,
+    enum: ['Unidade', 'ImovelAvulso']
+  },
+  company: { type: Schema.Types.ObjectId, ref: 'Company', required: true, index: true },
+  adquirentesSnapshot: {
+    type: [adquirenteSnapshotSchema],
+    required: true
+  },
+  modeloContratoUtilizado: {
+    type: Schema.Types.ObjectId,
+    ref: 'ModeloContrato',
+    required: true
+  },
 
-    // --- Financeiro ---
-    precoTabelaUnidadeNoMomento: { type: Number, required: true },
-    valorPropostaContrato: { type: Number, required: true },
-    valorDescontoConcedido: { type: Number, default: 0 },
-    valorEntrada: { type: Number },
-    condicoesPagamentoGerais: { type: String, trim: true },
-    dadosBancariosParaPagamento: dadosBancariosSchema,
-    planoDePagamento: [parcelaSchema],
+  // --- Financeiro ---
+  precoTabelaUnidadeNoMomento: { type: Number, required: true },
+  valorPropostaContrato: { type: Number, required: true },
+  valorDescontoConcedido: { type: Number, default: 0 },
+  valorEntrada: { type: Number },
+  condicoesPagamentoGerais: { type: String, trim: true },
+  dadosBancariosParaPagamento: dadosBancariosSchema,
+  planoDePagamento: [parcelaSchema],
 
-    // --- Corretagem ---
-    corretagem: corretagemSchema,
+  // --- Corretagem ---
+  corretagem: corretagemSchema,
 
-    // --- Contrato ---
-    corpoContratoHTMLGerado: { type: String, required: true },
+  // --- Contrato ---
+  corpoContratoHTMLGerado: { type: String, required: true },
 
-    // --- Metadados ---
-    dataProposta: { type: Date, default: Date.now },
-    dataAssinaturaCliente: { type: Date },
-    dataVendaEfetivada: { type: Date },
-    statusPropostaContrato: {
-        type: String,
-        required: true,
-        enum: [
-            "Em Elaboração",
-            "Aguardando Aprovações",
-            "Aguardando Assinatura Cliente",
-            "Assinado",
-            "Vendido",
-            "Recusado",
-            "Cancelado",
-            "Distrato Realizado"
-        ],
-        default: "Em Elaboração",
-        index: true
-    },
-    responsavelNegociacao: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    observacoesInternasProposta: { type: String, trim: true },
-    dataDistrato: { type: Date },
-    motivoDistrato: { type: String, trim: true }
+  // --- Metadados ---
+  dataProposta: { type: Date, default: Date.now },
+  dataAssinaturaCliente: { type: Date },
+  dataVendaEfetivada: { type: Date },
+  statusPropostaContrato: {
+    type: String,
+    required: true,
+    enum: [
+      "Em Elaboração",
+      "Aguardando Aprovações",
+      "Aguardando Assinatura Cliente",
+      "Assinado",
+      "Vendido",
+      "Recusado",
+      "Cancelado",
+      "Distrato Realizado"
+    ],
+    default: "Em Elaboração",
+    index: true
+  },
+  responsavelNegociacao: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  observacoesInternasProposta: { type: String, trim: true },
+  dataDistrato: { type: Date },
+  motivoDistrato: { type: String, trim: true }
 }, { timestamps: true });
 
 // --- Hooks ---
-
-// Calcula valor do desconto automaticamente
-propostaContratoSchema.pre('save', function(next) {
-    if (this.isModified('precoTabelaUnidadeNoMomento') || this.isModified('valorPropostaContrato')) {
-        this.valorDescontoConcedido = (this.precoTabelaUnidadeNoMomento || 0) - (this.valorPropostaContrato || 0);
-    }
-    next();
+// Desconto automático
+propostaContratoSchema.pre('save', function (next) {
+  if (this.isModified('precoTabelaUnidadeNoMomento') || this.isModified('valorPropostaContrato')) {
+    this.valorDescontoConcedido = (this.precoTabelaUnidadeNoMomento || 0) - (this.valorPropostaContrato || 0);
+  }
+  next();
 });
 
-// Valida se o somatório das parcelas bate com o valor da proposta
-propostaContratoSchema.pre('save', function(next) {
-    if (Array.isArray(this.planoDePagamento) && this.valorPropostaContrato) {
-        const total = this.planoDePagamento.reduce((acc, p) => acc + (p.valorUnitario * (p.quantidade || 1)), 0);
-        if (Math.abs(total - this.valorPropostaContrato) > 0.01) {
-            return next(new Error('O total das parcelas não bate com o valor da proposta.'));
-        }
+// Validação de somatório das parcelas
+propostaContratoSchema.pre('save', function (next) {
+  if (this.$ignoreValidacaoParcelas === true) return next(); // Bypass manual
+
+  if (Array.isArray(this.planoDePagamento) && this.valorPropostaContrato) {
+    const total = this.planoDePagamento.reduce((acc, p) =>
+      acc + (p.valorUnitario * (p.quantidade || 1)), 0);
+    const margemAceitavel = 5.00; // R$ 5,00 de tolerância
+
+    if (Math.abs(total - this.valorPropostaContrato) > margemAceitavel) {
+      return next(new Error(`O total das parcelas (R$ ${total.toFixed(2)}) não bate com o valor da proposta (R$ ${this.valorPropostaContrato.toFixed(2)}).`));
     }
-    next();
+  }
+  next();
 });
 
 // Valida comissão dos corretores
-corretagemSchema.pre('validate', function(next) {
-    if (Array.isArray(this.corretoresEnvolvidos)) {
-        const soma = this.corretoresEnvolvidos.reduce((acc, cur) => acc + (cur.percentualComissao || 0), 0);
-        if (soma > 100) return next(new Error('Percentual total de comissão excede 100%.'));
-    }
-    next();
+corretagemSchema.pre('validate', function (next) {
+  if (Array.isArray(this.corretoresEnvolvidos)) {
+    const soma = this.corretoresEnvolvidos.reduce((acc, cur) => acc + (cur.percentualComissao || 0), 0);
+    if (soma > 100) return next(new Error('Percentual total de comissão excede 100%.'));
+  }
+  next();
 });
 
 const PropostaContrato = mongoose.model('PropostaContrato', propostaContratoSchema);

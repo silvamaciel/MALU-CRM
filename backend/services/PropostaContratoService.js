@@ -174,6 +174,8 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
             precoTabelaUnidadeNoMomento: reserva.imovel.precoTabela || reserva.imovel.preco
         });
 
+        proposta.$ignoreValidacaoParcelas = true;
+
         const propostaSalva = await proposta.save({ session });
         console.log('[PropostaContrato] Proposta criada com ID:', propostaSalva._id);
 
