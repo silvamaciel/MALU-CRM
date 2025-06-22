@@ -35,3 +35,4 @@
 
 /* Media query para layout de uma coluna em telas menores */
 @media (max-width: 768px) { .resumo-grid { grid-template-columns: 1fr; } }
+
