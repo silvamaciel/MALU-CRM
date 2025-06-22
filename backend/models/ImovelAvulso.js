@@ -23,7 +23,7 @@ const imovelAvulsoSchema = new Schema({
     status: {
         type: String,
         required: true,
-        enum: ['Disponível', 'Reservado', 'Vendido', 'Inativo'],
+        enum: ['Disponível', 'Reservado', 'Vendido', 'Inativo', 'Proposta'],
         default: 'Disponível',
         index: true
     },
