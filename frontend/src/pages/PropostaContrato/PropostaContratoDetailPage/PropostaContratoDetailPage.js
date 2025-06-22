@@ -315,7 +315,13 @@ function PropostaContratoDetailPage() {
                         : 'N/A'}
                     </p>
 
-                    
+                    {(propostaContrato.imovel?.areaUtil || propostaContrato.imovel?.areaTotal) && (
+                    <p>
+                        <strong>Área:</strong> {propostaContrato.imovel.areaUtil || propostaContrato.imovel.areaTotal} m²
+                    </p>
+                    )}
+
+
                     <p><strong>Valor da Proposta:</strong> {propostaContrato.valorPropostaContrato?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
                     <p><strong>Status:</strong> {propostaContrato.statusPropostaContrato}</p>
                     <p><strong>Data da Proposta:</strong> {propostaContrato.dataProposta ? new Date(propostaContrato.dataProposta).toLocaleDateString('pt-BR') : 'N/A'}</p>
