@@ -302,16 +302,20 @@ function PropostaContratoDetailPage() {
                 <div className="info-section">
                     <h3>Informações Gerais</h3>
                     <p><strong>Lead:</strong> {propostaContrato.lead?.nome || 'N/A'}</p>
-                    <p><strong>Imóvel:</strong> {
-                    propostaContrato.unidade?.identificador 
-                        ? `${propostaContrato.unidade.identificador} (${propostaContrato.unidade.tipologia || ''}, ${propostaContrato.unidade.areaUtil || 'N/A'}m²)` 
-                        : propostaContrato.imovelAvulso?.titulo 
-                            ? `${propostaContrato.imovelAvulso.titulo} (${propostaContrato.imovelAvulso.quartos || 'N/A'} quartos, ${propostaContrato.imovelAvulso.areaTotal || 'N/A'}m²)` 
-                            : 'N/A'
-                }</p>
-                <p><strong>Empreendimento:</strong> {
-                    propostaContrato.unidade?.empreendimento?.nome || propostaContrato.empreendimento?.nome || 'N/A'
-                }</p>
+                    <p><strong>Imóvel:</strong> 
+                    {propostaContrato.imovel?.identificador
+                        ? <>
+                            {propostaContrato.imovel.identificador}
+                            {propostaContrato.imovel.empreendimento?.nome && (
+                            <> (Empreendimento: {propostaContrato.imovel.empreendimento.nome})</>
+                            )}
+                        </>
+                        : propostaContrato.imovel?.titulo
+                        ? propostaContrato.imovel.titulo
+                        : 'N/A'}
+                    </p>
+
+                    
                     <p><strong>Valor da Proposta:</strong> {propostaContrato.valorPropostaContrato?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
                     <p><strong>Status:</strong> {propostaContrato.statusPropostaContrato}</p>
                     <p><strong>Data da Proposta:</strong> {propostaContrato.dataProposta ? new Date(propostaContrato.dataProposta).toLocaleDateString('pt-BR') : 'N/A'}</p>
