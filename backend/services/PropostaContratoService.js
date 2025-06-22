@@ -16,63 +16,135 @@ const DiscardReason = require('../models/DiscardReason');
 
 
 
-
+/**
+ * Monta um objeto com todos os dados necessários para substituir os placeholders de um template de contrato.
+ * @param {object} propostaData - Os dados da proposta que vieram do formulário.
+ * @param {object} leadDoc - O documento Mongoose do Lead principal (com coadquirentes).
+ * @param {object} imovelDoc - O documento Mongoose do Imóvel (seja Unidade ou ImovelAvulso).
+ * @param {object} empresaVendedora - O documento da Empresa vendedora.
+ * @returns {object} Um objeto onde cada chave é um placeholder e cada valor é o dado correspondente.
+ */
 const montarDadosParaTemplate = (propostaData, leadDoc, imovelDoc, empresaVendedora) => {
-    const formatCurrency = v => v ? `R$ ${parseFloat(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'R$ 0,00';
-    const formatDate = d => d ? new Date(d).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '';
-
-    const dados = {
-        // Empresa
-        vendedor_nome_fantasia: empresaVendedora.nome || '',
-        vendedor_razao_social: empresaVendedora.razaoSocial || empresaVendedora.nome || '',
-        vendedor_cnpj: empresaVendedora.cnpj || '',
-        vendedor_endereco_completo: `${empresaVendedora.endereco?.logradouro || ''}, ${empresaVendedora.endereco?.numero || ''} - ${empresaVendedora.endereco?.bairro || ''}, ${empresaVendedora.endereco?.cidade || ''}/${empresaVendedora.endereco?.uf || ''}`,
-        vendedor_representante_nome: empresaVendedora.representanteLegalNome || '',
-        vendedor_representante_cpf: empresaVendedora.representanteLegalCPF || '',
-
-        // Proposta
-        proposta_valor_total_formatado: formatCurrency(propostaData.valorPropostaContrato),
-        proposta_valor_entrada_formatado: propostaData.valorEntrada ? formatCurrency(propostaData.valorEntrada) : 'N/A',
-        data_proposta_extenso: formatDate(propostaData.dataProposta || new Date()),
-
-        // Imóvel
-        imovel_identificador: imovelDoc.identificador || imovelDoc.titulo || '',
-        empreendimento_nome: imovelDoc.empreendimento?.nome || 'Imóvel Avulso',
-        imovel_endereco_completo: imovelDoc.empreendimento
-            ? `${imovelDoc.empreendimento?.localizacao?.logradouro || ''}, ${imovelDoc.empreendimento?.localizacao?.numero || ''}`
-            : `${imovelDoc.endereco?.logradouro || ''}, ${imovelDoc.endereco?.numero || ''}`
+    // Funções auxiliares para formatação
+    const formatCurrency = (value) => {
+        const number = parseFloat(value);
+        if (isNaN(number)) return 'R$ 0,00';
+        return number.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    };
+    const formatDate = (dateString) => {
+        if (!dateString) return 'Data não definida';
+        return new Date(dateString + "T00:00:00").toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+    };
+    const formatDateExtenso = (dateString) => {
+        if (!dateString) return 'Data não definida';
+        return new Date(dateString + "T00:00:00").toLocaleDateString('pt-BR', {
+            year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC'
+        });
     };
 
-    const adquirentes = [
+    // Objeto principal que armazenará todos os dados para os placeholders
+    const dados = {};
+
+    // --- 1. Dados do Vendedor (Sua Empresa) ---
+    dados['vendedor_nome_fantasia'] = empresaVendedora.nome || '';
+    dados['vendedor_razao_social'] = empresaVendedora.razaoSocial || empresaVendedora.nome || '';
+    dados['vendedor_cnpj'] = empresaVendedora.cnpj || '';
+    dados['vendedor_endereco_completo'] = `${empresaVendedora.endereco?.logradouro || ''}, ${empresaVendedora.endereco?.numero || ''} - ${empresaVendedora.endereco?.bairro || ''}, ${empresaVendedora.endereco?.cidade || ''}/${empresaVendedora.endereco?.uf || ''} - CEP: ${empresaVendedora.endereco?.cep || ''}`;
+    dados['vendedor_representante_nome'] = empresaVendedora.representanteLegalNome || '';
+    dados['vendedor_representante_cpf'] = empresaVendedora.representanteLegalCPF || '';
+    dados['vendedor_contato'] = empresaVendedora.contato || '';
+
+    // --- 2. Dados do Imóvel (Polimórfico) ---
+    if (imovelDoc && imovelDoc.constructor.modelName === 'Unidade') {
+        dados['imovel_identificador'] = imovelDoc.identificador || '';
+        dados['imovel_descricao'] = imovelDoc.tipologia || imovelDoc.identificador || '';
+        dados['empreendimento_nome'] = imovelDoc.empreendimento?.nome || '';
+        dados['imovel_endereco_completo'] = `${imovelDoc.empreendimento?.localizacao?.logradouro || ''}, ${imovelDoc.empreendimento?.localizacao?.numero || ''} - ${imovelDoc.empreendimento?.localizacao?.bairro || ''}, ${imovelDoc.empreendimento?.localizacao?.cidade || ''}/${imovelDoc.empreendimento?.localizacao?.uf || ''}`;
+        dados['unidade_memorial_incorporacao'] = imovelDoc.empreendimento?.memorialIncorporacao || '';
+        dados['unidade_matricula'] = imovelDoc.matriculaImovel || '';
+    } else if (imovelDoc) { // ImovelAvulso
+        dados['imovel_identificador'] = imovelDoc.titulo || '';
+        dados['imovel_descricao'] = imovelDoc.descricao || imovelDoc.titulo || '';
+        dados['empreendimento_nome'] = 'Imóvel Avulso';
+        dados['imovel_endereco_completo'] = `${imovelDoc.endereco?.logradouro || ''}, ${imovelDoc.endereco?.numero || ''} - ${imovelDoc.endereco?.bairro || ''}, ${imovelDoc.endereco?.cidade || ''}/${imovelDoc.endereco?.uf || ''}`;
+        dados['unidade_memorial_incorporacao'] = 'N/A';
+        dados['unidade_matricula'] = imovelDoc.matriculaImovel || '';
+    }
+    
+    // --- 3. Dados dos Compradores (Adquirente Principal + Coadquirentes) ---
+    const todosAdquirentes = [
         {
-            ...leadDoc
+            nome: leadDoc.nome, cpf: leadDoc.cpf, rg: leadDoc.rg, nacionalidade: leadDoc.nacionalidade,
+            estadoCivil: leadDoc.estadoCivil, profissao: leadDoc.profissao, email: leadDoc.email,
+            contato: leadDoc.contato, endereco: leadDoc.endereco, nascimento: leadDoc.nascimento
         },
         ...(leadDoc.coadquirentes || [])
     ];
 
     let blocoHtmlCoadquirentes = '';
+    let blocoAssinaturasCompradores = '';
 
-    adquirentes.forEach((adq, index) => {
-        const prefixo = index === 0 ? 'lead_principal' : `coadquirente${index}`;
+    todosAdquirentes.forEach((adq, index) => {
+        const isPrincipal = index === 0;
+        const prefixo = isPrincipal ? 'lead_principal' : `coadquirente${index}`;
+        
         dados[`${prefixo}_nome`] = adq.nome || '';
         dados[`${prefixo}_cpf`] = adq.cpf || '';
         dados[`${prefixo}_rg`] = adq.rg || '';
         dados[`${prefixo}_nacionalidade`] = adq.nacionalidade || '';
         dados[`${prefixo}_estadoCivil`] = adq.estadoCivil || '';
         dados[`${prefixo}_profissao`] = adq.profissao || '';
-        if (index > 0) {
+        dados[`${prefixo}_email`] = adq.email || '';
+        dados[`${prefixo}_contato`] = adq.contato || '';
+        dados[`${prefixo}_endereco`] = adq.endereco || '';
+        dados[`${prefixo}_nascimento`] = formatDate(adq.nascimento);
+
+        // Monta o bloco HTML para a SEÇÃO de coadquirentes (só os adicionais)
+        if (!isPrincipal) {
             blocoHtmlCoadquirentes += `
-                <div>
-                    <p><strong>Nome:</strong> ${adq.nome}<br>
-                    <strong>CPF:</strong> ${adq.cpf}<br>
-                    <strong>RG:</strong> ${adq.rg}<br>
-                    <strong>Profissão:</strong> ${adq.profissao}</p>
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ccc;">
+                    <h4>Coadquirente ${index}</h4>
+                    <p>
+                        <strong>Nome:</strong> ${adq.nome || ''}<br>
+                        <strong>CPF:</strong> ${adq.cpf || ''}<br>
+                        <strong>RG:</strong> ${adq.rg || ''}<br>
+                        <strong>Profissão:</strong> ${adq.profissao || ''}
+                    </p>
                 </div>
             `;
         }
+        
+        // Monta o bloco de HTML para TODAS as assinaturas
+        const tituloAssinatura = isPrincipal ? '(COMPRADOR/A PRINCIPAL)' : `(COADQUIRENTE ${index})`;
+        blocoAssinaturasCompradores += `
+            <div style="margin-top: 80px; text-align: center; page-break-inside: avoid;">
+                <p style="border-top: 1px solid #000; width: 350px; margin: 0 auto; padding-top: 5px;">
+                    <strong>${adq.nome || ''}</strong><br>
+                    ${tituloAssinatura}
+                </p>
+            </div>
+        `;
     });
 
-    dados['bloco_html_coadquirentes'] = blocoHtmlCoadquirentes;
+    dados['bloco_html_coadquirentes'] = blocoHtmlCoadquirentes || '<p>Não há coadquirentes.</p>';
+    dados['bloco_assinaturas_compradores'] = blocoHtmlAssinaturas;
+
+    // --- 4. Dados Financeiros e da Proposta ---
+    dados['proposta_valor_total_formatado'] = formatCurrency(propostaData.valorPropostaContrato);
+    dados['proposta_valor_entrada_formatado'] = propostaData.valorEntrada ? formatCurrency(propostaData.valorEntrada) : 'N/A';
+    dados['proposta_condicoes_pagamento_gerais'] = propostaData.condicoesPagamentoGerais || '';
+    
+    dados['plano_pagamento_string_formatada'] = (propostaData.planoDePagamento || [])
+        .map(p => ` - ${p.quantidade || 1}x ${p.tipoParcela} de ${formatCurrency(p.valorUnitario)} (1º Venc: ${formatDate(p.vencimentoPrimeira)}) ${p.observacao ? `- Obs: ${p.observacao}` : ''}`)
+        .join('<br>');
+
+    dados['corretagem_valor_formatado'] = propostaData.corretagem?.valorCorretagem ? formatCurrency(propostaData.corretagem.valorCorretagem) : 'N/A';
+    dados['corretagem_condicoes'] = propostaData.corretagem?.condicoesPagamentoCorretagem || '';
+    
+    // --- 5. Dados Gerais do Documento ---
+    dados['data_proposta_extenso'] = formatDateExtenso(propostaData.dataProposta);
+    dados['cidade_contrato'] = empresaVendedora.endereco?.cidade || '';
+
     return dados;
 };
 
