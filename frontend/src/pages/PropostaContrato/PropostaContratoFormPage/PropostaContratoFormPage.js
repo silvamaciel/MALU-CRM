@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { Dialog, DialogHeader, DialogBody, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+
 
 // APIs
 import { getReservaByIdApi, createPropostaContratoApi, updatePropostaContratoApi, getPropostaContratoByIdApi } from '../../../api/propostaContratoApi';
