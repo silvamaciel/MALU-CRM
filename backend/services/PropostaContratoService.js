@@ -27,106 +27,116 @@ const DiscardReason = require('../models/DiscardReason');
  * @returns {object} Um objeto onde cada chave é um placeholder e cada valor é o dado correspondente.
  */
 const montarDadosParaTemplate = (propostaData, leadDoc, imovelDoc, empresaVendedora, corretorPrincipalDoc) => {
-    // Funções auxiliares para formatação
-    const formatCurrency = (value) => {
-        const number = parseFloat(value);
-        if (isNaN(number)) return 'R$ 0,00';
-        return number.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-    };
-    const formatDate = (dateString) => {
-        if (!dateString) return '';
-        return new Date(dateString + "T00:00:00").toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-    };
-    const formatDateExtenso = (dateString) => {
-        if (!dateString) return '';
-        return new Date(dateString + "T00:00:00").toLocaleDateString('pt-BR', {
-            year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC'
-        });
-    };
+  // Funções auxiliares para formatação
+  const formatCurrency = (value) => {
+    const number = parseFloat(value);
+    if (isNaN(number)) return 'R$ 0,00';
+    return number.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  };
 
-    const dados = {};
+  const formatDate = (value) => {
+    if (!value) return '';
+    const date = (value instanceof Date) ? value : new Date(value);
+    if (isNaN(date.getTime())) return '';
+    return date.toLocaleDateString('pt-BR');
+  };
 
-    // --- 1. Dados do Vendedor (Sua Empresa) ---
-    dados['vendedor_nome_fantasia'] = empresaVendedora?.nome || '';
-    dados['vendedor_razao_social'] = empresaVendedora?.razaoSocial || empresaVendedora?.nome || '';
-    dados['vendedor_cnpj'] = empresaVendedora?.cnpj || '';
-    dados['vendedor_endereco_completo'] = `${empresaVendedora?.endereco?.logradouro || ''}, ${empresaVendedora?.endereco?.numero || ''} - ${empresaVendedora?.endereco?.bairro || ''}, ${empresaVendedora?.endereco?.cidade || ''}/${empresaVendedora?.endereco?.uf || ''}`;
-    dados['vendedor_representante_nome'] = empresaVendedora?.representanteLegalNome || '';
-    dados['vendedor_representante_cpf'] = empresaVendedora?.representanteLegalCPF || '';
+  // Corrigida para aceitar Date ou string, com validação
+  const formatDateExtenso = (value) => {
+    if (!value) return '';
+    const date = (value instanceof Date) ? value : new Date(value);
+    if (isNaN(date.getTime())) return '';
+    return date.toLocaleDateString('pt-BR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
 
-    // --- 2. Dados dos Compradores (Principal + Coadquirentes) ---
-    const todosAdquirentes = [
+  const dados = {};
+
+  // --- 1. Dados do Vendedor (Sua Empresa) ---
+  dados['vendedor_nome_fantasia'] = empresaVendedora?.nome || '';
+  dados['vendedor_razao_social'] = empresaVendedora?.razaoSocial || empresaVendedora?.nome || '';
+  dados['vendedor_cnpj'] = empresaVendedora?.cnpj || '';
+  dados['vendedor_endereco_completo'] = `${empresaVendedora?.endereco?.logradouro || ''}, ${empresaVendedora?.endereco?.numero || ''} - ${empresaVendedora?.endereco?.bairro || ''}, ${empresaVendedora?.endereco?.cidade || ''}/${empresaVendedora?.endereco?.uf || ''}`;
+  dados['vendedor_representante_nome'] = empresaVendedora?.representanteLegalNome || '';
+  dados['vendedor_representante_cpf'] = empresaVendedora?.representanteLegalCPF || '';
+
+  // --- 2. Dados dos Compradores (Principal + Coadquirentes) ---
+  const todosAdquirentes = [
     { ...leadDoc },
     ...(leadDoc.coadquirentes || [])
-    ];
+  ];
 
-    let blocoHtmlCoadquirentes = '';
-    let blocoAssinaturasCompradores = '';
+  let blocoHtmlCoadquirentes = '';
+  let blocoAssinaturasCompradores = '';
 
-    todosAdquirentes.forEach((adq, index) => {
-        const prefixo = index === 0 ? 'lead_principal' : `coadquirente${index}`;
-        dados[`${prefixo}_nome`] = adq.nome || '';
-        dados[`${prefixo}_cpf`] = adq.cpf || '';
-        dados[`${prefixo}_rg`] = adq.rg || '';
-        dados[`${prefixo}_nacionalidade`] = adq.nacionalidade || '';
-        dados[`${prefixo}_estadoCivil`] = adq.estadoCivil || '';
-        dados[`${prefixo}_profissao`] = adq.profissao || '';
-        dados[`${prefixo}_email`] = adq.email || '';
-        dados[`${prefixo}_contato`] = adq.contato || '';
-        dados[`${prefixo}_endereco`] = adq.endereco || '';
-        dados[`${prefixo}_nascimento`] = formatDate(adq.nascimento);
+  todosAdquirentes.forEach((adq, index) => {
+    const prefixo = index === 0 ? 'lead_principal' : `coadquirente${index}`;
+    dados[`${prefixo}_nome`] = adq.nome || '';
+    dados[`${prefixo}_cpf`] = adq.cpf || '';
+    dados[`${prefixo}_rg`] = adq.rg || '';
+    dados[`${prefixo}_nacionalidade`] = adq.nacionalidade || '';
+    dados[`${prefixo}_estadoCivil`] = adq.estadoCivil || '';
+    dados[`${prefixo}_profissao`] = adq.profissao || '';
+    dados[`${prefixo}_email`] = adq.email || '';
+    dados[`${prefixo}_contato`] = adq.contato || '';
+    dados[`${prefixo}_endereco`] = adq.endereco || '';
+    dados[`${prefixo}_nascimento`] = formatDate(adq.nascimento);
 
-        if (index > 0) {
-            blocoHtmlCoadquirentes += `<p><strong>Coadquirente ${index}:</strong> ${adq.nome || ''} (CPF: ${adq.cpf || 'N/A'})</p>`;
-        }
-
-        const tituloAssinatura = index === 0 ? '(COMPRADOR/A PRINCIPAL)' : `(COADQUIRENTE ${index})`;
-        blocoAssinaturasCompradores += `<p style="text-align: center; margin-top: 40px;">_________________________<br><strong>${adq.nome || ''}</strong><br>${tituloAssinatura}</p>`;
-    });
-
-    dados['bloco_html_coadquirentes'] = blocoHtmlCoadquirentes || '<p>Não há coadquirentes.</p>';
-    dados['bloco_assinaturas_compradores'] = blocoAssinaturasCompradores;
-
-    // --- 3. Dados do Imóvel (Polimórfico) ---
-    if (imovelDoc) {
-        const tipo = imovelDoc.constructor?.modelName;
-        const empreendimento = tipo === 'Unidade' ? imovelDoc.empreendimento : null;
-
-        dados['imovel_descricao'] = tipo === 'Unidade' ? imovelDoc.tipologia : imovelDoc.descricao;
-        dados['imovel_identificador'] = tipo === 'Unidade' ? imovelDoc.identificador : imovelDoc.titulo;
-        dados['empreendimento_nome'] = tipo === 'Unidade'
-            ? empreendimento?.nome || 'Empreendimento não identificado'
-            : 'Imóvel Avulso';
-        dados['imovel_endereco_completo'] = tipo === 'Unidade'
-            ? `${empreendimento?.localizacao?.logradouro || ''}, ${empreendimento?.localizacao?.numero || ''}`
-            : `${imovelDoc.endereco?.logradouro || ''}, ${imovelDoc.endereco?.numero || ''}`;
-        dados['unidade_matricula'] = imovelDoc.matriculaImovel || '';
-        dados['unidade_memorial_incorporacao'] = tipo === 'Unidade'
-            ? (empreendimento?.memorialIncorporacao || '')
-            : 'N/A';
+    if (index > 0) {
+      blocoHtmlCoadquirentes += `<p><strong>Coadquirente ${index}:</strong> ${adq.nome || ''} (CPF: ${adq.cpf || 'N/A'})</p>`;
     }
 
-    // --- 4. Dados Financeiros e da Proposta ---
-    dados['proposta_valor_total_formatado'] = formatCurrency(propostaData.valorPropostaContrato);
-    dados['proposta_valor_entrada_formatado'] = propostaData.valorEntrada ? formatCurrency(propostaData.valorEntrada) : 'N/A';
-    dados['proposta_condicoes_pagamento_gerais'] = propostaData.condicoesPagamentoGerais || '';
-    dados['plano_pagamento_string_formatada'] = (propostaData.planoDePagamento || [])
-        .map(p => `- ${p.quantidade || 1}x ${p.tipoParcela} de ${formatCurrency(p.valorUnitario)} (1º Venc: ${formatDate(p.vencimentoPrimeira)})`)
-        .join('<br>');
+    const tituloAssinatura = index === 0 ? '(COMPRADOR/A PRINCIPAL)' : `(COADQUIRENTE ${index})`;
+    blocoAssinaturasCompradores += `<p style="text-align: center; margin-top: 40px;">_________________________<br><strong>${adq.nome || ''}</strong><br>${tituloAssinatura}</p>`;
+  });
 
-    // --- 5. Dados da Corretagem ---
-    dados['corretagem_valor_formatado'] = propostaData.corretagem?.valorCorretagem ? formatCurrency(propostaData.corretagem.valorCorretagem) : 'N/A';
-    dados['corretagem_condicoes'] = propostaData.corretagem?.condicoesPagamentoCorretagem || '';
-    dados['corretor_principal_nome'] = corretorPrincipalDoc?.nome || '';
-    dados['corretor_principal_cpf_cnpj'] = corretorPrincipalDoc?.cpfCnpj || '';
-    dados['corretor_principal_creci'] = corretorPrincipalDoc?.creci || '';
+  dados['bloco_html_coadquirentes'] = blocoHtmlCoadquirentes || '<p>Não há coadquirentes.</p>';
+  dados['bloco_assinaturas_compradores'] = blocoAssinaturasCompradores;
 
-    // --- 6. Dados Gerais do Documento ---
-    dados['data_proposta_extenso'] = formatDateExtenso(propostaData.dataProposta);
-    dados['cidade_contrato'] = empresaVendedora.endereco?.cidade || '';
+  // --- 3. Dados do Imóvel (Polimórfico) ---
+  if (imovelDoc) {
+    const tipo = imovelDoc.constructor?.modelName;
+    const empreendimento = tipo === 'Unidade' ? imovelDoc.empreendimento : null;
 
-    return dados;
+    dados['imovel_descricao'] = tipo === 'Unidade' ? imovelDoc.tipologia : imovelDoc.descricao;
+    dados['imovel_identificador'] = tipo === 'Unidade' ? imovelDoc.identificador : imovelDoc.titulo;
+    dados['empreendimento_nome'] = tipo === 'Unidade'
+      ? empreendimento?.nome || 'Empreendimento não identificado'
+      : 'Imóvel Avulso';
+    dados['imovel_endereco_completo'] = tipo === 'Unidade'
+      ? `${empreendimento?.localizacao?.logradouro || ''}, ${empreendimento?.localizacao?.numero || ''}`
+      : `${imovelDoc.endereco?.logradouro || ''}, ${imovelDoc.endereco?.numero || ''}`;
+    dados['unidade_matricula'] = imovelDoc.matriculaImovel || '';
+    dados['unidade_memorial_incorporacao'] = tipo === 'Unidade'
+      ? (empreendimento?.memorialIncorporacao || '')
+      : 'N/A';
+  }
+
+  // --- 4. Dados Financeiros e da Proposta ---
+  dados['proposta_valor_total_formatado'] = formatCurrency(propostaData.valorPropostaContrato);
+  dados['proposta_valor_entrada_formatado'] = propostaData.valorEntrada ? formatCurrency(propostaData.valorEntrada) : 'N/A';
+  dados['proposta_condicoes_pagamento_gerais'] = propostaData.condicoesPagamentoGerais || '';
+  dados['plano_pagamento_string_formatada'] = (propostaData.planoDePagamento || [])
+    .map(p => `- ${p.quantidade || 1}x ${p.tipoParcela} de ${formatCurrency(p.valorUnitario)} (1º Venc: ${formatDate(p.vencimentoPrimeira)})`)
+    .join('<br>');
+
+  // --- 5. Dados da Corretagem ---
+  dados['corretagem_valor_formatado'] = propostaData.corretagem?.valorCorretagem ? formatCurrency(propostaData.corretagem.valorCorretagem) : 'N/A';
+  dados['corretagem_condicoes'] = propostaData.corretagem?.condicoesPagamentoCorretagem || '';
+  dados['corretor_principal_nome'] = corretorPrincipalDoc?.nome || '';
+  dados['corretor_principal_cpf_cnpj'] = corretorPrincipalDoc?.cpfCnpj || '';
+  dados['corretor_principal_creci'] = corretorPrincipalDoc?.creci || '';
+
+  // --- 6. Dados Gerais do Documento ---
+  dados['data_proposta_extenso'] = formatDateExtenso(propostaData.dataProposta);
+  dados['cidade_contrato'] = empresaVendedora.endereco?.cidade || '';
+
+  return dados;
 };
+
 
 
 
