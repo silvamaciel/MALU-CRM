@@ -15,6 +15,9 @@ import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
 import DiscardLeadModal from "../../../components/DiscardLeadModal/DiscardLeadModal";
 import { getDiscardReasons } from "../../../api/discardReasons";
 
+import GerarContratoModal from '../../components/PropostaWizard/GerarContratoModal';
+
+
 const STATUS_PROPOSTA_OPCOES = [
   "Em Elaboração",
   "Aguardando Aprovações",
@@ -48,6 +51,8 @@ function PropostaContratoDetailPage() {
   const [motivosDescarte, setMotivosDescarte] = useState([]);
   const [isProcessingDistrato, setIsProcessingDistrato] = useState(false);
   const [distratoError, setDistratoError] = useState("");
+
+  const [isGerarContratoModalOpen, setIsGerarContratoModalOpen] = useState(false);
 
   const fetchPropostaContrato = useCallback(async () => {
     if (!propostaContratoId) return;
@@ -338,6 +343,8 @@ function PropostaContratoDetailPage() {
             Editar Proposta/Contrato
           </Link>
 
+          <button onClick={() => setIsGerarContratoModalOpen(true)} className="button action-button">Gerar/Editar Documento </button>
+
           {/* Botão para baixar PDF */}
           <button
             onClick={handleDownloadPdf}
@@ -485,6 +492,13 @@ function PropostaContratoDetailPage() {
           discardReasons={motivosDescarte}
           initialComment={`Distrato referente à unidade ${propostaContrato?.unidade?.identificador} do empreendimento ${propostaContrato?.empreendimento?.nome}.`}
         />
+
+         <GerarContratoModal
+                    isOpen={isGerarContratoModalOpen}
+                    onClose={() => setIsGerarContratoModalOpen(false)}
+                    proposta={propostaContrato}
+                    onSaveSuccess={fetchPropostaContrato} // Chama o fetch para atualizar a página
+                />
 
         {/* TODO: Adicionar mais seções para Plano de Pagamento, Corretagem, etc. */}
       </div>

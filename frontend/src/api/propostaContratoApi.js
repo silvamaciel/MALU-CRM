@@ -141,3 +141,20 @@ export const registrarDistratoApi = async (propostaContratoId, dadosDistrato) =>
         throw error.response?.data || new Error("Falha ao registrar o distrato.");
     }
 };
+
+
+/**
+ * Solicita ao backend para gerar o HTML de um contrato com base em um modelo.
+ * @param {string} propostaId - O ID da Proposta/Contrato.
+ * @param {string} modeloId - O ID do Modelo de Contrato a ser usado.
+ * @returns {Promise<string>} A string de HTML gerada.
+ */
+export const gerarDocumentoApi = async (propostaId, modeloId) => {
+    try {
+        const response = await axiosInstance.post(`/propostas-contratos/${propostaId}/gerar-documento`, { modeloId });
+        return response.data.data.htmlGerado; // Retorna a string HTML
+    } catch (error) {
+        console.error("Erro ao gerar documento do contrato:", error.response?.data || error.message);
+        throw error.response?.data || new Error("Falha ao gerar o documento do contrato.");
+    }
+};
