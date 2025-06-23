@@ -168,23 +168,29 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
                 endereco: reserva.lead.endereco,
                 nascimento: reserva.lead.nascimento
             },
-            // Adiciona os coadquirentes que já existem no lead
             ...(reserva.lead.coadquirentes || []).map(co => co.toObject())
         ];
 
+        // --- VALIDAÇÃO: total das parcelas + valorEntrada bate com valorPropostaContrato ---
+        const valorEntrada = propostaData.valorEntrada || 0;
+        const totalParcelas = (propostaData.planoDePagamento || [])
+            .reduce((acc, p) => acc + (p.valorUnitario || 0), 0);
+        const totalComEntrada = totalParcelas + valorEntrada;
+
+        const diff = Math.abs(totalComEntrada - propostaData.valorPropostaContrato);
+        if (diff > 1) { // tolerância de R$1,00 para pequenos arredondamentos
+            throw new Error(`O total das parcelas (R$ ${totalComEntrada.toFixed(2)}) não bate com o valor da proposta (R$ ${propostaData.valorPropostaContrato.toFixed(2)}).`);
+        }
+
         // --- 3. Montar o Objeto Final da Proposta para Salvar ---
         const dadosParaNovaProposta = {
-            ...propostaData, // Dados do wizard (valor, parcelas, corretagem, etc.)
-            
-            // Vínculos
+            ...propostaData,
             lead: reserva.lead._id,
             reserva: reserva._id,
             imovel: reserva.imovel._id,
             tipoImovel: reserva.tipoImovel,
             company: companyId,
             createdBy: creatingUserId,
-            
-            // Snapshots
             adquirentesSnapshot: adquirentesSnapshot,
             empreendimentoNomeSnapshot: reserva.tipoImovel === 'Unidade' ? reserva.imovel.empreendimento?.nome : 'Imóvel Avulso',
             unidadeIdentificadorSnapshot: reserva.tipoImovel === 'Unidade' ? reserva.imovel.identificador : reserva.imovel.titulo,
@@ -192,11 +198,7 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
                 reserva.tipoImovel === 'Unidade'
                 ? reserva.imovel.precoTabela
                 : reserva.imovel.preco,
-
-            // VVVVV CAMPO DO CONTRATO COM MENSAGEM PADRÃO VVVVV
             corpoContratoHTMLGerado: "<p><em>Documento ainda não foi gerado. Selecione um modelo de contrato na página de detalhes para gerá-lo.</em></p>",
-            // O modeloContratoUtilizado pode ou não ser salvo aqui, dependendo se você quer que o usuário pré-selecione no wizard
-            // Para este fluxo, vamos remover a obrigatoriedade de selecionar o modelo na criação.
             modeloContratoUtilizado: null
         };
 
@@ -251,6 +253,7 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
         session.endSession();
     }
 };
+
 
 
 
