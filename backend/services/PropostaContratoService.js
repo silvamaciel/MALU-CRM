@@ -135,39 +135,28 @@ const montarDadosParaTemplate = (propostaData, leadDoc, imovelDoc, empresaVended
  * @returns {Promise<PropostaContrato>} A Proposta/Contrato criada.
  */
 const createPropostaContrato = async (reservaId, propostaData, companyId, creatingUserId) => {
+    console.log('[PropostaContrato] Iniciando criação de proposta (apenas dados estruturados)...');
+
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
-        console.log('[PropostaContrato] INICIANDO criação da proposta (modo rascunho)...');
-
-        // 1. Buscar Reserva com lead e imóvel populados
-        let reserva = await Reserva.findById(reservaId)
-            .populate({ path: 'lead', model: 'Lead' })
+        // --- 1. Buscar a Reserva e dados essenciais ---
+        const reserva = await PropostaContrato.findById(reservaId)
+            .populate('lead')
+            .populate('imovel')
             .session(session);
 
-        if (!reserva) throw new Error("Reserva não encontrada.");
-
-        // 1.1. Popular imóvel com base no tipoImovel
-        reserva = await Reserva.populate(reserva, {
-            path: 'imovel',
-            model: reserva.tipoImovel === 'Unidade' ? 'Unidade' : 'ImovelAvulso',
-            populate: reserva.tipoImovel === 'Unidade'
-                ? { path: 'empreendimento', model: 'Empreendimento' }
-                : undefined
-        });
-
-        if (!reserva.lead || !reserva.imovel) {
-            throw new Error("Lead ou Imóvel associado não encontrado.");
+        if (!reserva) {
+            throw new Error("Reserva associada não encontrada.");
         }
-
         if (reserva.statusReserva !== 'Ativa') {
-            throw new Error(`Reserva não está ativa. Status atual: ${reserva.statusReserva}`);
+            throw new Error(`A reserva não está mais ativa. Status atual: ${reserva.statusReserva}`);
         }
-
-        // 2. Gerar snapshot de adquirentes
+        
+        // --- 2. Construir o Snapshot dos Adquirentes a partir dos dados do Lead ---
         const adquirentesSnapshot = [
-            {
+            { // Adquirente Principal
                 nome: reserva.lead.nome,
                 cpf: reserva.lead.cpf,
                 rg: reserva.lead.rg,
@@ -179,75 +168,68 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
                 endereco: reserva.lead.endereco,
                 nascimento: reserva.lead.nascimento
             },
+            // Adiciona os coadquirentes que já existem no lead
             ...(reserva.lead.coadquirentes || []).map(co => co.toObject())
         ];
 
-        // 3. Montar proposta (rascunho)
-        const proposta = new PropostaContrato({
-            ...propostaData,
+        // --- 3. Montar o Objeto Final da Proposta para Salvar ---
+        const dadosParaNovaProposta = {
+            ...propostaData, // Dados do wizard (valor, parcelas, corretagem, etc.)
+            
+            // Vínculos
             lead: reserva.lead._id,
             reserva: reserva._id,
             imovel: reserva.imovel._id,
             tipoImovel: reserva.tipoImovel,
             company: companyId,
             createdBy: creatingUserId,
-            adquirentesSnapshot,
-            corpoContratoHTMLGerado: "<p><em>Documento ainda não gerado. Selecione um modelo de contrato na página de detalhes.</em></p>",
+            
+            // Snapshots
+            adquirentesSnapshot: adquirentesSnapshot,
+            empreendimentoNomeSnapshot: reserva.tipoImovel === 'Unidade' ? reserva.imovel.empreendimento?.nome : 'Imóvel Avulso',
+            unidadeIdentificadorSnapshot: reserva.tipoImovel === 'Unidade' ? reserva.imovel.identificador : reserva.imovel.titulo,
+            precoTabelaUnidadeNoMomento: reserva.imovel.preco,
 
-            empreendimentoNomeSnapshot:
-                reserva.tipoImovel === 'Unidade'
-                    ? reserva.imovel.empreendimento?.nome
-                    : 'Imóvel Avulso',
+            // VVVVV CAMPO DO CONTRATO COM MENSAGEM PADRÃO VVVVV
+            corpoContratoHTMLGerado: "<p><em>Documento ainda não foi gerado. Selecione um modelo de contrato na página de detalhes para gerá-lo.</em></p>",
+            // O modeloContratoUtilizado pode ou não ser salvo aqui, dependendo se você quer que o usuário pré-selecione no wizard
+            // Para este fluxo, vamos remover a obrigatoriedade de selecionar o modelo na criação.
+            modeloContratoUtilizado: null
+        };
 
-            unidadeIdentificadorSnapshot:
-                reserva.tipoImovel === 'Unidade'
-                    ? reserva.imovel.identificador
-                    : reserva.imovel.titulo,
-
-            precoTabelaUnidadeNoMomento:
-                reserva.imovel.precoTabela || reserva.imovel.preco
-        });
-
-        proposta.$ignoreValidacaoParcelas = true;
+        const proposta = new PropostaContrato(dadosParaNovaProposta);
         const propostaSalva = await proposta.save({ session });
-        console.log('[PropostaContrato] Proposta rascunho criada com ID:', propostaSalva._id);
+        console.log('[PropostaContrato] Proposta (dados) criada com ID:', propostaSalva._id);
 
-        // 4. Atualizar reserva
+        // --- 4. Atualizar Status das Entidades Relacionadas ---
         reserva.statusReserva = 'ConvertidaEmProposta';
         reserva.propostaId = propostaSalva._id;
-        await reserva.save({ session });
-
-        // 5. Atualizar lead (estágio)
-        const nomeEstagio = 'Proposta Emitida';
-        let leadStage = await LeadStage.findOne({
-            company: companyId,
-            nome: { $regex: new RegExp(`^${nomeEstagio}$`, 'i') }
-        }).session(session);
-
-        if (!leadStage) {
-            leadStage = new LeadStage({
-                nome: nomeEstagio,
-                company: companyId,
-                ativo: true,
-                descricao: 'Lead com proposta emitida'
-            });
-            await leadStage.save({ session });
+        
+        const imovelDoc = await mongoose.model(reserva.tipoImovel).findById(reserva.imovel._id).session(session);
+        if (imovelDoc) {
+            imovelDoc.status = 'Proposta';
+            await imovelDoc.save({ session });
         }
-
+        
+        const nomeEstagio = 'Proposta Emitida';
+        const leadStage = await LeadStage.findOneAndUpdate(
+            { company: companyId, nome: { $regex: new RegExp(`^${nomeEstagio}$`, 'i') } },
+            { $setOnInsert: { nome: nomeEstagio, company: companyId, ativo: true } },
+            { new: true, upsert: true, runValidators: true, session: session }
+        );
         reserva.lead.situacao = leadStage._id;
-        await reserva.lead.save({ session });
 
-        // 6. Atualizar status do imóvel
-        reserva.imovel.status = 'Proposta';
-        await reserva.imovel.save({ session });
+        await Promise.all([
+            reserva.save({ session }),
+            reserva.lead.save({ session })
+        ]);
 
-        // 7. Log histórico
         await logHistory(
             reserva.lead._id,
             creatingUserId,
             'PROPOSTA_CONTRATO_CRIADA',
-            `Proposta/Contrato criada como rascunho com ID ${propostaSalva._id}`,
-            { propostaContratoId: propostaSalva._id, reservaId: reserva._id },
+            `Proposta (dados) criada com ID ${propostaSalva._id}.`,
+            { propostaContratoId: propostaSalva._id },
             null,
             'PropostaContrato',
             propostaSalva._id,
@@ -255,7 +237,7 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
         );
 
         await session.commitTransaction();
-        console.log('[PropostaContrato] Proposta (rascunho) criada com sucesso.');
+        console.log('[PropostaContrato] Processo de criação de proposta concluído com sucesso.');
         return propostaSalva;
 
     } catch (err) {
