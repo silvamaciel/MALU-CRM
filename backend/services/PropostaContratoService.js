@@ -517,7 +517,6 @@ const updatePropostaContrato = async (propostaContratoId, updateData, companyId,
             throw new Error('Erro ao buscar dados relacionados para atualização.');
         }
 
-        // Gera os dados para template com os dados atualizados mesclados
         const dadosTemplate = montarDadosParaTemplate(
             { ...propostaContrato.toObject(), ...updateData },
             lead,
@@ -526,9 +525,10 @@ const updatePropostaContrato = async (propostaContratoId, updateData, companyId,
             corretorPrincipalDoc
         );
 
-        let corpoContratoProcessado = '';
+        let corpoContratoFinal = propostaContrato.corpoContratoHTMLGerado || "<p><em>Documento ainda não foi gerado. Selecione um modelo de contrato na página de detalhes para gerá-lo.</em></p>";
+
         if (modeloContrato) {
-            corpoContratoProcessado = preencherTemplateContrato(
+            corpoContratoFinal = preencherTemplateContrato(
                 modeloContrato.conteudoHTMLTemplate,
                 dadosTemplate
             );
@@ -551,7 +551,7 @@ const updatePropostaContrato = async (propostaContratoId, updateData, companyId,
         ];
 
         Object.assign(propostaContrato, updateData, {
-            corpoContratoHTMLGerado: corpoContratoProcessado,
+            corpoContratoHTMLGerado: corpoContratoFinal,
             adquirentesSnapshot,
             empreendimentoNomeSnapshot:
                 propostaContrato.tipoImovel === 'Unidade'
@@ -592,11 +592,6 @@ const updatePropostaContrato = async (propostaContratoId, updateData, companyId,
         session.endSession();
     }
 };
-
-
-
-
-
 
 
 
