@@ -171,16 +171,6 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
             ...(reserva.lead.coadquirentes || []).map(co => co.toObject())
         ];
 
-        // --- VALIDAÇÃO: total das parcelas + valorEntrada bate com valorPropostaContrato ---
-        const valorEntrada = propostaData.valorEntrada || 0;
-        const totalParcelas = (propostaData.planoDePagamento || [])
-            .reduce((acc, p) => acc + (p.valorUnitario || 0), 0);
-        const totalComEntrada = totalParcelas + valorEntrada;
-
-        const diff = Math.abs(totalComEntrada - propostaData.valorPropostaContrato);
-        if (diff > 1) { // tolerância de R$1,00 para pequenos arredondamentos
-            throw new Error(`O total das parcelas (R$ ${totalComEntrada.toFixed(2)}) não bate com o valor da proposta (R$ ${propostaData.valorPropostaContrato.toFixed(2)}).`);
-        }
 
         // --- 3. Montar o Objeto Final da Proposta para Salvar ---
         const dadosParaNovaProposta = {
