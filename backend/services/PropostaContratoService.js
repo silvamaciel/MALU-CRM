@@ -35,7 +35,6 @@ const montarDadosParaTemplate = (propostaData, leadDoc, imovelDoc, empresaVended
     };
     const formatDate = (dateString) => {
         if (!dateString) return '';
-        // Adiciona T00:00:00 para garantir que a data seja interpretada no fuso local
         return new Date(dateString + "T00:00:00").toLocaleDateString('pt-BR', { timeZone: 'UTC' });
     };
     const formatDateExtenso = (dateString) => {
@@ -57,8 +56,8 @@ const montarDadosParaTemplate = (propostaData, leadDoc, imovelDoc, empresaVended
 
     // --- 2. Dados dos Compradores (Principal + Coadquirentes) ---
     const todosAdquirentes = [
-        { ...leadDoc.toObject() }, // Converte o doc principal para objeto
-        ...(leadDoc.coadquirentes || []).map(co => co.toObject()) // Converte subdocs para objetos
+        { ...leadDoc.toObject() },
+        ...(leadDoc.coadquirentes || []).map(co => co.toObject())
     ];
 
     let blocoHtmlCoadquirentes = '';
@@ -77,11 +76,10 @@ const montarDadosParaTemplate = (propostaData, leadDoc, imovelDoc, empresaVended
         dados[`${prefixo}_endereco`] = adq.endereco || '';
         dados[`${prefixo}_nascimento`] = formatDate(adq.nascimento);
 
-        if (index > 0) { // Bloco HTML apenas para os coadquirentes
+        if (index > 0) {
             blocoHtmlCoadquirentes += `<p><strong>Coadquirente ${index}:</strong> ${adq.nome || ''} (CPF: ${adq.cpf || 'N/A'})</p>`;
         }
 
-        // Bloco de Assinaturas para TODOS os compradores
         const tituloAssinatura = index === 0 ? '(COMPRADOR/A PRINCIPAL)' : `(COADQUIRENTE ${index})`;
         blocoAssinaturasCompradores += `<p style="text-align: center; margin-top: 40px;">_________________________<br><strong>${adq.nome || ''}</strong><br>${tituloAssinatura}</p>`;
     });
@@ -91,15 +89,21 @@ const montarDadosParaTemplate = (propostaData, leadDoc, imovelDoc, empresaVended
 
     // --- 3. Dados do Imóvel (Polimórfico) ---
     if (imovelDoc) {
-        const tipo = imovelDoc.constructor.modelName; // 'Unidade' ou 'ImovelAvulso'
+        const tipo = imovelDoc.constructor?.modelName;
+        const empreendimento = tipo === 'Unidade' ? imovelDoc.empreendimento : null;
+
         dados['imovel_descricao'] = tipo === 'Unidade' ? imovelDoc.tipologia : imovelDoc.descricao;
         dados['imovel_identificador'] = tipo === 'Unidade' ? imovelDoc.identificador : imovelDoc.titulo;
-        dados['empreendimento_nome'] = tipo === 'Unidade' ? imovelDoc.empreendimento?.nome : 'Imóvel Avulso';
-        dados['imovel_endereco_completo'] = tipo === 'Unidade' 
-            ? `${imovelDoc.empreendimento?.localizacao?.logradouro || ''}, ${imovelDoc.empreendimento?.localizacao?.numero || ''}`
+        dados['empreendimento_nome'] = tipo === 'Unidade'
+            ? empreendimento?.nome || 'Empreendimento não identificado'
+            : 'Imóvel Avulso';
+        dados['imovel_endereco_completo'] = tipo === 'Unidade'
+            ? `${empreendimento?.localizacao?.logradouro || ''}, ${empreendimento?.localizacao?.numero || ''}`
             : `${imovelDoc.endereco?.logradouro || ''}, ${imovelDoc.endereco?.numero || ''}`;
         dados['unidade_matricula'] = imovelDoc.matriculaImovel || '';
-        dados['unidade_memorial_incorporacao'] = tipo === 'Unidade' ? (imovelDoc.empreendimento?.memorialIncorporacao || '') : 'N/A';
+        dados['unidade_memorial_incorporacao'] = tipo === 'Unidade'
+            ? (empreendimento?.memorialIncorporacao || '')
+            : 'N/A';
     }
 
     // --- 4. Dados Financeiros e da Proposta ---
@@ -116,13 +120,14 @@ const montarDadosParaTemplate = (propostaData, leadDoc, imovelDoc, empresaVended
     dados['corretor_principal_nome'] = corretorPrincipalDoc?.nome || '';
     dados['corretor_principal_cpf_cnpj'] = corretorPrincipalDoc?.cpfCnpj || '';
     dados['corretor_principal_creci'] = corretorPrincipalDoc?.creci || '';
-    
+
     // --- 6. Dados Gerais do Documento ---
     dados['data_proposta_extenso'] = formatDateExtenso(propostaData.dataProposta);
     dados['cidade_contrato'] = empresaVendedora.endereco?.cidade || '';
 
     return dados;
 };
+
 
 
 
@@ -869,33 +874,40 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
  * @returns {Promise<string>} A string de HTML com os placeholders preenchidos.
  */
 const gerarDocumentoHTML = async (propostaId, modeloId, companyId) => {
-    console.log(`[PropContSvc] Gerando documento para Proposta ${propostaId} usando Modelo ${modeloId}`);
-    
-    // Busca todos os dados necessários em paralelo
-    const [proposta, modelo, empresaVendedora] = await Promise.all([
-        PropostaContrato.findById(propostaId).populate({
-            path: 'lead', model: 'Lead'
-        }).populate({
-            path: 'imovel', populate: { path: 'empreendimento', model: 'Empreendimento' }
-        }).lean(),
-        ModeloContrato.findOne({ _id: modeloId, company: companyId, ativo: true }).lean(),
-        Company.findById(companyId).lean()
-    ]);
-    
-    if (!proposta) throw new Error("Proposta não encontrada.");
-    if (!modelo) throw new Error("Modelo de contrato não encontrado ou inativo.");
-    if (!empresaVendedora) throw new Error("Empresa não encontrada.");
+  console.log(`[PropContSvc] Gerando documento para Proposta ${propostaId} usando Modelo ${modeloId}`);
 
-    // Busca o corretor separadamente, se existir
-    const corretorDoc = proposta.corretagem?.corretorPrincipal 
-        ? await BrokerContact.findById(proposta.corretagem.corretorPrincipal).lean() 
-        : null;
+  const proposta = await PropostaContrato.findById(propostaId)
+    .populate({ path: 'lead', model: 'Lead' })
+    .populate({ path: 'imovel' }) // populate básico
+    .lean();
 
-    // Reutiliza a função que já criamos!
-    const dadosParaTemplate = montarDadosParaTemplate(proposta, proposta.lead, proposta.imovel, empresaVendedora, corretorDoc);
-    const corpoProcessado = preencherTemplateContrato(modelo.conteudoHTMLTemplate, dadosParaTemplate);
-    
-    return corpoProcessado;
+  if (!proposta) throw new Error("Proposta não encontrada.");
+
+  // Se for unidade, popula empreendimento manualmente
+  if (proposta.tipoImovel === 'Unidade' && proposta.imovel?.empreendimento) {
+    const empreendimento = await mongoose.model('Empreendimento')
+      .findById(proposta.imovel.empreendimento)
+      .lean();
+
+    proposta.imovel.empreendimento = empreendimento; // injeta o objeto populado
+  }
+
+  const [modelo, empresaVendedora] = await Promise.all([
+    ModeloContrato.findOne({ _id: modeloId, company: companyId, ativo: true }).lean(),
+    Company.findById(companyId).lean()
+  ]);
+
+  if (!modelo) throw new Error("Modelo de contrato não encontrado ou inativo.");
+  if (!empresaVendedora) throw new Error("Empresa não encontrada.");
+
+  const corretorDoc = proposta.corretagem?.corretorPrincipal
+    ? await BrokerContact.findById(proposta.corretagem.corretorPrincipal).lean()
+    : null;
+
+  const dadosParaTemplate = montarDadosParaTemplate(proposta, proposta.lead, proposta.imovel, empresaVendedora, corretorDoc);
+  const corpoProcessado = preencherTemplateContrato(modelo.conteudoHTMLTemplate, dadosParaTemplate);
+
+  return corpoProcessado;
 };
 
 module.exports = {
