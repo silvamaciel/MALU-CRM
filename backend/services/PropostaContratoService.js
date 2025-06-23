@@ -472,11 +472,14 @@ const updatePropostaContrato = async (propostaContratoId, updateData, companyId,
     }
 
     // Campos que não devem ser alterados via update genérico
-    const NaoAlterar = ['lead', 'reserva', 'unidade', 'empreendimento', 'company', 'createdBy', '_id', 'createdAt', 'updatedAt', '__v', 'modeloContratoUtilizado', 'precoTabelaUnidadeNoMomento'];
+    const NaoAlterar = [
+        'lead', 'reserva', 'unidade', 'empreendimento',
+        'company', 'createdBy', '_id', 'createdAt', 'updatedAt',
+        '__v', 'modeloContratoUtilizado', 'precoTabelaUnidadeNoMomento'
+    ];
     for (const key of NaoAlterar) {
         delete updateData[key];
     }
-
 
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -491,25 +494,27 @@ const updatePropostaContrato = async (propostaContratoId, updateData, companyId,
             throw new Error("Proposta/Contrato não encontrada ou não pertence a esta empresa.");
         }
 
-        // Não permitir edição se já estiver "Vendido" ou "Cancelado" (Exemplo de regra de negócio)
+        // Não permitir edição se já estiver "Vendido" ou "Cancelado"
         if (["Vendido", "Cancelado"].includes(propostaContrato.statusPropostaContrato)) {
             throw new Error(`Proposta/Contrato com status "${propostaContrato.statusPropostaContrato}" não pode ser editada.`);
         }
-        
+
         // Atualiza os campos
         Object.assign(propostaContrato, updateData);
 
-       
+        // Ignora validação de soma das parcelas
+        propostaContrato.$ignoreValidacaoParcelas = true;
+
         const propostaAtualizada = await propostaContrato.save({ session });
 
-    
-        const oldData = await PropostaContrato.findById(propostaContratoId).lean(); // Pega o estado anterior para o log
+        const oldData = await PropostaContrato.findById(propostaContratoId).lean();
+
         await logHistory(
             propostaAtualizada.lead,
             actorUserId,
             "PROPOSTA_CONTRATO_EDITADA",
             `Proposta/Contrato (ID: ${propostaAtualizada._id}) atualizada.`,
-            { oldData: oldData }, // Salvar o objeto antigo pode ser muito grande, talvez campos específicos
+            { oldData: oldData },
             propostaAtualizada.toObject(),
             'PropostaContrato',
             propostaAtualizada._id,
@@ -528,6 +533,7 @@ const updatePropostaContrato = async (propostaContratoId, updateData, companyId,
         session.endSession();
     }
 };
+
 
 
 /**
