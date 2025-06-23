@@ -46,6 +46,9 @@ function PropostaContratoFormPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [pendingSubmission, setPendingSubmission] = useState(null);
 
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [submitReady, setSubmitReady] = useState(false);
+
   const montarDadosParaTemplate = useCallback((currentFormData, baseData) => {
     if (!baseData) return {};
     const { unidade, empreendimento } = baseData;
@@ -138,39 +141,33 @@ function PropostaContratoFormPage() {
   }, [reservaId, propostaContratoId, isEditMode, navigate]);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setFormError('');
+  e.preventDefault();
+  setFormError('');
 
-    if (!formData.adquirentes || formData.adquirentes.length === 0 || !formData.adquirentes[0].nome) {
-      toast.error("Dados do Adquirente Principal são obrigatórios.");
-      setCurrentStep(1);
-      return;
-    }
-    if (!formData.valorPropostaContrato || parseFloat(formData.valorPropostaContrato) <= 0) {
-      toast.error("Valor da Proposta é obrigatório.");
-      setCurrentStep(2);
-      return;
-    }
-    if (!formData.responsavelNegociacao) {
-      toast.error("Responsável pela negociação é obrigatório.");
-      return;
-    }
-    const planoPagamentoValido = formData.planoDePagamento.every(p => p.valorUnitario && p.vencimentoPrimeira);
-    if (!planoPagamentoValido) {
-      toast.error("Todas as parcelas precisam ter valor e vencimento.");
-      setCurrentStep(2);
-      return;
-    }
+  // Validações
+  if (!formData.adquirentes?.[0]?.nome) {
+    toast.error("Dados do Adquirente Principal são obrigatórios.");
+    setCurrentStep(1);
+    return;
+  }
+  if (!formData.valorPropostaContrato || parseFloat(formData.valorPropostaContrato) <= 0) {
+    toast.error("Valor da Proposta é obrigatório.");
+    setCurrentStep(2);
+    return;
+  }
+  if (!formData.responsavelNegociacao) {
+    toast.error("Responsável pela negociação é obrigatório.");
+    return;
+  }
+  const planoPagamentoValido = formData.planoDePagamento.every(p => p.valorUnitario && p.vencimentoPrimeira);
+  if (!planoPagamentoValido) {
+    toast.error("Todas as parcelas precisam ter valor e vencimento.");
+    setCurrentStep(2);
+    return;
+  }
 
-    const precoTabela = parseFloat(
-      reservaBase?.tipoImovel === 'Unidade'
-        ? reservaBase?.imovel?.precoTabela
-        : reservaBase?.imovel?.preco
-    ) || 0;
-
-    setPendingSubmission({ precoTabela });
-    setModalOpen(true);
-  };
+  setShowConfirmModal(true); // <- Abre o modal
+};
 
   const confirmSubmit = async () => {
     setIsSaving(true);
@@ -255,18 +252,65 @@ function PropostaContratoFormPage() {
         </div>
       </div>
 
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogHeader>Confirmação do Valor da Proposta</DialogHeader>
-        <DialogBody>
-          <p>O valor da proposta é <strong>{parseFloat(formData.valorPropostaContrato).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>.</p>
-          <p>O valor de tabela atual é <strong>{(pendingSubmission?.precoTabela || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>.</p>
-          <p>Tem certeza que deseja continuar?</p>
-        </DialogBody>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setModalOpen(false)}>Cancelar</Button>
-          <Button onClick={confirmSubmit} disabled={isSaving} className="ml-2">Confirmar e Enviar</Button>
-        </DialogFooter>
-      </Dialog>
+      {showConfirmModal && (
+  <div className="modal-overlay">
+    <div className="modal-content">
+      <h2>Confirmar envio</h2>
+      <p>O valor da proposta é <strong>R$ {parseFloat(formData.valorPropostaContrato).toLocaleString('pt-BR')}</strong>.<br />
+         O valor de tabela é <strong>R$ {parseFloat(reservaBase?.tipoImovel === 'Unidade'
+            ? reservaBase?.imovel?.precoTabela
+            : reservaBase?.imovel?.preco).toLocaleString('pt-BR')}</strong>.<br />
+         Deseja continuar com o envio?</p>
+      <div className="modal-buttons">
+        <button className="cancel-button" onClick={() => setShowConfirmModal(false)}>Cancelar</button>
+        <button className="confirm-button" onClick={async () => {
+          setIsSaving(true);
+          setShowConfirmModal(false);
+
+          const dataToSubmit = {
+            ...formData,
+            modeloContratoUtilizado: formData.modeloContratoUtilizado || null,
+            adquirentesSnapshot: formData.adquirentes,
+            precoTabelaUnidadeNoMomento:
+              parseFloat(
+                reservaBase?.tipoImovel === 'Unidade'
+                  ? reservaBase?.imovel?.precoTabela
+                  : reservaBase?.imovel?.preco
+              ) || 0,
+            valorPropostaContrato: parseFloat(formData.valorPropostaContrato) || 0,
+            valorEntrada: formData.valorEntrada ? parseFloat(formData.valorEntrada) : null,
+            planoDePagamento: formData.planoDePagamento.filter(p => p.valorUnitario && p.vencimentoPrimeira),
+            corretagem: formData.corretagem?.valorCorretagem ? {
+              ...formData.corretagem,
+              valorCorretagem: Number(formData.corretagem.valorCorretagem) || 0
+            } : null,
+          };
+
+          delete dataToSubmit.corpoContratoHTMLGerado;
+
+          try {
+            let result;
+            if (isEditMode) {
+              result = await updatePropostaContratoApi(propostaContratoId, dataToSubmit);
+              toast.success("Proposta/Contrato atualizada com sucesso!");
+            } else {
+              result = await createPropostaContratoApi(reservaId, dataToSubmit);
+              toast.success("Proposta/Contrato criada com sucesso!");
+            }
+            navigate(`/propostas-contratos/${result._id || propostaContratoId}`);
+          } catch (err) {
+            const errMsg = err.error || err.message || "Erro ao salvar Proposta/Contrato.";
+            setFormError(errMsg);
+            toast.error(errMsg);
+          } finally {
+            setIsSaving(false);
+          }
+        }}>Confirmar envio</button>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 }
