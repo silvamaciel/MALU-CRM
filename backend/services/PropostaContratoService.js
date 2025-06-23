@@ -193,6 +193,7 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
         };
 
         const proposta = new PropostaContrato(dadosParaNovaProposta);
+        proposta.$ignoreValidacaoParcelas = true;
         const propostaSalva = await proposta.save({ session });
         console.log('[PropostaContrato] Proposta (dados) criada com ID:', propostaSalva._id);
 

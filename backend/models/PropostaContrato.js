@@ -149,12 +149,15 @@ propostaContratoSchema.pre('save', function (next) {
   if (this.$ignoreValidacaoParcelas === true) return next(); // Bypass manual
 
   if (Array.isArray(this.planoDePagamento) && this.valorPropostaContrato) {
-    const total = this.planoDePagamento.reduce((acc, p) =>
+    const totalParcelas = this.planoDePagamento.reduce((acc, p) =>
       acc + (p.valorUnitario * (p.quantidade || 1)), 0);
+    
+    const total = totalParcelas + (this.valorEntrada || 0);
+
     const margemAceitavel = 5.00; // R$ 5,00 de tolerância
 
     if (Math.abs(total - this.valorPropostaContrato) > margemAceitavel) {
-      return next(new Error(`O total das parcelas (R$ ${total.toFixed(2)}) não bate com o valor da proposta (R$ ${this.valorPropostaContrato.toFixed(2)}).`));
+      return next(new Error(`O total das parcelas + entrada (R$ ${total.toFixed(2)}) não bate com o valor da proposta (R$ ${this.valorPropostaContrato.toFixed(2)}).`));
     }
   }
   next();
