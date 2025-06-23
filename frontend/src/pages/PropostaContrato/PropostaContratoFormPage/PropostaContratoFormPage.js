@@ -255,20 +255,11 @@ function PropostaContratoFormPage() {
   <div className="modal-overlay">
     <div className="modal-content">
       <h2>Confirmar envio</h2>
-      <p>
-            O valor total da proposta (entrada + parcelas) é <strong>
-                R$ {(
-                (parseFloat(formData.valorEntrada) || 0) +
-                (formData.planoDePagamento || []).reduce((acc, p) => acc + (parseFloat(p.valorUnitario) || 0), 0)
-                ).toLocaleString('pt-BR')}
-            </strong>.<br />
-            O valor de tabela é <strong>
-                R$ {parseFloat(reservaBase?.tipoImovel === 'Unidade'
-                ? reservaBase?.imovel?.precoTabela
-                : reservaBase?.imovel?.preco).toLocaleString('pt-BR')}
-            </strong>.<br />
-            Deseja continuar com o envio?
-            </p>
+      <p> O valor total da proposta (entrada + parcelas) é <strong> R$ {((parseFloat(formData.valorEntrada) || 0) + (formData.planoDePagamento || []).reduce((acc, p) => acc + ((parseFloat(p.valorUnitario) || 0) * (p.quantidade || 1)), 0)).toLocaleString('pt-BR')}</strong>.<br />
+         O valor de tabela é <strong>R$ {parseFloat(reservaBase?.tipoImovel === 'Unidade'
+            ? reservaBase?.imovel?.precoTabela
+            : reservaBase?.imovel?.preco).toLocaleString('pt-BR')}</strong>.<br />
+         Deseja continuar com o envio?</p>
       <div className="modal-buttons">
         <button className="cancel-button" onClick={() => setShowConfirmModal(false)}>Cancelar</button>
         <button className="confirm-button" onClick={async () => {
