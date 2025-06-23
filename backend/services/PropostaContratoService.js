@@ -498,6 +498,7 @@ const updatePropostaContrato = async (propostaContratoId, updateData, companyId,
             throw new Error(`Proposta/Contrato com status "${propostaContrato.statusPropostaContrato}" não pode ser editada.`);
         }
 
+        // Buscar dados relacionados
         const [reserva, lead, imovel, modeloContrato, empresaVendedora, corretorPrincipalDoc] = await Promise.all([
             Reserva.findById(propostaContrato.reserva).session(session),
             Lead.findById(propostaContrato.lead).session(session),
@@ -511,9 +512,20 @@ const updatePropostaContrato = async (propostaContratoId, updateData, companyId,
                 : Promise.resolve(null)
         ]);
 
-        if (!reserva || !lead || !imovel || !modeloContrato || !empresaVendedora) {
-            throw new Error('Erro ao buscar dados relacionados para atualização.');
-        }
+        // Logs para identificar dados faltantes
+        console.log("Dados relacionados carregados:");
+        console.log("reserva:", reserva);
+        console.log("lead:", lead);
+        console.log("imovel:", imovel);
+        console.log("modeloContrato:", modeloContrato);
+        console.log("empresaVendedora:", empresaVendedora);
+        console.log("corretorPrincipalDoc:", corretorPrincipalDoc);
+
+        if (!reserva) throw new Error('Reserva não encontrada para a proposta.');
+        if (!lead) throw new Error('Lead não encontrado para a proposta.');
+        if (!imovel) throw new Error('Imóvel não encontrado para a proposta.');
+        if (!modeloContrato) throw new Error('Modelo de contrato não encontrado para a proposta.');
+        if (!empresaVendedora) throw new Error('Empresa vendedora não encontrada para a proposta.');
 
         const dadosTemplate = montarDadosParaTemplate(
             { ...propostaContrato.toObject(), ...updateData },
@@ -586,6 +598,7 @@ const updatePropostaContrato = async (propostaContratoId, updateData, companyId,
         session.endSession();
     }
 };
+
 
 
 
