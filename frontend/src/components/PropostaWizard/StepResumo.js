@@ -85,13 +85,6 @@ function StepResumo({ formData, reservaBase }) {
                 )}
             </div>
 
-            <div className="resumo-section contract-preview">
-                <h4>Preview do Contrato</h4>
-                <div
-                    className="html-preview-container"
-                    dangerouslySetInnerHTML={{ __html: formData.corpoContratoHTMLGerado || '' }}
-                />
-            </div>
         </div>
     );
 }
