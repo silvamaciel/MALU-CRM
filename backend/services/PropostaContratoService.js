@@ -142,7 +142,7 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
 
     try {
         // --- 1. Buscar a Reserva e dados essenciais ---
-        const reserva = await PropostaContrato.findById(reservaId)
+        const reserva = await Reserva.findById(reservaId)
             .populate('lead')
             .populate('imovel')
             .session(session);
