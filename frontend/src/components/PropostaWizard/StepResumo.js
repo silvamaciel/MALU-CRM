@@ -17,7 +17,7 @@ function StepResumo({ formData, reservaBase }) {
 
     return (
         <div className="wizard-step">
-            <h3>Etapa 5: Resumo e Confirmação</h3>
+            <h3>Etapa 4: Resumo e Confirmação</h3>
             <p>Por favor, revise todos os dados abaixo antes de criar a Proposta/Contrato.</p>
 
             <div className="resumo-grid">
