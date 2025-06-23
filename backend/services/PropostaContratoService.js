@@ -188,7 +188,10 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
             adquirentesSnapshot: adquirentesSnapshot,
             empreendimentoNomeSnapshot: reserva.tipoImovel === 'Unidade' ? reserva.imovel.empreendimento?.nome : 'Imóvel Avulso',
             unidadeIdentificadorSnapshot: reserva.tipoImovel === 'Unidade' ? reserva.imovel.identificador : reserva.imovel.titulo,
-            precoTabelaUnidadeNoMomento: reserva.imovel.preco,
+            precoTabelaUnidadeNoMomento:
+                reserva.tipoImovel === 'Unidade'
+                ? reserva.imovel.precoTabela
+                : reserva.imovel.preco,
 
             // VVVVV CAMPO DO CONTRATO COM MENSAGEM PADRÃO VVVVV
             corpoContratoHTMLGerado: "<p><em>Documento ainda não foi gerado. Selecione um modelo de contrato na página de detalhes para gerá-lo.</em></p>",
