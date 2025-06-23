@@ -171,6 +171,17 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
             ...(reserva.lead.coadquirentes || []).map(co => co.toObject())
         ];
 
+        // --- Recalcular valor total da proposta com base na entrada + parcelas ---
+        const entrada = parseFloat(propostaData.valorEntrada) || 0;
+        const totalParcelas = (propostaData.planoDePagamento || []).reduce((acc, parcela) => {
+        const valor = parseFloat(parcela.valorUnitario) || 0;
+        const qtd = parseInt(parcela.quantidade) || 1;
+        return acc + (valor * qtd);
+        }, 0);
+
+        const valorTotalProposta = entrada + totalParcelas;
+        propostaData.valorPropostaContrato = valorTotalProposta;
+
 
         // --- 3. Montar o Objeto Final da Proposta para Salvar ---
         const dadosParaNovaProposta = {
@@ -445,6 +456,16 @@ const updatePropostaContrato = async (propostaContratoId, updateData, companyId,
         delete updateData[key];
     }
 
+    // --- Recalcular valor da proposta (entrada + parcelas)
+    const entrada = parseFloat(updateData.valorEntrada) || 0;
+    const totalParcelas = (updateData.planoDePagamento || []).reduce((acc, parcela) => {
+        const valor = parseFloat(parcela.valorUnitario) || 0;
+        const qtd = parseInt(parcela.quantidade) || 1;
+        return acc + (valor * qtd);
+    }, 0);
+    const valorTotalProposta = entrada + totalParcelas;
+    updateData.valorPropostaContrato = valorTotalProposta;
+
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -462,7 +483,6 @@ const updatePropostaContrato = async (propostaContratoId, updateData, companyId,
             throw new Error(`Proposta/Contrato com status "${propostaContrato.statusPropostaContrato}" não pode ser editada.`);
         }
 
-        // Buscar documentos relacionados
         const [reserva, lead, imovel, modeloContrato, empresaVendedora, corretorPrincipalDoc] = await Promise.all([
             Reserva.findById(propostaContrato.reserva).session(session),
             Lead.findById(propostaContrato.lead).session(session),
@@ -480,7 +500,6 @@ const updatePropostaContrato = async (propostaContratoId, updateData, companyId,
             throw new Error('Erro ao buscar dados relacionados para atualização.');
         }
 
-        // Processar novo HTML
         const dadosTemplate = montarDadosParaTemplate(
             { ...propostaContrato.toObject(), ...updateData },
             lead,
@@ -494,7 +513,6 @@ const updatePropostaContrato = async (propostaContratoId, updateData, companyId,
             dadosTemplate
         );
 
-        // Snapshot atualizado dos adquirentes
         const adquirentesSnapshot = [
             {
                 nome: lead.nome,
@@ -511,7 +529,6 @@ const updatePropostaContrato = async (propostaContratoId, updateData, companyId,
             ...(lead.coadquirentes || []).map(co => co.toObject())
         ];
 
-        // Atualizar campos permitidos
         Object.assign(propostaContrato, updateData, {
             corpoContratoHTMLGerado: corpoContratoProcessado,
             adquirentesSnapshot,
@@ -530,7 +547,6 @@ const updatePropostaContrato = async (propostaContratoId, updateData, companyId,
         const oldData = await PropostaContrato.findById(propostaContratoId).lean();
         const propostaAtualizada = await propostaContrato.save({ session });
 
-        // Histórico
         await logHistory(
             propostaAtualizada.lead,
             actorUserId,
@@ -555,6 +571,8 @@ const updatePropostaContrato = async (propostaContratoId, updateData, companyId,
         session.endSession();
     }
 };
+
+
 
 
 
