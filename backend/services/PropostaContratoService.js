@@ -480,18 +480,19 @@ const gerarPDFPropostaContrato = async (propostaContratoId, companyId) => {
  */
 const updatePropostaContrato = async (propostaContratoId, updateData, companyId, actorUserId) => {
     console.log(`[PropContSvc] Atualizando Proposta/Contrato ID: ${propostaContratoId} para Company: ${companyId} por User: ${actorUserId}`);
-    
-    if (!mongoose.Types.ObjectId.isValid(propostaContratoId) || 
+
+    if (
+        !mongoose.Types.ObjectId.isValid(propostaContratoId) ||
         !mongoose.Types.ObjectId.isValid(companyId) ||
-        !mongoose.Types.ObjectId.isValid(actorUserId) ) {
+        !mongoose.Types.ObjectId.isValid(actorUserId)
+    ) {
         throw new Error("IDs inválidos fornecidos (Proposta/Contrato, Empresa ou Usuário).");
     }
 
-    // Campos que não devem ser alterados via update genérico
     const NaoAlterar = [
-        'lead', 'reserva', 'unidade', 'empreendimento',
-        'company', 'createdBy', '_id', 'createdAt', 'updatedAt',
-        '__v', 'modeloContratoUtilizado', 'precoTabelaUnidadeNoMomento'
+        'lead', 'reserva', 'imovel', 'tipoImovel', 'company', 'createdBy',
+        '_id', 'createdAt', 'updatedAt', '__v', 'modeloContratoUtilizado',
+        'precoTabelaUnidadeNoMomento'
     ];
     for (const key of NaoAlterar) {
         delete updateData[key];
@@ -510,27 +511,85 @@ const updatePropostaContrato = async (propostaContratoId, updateData, companyId,
             throw new Error("Proposta/Contrato não encontrada ou não pertence a esta empresa.");
         }
 
-        // Não permitir edição se já estiver "Vendido" ou "Cancelado"
         if (["Vendido", "Cancelado"].includes(propostaContrato.statusPropostaContrato)) {
             throw new Error(`Proposta/Contrato com status "${propostaContrato.statusPropostaContrato}" não pode ser editada.`);
         }
 
-        // Atualiza os campos
-        Object.assign(propostaContrato, updateData);
+        // Buscar documentos relacionados
+        const [reserva, lead, imovel, modeloContrato, empresaVendedora, corretorPrincipalDoc] = await Promise.all([
+            Reserva.findById(propostaContrato.reserva).session(session),
+            Lead.findById(propostaContrato.lead).session(session),
+            mongoose.model(propostaContrato.tipoImovel).findById(propostaContrato.imovel)
+                .populate(propostaContrato.tipoImovel === 'Unidade' ? { path: 'empreendimento', model: 'Empreendimento' } : null)
+                .session(session),
+            ModeloContrato.findById(propostaContrato.modeloContratoUtilizado).lean().session(session),
+            Company.findById(companyId).lean().session(session),
+            updateData.corretagem?.corretorPrincipal
+                ? BrokerContact.findById(updateData.corretagem.corretorPrincipal).lean().session(session)
+                : Promise.resolve(null)
+        ]);
 
-        // Ignora validação de soma das parcelas
+        if (!reserva || !lead || !imovel || !modeloContrato || !empresaVendedora) {
+            throw new Error('Erro ao buscar dados relacionados para atualização.');
+        }
+
+        // Processar novo HTML
+        const dadosTemplate = montarDadosParaTemplate(
+            { ...propostaContrato.toObject(), ...updateData },
+            lead,
+            imovel,
+            empresaVendedora,
+            corretorPrincipalDoc
+        );
+
+        const corpoContratoProcessado = preencherTemplateContrato(
+            modeloContrato.conteudoHTMLTemplate,
+            dadosTemplate
+        );
+
+        // Snapshot atualizado dos adquirentes
+        const adquirentesSnapshot = [
+            {
+                nome: lead.nome,
+                cpf: lead.cpf,
+                rg: lead.rg,
+                nacionalidade: lead.nacionalidade,
+                estadoCivil: lead.estadoCivil,
+                profissao: lead.profissao,
+                email: lead.email,
+                contato: lead.contato,
+                endereco: lead.endereco,
+                nascimento: lead.nascimento
+            },
+            ...(lead.coadquirentes || []).map(co => co.toObject())
+        ];
+
+        // Atualizar campos permitidos
+        Object.assign(propostaContrato, updateData, {
+            corpoContratoHTMLGerado: corpoContratoProcessado,
+            adquirentesSnapshot,
+            empreendimentoNomeSnapshot:
+                propostaContrato.tipoImovel === 'Unidade'
+                    ? imovel.empreendimento?.nome
+                    : 'Imóvel Avulso',
+            unidadeIdentificadorSnapshot:
+                propostaContrato.tipoImovel === 'Unidade'
+                    ? imovel.identificador
+                    : imovel.titulo
+        });
+
         propostaContrato.$ignoreValidacaoParcelas = true;
 
+        const oldData = await PropostaContrato.findById(propostaContratoId).lean();
         const propostaAtualizada = await propostaContrato.save({ session });
 
-        const oldData = await PropostaContrato.findById(propostaContratoId).lean();
-
+        // Histórico
         await logHistory(
             propostaAtualizada.lead,
             actorUserId,
             "PROPOSTA_CONTRATO_EDITADA",
             `Proposta/Contrato (ID: ${propostaAtualizada._id}) atualizada.`,
-            { oldData: oldData },
+            { oldData },
             propostaAtualizada.toObject(),
             'PropostaContrato',
             propostaAtualizada._id,
@@ -549,6 +608,7 @@ const updatePropostaContrato = async (propostaContratoId, updateData, companyId,
         session.endSession();
     }
 };
+
 
 
 
