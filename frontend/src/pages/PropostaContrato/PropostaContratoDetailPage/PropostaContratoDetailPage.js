@@ -15,7 +15,7 @@ import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
 import DiscardLeadModal from "../../../components/DiscardLeadModal/DiscardLeadModal";
 import { getDiscardReasons } from "../../../api/discardReasons";
 
-import GerarContratoModal from '../../components/PropostaWizard/GerarContratoModal';
+import GerarContratoModal from '../../../components/PropostaWizard/GerarContratoModal';
 
 
 const STATUS_PROPOSTA_OPCOES = [
