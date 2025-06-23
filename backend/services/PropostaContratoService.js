@@ -150,126 +150,134 @@ const montarDadosParaTemplate = (propostaData, leadDoc, imovelDoc, empresaVended
  * @returns {Promise<PropostaContrato>} A Proposta/Contrato criada.
  */
 const createPropostaContrato = async (reservaId, propostaData, companyId, creatingUserId) => {
-    console.log('[PropostaContrato] Iniciando criação de proposta (apenas dados estruturados)...');
+  console.log('[PropostaContrato] Iniciando criação de proposta (apenas dados estruturados)...');
 
-    const session = await mongoose.startSession();
-    session.startTransaction();
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-    try {
-        // --- 1. Buscar a Reserva e dados essenciais ---
-        const reserva = await Reserva.findById(reservaId)
-            .populate('lead')
-            .populate('imovel')
-            .session(session);
+  try {
+    // 1. Buscar a Reserva e dados essenciais
+    const reserva = await Reserva.findById(reservaId)
+      .populate('lead')
+      .populate('imovel')
+      .session(session);
 
-        if (!reserva) {
-            throw new Error("Reserva associada não encontrada.");
-        }
-        if (reserva.statusReserva !== 'Ativa') {
-            throw new Error(`A reserva não está mais ativa. Status atual: ${reserva.statusReserva}`);
-        }
-        
-        // --- 2. Construir o Snapshot dos Adquirentes a partir dos dados do Lead ---
-        const adquirentesSnapshot = [
-            { // Adquirente Principal
-                nome: reserva.lead.nome,
-                cpf: reserva.lead.cpf,
-                rg: reserva.lead.rg,
-                nacionalidade: reserva.lead.nacionalidade,
-                estadoCivil: reserva.lead.estadoCivil,
-                profissao: reserva.lead.profissao,
-                email: reserva.lead.email,
-                contato: reserva.lead.contato,
-                endereco: reserva.lead.endereco,
-                nascimento: reserva.lead.nascimento
-            },
-            ...(reserva.lead.coadquirentes || []).map(co => co.toObject())
-        ];
-
-        // --- Recalcular valor total da proposta com base na entrada + parcelas ---
-        const entrada = parseFloat(propostaData.valorEntrada) || 0;
-        const totalParcelas = (propostaData.planoDePagamento || []).reduce((acc, parcela) => {
-        const valor = parseFloat(parcela.valorUnitario) || 0;
-        const qtd = parseInt(parcela.quantidade) || 1;
-        return acc + (valor * qtd);
-        }, 0);
-
-        const valorTotalProposta = entrada + totalParcelas;
-        propostaData.valorPropostaContrato = valorTotalProposta;
-
-
-        // --- 3. Montar o Objeto Final da Proposta para Salvar ---
-        const dadosParaNovaProposta = {
-            ...propostaData,
-            lead: reserva.lead._id,
-            reserva: reserva._id,
-            imovel: reserva.imovel._id,
-            tipoImovel: reserva.tipoImovel,
-            company: companyId,
-            createdBy: creatingUserId,
-            adquirentesSnapshot: adquirentesSnapshot,
-            empreendimentoNomeSnapshot: reserva.tipoImovel === 'Unidade' ? reserva.imovel.empreendimento?.nome : 'Imóvel Avulso',
-            unidadeIdentificadorSnapshot: reserva.tipoImovel === 'Unidade' ? reserva.imovel.identificador : reserva.imovel.titulo,
-            precoTabelaUnidadeNoMomento:
-                reserva.tipoImovel === 'Unidade'
-                ? reserva.imovel.precoTabela
-                : reserva.imovel.preco,
-            corpoContratoHTMLGerado: "<p><em>Documento ainda não foi gerado. Selecione um modelo de contrato na página de detalhes para gerá-lo.</em></p>",
-            modeloContratoUtilizado: null
-        };
-
-        const proposta = new PropostaContrato(dadosParaNovaProposta);
-        proposta.$ignoreValidacaoParcelas = true;
-        const propostaSalva = await proposta.save({ session });
-        console.log('[PropostaContrato] Proposta (dados) criada com ID:', propostaSalva._id);
-
-        // --- 4. Atualizar Status das Entidades Relacionadas ---
-        reserva.statusReserva = 'ConvertidaEmProposta';
-        reserva.propostaId = propostaSalva._id;
-        
-        const imovelDoc = await mongoose.model(reserva.tipoImovel).findById(reserva.imovel._id).session(session);
-        if (imovelDoc) {
-            imovelDoc.status = 'Proposta';
-            await imovelDoc.save({ session });
-        }
-        
-        const nomeEstagio = 'Proposta Emitida';
-        const leadStage = await LeadStage.findOneAndUpdate(
-            { company: companyId, nome: { $regex: new RegExp(`^${nomeEstagio}$`, 'i') } },
-            { $setOnInsert: { nome: nomeEstagio, company: companyId, ativo: true } },
-            { new: true, upsert: true, runValidators: true, session: session }
-        );
-        reserva.lead.situacao = leadStage._id;
-
-        await Promise.all([
-            reserva.save({ session }),
-            reserva.lead.save({ session })
-        ]);
-
-        await logHistory(
-            reserva.lead._id,
-            creatingUserId,
-            'PROPOSTA_CONTRATO_CRIADA',
-            `Proposta (dados) criada com ID ${propostaSalva._id}.`,
-            { propostaContratoId: propostaSalva._id },
-            null,
-            'PropostaContrato',
-            propostaSalva._id,
-            session
-        );
-
-        await session.commitTransaction();
-        console.log('[PropostaContrato] Processo de criação de proposta concluído com sucesso.');
-        return propostaSalva;
-
-    } catch (err) {
-        await session.abortTransaction();
-        console.error('[PropostaContrato][ERRO] Falha ao criar proposta:', err);
-        throw new Error(err.message || 'Erro interno ao criar proposta.');
-    } finally {
-        session.endSession();
+    if (!reserva) {
+      throw new Error("Reserva associada não encontrada.");
     }
+    if (reserva.statusReserva !== 'Ativa') {
+      throw new Error(`A reserva não está mais ativa. Status atual: ${reserva.statusReserva}`);
+    }
+
+    // 2. Construir o Snapshot dos Adquirentes a partir do Lead + adquirentes enviados
+    const coadquirentesViaForm = (propostaData.adquirentes || []).filter(p => p.cpf !== reserva.lead.cpf);
+
+    const adquirentesSnapshot = [
+      {
+        nome: reserva.lead.nome,
+        cpf: reserva.lead.cpf,
+        rg: reserva.lead.rg,
+        nacionalidade: reserva.lead.nacionalidade,
+        estadoCivil: reserva.lead.estadoCivil,
+        profissao: reserva.lead.profissao,
+        email: reserva.lead.email,
+        contato: reserva.lead.contato,
+        endereco: reserva.lead.endereco,
+        nascimento: reserva.lead.nascimento
+      },
+      ...coadquirentesViaForm
+    ];
+
+    // 3. Recalcular valor total da proposta (entrada + parcelas)
+    const entrada = parseFloat(propostaData.valorEntrada) || 0;
+    const totalParcelas = (propostaData.planoDePagamento || []).reduce((acc, parcela) => {
+      const valor = parseFloat(parcela.valorUnitario) || 0;
+      const qtd = parseInt(parcela.quantidade) || 1;
+      return acc + (valor * qtd);
+    }, 0);
+    propostaData.valorPropostaContrato = entrada + totalParcelas;
+
+    // 4. Montar dados da proposta
+    const dadosParaNovaProposta = {
+      ...propostaData,
+      lead: reserva.lead._id,
+      reserva: reserva._id,
+      imovel: reserva.imovel._id,
+      tipoImovel: reserva.tipoImovel,
+      company: companyId,
+      createdBy: creatingUserId,
+      adquirentesSnapshot,
+      empreendimentoNomeSnapshot: reserva.tipoImovel === 'Unidade'
+        ? reserva.imovel.empreendimento?.nome
+        : 'Imóvel Avulso',
+      unidadeIdentificadorSnapshot: reserva.tipoImovel === 'Unidade'
+        ? reserva.imovel.identificador
+        : reserva.imovel.titulo,
+      precoTabelaUnidadeNoMomento: reserva.tipoImovel === 'Unidade'
+        ? reserva.imovel.precoTabela
+        : reserva.imovel.preco,
+      corpoContratoHTMLGerado: "<p><em>Documento ainda não foi gerado. Selecione um modelo de contrato na página de detalhes para gerá-lo.</em></p>",
+      modeloContratoUtilizado: null
+    };
+
+    const proposta = new PropostaContrato(dadosParaNovaProposta);
+    proposta.$ignoreValidacaoParcelas = true;
+    const propostaSalva = await proposta.save({ session });
+
+    // 5. Atualizar Reserva e Imóvel
+    reserva.statusReserva = 'ConvertidaEmProposta';
+    reserva.propostaId = propostaSalva._id;
+
+    const imovelDoc = await mongoose.model(reserva.tipoImovel)
+      .findById(reserva.imovel._id)
+      .session(session);
+
+    if (imovelDoc) {
+      imovelDoc.status = 'Proposta';
+      await imovelDoc.save({ session });
+    }
+
+    // 6. Atualizar situação do Lead
+    const nomeEstagio = 'Proposta Emitida';
+    const leadStage = await LeadStage.findOneAndUpdate(
+      { company: companyId, nome: { $regex: new RegExp(`^${nomeEstagio}$`, 'i') } },
+      { $setOnInsert: { nome: nomeEstagio, company: companyId, ativo: true } },
+      { new: true, upsert: true, runValidators: true, session }
+    );
+
+    reserva.lead.situacao = leadStage._id;
+
+    await Promise.all([
+      reserva.save({ session }),
+      reserva.lead.save({ session })
+    ]);
+
+    // 7. Histórico
+    await logHistory(
+      reserva.lead._id,
+      creatingUserId,
+      'PROPOSTA_CONTRATO_CRIADA',
+      `Proposta (dados) criada com ID ${propostaSalva._id}.`,
+      { propostaContratoId: propostaSalva._id },
+      null,
+      'PropostaContrato',
+      propostaSalva._id,
+      session
+    );
+
+    await session.commitTransaction();
+    console.log('[PropostaContrato] Processo de criação de proposta concluído com sucesso.');
+    return propostaSalva;
+
+  } catch (err) {
+    await session.abortTransaction();
+    console.error('[PropostaContrato][ERRO] Falha ao criar proposta:', err);
+    throw new Error(err.message || 'Erro interno ao criar proposta.');
+  } finally {
+    session.endSession();
+  }
 };
+
 
 
 
@@ -452,145 +460,143 @@ const gerarPDFPropostaContrato = async (propostaContratoId, companyId) => {
  * @returns {Promise<PropostaContrato>} A Proposta/Contrato atualizada.
  */
 const updatePropostaContrato = async (propostaContratoId, updateData, companyId, actorUserId) => {
-    console.log(`[PropContSvc] Atualizando Proposta/Contrato ID: ${propostaContratoId} para Company: ${companyId} por User: ${actorUserId}`);
+  console.log(`[PropContSvc] Atualizando Proposta/Contrato ID: ${propostaContratoId} para Company: ${companyId} por User: ${actorUserId}`);
 
-    if (
-        !mongoose.Types.ObjectId.isValid(propostaContratoId) ||
-        !mongoose.Types.ObjectId.isValid(companyId) ||
-        !mongoose.Types.ObjectId.isValid(actorUserId)
-    ) {
-        throw new Error("IDs inválidos fornecidos (Proposta/Contrato, Empresa ou Usuário).");
+  if (
+    !mongoose.Types.ObjectId.isValid(propostaContratoId) ||
+    !mongoose.Types.ObjectId.isValid(companyId) ||
+    !mongoose.Types.ObjectId.isValid(actorUserId)
+  ) {
+    throw new Error("IDs inválidos fornecidos (Proposta/Contrato, Empresa ou Usuário).");
+  }
+
+  const NaoAlterar = [
+    'lead', 'reserva', 'imovel', 'tipoImovel', 'company', 'createdBy',
+    '_id', 'createdAt', 'updatedAt', '__v', 'modeloContratoUtilizado',
+    'precoTabelaUnidadeNoMomento'
+  ];
+  for (const key of NaoAlterar) {
+    delete updateData[key];
+  }
+
+  // --- Recalcular valor da proposta
+  const entrada = parseFloat(updateData.valorEntrada) || 0;
+  const totalParcelas = (updateData.planoDePagamento || []).reduce((acc, parcela) => {
+    const valor = parseFloat(parcela.valorUnitario) || 0;
+    const qtd = parseInt(parcela.quantidade) || 1;
+    return acc + (valor * qtd);
+  }, 0);
+  updateData.valorPropostaContrato = entrada + totalParcelas;
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const propostaContrato = await PropostaContrato.findOne({
+      _id: propostaContratoId,
+      company: companyId
+    }).session(session);
+
+    if (!propostaContrato) {
+      throw new Error("Proposta/Contrato não encontrada ou não pertence a esta empresa.");
     }
 
-    const NaoAlterar = [
-        'lead', 'reserva', 'imovel', 'tipoImovel', 'company', 'createdBy',
-        '_id', 'createdAt', 'updatedAt', '__v', 'modeloContratoUtilizado',
-        'precoTabelaUnidadeNoMomento'
+    if (["Vendido", "Cancelado"].includes(propostaContrato.statusPropostaContrato)) {
+      throw new Error(`Proposta/Contrato com status "${propostaContrato.statusPropostaContrato}" não pode ser editada.`);
+    }
+
+    const [reserva, lead, imovel, modeloContrato, empresaVendedora, corretorPrincipalDoc] = await Promise.all([
+      Reserva.findById(propostaContrato.reserva).session(session),
+      Lead.findById(propostaContrato.lead).session(session),
+      mongoose.model(propostaContrato.tipoImovel).findById(propostaContrato.imovel)
+        .populate(propostaContrato.tipoImovel === 'Unidade' ? { path: 'empreendimento', model: 'Empreendimento' } : null)
+        .session(session),
+      propostaContrato.modeloContratoUtilizado
+        ? ModeloContrato.findById(propostaContrato.modeloContratoUtilizado).lean().session(session)
+        : Promise.resolve(null),
+      Company.findById(companyId).lean().session(session),
+      updateData.corretagem?.corretorPrincipal
+        ? BrokerContact.findById(updateData.corretagem.corretorPrincipal).lean().session(session)
+        : Promise.resolve(null)
+    ]);
+
+    if (!reserva || !lead || !imovel || !empresaVendedora) {
+      throw new Error('Erro ao buscar dados relacionados para atualização.');
+    }
+
+    let corpoContratoHTMLGeradoAtualizado = propostaContrato.corpoContratoHTMLGerado;
+
+    if (modeloContrato) {
+      const dadosTemplate = montarDadosParaTemplate(
+        { ...propostaContrato.toObject(), ...updateData },
+        lead,
+        imovel,
+        empresaVendedora,
+        corretorPrincipalDoc
+      );
+      corpoContratoHTMLGeradoAtualizado = preencherTemplateContrato(
+        modeloContrato.conteudoHTMLTemplate,
+        dadosTemplate
+      );
+    }
+
+    const adquirentesSnapshot = [
+      {
+        nome: lead.nome,
+        cpf: lead.cpf,
+        rg: lead.rg,
+        nacionalidade: lead.nacionalidade,
+        estadoCivil: lead.estadoCivil,
+        profissao: lead.profissao,
+        email: lead.email,
+        contato: lead.contato,
+        endereco: lead.endereco,
+        nascimento: lead.nascimento
+      },
+      ...(updateData.adquirentes || []).filter(p => p.cpf !== lead.cpf)
     ];
-    for (const key of NaoAlterar) {
-        delete updateData[key];
-    }
 
-    // --- Recalcular valor da proposta (entrada + parcelas)
-    const entrada = parseFloat(updateData.valorEntrada) || 0;
-    const totalParcelas = (updateData.planoDePagamento || []).reduce((acc, parcela) => {
-        const valor = parseFloat(parcela.valorUnitario) || 0;
-        const qtd = parseInt(parcela.quantidade) || 1;
-        return acc + (valor * qtd);
-    }, 0);
-    const valorTotalProposta = entrada + totalParcelas;
-    updateData.valorPropostaContrato = valorTotalProposta;
+    Object.assign(propostaContrato, updateData, {
+      corpoContratoHTMLGerado: corpoContratoHTMLGeradoAtualizado,
+      adquirentesSnapshot,
+      empreendimentoNomeSnapshot:
+        propostaContrato.tipoImovel === 'Unidade'
+          ? imovel.empreendimento?.nome
+          : 'Imóvel Avulso',
+      unidadeIdentificadorSnapshot:
+        propostaContrato.tipoImovel === 'Unidade'
+          ? imovel.identificador
+          : imovel.titulo
+    });
 
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    propostaContrato.$ignoreValidacaoParcelas = true;
 
-    try {
-        const propostaContrato = await PropostaContrato.findOne({
-            _id: propostaContratoId,
-            company: companyId
-        }).session(session);
+    const oldData = await PropostaContrato.findById(propostaContratoId).lean();
+    const propostaAtualizada = await propostaContrato.save({ session });
 
-        if (!propostaContrato) {
-            throw new Error("Proposta/Contrato não encontrada ou não pertence a esta empresa.");
-        }
+    await logHistory(
+      propostaAtualizada.lead,
+      actorUserId,
+      "PROPOSTA_CONTRATO_EDITADA",
+      `Proposta/Contrato (ID: ${propostaAtualizada._id}) atualizada.`,
+      { oldData },
+      propostaAtualizada.toObject(),
+      'PropostaContrato',
+      propostaAtualizada._id,
+      session
+    );
 
-        if (["Vendido", "Cancelado"].includes(propostaContrato.statusPropostaContrato)) {
-            throw new Error(`Proposta/Contrato com status "${propostaContrato.statusPropostaContrato}" não pode ser editada.`);
-        }
+    await session.commitTransaction();
+    console.log(`[PropContSvc] Proposta/Contrato ${propostaAtualizada._id} atualizada com sucesso.`);
+    return propostaAtualizada;
 
-        const [reserva, lead, imovel, modeloContrato, empresaVendedora, corretorPrincipalDoc] = await Promise.all([
-            Reserva.findById(propostaContrato.reserva).session(session),
-            Lead.findById(propostaContrato.lead).session(session),
-            mongoose.model(propostaContrato.tipoImovel).findById(propostaContrato.imovel)
-                .populate(propostaContrato.tipoImovel === 'Unidade' ? { path: 'empreendimento', model: 'Empreendimento' } : null)
-                .session(session),
-            propostaContrato.modeloContratoUtilizado
-                ? ModeloContrato.findById(propostaContrato.modeloContratoUtilizado).lean().session(session)
-                : Promise.resolve(null),
-            Company.findById(companyId).lean().session(session),
-            updateData.corretagem?.corretorPrincipal
-                ? BrokerContact.findById(updateData.corretagem.corretorPrincipal).lean().session(session)
-                : Promise.resolve(null)
-        ]);
-
-        if (!reserva || !lead || !imovel || !empresaVendedora) {
-            throw new Error('Erro ao buscar dados relacionados para atualização.');
-        }
-
-        const dadosTemplate = montarDadosParaTemplate(
-            { ...propostaContrato.toObject(), ...updateData },
-            lead,
-            imovel,
-            empresaVendedora,
-            corretorPrincipalDoc
-        );
-
-        let corpoContratoFinal = propostaContrato.corpoContratoHTMLGerado || "<p><em>Documento ainda não foi gerado. Selecione um modelo de contrato na página de detalhes para gerá-lo.</em></p>";
-
-        if (modeloContrato) {
-            corpoContratoFinal = preencherTemplateContrato(
-                modeloContrato.conteudoHTMLTemplate,
-                dadosTemplate
-            );
-        }
-
-        const adquirentesSnapshot = [
-            {
-                nome: lead.nome,
-                cpf: lead.cpf,
-                rg: lead.rg,
-                nacionalidade: lead.nacionalidade,
-                estadoCivil: lead.estadoCivil,
-                profissao: lead.profissao,
-                email: lead.email,
-                contato: lead.contato,
-                endereco: lead.endereco,
-                nascimento: lead.nascimento
-            },
-            ...(lead.coadquirentes || []).map(co => co.toObject())
-        ];
-
-        Object.assign(propostaContrato, updateData, {
-            corpoContratoHTMLGerado: corpoContratoFinal,
-            adquirentesSnapshot,
-            empreendimentoNomeSnapshot:
-                propostaContrato.tipoImovel === 'Unidade'
-                    ? imovel.empreendimento?.nome
-                    : 'Imóvel Avulso',
-            unidadeIdentificadorSnapshot:
-                propostaContrato.tipoImovel === 'Unidade'
-                    ? imovel.identificador
-                    : imovel.titulo
-        });
-
-        propostaContrato.$ignoreValidacaoParcelas = true;
-
-        const oldData = await PropostaContrato.findById(propostaContratoId).lean();
-        const propostaAtualizada = await propostaContrato.save({ session });
-
-        await logHistory(
-            propostaAtualizada.lead,
-            actorUserId,
-            "PROPOSTA_CONTRATO_EDITADA",
-            `Proposta/Contrato (ID: ${propostaAtualizada._id}) atualizada.`,
-            { oldData },
-            propostaAtualizada.toObject(),
-            'PropostaContrato',
-            propostaAtualizada._id,
-            session
-        );
-
-        await session.commitTransaction();
-        console.log(`[PropContSvc] Proposta/Contrato ${propostaAtualizada._id} atualizada com sucesso.`);
-        return propostaAtualizada;
-
-    } catch (error) {
-        await session.abortTransaction();
-        console.error("[PropContSvc] Erro ao atualizar Proposta/Contrato:", error);
-        throw new Error(error.message || "Erro interno ao atualizar a Proposta/Contrato.");
-    } finally {
-        session.endSession();
-    }
+  } catch (error) {
+    await session.abortTransaction();
+    console.error("[PropContSvc] Erro ao atualizar Proposta/Contrato:", error);
+    throw new Error(error.message || "Erro interno ao atualizar a Proposta/Contrato.");
+  } finally {
+    session.endSession();
+  }
 };
 
 
