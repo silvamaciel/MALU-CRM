@@ -1,11 +1,30 @@
 /* src/components/PropostaWizard/GerarContratoModal.css */
-/* O .form-modal-overlay e .form-modal-content podem ser reutilizados */
+.form-modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex; align-items: center; justify-content: center; z-index: 1050;
+}
+
 .form-modal-content.large {
     max-width: 90%;
     width: 950px;
+    background-color: #fff;
+    padding: 25px 30px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     display: flex;
     flex-direction: column;
     height: 90vh; /* Ocupa 90% da altura da tela */
+}
+
+.form-modal-content.large h2 {
+    margin-top: 0;
+    flex-shrink: 0; /* Impede que o título encolha */
+}
+
+.form-modal-content.large .form-group {
+    margin-bottom: 15px;
+    flex-shrink: 0;
 }
 
 .form-modal-content.large .quill-editor-container {
@@ -14,6 +33,24 @@
     flex-direction: column;
     min-height: 300px; /* Garante uma altura mínima */
 }
-.form-modal-content.large .ql-container {
+
+.form-modal-content.large .ql-container.ql-snow {
     flex-grow: 1;
+    overflow-y: auto;
+}
+
+.form-modal-content.large .loading-message {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-style: italic;
+    color: #555;
+}
+
+.form-modal-content.large .form-actions {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    flex-shrink: 0;
 }

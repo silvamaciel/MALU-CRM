@@ -1,14 +1,22 @@
+// src/components/PropostaWizard/GerarContratoModal.js
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
 import { getModelosContrato } from '../../api/modeloContratoApi';
-import { gerarDocumentoApi } from '../../api/propostaContratoApi';
+import { gerarDocumentoApi, updatePropostaContratoApi } from '../../api/propostaContratoApi';
 import './GerarContratoModal.css';
 
-const quillModules = { /* ... cole aqui seus módulos do quill ... */ };
-const quillFormats = [ /* ... cole aqui seus formatos do quill ... */ ];
+const quillModules = {
+    toolbar: [
+        [{ header: [1, 2, 3, false] }], ['bold', 'italic', 'underline'],
+        [{ list: "ordered" }, { list: "bullet" }], [{ align: [] }],
+        [{ color: [] }, { background: [] }], ['clean']
+    ],
+};
+
+const quillFormats = ["header", "bold", "italic", "underline", "list", "bullet", "align", "color", "background"];
 
 function GerarContratoModal({ isOpen, onClose, proposta, onSaveSuccess }) {
     const [modelos, setModelos] = useState([]);
@@ -17,11 +25,10 @@ function GerarContratoModal({ isOpen, onClose, proposta, onSaveSuccess }) {
     const [loading, setLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
-    // Carrega os modelos de contrato quando o modal abre
     useEffect(() => {
         if (isOpen) {
-            setHtmlContent(proposta.corpoContratoHTMLGerado || ''); // Carrega o conteúdo atual
-            setSelectedModelo(proposta.modeloContratoUtilizado || ''); // Pré-seleciona o modelo se já houver um
+            setHtmlContent(proposta.corpoContratoHTMLGerado || '');
+            setSelectedModelo(proposta.modeloContratoUtilizado || '');
 
             const fetchModelos = async () => {
                 try {
@@ -35,7 +42,6 @@ function GerarContratoModal({ isOpen, onClose, proposta, onSaveSuccess }) {
         }
     }, [isOpen, proposta]);
 
-    // Handler para quando um modelo é selecionado
     const handleModeloChange = async (e) => {
         const modeloId = e.target.value;
         setSelectedModelo(modeloId);
@@ -57,20 +63,16 @@ function GerarContratoModal({ isOpen, onClose, proposta, onSaveSuccess }) {
         }
     };
 
-    // Handler para salvar o contrato final
     const handleSaveContrato = async () => {
         setIsSaving(true);
         try {
-            // A API de update da proposta já existe, vamos usá-la
-            // Precisaremos importá-la em um próximo passo
-            const { updatePropostaContratoApi } = await import('../../api/propostaContratoApi');
             await updatePropostaContratoApi(proposta._id, {
                 corpoContratoHTMLGerado: htmlContent,
                 modeloContratoUtilizado: selectedModelo
             });
             toast.success("Documento do contrato salvo com sucesso!");
-            onSaveSuccess(); // Notifica o pai para atualizar a página
-            onClose(); // Fecha o modal
+            if(onSaveSuccess) onSaveSuccess();
+            onClose();
         } catch (error) {
             toast.error(error.message || "Falha ao salvar o documento.");
         } finally {
@@ -85,14 +87,14 @@ function GerarContratoModal({ isOpen, onClose, proposta, onSaveSuccess }) {
             <div className="form-modal-content large" onClick={(e) => e.stopPropagation()}>
                 <h2>Gerar/Editar Documento do Contrato</h2>
                 <div className="form-group">
-                    <label htmlFor="modeloContratoSelect">Selecione um Modelo de Contrato</label>
+                    <label htmlFor="modeloContratoSelect">Usar Modelo de Contrato</label>
                     <select
                         id="modeloContratoSelect"
                         value={selectedModelo}
                         onChange={handleModeloChange}
                         disabled={loading || isSaving}
                     >
-                        <option value="">Selecione para gerar/alterar o modelo...</option>
+                        <option value="">Selecione para gerar ou alterar o modelo...</option>
                         {modelos.map(mod => (
                             <option key={mod._id} value={mod._id}>{mod.nomeModelo}</option>
                         ))}
