@@ -141,23 +141,24 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
     try {
         console.log('[PropostaContrato] INICIANDO criação da proposta...');
 
-        // 1. Buscar Reserva
-        const reserva = await Reserva.findById(reservaId)
-            .populate({
-                path: 'lead',
-                model: 'Lead'
-            })
-            .populate({
-                path: 'imovel',
-                model: reserva.tipoImovel === 'Unidade' ? 'Unidade' : 'ImovelAvulso',
-                populate: reserva.tipoImovel === 'Unidade'
-                    ? { path: 'empreendimento', model: 'Empreendimento' }
-                    : undefined
-            })
+        // 1. Buscar Reserva sem dependência do tipoImovel
+        let reserva = await Reserva.findById(reservaId)
+            .populate({ path: 'lead', model: 'Lead' })
             .session(session);
 
-        if (!reserva || !reserva.lead || !reserva.imovel) {
-            throw new Error("Reserva, Lead ou Imóvel associado não encontrado.");
+        if (!reserva) throw new Error("Reserva não encontrada.");
+
+        // 1.1. Popular imóvel com base no tipoImovel
+        reserva = await Reserva.populate(reserva, {
+            path: 'imovel',
+            model: reserva.tipoImovel === 'Unidade' ? 'Unidade' : 'ImovelAvulso',
+            populate: reserva.tipoImovel === 'Unidade'
+                ? { path: 'empreendimento', model: 'Empreendimento' }
+                : undefined
+        });
+
+        if (!reserva.lead || !reserva.imovel) {
+            throw new Error("Lead ou Imóvel associado não encontrado.");
         }
 
         if (reserva.statusReserva !== 'Ativa') {
@@ -295,6 +296,7 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
         session.endSession();
     }
 };
+
 
 
 
