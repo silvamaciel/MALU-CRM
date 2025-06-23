@@ -16,7 +16,7 @@ const DiscardReason = require('../models/DiscardReason');
 
 
 
-
+ 
 /**
  * Monta um objeto com todos os dados necessários para substituir os placeholders de um template de contrato.
  * @param {object} propostaData - Os dados da proposta que vieram do formulário.
