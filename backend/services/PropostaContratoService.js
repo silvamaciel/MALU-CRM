@@ -56,8 +56,8 @@ const montarDadosParaTemplate = (propostaData, leadDoc, imovelDoc, empresaVended
 
     // --- 2. Dados dos Compradores (Principal + Coadquirentes) ---
     const todosAdquirentes = [
-        { ...leadDoc.toObject() },
-        ...(leadDoc.coadquirentes || []).map(co => co.toObject())
+    { ...leadDoc },
+    ...(leadDoc.coadquirentes || [])
     ];
 
     let blocoHtmlCoadquirentes = '';
