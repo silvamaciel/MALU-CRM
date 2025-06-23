@@ -166,26 +166,21 @@ function PropostaContratoFormPage() {
         setIsSaving(true);
 
         const dataToSubmit = {
+            ...formData, 
+            modeloContratoUtilizado: formData.modeloContratoUtilizado || null,
+            adquirentesSnapshot: formData.adquirentes,
+            
+            precoTabelaUnidadeNoMomento: reservaBase?.unidade?.preco || reservaBase?.imovel?.preco,
+            
+            // Formatações finais de números
             valorPropostaContrato: parseFloat(formData.valorPropostaContrato) || 0,
             valorEntrada: formData.valorEntrada ? parseFloat(formData.valorEntrada) : null,
-            condicoesPagamentoGerais: formData.condicoesPagamentoGerais,
-            dadosBancariosParaPagamento: formData.dadosBancariosParaPagamento,
-            planoDePagamento: formData.planoDePagamento.map(p => ({
-                ...p,
-                quantidade: Number(p.quantidade) || 1,
-                valorUnitario: Number(p.valorUnitario) || 0,
-            })).filter(p => p.valorUnitario > 0 && p.vencimentoPrimeira),
-            corretagem: formData.corretagem?.valorCorretagem ? {
-                ...formData.corretagem,
-                valorCorretagem: Number(formData.corretagem.valorCorretagem) || 0,
-            } : null,
-            corpoContratoHTMLGerado: formData.corpoContratoHTMLGerado,
-            responsavelNegociacao: formData.responsavelNegociacao,
-            observacoesInternasProposta: formData.observacoesInternasProposta,
-            statusPropostaContrato: formData.statusPropostaContrato,
-            dataProposta: formData.dataProposta,
-            adquirentesSnapshot: formData.adquirentes,
+            planoDePagamento: formData.planoDePagamento.filter(p => p.valorUnitario && p.vencimentoPrimeira),
+            corretagem: formData.corretagem?.valorCorretagem ? { ...formData.corretagem, valorCorretagem: Number(formData.corretagem.valorCorretagem) || 0 } : null,
         };
+
+        // Removemos o corpo do contrato daqui, pois será gerado depois
+        delete dataToSubmit.corpoContratoHTMLGerado;
 
         try {
             let result;

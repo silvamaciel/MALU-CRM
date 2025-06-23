@@ -90,7 +90,7 @@ const propostaContratoSchema = new Schema({
   modeloContratoUtilizado: {
     type: Schema.Types.ObjectId,
     ref: 'ModeloContrato',
-    required: true
+    required: false
   },
 
   // --- Financeiro ---
