@@ -141,67 +141,74 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
     try {
         console.log('[PropostaContrato] INICIANDO criação da proposta...');
 
-        // 1. Buscar Reserva + Lead + Imóvel (polimórfico)
+        // 1. Buscar Reserva
         const reserva = await Reserva.findById(reservaId)
-        .populate({ path: 'lead', populate: { path: 'coadquirentes' } })
-        .populate('imovel')
-        .session(session);
-
-        if (reserva.tipoImovel === 'Unidade' && reserva.imovel?.empreendimento) {
-            await reserva.imovel.populate({ path: 'empreendimento', strictPopulate: false });
-        }
-
-        console.log('[PropostaContrato] Reserva encontrada:', reserva?._id);
-        console.log('[PropostaContrato] Lead:', reserva?.lead?._id);
-        console.log('[PropostaContrato] Imóvel:', reserva?.imovel?._id);
+            .populate({
+                path: 'lead',
+                model: 'Lead'
+            })
+            .populate({
+                path: 'imovel',
+                model: reserva.tipoImovel === 'Unidade' ? 'Unidade' : 'ImovelAvulso',
+                populate: reserva.tipoImovel === 'Unidade'
+                    ? { path: 'empreendimento', model: 'Empreendimento' }
+                    : undefined
+            })
+            .session(session);
 
         if (!reserva || !reserva.lead || !reserva.imovel) {
-            throw new Error("Reserva, Lead ou Imóvel não encontrado.");
+            throw new Error("Reserva, Lead ou Imóvel associado não encontrado.");
         }
 
         if (reserva.statusReserva !== 'Ativa') {
             throw new Error(`Reserva não está ativa. Status atual: ${reserva.statusReserva}`);
         }
 
-        // 2. Buscar Empresa e Modelo de Contrato
-        const [empresaVendedora, modeloContrato] = await Promise.all([
+        // 2. Buscar Empresa, Modelo de Contrato e Corretor
+        const [empresaVendedora, modeloContrato, corretorPrincipalDoc] = await Promise.all([
             Company.findById(companyId).lean().session(session),
             ModeloContrato.findOne({
                 _id: propostaData.modeloContratoUtilizado,
                 company: companyId,
                 ativo: true
-            }).lean().session(session)
+            }).lean().session(session),
+            propostaData.corretagem?.corretorPrincipal
+                ? BrokerContact.findById(propostaData.corretagem.corretorPrincipal).lean().session(session)
+                : Promise.resolve(null)
         ]);
-
-        console.log('[PropostaContrato] Empresa:', empresaVendedora?._id);
-        console.log('[PropostaContrato] Modelo de Contrato:', modeloContrato?._id);
 
         if (!empresaVendedora) throw new Error("Empresa vendedora não encontrada.");
         if (!modeloContrato) throw new Error("Modelo de Contrato inválido ou inativo.");
 
-        // 3. Montar dados para template com coadquirentes
-        const dadosTemplate = montarDadosParaTemplate(propostaData, reserva.lead, reserva.imovel, empresaVendedora);
+        // 3. Gerar dados para o template e processar o HTML
+        const dadosTemplate = montarDadosParaTemplate(
+            propostaData,
+            reserva.lead,
+            reserva.imovel,
+            empresaVendedora,
+            corretorPrincipalDoc
+        );
+        const corpoContratoProcessado = preencherTemplateContrato(
+            modeloContrato.conteudoHTMLTemplate,
+            dadosTemplate
+        );
 
-        let corpoContratoProcessado = modeloContrato.conteudoHTMLTemplate;
-        for (const key in dadosTemplate) {
-            const valor = dadosTemplate[key];
-            const regex = new RegExp(`{{${key}}}`, 'g');
-            corpoContratoProcessado = corpoContratoProcessado.replace(regex, valor);
-        }
-
-        // 4. Usar adquirentes vindos do frontend
-        const adquirentesSnapshot = propostaData.adquirentesSnapshot;
-        console.log('[PropostaContrato] adquirentesSnapshot recebido:', adquirentesSnapshot);
-
-        if (!Array.isArray(adquirentesSnapshot) || adquirentesSnapshot.length === 0) {
-            throw new Error('É necessário informar pelo menos um adquirente.');
-        }
-
-        const adquirentesInvalidos = adquirentesSnapshot.filter(a => !a.contato || a.contato.trim() === '');
-        if (adquirentesInvalidos.length > 0) {
-            console.warn('[PropostaContrato] Adquirentes com contato faltando:', adquirentesInvalidos);
-            throw new Error('Todos os adquirentes devem conter o campo "contato".');
-        }
+        // 4. Gerar Snapshot de adquirentes
+        const adquirentesSnapshot = [
+            {
+                nome: reserva.lead.nome,
+                cpf: reserva.lead.cpf,
+                rg: reserva.lead.rg,
+                nacionalidade: reserva.lead.nacionalidade,
+                estadoCivil: reserva.lead.estadoCivil,
+                profissao: reserva.lead.profissao,
+                email: reserva.lead.email,
+                contato: reserva.lead.contato,
+                endereco: reserva.lead.endereco,
+                nascimento: reserva.lead.nascimento
+            },
+            ...(reserva.lead.coadquirentes || []).map(co => co.toObject())
+        ];
 
         // 5. Montar proposta
         const proposta = new PropostaContrato({
@@ -214,24 +221,32 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
             createdBy: creatingUserId,
             modeloContratoUtilizado: propostaData.modeloContratoUtilizado,
             corpoContratoHTMLGerado: corpoContratoProcessado,
-
-            // Snapshots
             adquirentesSnapshot,
-            empreendimentoNomeSnapshot: reserva.tipoImovel === 'Unidade' ? reserva.imovel.empreendimento?.nome : 'Imóvel Avulso',
-            unidadeIdentificadorSnapshot: reserva.tipoImovel === 'Unidade' ? reserva.imovel.identificador : reserva.imovel.titulo,
-            precoTabelaUnidadeNoMomento: reserva.imovel.precoTabela || reserva.imovel.preco
+
+            empreendimentoNomeSnapshot:
+                reserva.tipoImovel === 'Unidade'
+                    ? reserva.imovel.empreendimento?.nome
+                    : 'Imóvel Avulso',
+
+            unidadeIdentificadorSnapshot:
+                reserva.tipoImovel === 'Unidade'
+                    ? reserva.imovel.identificador
+                    : reserva.imovel.titulo,
+
+            precoTabelaUnidadeNoMomento:
+                reserva.imovel.precoTabela || reserva.imovel.preco
         });
 
         proposta.$ignoreValidacaoParcelas = true;
-
         const propostaSalva = await proposta.save({ session });
         console.log('[PropostaContrato] Proposta criada com ID:', propostaSalva._id);
 
-        // 6. Atualizar Reserva, Lead e Imóvel
+        // 6. Atualizar reserva
         reserva.statusReserva = 'ConvertidaEmProposta';
         reserva.propostaId = propostaSalva._id;
         await reserva.save({ session });
 
+        // 7. Atualizar lead (estágio)
         const nomeEstagio = 'Proposta Emitida';
         let leadStage = await LeadStage.findOne({
             company: companyId,
@@ -239,7 +254,6 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
         }).session(session);
 
         if (!leadStage) {
-            console.log('[PropostaContrato] Criando novo LeadStage "Proposta Emitida"...');
             leadStage = new LeadStage({
                 nome: nomeEstagio,
                 company: companyId,
@@ -252,10 +266,11 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
         reserva.lead.situacao = leadStage._id;
         await reserva.lead.save({ session });
 
+        // 8. Atualizar status do imóvel
         reserva.imovel.status = 'Proposta';
         await reserva.imovel.save({ session });
 
-        // 7. Log de histórico
+        // 9. Log histórico
         await logHistory(
             reserva.lead._id,
             creatingUserId,
@@ -268,8 +283,8 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
             session
         );
 
-        console.log('[PropostaContrato] Proposta criada com sucesso.');
         await session.commitTransaction();
+        console.log('[PropostaContrato] Proposta criada com sucesso.');
         return propostaSalva;
 
     } catch (err) {
@@ -280,6 +295,7 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
         session.endSession();
     }
 };
+
 
 
 
