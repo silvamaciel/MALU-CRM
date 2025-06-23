@@ -863,6 +863,44 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
     }
 };
 
+
+/**
+ * Gera o HTML de um contrato sob demanda, usando um modelo e os dados de uma proposta existente.
+ * @param {string} propostaId - ID da Proposta/Contrato.
+ * @param {string} modeloId - ID do Modelo de Contrato a ser usado.
+ * @param {string} companyId - ID da empresa.
+ * @returns {Promise<string>} A string de HTML com os placeholders preenchidos.
+ */
+const gerarDocumentoHTML = async (propostaId, modeloId, companyId) => {
+    console.log(`[PropContSvc] Gerando documento para Proposta ${propostaId} usando Modelo ${modeloId}`);
+    
+    // Busca todos os dados necessários em paralelo
+    const [proposta, modelo, empresaVendedora] = await Promise.all([
+        PropostaContrato.findById(propostaId).populate({
+            path: 'lead', model: 'Lead'
+        }).populate({
+            path: 'imovel', populate: { path: 'empreendimento', model: 'Empreendimento' }
+        }).lean(),
+        ModeloContrato.findOne({ _id: modeloId, company: companyId, ativo: true }).lean(),
+        Company.findById(companyId).lean()
+    ]);
+    
+    if (!proposta) throw new Error("Proposta não encontrada.");
+    if (!modelo) throw new Error("Modelo de contrato não encontrado ou inativo.");
+    if (!empresaVendedora) throw new Error("Empresa não encontrada.");
+
+    // Busca o corretor separadamente, se existir
+    const corretorDoc = proposta.corretagem?.corretorPrincipal 
+        ? await BrokerContact.findById(proposta.corretagem.corretorPrincipal).lean() 
+        : null;
+
+    // Reutiliza a função que já criamos!
+    const dadosParaTemplate = montarDadosParaTemplate(proposta, proposta.lead, proposta.imovel, empresaVendedora, corretorDoc);
+    const corpoProcessado = preencherTemplateContrato(modelo.conteudoHTMLTemplate, dadosParaTemplate);
+    
+    return corpoProcessado;
+};
+
 module.exports = {
     createPropostaContrato,
     preencherTemplateContrato,
@@ -870,5 +908,6 @@ module.exports = {
     gerarPDFPropostaContrato,
     updatePropostaContrato,
     updateStatusPropostaContrato,
-    registrarDistratoPropostaContrato
+    registrarDistratoPropostaContrato,
+    gerarDocumentoHTML
 };

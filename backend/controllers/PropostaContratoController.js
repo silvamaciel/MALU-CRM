@@ -202,11 +202,23 @@ const registrarDistratoController = asyncHandler(async (req, res, next) => {
 });
 
 
+const gerarDocumentoController = asyncHandler(async (req, res, next) => {
+    const { id } = req.params;
+    const { modeloId } = req.body; // O frontend enviará o ID do modelo no corpo
+    if (!modeloId) {
+        return next(new ErrorResponse('O ID do modelo de contrato é obrigatório.', 400));
+    }
+    const html = await PropostaContratoService.gerarDocumentoHTML(id, modeloId, req.user.company);
+    res.status(200).json({ success: true, data: { htmlGerado: html } });
+});
+
+
 module.exports = {
     createPropostaContratoController,
     getPropostaContratoByIdController,
     downloadPropostaContratoPDFController,
     updatePropostaContratoController,
     updateStatusPropostaContratoController,
-    registrarDistratoController
+    registrarDistratoController,
+    gerarDocumentoController
 };
