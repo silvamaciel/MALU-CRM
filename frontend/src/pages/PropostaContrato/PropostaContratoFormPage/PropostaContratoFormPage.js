@@ -170,7 +170,12 @@ function PropostaContratoFormPage() {
             modeloContratoUtilizado: formData.modeloContratoUtilizado || null,
             adquirentesSnapshot: formData.adquirentes,
             
-            precoTabelaUnidadeNoMomento: reservaBase?.unidade?.preco || reservaBase?.imovel?.preco,
+            precoTabelaUnidadeNoMomento:
+            parseFloat(
+                reservaBase?.tipoImovel === 'Unidade'
+                ? reservaBase?.imovel?.precoTabela
+                : reservaBase?.imovel?.preco
+            ) || 0,
             
             // Formatações finais de números
             valorPropostaContrato: parseFloat(formData.valorPropostaContrato) || 0,
