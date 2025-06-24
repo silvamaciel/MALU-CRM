@@ -66,11 +66,12 @@ const montarDadosParaTemplate = (propostaData, leadDoc, imovelDoc, empresaVended
   // --- 2. Dados dos Compradores (Principal + Coadquirentes) ---
  const todosAdquirentes = propostaData.adquirentesSnapshot || [];
 
-  let blocoHtmlCoadquirentes = '';
-  let blocoAssinaturasCompradores = '';
+let blocoHtmlCoadquirentes = '';
+let blocoAssinaturasCompradores = '';
 
-  todosAdquirentes.forEach((adq, index) => {
+todosAdquirentes.forEach((adq, index) => {
     const prefixo = index === 0 ? 'lead_principal' : `coadquirente${index}`;
+
     dados[`${prefixo}_nome`] = adq.nome || '';
     dados[`${prefixo}_cpf`] = adq.cpf || '';
     dados[`${prefixo}_rg`] = adq.rg || '';
@@ -83,12 +84,32 @@ const montarDadosParaTemplate = (propostaData, leadDoc, imovelDoc, empresaVended
     dados[`${prefixo}_nascimento`] = formatDate(adq.nascimento);
 
     if (index > 0) {
-      blocoHtmlCoadquirentes += `<p><strong>Coadquirente ${index}:</strong> ${adq.nome || ''} (CPF: ${adq.cpf || 'N/A'})</p>`;
+        blocoHtmlCoadquirentes += `
+        <p>
+            <strong>Coadquirente ${index}</strong><br>
+            Nome: ${adq.nome || ''}<br>
+            CPF: ${adq.cpf || ''}<br>
+            RG: ${adq.rg || ''}<br>
+            Estado Civil: ${adq.estadoCivil || ''}<br>
+            Nacionalidade: ${adq.nacionalidade || ''}<br>
+            Profissão: ${adq.profissao || ''}<br>
+            E-mail: ${adq.email || ''}<br>
+            Telefone: ${adq.contato || ''}<br>
+            Data de Nascimento: ${formatDate(adq.nascimento)}<br>
+            Endereço: ${adq.endereco || ''}
+        </p>
+        `;
     }
 
     const tituloAssinatura = index === 0 ? '(COMPRADOR/A PRINCIPAL)' : `(COADQUIRENTE ${index})`;
-    blocoAssinaturasCompradores += `<p style="text-align: center; margin-top: 40px;">_________________________<br><strong>${adq.nome || ''}</strong><br>${tituloAssinatura}</p>`;
-  });
+    blocoAssinaturasCompradores += `
+        <p style="text-align: center; margin-top: 40px;">
+        _________________________<br>
+        <strong>${adq.nome || ''}</strong><br>
+        ${tituloAssinatura}
+        </p>
+    `;
+    });
 
   dados['bloco_html_coadquirentes'] = blocoHtmlCoadquirentes || '<p>Não há coadquirentes.</p>';
   dados['bloco_assinaturas_compradores'] = blocoAssinaturasCompradores;
