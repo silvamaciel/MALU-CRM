@@ -64,10 +64,7 @@ const montarDadosParaTemplate = (propostaData, leadDoc, imovelDoc, empresaVended
   dados['vendedor_representante_cpf'] = empresaVendedora?.representanteLegalCPF || '';
 
   // --- 2. Dados dos Compradores (Principal + Coadquirentes) ---
-  const todosAdquirentes = [
-    { ...leadDoc },
-    ...(leadDoc.coadquirentes || [])
-  ];
+ const todosAdquirentes = propostaData.adquirentesSnapshot || [];
 
   let blocoHtmlCoadquirentes = '';
   let blocoAssinaturasCompradores = '';
