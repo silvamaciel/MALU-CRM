@@ -27,6 +27,7 @@ Este modelo de deploy separado permite escalar e gerenciar cada parte da aplica�
     CMD [ "node", "server.js" ]
     ```
 *   **Scripts no `package.json`:** Certifique-se de que o script `start` em `backend/package.json` está configurado para iniciar a aplicação em modo de produção (ex: `node server.js`).
+*   **Dependências:** Novas dependências como `dompurify`, `jsdom`, `express-validator`, e `papaparse` serão instaladas automaticamente via `npm install` durante o build na Railway. Dependências de desenvolvimento como `mongodb-memory-server`, `jest`, `supertest` não são instaladas em produção se `npm install --only=production` (ou similar) for usado, o que é comum.
 *   **Repositório Git:** Seu código deve estar em um repositório Git (GitHub, GitLab, Bitbucket) que a Railway possa acessar.
 
 ### 2.2. Configuração na Railway
@@ -57,6 +58,7 @@ Este modelo de deploy separado permite escalar e gerenciar cada parte da aplica�
 ### 3.1. Preparação
 
 *   **Scripts no `package.json`:** Certifique-se de que o script `build` em `frontend/package.json` (ex: `react-scripts build`) gera os arquivos estáticos da sua aplicação React na pasta `build` (ou `dist`).
+*   **Dependências:** Novas dependências como `dompurify` serão instaladas automaticamente via `npm install` durante o build na Vercel.
 *   **Repositório Git:** Seu código deve estar em um repositório Git que a Vercel possa acessar.
 
 ### 3.2. Configuração na Vercel

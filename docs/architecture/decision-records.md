@@ -80,4 +80,95 @@ Este documento lista as principais decisões arquiteturais tomadas durante o des
 
 ---
 
+## ADR-006: Escolha de Biblioteca para Validação de Entrada no Backend (`express-validator`)
+
+*   **Decisão:** Adotar `express-validator` para validação centralizada de dados de entrada (request body, query params, path params) nas rotas do backend.
+*   **Status:** Decidido e parcialmente implementado (ex: rotas de Lead).
+*   **Contexto:** A aplicação precisa de uma forma robusta e declarativa para validar os dados recebidos pela API, além das validações de schema do Mongoose, para garantir a integridade dos dados antes de atingir a lógica de serviço.
+*   **Justificativa:**
+    *   **Middleware Express:** `express-validator` integra-se diretamente como middleware nas rotas Express, tornando a validação parte do fluxo de manipulação da requisição.
+    *   **Declarativo:** As regras de validação são definidas de forma encadeada e legível (e.g., `body('email').isEmail().normalizeEmail()`).
+    *   **Abrangente:** Oferece uma vasta gama de validadores e sanitizadores padrão.
+    *   **Customizável:** Permite validadores customizados.
+    *   **Coleta de Erros:** Facilita a coleta e formatação de erros de validação.
+*   **Consequências:**
+    *   Adiciona uma nova dependência ao backend.
+    *   Requer a definição de cadeias de validação para cada rota que manipula dados de entrada.
+    *   A lógica de validação fica no nível da rota/controller, o que é apropriado para dados de HTTP request.
+
+## ADR-007: Escolha de Biblioteca para Parsing de CSV no Backend (`papaparse`)
+
+*   **Decisão:** Utilizar `papaparse` para o parsing de arquivos CSV na funcionalidade de importação de leads no backend.
+*   **Status:** Decidido e implementado.
+*   **Contexto:** A importação de leads via CSV necessita de um parser robusto que lide bem com diferentes formatos de CSV, delimitadores, e possíveis erros de formatação no arquivo.
+*   **Justificativa:**
+    *   **Robustez:** `papaparse` é uma biblioteca popular e bem testada para parsing de CSV, capaz de lidar com arquivos grandes, diferentes delimitadores, e encoding.
+    *   **Facilidade de Uso:** Oferece uma API simples para converter strings CSV em arrays de objetos JavaScript.
+    *   **Streaming (Potencial):** Embora a implementação atual leia o buffer, `papaparse` tem suporte a streaming, o que seria benéfico para arquivos muito grandes no futuro.
+    *   **Error Handling:** Fornece informações sobre erros de parsing.
+*   **Consequências:**
+    *   Adiciona a dependência `papaparse` ao backend.
+    *   Substitui a lógica manual de splitting de CSV, o que é uma melhoria em termos de confiabilidade.
+
+## ADR-008: Estratégia de Sanitização de HTML (`DOMPurify` e Escaping)
+
+*   **Decisão:**
+    1.  Utilizar `DOMPurify` no backend para sanitizar o HTML de `ModeloContrato.conteudoHTMLTemplate` no momento do salvamento, permitindo um conjunto seguro de tags e atributos para formatação.
+    2.  Utilizar uma função `escapeHtml` no backend (`PropostaContratoService`) para escapar dados dinâmicos (ex: nome do lead, endereço) antes de serem injetados nos placeholders dos templates HTML.
+    3.  Utilizar `DOMPurify` no frontend para sanitizar o `corpoContratoHTMLGerado` (que é o resultado do template sanitizado + dados escapados) antes de renderizá-lo com `dangerouslySetInnerHTML`.
+*   **Status:** Decidido e implementado.
+*   **Contexto:** A aplicação lida com HTML gerado por administradores (templates de contrato) e com dados de usuários que são inseridos nesses templates. É crucial prevenir vulnerabilidades XSS.
+*   **Justificativa:**
+    *   **Defesa em Profundidade:** Múltiplas camadas de sanitização (template no save, dados na injeção, output final no display) oferecem maior segurança.
+    *   **DOMPurify:** É uma biblioteca bem conceituada e robusta para sanitização de HTML, prevenindo XSS ao remover código malicioso e permitir apenas tags/atributos seguros.
+    *   **HTML Escaping:** Escapar dados dinâmicos previne que esses dados, se contiverem caracteres HTML, quebrem a estrutura do template ou introduzam XSS.
+    *   **Controle do Admin:** Permite que administradores usem HTML para formatação rica nos templates, mas de forma segura.
+*   **Consequências:**
+    *   Adiciona dependências (`dompurify`, `jsdom` no backend; `dompurify` no frontend).
+    *   Pequeno overhead de performance devido à sanitização, mas justificado pelo ganho de segurança.
+    *   Requer configuração cuidadosa do DOMPurify para permitir as tags HTML necessárias para formatação de contratos, sem permitir vetores de ataque.
+
+## ADR-009: Code Splitting para Rotas no Frontend (`React.lazy` e `Suspense`)
+
+*   **Decisão:** Implementar code splitting baseado em rotas no frontend utilizando `React.lazy()` para importação dinâmica de componentes de página e `<Suspense>` para exibir um fallback de carregamento.
+*   **Status:** Decidido e implementado em `App.js`.
+*   **Contexto:** O bundle inicial do JavaScript do frontend estava incluindo o código de todas as páginas, o que pode levar a tempos de carregamento iniciais mais longos, especialmente à medida que a aplicação cresce.
+*   **Justificativa:**
+    *   **Melhora de Performance Percebida:** Reduz o tamanho do bundle inicial, fazendo com que a aplicação carregue mais rápido para o usuário. O código de cada página só é baixado quando o usuário navega para ela.
+    *   **Padrão React:** `React.lazy` e `Suspense` são as ferramentas padrão fornecidas pelo React para esta finalidade.
+    *   **Melhor Experiência do Usuário:** Carregamentos iniciais mais rápidos são cruciais para a retenção de usuários.
+*   **Consequências:**
+    *   Introduz um pequeno delay ao navegar para uma nova rota pela primeira vez, enquanto o chunk de JavaScript daquela página é baixado (mitigado por um componente de fallback via `Suspense`).
+    *   Requer que os componentes de página sejam exportados como default ou que `React.lazy` seja usado com uma função que retorne o componente nomeado.
+
+## ADR-010: Estratégia de Testes Automatizados (Jest, RTL, Supertest)
+
+*   **Decisão:** Adotar Jest como framework de testes principal. Utilizar React Testing Library (RTL) para testes de componentes frontend e Supertest para testes de integração de API no backend.
+*   **Status:** Decidido e parcialmente implementado (testes iniciais para `LeadService`, `PropostaContratoService`, `LoginPage`, `PropostaContratoFormPage`, e algumas rotas API).
+*   **Contexto:** O projeto carecia de uma suíte de testes automatizados, o que é crucial para garantir a qualidade do código, prevenir regressões e facilitar refatorações seguras.
+*   **Justificativa:**
+    *   **Jest:** Um test runner popular, com bom suporte para mocking, asserções e relatórios de cobertura. Já é parte do setup do Create React App.
+    *   **React Testing Library (RTL):** Promove testes que se assemelham mais à forma como os usuários interagem com os componentes, focando no comportamento em vez de detalhes de implementação.
+    *   **Supertest:** Facilita o teste de aplicações Express.js fazendo requisições HTTP e validando respostas, ideal para testar a integração de rotas e controllers.
+    *   **Abordagem de Pirâmide de Testes:** A intenção é construir uma base de testes unitários rápidos, complementados por testes de integração e, eventualmente, alguns testes E2E.
+*   **Consequências:**
+    *   Aumento no tempo de desenvolvimento inicial para escrever testes.
+    *   Necessidade de manter os testes atualizados à medida que o código evolui.
+    *   Overhead de CI/CD para rodar os testes.
+    *   Benefício a longo prazo em termos de estabilidade e confiança nas alterações.
+
+## ADR-011: Caching para Dados de Dashboard (Conceitual - `node-cache`)
+
+*   **Decisão:** (Conceitual) Implementar um mecanismo de caching in-memory (usando `node-cache` como exemplo) para os resultados de agregações pesadas no `DashboardService`.
+*   **Status:** Conceitualmente definido; implementação pendente de acesso ao `DashboardService.js`.
+*   **Contexto:** As queries de agregação do dashboard podem ser resource-intensive no banco de dados, especialmente com grandes volumes de dados.
+*   **Justificativa:**
+    *   **Melhora de Performance:** Reduz a carga no banco de dados e diminui o tempo de resposta para requisições de dashboard, retornando dados cacheados quando disponíveis e dentro do TTL.
+    *   **Simplicidade (para In-Memory):** `node-cache` é simples de implementar para um cache local de instância única.
+*   **Consequências (para In-Memory Cache):**
+    *   **Consumo de Memória:** O cache consumirá memória do servidor Node.js.
+    *   **Escalabilidade Limitada:** Em um ambiente com múltiplas instâncias do backend, cada instância terá seu próprio cache, podendo levar a inconsistências temporárias ou múltiplas queries para popular caches individuais. Para ambientes escalados, um cache distribuído (ex: Redis) seria mais apropriado.
+    *   **Frescor dos Dados:** Dados do dashboard podem ficar levemente desatualizados (dentro do TTL do cache).
+    *   **Complexidade Adicional:** Gerenciamento de chaves de cache e estratégias de invalidação (além do TTL) podem adicionar complexidade se necessário.
+
 Este documento será atualizado à medida que novas decisões arquiteturais significativas forem tomadas ou as existentes forem revisadas.

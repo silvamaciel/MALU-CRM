@@ -15,7 +15,8 @@ const getAllLeadStages = async (companyId) => {
     }
     try {
         return await LeadStage.find({ company: companyId, ativo: true })
-                           .sort({ ordem: 1, nome: 1 });
+                           .sort({ ordem: 1, nome: 1 })
+                           .lean(); // Added .lean()
     } catch (error) {
         console.error(`[LSvc] Erro ao buscar situações para empresa ${companyId}:`, error);
         throw new Error('Erro ao buscar situações.');
@@ -45,8 +46,8 @@ const createLeadStage = async (stageData, companyId) => {
         // <<< MELHORIA: Verifica nome duplicado NA MESMA EMPRESA >>>
         const existingStage = await LeadStage.findOne({
             nome: { $regex: new RegExp(`^${nomeTrimmed}$`, 'i') },
-            company: companyId // <<< FILTRA por empresa
-        });
+            company: companyId
+        }).lean(); // Added .lean()
         if (existingStage) {
             throw new Error(`Situação '${nomeTrimmed}' já existe nesta empresa.`);
         }
@@ -56,14 +57,14 @@ const createLeadStage = async (stageData, companyId) => {
             ordemCalculada = DESCARTADO_ORDER_VALUE;
             const existingDescartado = await LeadStage.findOne({
                  nome: { $regex: /^descartado$/i },
-                 company: companyId // <<< FILTRA por empresa
-            });
+                 company: companyId
+            }).lean(); // Added .lean()
             if (existingDescartado) { throw new Error("Situação 'Descartado' já existe nesta empresa."); }
         } else {
             const lastStage = await LeadStage.findOne({
-                company: companyId, // <<< FILTRA por empresa
+                company: companyId,
                 ordem: { $lt: DESCARTADO_ORDER_VALUE }
-            }).sort({ ordem: -1 });
+            }).sort({ ordem: -1 }).lean(); // Added .lean()
             ordemCalculada = (lastStage ? lastStage.ordem : -1) + 1;
         }
         // <<< FIM LÓGICA DE ORDEM >>>
@@ -120,7 +121,7 @@ const updateLeadStage = async (id, companyId, updateData) => {
 
     try {
         // Validações antes de atualizar (duplicidade, nome 'Descartado', etc.)
-        const currentStage = await LeadStage.findOne({_id: id, company: companyId });
+        const currentStage = await LeadStage.findOne({_id: id, company: companyId }).lean(); // Added .lean()
         if (!currentStage) throw new Error('Situação não encontrada ou não pertence a esta empresa.');
 
         if (fieldsToUpdate.nome && fieldsToUpdate.nome.toLowerCase() !== currentStage.nome.toLowerCase()) {
@@ -129,12 +130,12 @@ const updateLeadStage = async (id, companyId, updateData) => {
                   nome: { $regex: new RegExp(`^${fieldsToUpdate.nome}$`, 'i') },
                   company: companyId,
                   _id: { $ne: id }
-             });
+             }).lean(); // Added .lean()
              if (existingStage) throw new Error(`Já existe outra situação com o nome '${fieldsToUpdate.nome}' nesta empresa.`);
 
              // Impede renomear para "Descartado" se já existir outro "Descartado"
              if(fieldsToUpdate.nome.toLowerCase() === 'descartado') {
-                 const existingDescartado = await LeadStage.findOne({ nome: { $regex: /^descartado$/i }, company: companyId, _id: { $ne: id } });
+                 const existingDescartado = await LeadStage.findOne({ nome: { $regex: /^descartado$/i }, company: companyId, _id: { $ne: id } }).lean(); // Added .lean()
                  if (existingDescartado) throw new Error("Já existe uma situação 'Descartado' nesta empresa.");
              }
              // Impede renomear a situação que é "Descartado"
@@ -181,7 +182,7 @@ const deleteLeadStage = async (id, companyId) => {
 
     try {
         // <<< Busca filtrando por ID E companyId >>>
-        const stageToDelete = await LeadStage.findOne({ _id: id, company: companyId });
+        const stageToDelete = await LeadStage.findOne({ _id: id, company: companyId }).lean(); // Added .lean()
         if (!stageToDelete) {
             throw new Error('Situação não encontrada ou não pertence a esta empresa.');
         }

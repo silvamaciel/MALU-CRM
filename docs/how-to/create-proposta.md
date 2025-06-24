@@ -102,6 +102,7 @@ O método `createPropostaContrato` no serviço é responsável por:
     *   Armazena `empreendimentoNomeSnapshot`, `unidadeIdentificadorSnapshot`, e `precoTabelaUnidadeNoMomento` para referência histórica.
     *   Define um valor placeholder inicial para `corpoContratoHTMLGerado` (ex: "Documento ainda não foi gerado...").
     *   `modeloContratoUtilizado` é definido como `null` ou o valor que veio do formulário (geralmente `null` na criação inicial).
+    *   **Nota de Segurança (Backend - Dados):** Todos os dados dinâmicos (como nome do lead, detalhes do imóvel) são HTML-escapados pelo backend (`PropostaContratoService.montarDadosParaTemplate`) antes de serem usados para preencher os placeholders do modelo de contrato. Isso previne a injeção de HTML/scripts maliciosos através dos dados da proposta.
 6.  **Salvar PropostaContrato:** Cria uma nova instância do modelo `PropostaContrato` e a salva no banco.
 7.  **Atualizar Status da Reserva:**
     *   Altera o `reserva.statusReserva` para "ConvertidaEmProposta".
@@ -133,11 +134,13 @@ A criação da proposta, conforme descrito acima, foca em salvar os **dados estr
 2.  **Geração do HTML:**
     *   Uma ação no frontend (ex: botão "Gerar Documento") chama a API (`POST /api/propostas-contratos/:id/gerar-documento` com `modeloId` no corpo).
     *   O backend (`PropostaContratoService.gerarDocumentoHTML`) busca o conteúdo do template do modelo, busca os dados da proposta e entidades relacionadas (lead, imóvel, empresa vendedora, corretor).
-    *   Preenche os placeholders (ex: `{{lead_principal_nome}}`) no template com os dados reais.
+    *   Preenche os placeholders (ex: `{{lead_principal_nome}}`) no template com os dados reais (que já foram HTML-escapados).
     *   Retorna a string HTML resultante para o frontend.
 3.  **Visualização e Edição:** O frontend exibe o HTML gerado (ex: usando um editor como `react-quill`). O usuário pode fazer ajustes finos no HTML.
+    *   **Nota de Segurança (Frontend - Display):** Ao exibir este HTML final (por exemplo, na página de detalhes da proposta), o frontend utiliza `DOMPurify.sanitize()` para sanitizar o conteúdo antes de renderizá-lo com `dangerouslySetInnerHTML`. Esta é uma camada de defesa em profundidade.
 4.  **Salvamento do HTML:** Para persistir o HTML gerado (ou editado), o frontend chama a API de atualização da proposta (`PUT /api/propostas-contratos/:id`), enviando o conteúdo HTML no campo `corpoContratoHTMLGerado`.
-5.  **Geração de PDF:** Uma vez que o `corpoContratoHTMLGerado` está salvo, um PDF pode ser gerado através da API (`GET /api/propostas-contratos/:id/pdf`). O backend usa o Puppeteer para converter o HTML salvo em um arquivo PDF.
+    *   **Nota de Segurança (Backend - Templates):** Os `ModeloContrato` (templates base), que são criados por administradores, têm seu conteúdo HTML (`conteudoHTMLTemplate`) sanitizado pelo backend (usando `DOMPurify`) no momento em que são salvos. Isso garante que os templates base sejam seguros.
+5.  **Geração de PDF:** Uma vez que o `corpoContratoHTMLGerado` está salvo (sendo este resultado de um template sanitizado + dados escapados), um PDF pode ser gerado via API (`GET /api/propostas-contratos/:id/pdf`). O backend usa Puppeteer para converter o HTML em PDF.
 
 ## 5. Salvamento Final
 

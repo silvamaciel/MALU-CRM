@@ -13,7 +13,19 @@ const ModeloContrato = require('../models/ModeloContrato');
 const BrokerContact = require('../models/BrokerContact');
 const puppeteer = require('puppeteer-core');
 const DiscardReason = require('../models/DiscardReason');
-
+const { escapeHtml } = require('../utils/htmlUtils');
+const {
+    PROPOSTA_CONTRATO_STATUS,
+    LEAD_HISTORY_ACTIONS,
+    LEAD_STAGE_NOME_PROPOSTA_EMITIDA,
+    LEAD_STAGE_NOME_EM_RESERVA,
+    LEAD_STAGE_NOME_VENDA_REALIZADA,
+    LEAD_STAGE_NOME_PROPOSTA_RECUSADA,
+    LEAD_STAGE_NOME_NEGOCIACAO_PERDIDA,
+    LEAD_STAGE_NOME_DESCARTADO,
+    RESERVA_STATUS,
+    UNIDADE_STATUS,
+} = require('../utils/constants');
 
 
  
@@ -56,12 +68,12 @@ const montarDadosParaTemplate = (propostaData, leadDoc, imovelDoc, empresaVended
   const dados = {};
 
   // --- 1. Dados do Vendedor (Sua Empresa) ---
-  dados['vendedor_nome_fantasia'] = empresaVendedora?.nome || '';
-  dados['vendedor_razao_social'] = empresaVendedora?.razaoSocial || empresaVendedora?.nome || '';
-  dados['vendedor_cnpj'] = empresaVendedora?.cnpj || '';
-  dados['vendedor_endereco_completo'] = `${empresaVendedora?.endereco?.logradouro || ''}, ${empresaVendedora?.endereco?.numero || ''} - ${empresaVendedora?.endereco?.bairro || ''}, ${empresaVendedora?.endereco?.cidade || ''}/${empresaVendedora?.endereco?.uf || ''}`;
-  dados['vendedor_representante_nome'] = empresaVendedora?.representanteLegalNome || '';
-  dados['vendedor_representante_cpf'] = empresaVendedora?.representanteLegalCPF || '';
+  dados['vendedor_nome_fantasia'] = escapeHtml(empresaVendedora?.nome || '');
+  dados['vendedor_razao_social'] = escapeHtml(empresaVendedora?.razaoSocial || empresaVendedora?.nome || '');
+  dados['vendedor_cnpj'] = escapeHtml(empresaVendedora?.cnpj || '');
+  dados['vendedor_endereco_completo'] = escapeHtml(`${empresaVendedora?.endereco?.logradouro || ''}, ${empresaVendedora?.endereco?.numero || ''} - ${empresaVendedora?.endereco?.bairro || ''}, ${empresaVendedora?.endereco?.cidade || ''}/${empresaVendedora?.endereco?.uf || ''}`);
+  dados['vendedor_representante_nome'] = escapeHtml(empresaVendedora?.representanteLegalNome || '');
+  dados['vendedor_representante_cpf'] = escapeHtml(empresaVendedora?.representanteLegalCPF || '');
 
   // --- 2. Dados dos Compradores (Principal + Coadquirentes) ---
  const todosAdquirentes = propostaData.adquirentesSnapshot || [];
@@ -72,31 +84,34 @@ let blocoAssinaturasCompradores = '';
 todosAdquirentes.forEach((adq, index) => {
     const prefixo = index === 0 ? 'lead_principal' : `coadquirente${index}`;
 
-    dados[`${prefixo}_nome`] = adq.nome || '';
-    dados[`${prefixo}_cpf`] = adq.cpf || '';
-    dados[`${prefixo}_rg`] = adq.rg || '';
-    dados[`${prefixo}_nacionalidade`] = adq.nacionalidade || '';
-    dados[`${prefixo}_estadoCivil`] = adq.estadoCivil || '';
-    dados[`${prefixo}_profissao`] = adq.profissao || '';
-    dados[`${prefixo}_email`] = adq.email || '';
-    dados[`${prefixo}_contato`] = adq.contato || '';
-    dados[`${prefixo}_endereco`] = adq.endereco || '';
-    dados[`${prefixo}_nascimento`] = formatDate(adq.nascimento);
+    dados[`${prefixo}_nome`] = escapeHtml(adq.nome || '');
+    dados[`${prefixo}_cpf`] = escapeHtml(adq.cpf || '');
+    dados[`${prefixo}_rg`] = escapeHtml(adq.rg || '');
+    dados[`${prefixo}_nacionalidade`] = escapeHtml(adq.nacionalidade || '');
+    dados[`${prefixo}_estadoCivil`] = escapeHtml(adq.estadoCivil || '');
+    dados[`${prefixo}_profissao`] = escapeHtml(adq.profissao || '');
+    dados[`${prefixo}_email`] = escapeHtml(adq.email || '');
+    dados[`${prefixo}_contato`] = escapeHtml(adq.contato || '');
+    dados[`${prefixo}_endereco`] = escapeHtml(adq.endereco || '');
+    dados[`${prefixo}_nascimento`] = formatDate(adq.nascimento); // formatDate already handles empty/invalid
 
     if (index > 0) {
+        // Note: HTML blocks like this are generally not great for security if content isn't controlled.
+        // However, since all individual adq fields are escaped, the risk here is lower.
+        // The ideal would be to build this structure with safer templating if it were more complex.
         blocoHtmlCoadquirentes += `
         <p>
             <strong>Coadquirente ${index}</strong><br>
-            Nome: ${adq.nome || ''}<br>
-            CPF: ${adq.cpf || ''}<br>
-            RG: ${adq.rg || ''}<br>
-            Estado Civil: ${adq.estadoCivil || ''}<br>
-            Nacionalidade: ${adq.nacionalidade || ''}<br>
-            Profissão: ${adq.profissao || ''}<br>
-            E-mail: ${adq.email || ''}<br>
-            Telefone: ${adq.contato || ''}<br>
+            Nome: ${escapeHtml(adq.nome || '')}<br>
+            CPF: ${escapeHtml(adq.cpf || '')}<br>
+            RG: ${escapeHtml(adq.rg || '')}<br>
+            Estado Civil: ${escapeHtml(adq.estadoCivil || '')}<br>
+            Nacionalidade: ${escapeHtml(adq.nacionalidade || '')}<br>
+            Profissão: ${escapeHtml(adq.profissao || '')}<br>
+            E-mail: ${escapeHtml(adq.email || '')}<br>
+            Telefone: ${escapeHtml(adq.contato || '')}<br>
             Data de Nascimento: ${formatDate(adq.nascimento)}<br>
-            Endereço: ${adq.endereco || ''}
+            Endereço: ${escapeHtml(adq.endereco || '')}
         </p>
         `;
     }
@@ -105,8 +120,8 @@ todosAdquirentes.forEach((adq, index) => {
     blocoAssinaturasCompradores += `
         <p style="text-align: center;  margin-top: 80px; margin-bottom: 60px">
         _________________________<br>
-        <strong>${adq.nome || ''}</strong><br>
-        ${tituloAssinatura}
+        <strong>${escapeHtml(adq.nome || '')}</strong><br>
+        ${escapeHtml(tituloAssinatura)}
         <br>
         <br>
         <br>
@@ -124,40 +139,45 @@ todosAdquirentes.forEach((adq, index) => {
     const tipo = imovelDoc.constructor?.modelName;
     const empreendimento = tipo === 'Unidade' ? imovelDoc.empreendimento : null;
 
-    dados['imovel_descricao'] = tipo === 'Unidade' ? imovelDoc.tipologia : imovelDoc.descricao;
-    dados['imovel_identificador'] = tipo === 'Unidade' ? imovelDoc.identificador : imovelDoc.titulo;
-    dados['empreendimento_nome'] = tipo === 'Unidade'
+    dados['imovel_descricao'] = escapeHtml(tipo === 'Unidade' ? imovelDoc.tipologia : imovelDoc.descricao);
+    dados['imovel_identificador'] = escapeHtml(tipo === 'Unidade' ? imovelDoc.identificador : imovelDoc.titulo);
+    dados['empreendimento_nome'] = escapeHtml(tipo === 'Unidade'
       ? empreendimento?.nome || 'Empreendimento não identificado'
-      : 'Imóvel Avulso';
-    dados['imovel_endereco_completo'] = tipo === 'Unidade'
+      : 'Imóvel Avulso');
+    dados['imovel_endereco_completo'] = escapeHtml(tipo === 'Unidade'
       ? `${empreendimento?.localizacao?.logradouro || ''}, ${empreendimento?.localizacao?.numero || ''}`
-      : `${imovelDoc.endereco?.logradouro || ''}, ${imovelDoc.endereco?.numero || ''}`;
-    dados['unidade_matricula'] = imovelDoc.matriculaImovel || '';
-    dados['unidade_memorial_incorporacao'] = tipo === 'Unidade'
+      : `${imovelDoc.endereco?.logradouro || ''}, ${imovelDoc.endereco?.numero || ''}`);
+    dados['unidade_matricula'] = escapeHtml(imovelDoc.matriculaImovel || '');
+    dados['unidade_memorial_incorporacao'] = escapeHtml(tipo === 'Unidade'
       ? (empreendimento?.memorialIncorporacao || '')
-      : 'N/A';
+      : 'N/A');
   }
 
   // --- 4. Dados Financeiros e da Proposta ---
+  // Financial data (numbers, dates) is generally safe, but string descriptions should be escaped.
   dados['proposta_valor_total_formatado'] = formatCurrency(propostaData.valorPropostaContrato);
   dados['proposta_valor_entrada_formatado'] = propostaData.valorEntrada ? formatCurrency(propostaData.valorEntrada) : 'N/A';
-  dados['proposta_condicoes_pagamento_gerais'] = propostaData.condicoesPagamentoGerais || '';
+  dados['proposta_condicoes_pagamento_gerais'] = escapeHtml(propostaData.condicoesPagamentoGerais || '');
+
+  // For plano_pagamento_string_formatada, individual parts are formatted/escaped.
+  // The <br> is intentional HTML for the template.
   dados['plano_pagamento_string_formatada'] = (propostaData.planoDePagamento || [])
-    .map(p => `- ${p.quantidade || 1}x ${p.tipoParcela} de ${formatCurrency(p.valorUnitario)} (1º Venc: ${formatDate(p.vencimentoPrimeira)})`)
+    .map(p => `- ${escapeHtml(String(p.quantidade || 1))}x ${escapeHtml(p.tipoParcela)} de ${formatCurrency(p.valorUnitario)} (1º Venc: ${formatDate(p.vencimentoPrimeira)})${p.observacao ? ' Obs: ' + escapeHtml(p.observacao) : ''}`)
     .join('<br>');
+
 
   // --- 5. Dados da Corretagem ---
   dados['corretagem_valor_formatado'] = propostaData.corretagem?.valorCorretagem ? formatCurrency(propostaData.corretagem.valorCorretagem) : 'N/A';
-  dados['corretagem_condicoes'] = propostaData.corretagem?.condicoesPagamentoCorretagem || '';
-  dados['corretor_principal_nome'] = corretorPrincipalDoc?.nome || '';
-  dados['corretor_principal_cpf_cnpj'] = corretorPrincipalDoc?.cpfCnpj || '';
-  dados['corretor_principal_creci'] = corretorPrincipalDoc?.creci || '';
+  dados['corretagem_condicoes'] = escapeHtml(propostaData.corretagem?.condicoesPagamentoCorretagem || '');
+  dados['corretor_principal_nome'] = escapeHtml(corretorPrincipalDoc?.nome || '');
+  dados['corretor_principal_cpf_cnpj'] = escapeHtml(corretorPrincipalDoc?.cpfCnpj || '');
+  dados['corretor_principal_creci'] = escapeHtml(corretorPrincipalDoc?.creci || '');
 
   // --- 6. Dados Gerais do Documento ---
-  dados['data_proposta_extenso'] = formatDateExtenso(propostaData.dataProposta);
-  dados['cidade_contrato'] = empresaVendedora.endereco?.cidade || '';
+  dados['data_proposta_extenso'] = formatDateExtenso(propostaData.dataProposta); // Date formatting is safe
+  dados['cidade_contrato'] = escapeHtml(empresaVendedora.endereco?.cidade || '');
 
-  console.log('[DEBUG CONTRATO] Placeholders disponíveis para o modelo:', JSON.stringify(dados, null, 2));
+  // console.log('[DEBUG CONTRATO] Placeholders disponíveis para o modelo:', JSON.stringify(dados, null, 2));
 
   return dados;
 };
@@ -187,7 +207,7 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
       .session(session);
 
     if (!reserva) throw new Error("Reserva associada não encontrada.");
-    if (reserva.statusReserva !== 'Ativa') throw new Error(`A reserva não está mais ativa. Status atual: ${reserva.statusReserva}`);
+    if (reserva.statusReserva !== RESERVA_STATUS.ATIVA) throw new Error(`A reserva não está mais ativa. Status atual: ${reserva.statusReserva}`);
 
     // Atualizar dados do lead com base no primeiro adquirente
     if (propostaData.adquirentes?.length > 0) {
@@ -227,30 +247,34 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
       company: companyId,
       createdBy: creatingUserId,
       adquirentesSnapshot,
-      empreendimentoNomeSnapshot: reserva.tipoImovel === 'Unidade' ? reserva.imovel.empreendimento?.nome : 'Imóvel Avulso',
-      unidadeIdentificadorSnapshot: reserva.tipoImovel === 'Unidade' ? reserva.imovel.identificador : reserva.imovel.titulo,
+      empreendimentoNomeSnapshot: reserva.tipoImovel === 'Unidade' ? reserva.imovel.empreendimento?.nome : 'Imóvel Avulso', // These are snapshots, escaping might not be needed here if they are for internal reference
+      unidadeIdentificadorSnapshot: reserva.tipoImovel === 'Unidade' ? reserva.imovel.identificador : reserva.imovel.titulo, // Same as above
       precoTabelaUnidadeNoMomento: reserva.tipoImovel === 'Unidade' ? reserva.imovel.precoTabela : reserva.imovel.preco,
-      corpoContratoHTMLGerado: "<p><em>Documento ainda não foi gerado. Selecione um modelo de contrato na página de detalhes para gerá-lo.</em></p>",
+      corpoContratoHTMLGerado: "<p><em>Documento ainda não foi gerado. Selecione um modelo de contrato na página de detalhes para gerá-lo.</em></p>", // This is a system message, no need to escape
       modeloContratoUtilizado: null,
+      statusPropostaContrato: PROPOSTA_CONTRATO_STATUS.EM_ELABORACAO, // Using constant
     };
 
     const proposta = new PropostaContrato(dadosParaNovaProposta);
     proposta.$ignoreValidacaoParcelas = true;
     const propostaSalva = await proposta.save({ session });
 
-    reserva.statusReserva = 'ConvertidaEmProposta';
+    reserva.statusReserva = RESERVA_STATUS.CONVERTIDA_EM_PROPOSTA; // Using constant
     reserva.propostaId = propostaSalva._id;
 
     const imovelDoc = await mongoose.model(reserva.tipoImovel).findById(reserva.imovel._id).session(session);
     if (imovelDoc) {
-      imovelDoc.status = 'Proposta';
+      imovelDoc.status = UNIDADE_STATUS.PROPOSTA; // Assuming 'Proposta' is a valid status for ImovelAvulso as well, or use specific status
+      if (imovelDoc.constructor.modelName === 'Unidade') {
+        imovelDoc.statusUnidade = UNIDADE_STATUS.PROPOSTA;
+      }
       await imovelDoc.save({ session });
     }
 
-    const nomeEstagio = 'Proposta Emitida';
+    const nomeEstagio = LEAD_STAGE_NOME_PROPOSTA_EMITIDA; // Using constant
     const leadStage = await LeadStage.findOneAndUpdate(
-      { company: companyId, nome: { $regex: new RegExp(`^${nomeEstagio}$`, 'i') } },
-      { $setOnInsert: { nome: nomeEstagio, company: companyId, ativo: true } },
+      { company: companyId, nome: { $regex: new RegExp(`^${nomeEstagio}$`, 'i') } }, // Regex still needed if names can vary slightly in DB
+      { $setOnInsert: { nome: nomeEstagio, company: companyId, ativo: true } }, // Ensure created constant name is used
       { new: true, upsert: true, runValidators: true, session }
     );
     reserva.lead.situacao = leadStage._id;
@@ -263,11 +287,11 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
     await logHistory(
       reserva.lead._id,
       creatingUserId,
-      'PROPOSTA_CONTRATO_CRIADA',
+      LEAD_HISTORY_ACTIONS.PROPOSTA_CONTRATO_CRIADA, // Using constant
       `Proposta (dados) criada com ID ${propostaSalva._id}.`,
       { propostaContratoId: propostaSalva._id },
       null,
-      'PropostaContrato',
+      'PropostaContrato', // This refers to the model name for history context, not a status
       propostaSalva._id,
       session
     );
@@ -546,8 +570,8 @@ const updateStatusPropostaContrato = async (propostaContratoId, novoStatus, dado
         throw new Error("IDs inválidos fornecidos (Proposta/Contrato, Empresa ou Usuário).");
     }
 
-    const statusPermitidos = PropostaContrato.schema.path('statusPropostaContrato').enumValues;
-    if (!statusPermitidos.includes(novoStatus)) {
+    // const statusPermitidos = PropostaContrato.schema.path('statusPropostaContrato').enumValues; // Not needed if using constants
+    if (!Object.values(PROPOSTA_CONTRATO_STATUS).includes(novoStatus)) {
         throw new Error(`Status '${novoStatus}' é inválido para Proposta/Contrato.`);
     }
 
@@ -571,7 +595,7 @@ const updateStatusPropostaContrato = async (propostaContratoId, novoStatus, dado
         const statusAntigoProposta = propostaContrato.statusPropostaContrato;
         if (statusAntigoProposta === novoStatus) {
             // Nenhuma mudança de status, talvez apenas atualizando outros campos como dataAssinatura
-            if (novoStatus === "Assinado" && dadosAdicionais.dataAssinaturaCliente) {
+            if (novoStatus === PROPOSTA_CONTRATO_STATUS.ASSINADO && dadosAdicionais.dataAssinaturaCliente) {
                 propostaContrato.dataAssinaturaCliente = new Date(dadosAdicionais.dataAssinaturaCliente);
             }
              // Poderia adicionar lógica para atualizar outros campos se não houver mudança de status
@@ -584,45 +608,50 @@ const updateStatusPropostaContrato = async (propostaContratoId, novoStatus, dado
         // TODO: Adicionar lógica de transição de status permitida (ex: de "Em Elaboração" só pode ir para "Aguardando Aprovação", etc.)
 
         propostaContrato.statusPropostaContrato = novoStatus;
-        let leadStatusNomeAlvo = null; // Nome do novo estágio do lead
-        let logAction = `PROPOSTA_STATUS_${novoStatus.toUpperCase().replace(/\s+/g, '_')}`;
+        let leadStatusNomeAlvo = null;
+        let logActionKey = `PROPOSTA_STATUS_${novoStatus.toUpperCase().replace(/\s+/g, '_').replace(/Ç/g, 'C').replace(/Ã/g, 'A').replace(/Õ/g, 'O')}`;
+        let logAction = LEAD_HISTORY_ACTIONS[logActionKey] || LEAD_HISTORY_ACTIONS.ATUALIZACAO; // Fallback
+
         let logDetails = `Status da Proposta/Contrato (ID: ${propostaContrato._id}) alterado de "${statusAntigoProposta}" para "${novoStatus}".`;
 
         // Lógica específica baseada no NOVO status
-        if (novoStatus === "Assinado") {
+        if (novoStatus === PROPOSTA_CONTRATO_STATUS.ASSINADO) {
             propostaContrato.dataAssinaturaCliente = dadosAdicionais.dataAssinaturaCliente ? new Date(dadosAdicionais.dataAssinaturaCliente) : new Date();
-            leadStatusNomeAlvo = "Em Reserva"; // Ou o nome do seu estágio
-        } else if (novoStatus === "Vendido") {
+            leadStatusNomeAlvo = LEAD_STAGE_NOME_EM_RESERVA;
+        } else if (novoStatus === PROPOSTA_CONTRATO_STATUS.VENDIDO) {
             propostaContrato.dataVendaEfetivada = dadosAdicionais.dataVendaEfetivada ? new Date(dadosAdicionais.dataVendaEfetivada) : new Date();
-            propostaContrato.dataAssinaturaCliente = propostaContrato.dataAssinaturaCliente || new Date(); // Garante data de assinatura se não houver
+            propostaContrato.dataAssinaturaCliente = propostaContrato.dataAssinaturaCliente || new Date();
             
-            // Atualiza Unidade
-            propostaContrato.unidade.statusUnidade = "Vendido";
-            // currentLeadId e currentReservaId já devem estar corretos na unidade desde a reserva
-
-            // Atualiza Reserva
-            propostaContrato.reserva.statusReserva = "ConvertidaEmVenda";
-            
-            leadStatusNomeAlvo = "Venda Realizada";
-        } else if (novoStatus === "Recusado" || novoStatus === "Cancelado") {
-            // Atualiza Reserva
-            propostaContrato.reserva.statusReserva = novoStatus === "Recusado" ? "RecusadaPelaProposta" : "CanceladaPelaProposta";
-
-            // Libera a Unidade
-            if (propostaContrato.unidade.statusUnidade !== "Disponível" && 
-                propostaContrato.unidade.currentReservaId && 
-                propostaContrato.unidade.currentReservaId.equals(propostaContrato.reserva._id)) 
-            {
-                propostaContrato.unidade.statusUnidade = "Disponível";
-                propostaContrato.unidade.currentLeadId = null;
-                propostaContrato.unidade.currentReservaId = null;
+            if (propostaContrato.unidade) { // Check if unidade exists (for ImovelAvulso it might not be 'unidade')
+                if (propostaContrato.tipoImovel === 'Unidade') {
+                    propostaContrato.unidade.statusUnidade = UNIDADE_STATUS.VENDIDO;
+                } else if (propostaContrato.tipoImovel === 'ImovelAvulso') {
+                    propostaContrato.unidade.status = UNIDADE_STATUS.VENDIDO; // Assuming ImovelAvulso uses 'status'
+                }
             }
-            leadStatusNomeAlvo = novoStatus === "Recusado" ? "Proposta Recusada" : "Negociação Perdida"; // Ou um estágio genérico
+            propostaContrato.reserva.statusReserva = RESERVA_STATUS.CONVERTIDA_EM_VENDA;
+            leadStatusNomeAlvo = LEAD_STAGE_NOME_VENDA_REALIZADA;
+        } else if (novoStatus === PROPOSTA_CONTRATO_STATUS.RECUSADO || novoStatus === PROPOSTA_CONTRATO_STATUS.CANCELADO) {
+            propostaContrato.reserva.statusReserva = novoStatus === PROPOSTA_CONTRATO_STATUS.RECUSADO
+                ? RESERVA_STATUS.RECUSADA_PELA_PROPOSTA
+                : RESERVA_STATUS.CANCELADA_PELA_PROPOSTA;
+
+            if (propostaContrato.unidade) {
+                const currentUnitStatusField = propostaContrato.tipoImovel === 'Unidade' ? 'statusUnidade' : 'status';
+                if (propostaContrato.unidade[currentUnitStatusField] !== UNIDADE_STATUS.DISPONIVEL &&
+                    propostaContrato.unidade.currentReservaId &&
+                    propostaContrato.unidade.currentReservaId.equals(propostaContrato.reserva._id))
+                {
+                    propostaContrato.unidade[currentUnitStatusField] = UNIDADE_STATUS.DISPONIVEL;
+                    propostaContrato.unidade.currentLeadId = null;
+                    propostaContrato.unidade.currentReservaId = null;
+                }
+            }
+            leadStatusNomeAlvo = novoStatus === PROPOSTA_CONTRATO_STATUS.RECUSADO ? LEAD_STAGE_NOME_PROPOSTA_RECUSADA : LEAD_STAGE_NOME_NEGOCIACAO_PERDIDA;
         }
-        // Adicione mais 'else if' para outros status que alteram Lead/Unidade
 
         // Salva Unidade e Reserva se foram modificadas
-        if (propostaContrato.unidade.isModified()) await propostaContrato.unidade.save({ session });
+        if (propostaContrato.unidade && propostaContrato.unidade.isModified()) await propostaContrato.unidade.save({ session });
         if (propostaContrato.reserva.isModified()) await propostaContrato.reserva.save({ session });
 
         // Atualiza Status do Lead se um leadStatusNomeAlvo foi definido
@@ -713,24 +742,25 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
         const statusAntigoProposta = propostaContrato.statusPropostaContrato;
 
         // 1. Atualizar Proposta/Contrato
-        propostaContrato.statusPropostaContrato = "Distrato Realizado";
+        propostaContrato.statusPropostaContrato = PROPOSTA_CONTRATO_STATUS.DISTRATO_REALIZADO;
         propostaContrato.motivoDistrato = dadosDistrato.motivoDistrato;
         propostaContrato.dataDistrato = dadosDistrato.dataDistrato ? new Date(dadosDistrato.dataDistrato) : new Date();
 
         // 2. Atualizar Reserva associada
-        const reservaDoc = propostaContrato.reserva; // Referência ao documento populado
-        reservaDoc.statusReserva = "Distratada";
+        const reservaDoc = propostaContrato.reserva;
+        reservaDoc.statusReserva = RESERVA_STATUS.DISTRATADA;
 
-        // 3. Liberar Unidade
-        const unidadeDoc = propostaContrato.unidade; // Referência ao documento populado
-        unidadeDoc.statusUnidade = "Disponível";
-        unidadeDoc.currentLeadId = null;
-        unidadeDoc.currentReservaId = null;
+        // 3. Liberar Unidade/Imóvel
+        const imovelDoc = propostaContrato.unidade; // 'unidade' here is a generic term for the imovel linked object
+        const statusField = propostaContrato.tipoImovel === 'Unidade' ? 'statusUnidade' : 'status';
+        imovelDoc[statusField] = UNIDADE_STATUS.DISPONIVEL;
+        imovelDoc.currentLeadId = null;
+        imovelDoc.currentReservaId = null;
 
         // 4. Atualizar Lead
-        const nomeEstagioDescartado = "Descartado"; 
+        const nomeEstagioDescartado = LEAD_STAGE_NOME_DESCARTADO;
         const situacaoDescartado = await LeadStage.findOneAndUpdate(
-            { company: companyId, nome: { $regex: new RegExp(`^${nomeEstagioDescartado}$`, "i") } },
+            { company: companyId, nome: { $regex: new RegExp(`^${nomeEstagioDescartado}$`, "i") } }, // Regex for case-insensitivity
             { $setOnInsert: { nome: nomeEstagioDescartado, company: companyId, ativo: true, descricao: "Lead descartado devido a distrato de contrato." } },
             { new: true, upsert: true, runValidators: true, session: session }
         );
@@ -778,18 +808,18 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
         console.log('[DEBUG] Unidade:', unidadeDoc.statusUnidade);
         console.log('[DEBUG] Lead:', leadDoc.situacao);
         console.log('[DEBUG] Reserva:', reservaDoc.statusReserva);
-        await unidadeDoc.save({ session });       // Salva as alterações na unidade
-        await reservaDoc.save({ session });       // Salva as alterações na reserva
-        await leadDoc.save({ session });          // Salva as alterações no lead
-        const propostaAtualizada = await propostaContrato.save({ session }); // Salva as alterações na proposta
+        await imovelDoc.save({ session });
+        await reservaDoc.save({ session });
+        await leadDoc.save({ session });
+        const propostaAtualizada = await propostaContrato.save({ session });
 
         // 5. Log de Histórico
-        const leadStatusAntigoNomeDoc = await LeadStage.findById(oldLeadStatusId).select('nome').lean(); // Fora da session, é uma leitura
-        const logDetails = `Distrato registrado. Motivo: ${dadosDistrato.motivoDistrato}. Unidade ${unidadeDoc.identificador} liberada. Lead movido para "${situacaoDescartado.nome}".`;
+        const leadStatusAntigoNomeDoc = await LeadStage.findById(oldLeadStatusId).select('nome').lean();
+        const logDetails = `Distrato registrado. Motivo: ${dadosDistrato.motivoDistrato}. Imóvel liberado. Lead movido para "${situacaoDescartado.nome}".`;
         await logHistory(
-            leadDoc._id, actorUserId, "DISTRATO_REALIZADO", logDetails,
-            { oldStatusProposta: statusAntigoProposta, oldStatusUnidade: "Vendido" }, 
-            { newStatusProposta: "Distrato Realizado", newStatusUnidade: "Disponível" },
+            leadDoc._id, actorUserId, LEAD_HISTORY_ACTIONS.DISTRATO_REALIZADO_HIST, logDetails,
+            { oldStatusProposta: statusAntigoProposta, oldStatusImovel: PROPOSTA_CONTRATO_STATUS.VENDIDO },
+            { newStatusProposta: PROPOSTA_CONTRATO_STATUS.DISTRATO_REALIZADO, newStatusImovel: UNIDADE_STATUS.DISPONIVEL },
             'PropostaContrato', propostaAtualizada._id, session
         );
 

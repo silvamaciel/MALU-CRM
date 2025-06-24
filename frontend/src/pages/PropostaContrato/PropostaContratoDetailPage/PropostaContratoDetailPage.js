@@ -1,6 +1,7 @@
 // src/pages/PropostaContrato/PropostaContratoDetailPage/PropostaContratoDetailPage.js
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import DOMPurify from 'dompurify';
 import { toast } from "react-toastify";
 import {
   getPropostaContratoByIdApi,
@@ -457,9 +458,11 @@ function PropostaContratoDetailPage() {
           <div
             className="html-preview-container"
             dangerouslySetInnerHTML={{
-              __html:
+              __html: DOMPurify.sanitize(
                 propostaContrato.corpoContratoHTMLGerado ||
                 "<p>Conteúdo do contrato não disponível.</p>",
+                { USE_PROFILES: { html: true } }
+              ),
             }}
           />
         </div>

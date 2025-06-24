@@ -1,14 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import React, { useState, useEffect } from 'react'; // Removed useCallback as it's in the hook
+import { useParams, Link } from 'react-router-dom'; // useNavigate is now in hooks
+// Removed API imports, they are now in hooks
+// import { getReservaByIdApi, createPropostaContratoApi, updatePropostaContratoApi, getPropostaContratoByIdApi } from '../../../api/propostaContratoApi';
+// import { getUsuarios } from '../../../api/users';
+// import { getBrokerContacts } from '../../../api/brokerContacts';
 
+// Custom Hooks
+import usePropostaFormInitializer from '../../../hooks/usePropostaFormInitializer';
+import usePropostaFormSubmit from '../../../hooks/usePropostaFormSubmit';
 
-// APIs
-import { getReservaByIdApi, createPropostaContratoApi, updatePropostaContratoApi, getPropostaContratoByIdApi } from '../../../api/propostaContratoApi';
-import { getUsuarios } from '../../../api/users';
-import { getBrokerContacts } from '../../../api/brokerContacts';
-
-// Componentes
+// Componentes (Step components remain)
 import StepAdquirentes from '../../../components/PropostaWizard/StepAdquirentes';
 import StepFinanceiro from '../../../components/PropostaWizard/StepFinanceiro';
 import StepCorretagem from '../../../components/PropostaWizard/StepCorretagem';
@@ -20,189 +21,40 @@ const STATUS_PROPOSTA_OPCOES = ["Em Elaboração", "Aguardando Aprovações", "A
 
 function PropostaContratoFormPage() {
   const { reservaId, propostaContratoId } = useParams();
-  const navigate = useNavigate();
   const isEditMode = Boolean(propostaContratoId);
-  const totalSteps = 4;
+  const totalSteps = 4; // This can be a constant or derived if steps become dynamic
 
-  const [formData, setFormData] = useState({
-    adquirentes: [{ nome: '', cpf: '', rg: '', nacionalidade: 'Brasileiro(a)', estadoCivil: '', profissao: '', isPrincipal: true }],
-    valorPropostaContrato: '', valorEntrada: '', condicoesPagamentoGerais: '',
-    planoDePagamento: [{ tipoParcela: 'ATO', quantidade: 1, valorUnitario: '', vencimentoPrimeira: '', observacao: '' }],
-    corretagem: { valorCorretagem: '', corretorPrincipal: '', condicoesPagamentoCorretagem: '', observacoesCorretagem: '' },
-    corpoContratoHTMLGerado: '', responsavelNegociacao: '', observacoesInternasProposta: '',
-    statusPropostaContrato: STATUS_PROPOSTA_OPCOES[0], dataProposta: new Date().toISOString().split("T")[0]
-  });
+  const {
+    formData,
+    setFormData,
+    pageTitle,
+    reservaBase,
+    propostaBase,
+    usuariosCRM,
+    brokerContactsList,
+    loadingInitialData,
+    STATUS_PROPOSTA_OPCOES // Make sure this is exported from the hook if needed by StepResumo for status options
+  } = usePropostaFormInitializer(reservaId, propostaContratoId, isEditMode);
+
+  const {
+    isSaving,
+    formError, // Form-level error from submission hook
+    showConfirmModal,
+    // setShowConfirmModal, // Managed by the hook now
+    initiateSubmit,
+    executeSubmit,
+    cancelSubmit,
+    pendingSubmitData
+  } = usePropostaFormSubmit(isEditMode, propostaContratoId, reservaId);
 
   const [currentStep, setCurrentStep] = useState(1);
-  const [reservaBase, setReservaBase] = useState(null);
-  const [propostaBase, setPropostaBase] = useState(null);
-  const [usuariosCRM, setUsuariosCRM] = useState([]);
-  const [brokerContactsList, setBrokerContactsList] = useState([]);
-  const [loadingInitialData, setLoadingInitialData] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [formError, setFormError] = useState("");
-  const [pageTitle, setPageTitle] = useState("Nova Proposta/Contrato");
-  const [modalOpen, setModalOpen] = useState(false);
-  const [pendingSubmission, setPendingSubmission] = useState(null);
+  // Removed local formError state, using the one from usePropostaFormSubmit
 
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [submitReady, setSubmitReady] = useState(false);
-
-  const montarDadosParaTemplate = useCallback((currentFormData, baseData) => {
-    if (!baseData) return {};
-    const { unidade, empreendimento } = baseData;
-    const formatCurrency = (v) => parseFloat(v) ? parseFloat(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'R$ 0,00';
-    return {
-      lead_principal_nome: currentFormData.adquirentes[0]?.nome || '',
-      lead_principal_cpf: currentFormData.adquirentes[0]?.cpf || '',
-      valor_proposta: formatCurrency(currentFormData.valorPropostaContrato),
-      unidade_identificador: unidade?.identificador || '',
-      empreendimento_nome: empreendimento?.nome || '',
-    };
-  }, []);
-
-  useEffect(() => {
-    const loadInitialData = async () => {
-      setLoadingInitialData(true);
-      try {
-        const [usuariosDataResult, brokersData] = await Promise.all([
-          getUsuarios({ ativo: true }), getBrokerContacts({ ativo: true })
-        ]);
-        setUsuariosCRM(usuariosDataResult || []);
-        setBrokerContactsList(brokersData || []);
-
-        let initialFormData = { ...formData };
-        let baseDataForTemplate = null;
-
-        if (isEditMode && propostaContratoId) {
-          setPageTitle("Carregando Proposta...");
-          const proposta = await getPropostaContratoByIdApi(propostaContratoId);
-          if (!proposta) throw new Error("Proposta/Contrato não encontrada.");
-
-          setPropostaBase(proposta);
-          baseDataForTemplate = proposta;
-          setPageTitle(`Editar Proposta | Lead: ${proposta.lead?.nome}`);
-
-          initialFormData = {
-            ...proposta,
-            responsavelNegociacao: proposta.responsavelNegociacao?._id || proposta.responsavelNegociacao,
-            corretagem: {
-              ...proposta.corretagem,
-              corretorPrincipal: proposta.corretagem?.corretorPrincipal?._id || proposta.corretagem?.corretorPrincipal
-            },
-            dataProposta: proposta.dataProposta ? new Date(proposta.dataProposta).toISOString().split('T')[0] : '',
-            planoDePagamento: proposta.planoDePagamento?.map(p => ({ ...p, vencimentoPrimeira: p.vencimentoPrimeira ? new Date(p.vencimentoPrimeira).toISOString().split('T')[0] : '' })) || [],
-            adquirentes: proposta.adquirentesSnapshot || [],
-          };
-        } else if (reservaId) {
-          setPageTitle("Carregando dados da Reserva...");
-          const reservaData = await getReservaByIdApi(reservaId);
-          if (!reservaData) throw new Error("Reserva base não encontrada.");
-
-          setReservaBase(reservaData);
-          baseDataForTemplate = reservaData;
-          setPageTitle(`Nova Proposta | Lead: ${reservaData.lead?.nome}`);
-
-          const precoImovel = reservaData?.imovel?.preco || reservaData?.imovel?.precoTabela || 0;
-
-          initialFormData = {
-            ...formData,
-            valorPropostaContrato: (formData.valorPropostaContrato ?? 0) <= 0 ? precoImovel : formData.valorPropostaContrato,
-            adquirentes: [{
-              nome: reservaData.lead?.nome || '',
-              cpf: reservaData.lead?.cpf || '',
-              rg: reservaData.lead?.rg || '',
-              nacionalidade: reservaData.lead?.nacionalidade || 'Brasileiro(a)',
-              estadoCivil: reservaData.lead?.estadoCivil || '',
-              profissao: reservaData.lead?.profissao || '',
-              email: reservaData.lead?.email || '',
-              contato: reservaData.lead?.contato || '',
-              endereco: reservaData.lead?.endereco || '',
-              nascimento: reservaData.lead?.nascimento || '',
-              isPrincipal: true
-            }, ...(reservaData.lead?.coadquirentes || [])],
-            responsavelNegociacao: reservaData.lead?.responsavel?._id || reservaData.lead?.responsavel || '',
-          };
-        } else {
-          toast.error("Nenhum ID de Reserva ou Proposta fornecido.");
-          navigate('/reservas');
-          return;
-        }
-
-        setFormData(initialFormData);
-      } catch (err) {
-        toast.error(`Erro ao carregar dados: ${err.error || err.message}`);
-      } finally {
-        setLoadingInitialData(false);
-      }
-    };
-    loadInitialData();
-  }, [reservaId, propostaContratoId, isEditMode, navigate]);
-
-  const handleSubmit = async (e) => {
-  e.preventDefault();
-  setFormError('');
-
-  // Validações
-  if (!formData.adquirentes?.[0]?.nome) {
-    toast.error("Dados do Adquirente Principal são obrigatórios.");
-    setCurrentStep(1);
-    return;
-  }
-  if (!formData.valorPropostaContrato || parseFloat(formData.valorPropostaContrato) <= 0) {
-    toast.error("Valor da Proposta é obrigatório.");
-    setCurrentStep(2);
-    return;
-  }
-  if (!formData.responsavelNegociacao) {
-    toast.error("Responsável pela negociação é obrigatório.");
-    return;
-  }
-  const planoPagamentoValido = formData.planoDePagamento.every(p => p.valorUnitario && p.vencimentoPrimeira);
-  if (!planoPagamentoValido) {
-    toast.error("Todas as parcelas precisam ter valor e vencimento.");
-    setCurrentStep(2);
-    return;
-  }
-
-  setShowConfirmModal(true); // <- Abre o modal
-};
-
-  const confirmSubmit = async () => {
-    setIsSaving(true);
-    const precoTabela = pendingSubmission?.precoTabela;
-
-    const dataToSubmit = {
-      ...formData,
-      modeloContratoUtilizado: formData.modeloContratoUtilizado || null,
-      adquirentesSnapshot: formData.adquirentes,
-      precoTabelaUnidadeNoMomento: precoTabela,
-      valorPropostaContrato: parseFloat(formData.valorPropostaContrato) || 0,
-      valorEntrada: formData.valorEntrada ? parseFloat(formData.valorEntrada) : null,
-      planoDePagamento: formData.planoDePagamento.filter(p => p.valorUnitario && p.vencimentoPrimeira),
-      corretagem: formData.corretagem?.valorCorretagem ? { ...formData.corretagem, valorCorretagem: Number(formData.corretagem.valorCorretagem) || 0 } : null,
-    };
-
-    delete dataToSubmit.corpoContratoHTMLGerado;
-
-    try {
-      let result;
-      if (isEditMode) {
-        result = await updatePropostaContratoApi(propostaContratoId, dataToSubmit);
-        toast.success("Proposta/Contrato atualizada com sucesso!");
-      } else {
-        result = await createPropostaContratoApi(reservaId, dataToSubmit);
-        toast.success("Proposta/Contrato criada com sucesso!");
-      }
-      navigate(`/propostas-contratos/${result._id || propostaContratoId}`);
-    } catch (err) {
-      const errMsg = err.error || err.message || "Erro ao salvar Proposta/Contrato.";
-      setFormError(errMsg);
-      toast.error(errMsg);
-    } finally {
-      setIsSaving(false);
-      setModalOpen(false);
-      setPendingSubmission(null);
+  const handleFormSubmitAttempt = (e) => {
+    e.preventDefault();
+    const { validationError, targetStep } = initiateSubmit(formData, reservaBase, propostaBase);
+    if (validationError && targetStep) {
+      setCurrentStep(targetStep); // Navigate to the step with validation error
     }
   };
 

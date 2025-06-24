@@ -13,7 +13,8 @@ const getAllOrigens = async (companyId) => {
     }
     try {
         return await Origem.find({ company: companyId, ativo: true })
-                           .sort({ nome: 1 });
+                           .sort({ nome: 1 })
+                           .lean(); // Added .lean()
     } catch (error) {
         console.error(`[OrigemService] Erro ao buscar origens para empresa ${companyId}:`, error);
         throw new Error('Erro ao buscar origens.');
@@ -39,7 +40,7 @@ const createOrigem = async (data, companyId) => {
         const existing = await Origem.findOne({
             nome: { $regex: new RegExp(`^${nomeTrimmed}$`, 'i') },
             company: companyId 
-        });
+        }).lean(); // Added .lean()
         if (existing) {
             throw new Error(`Origem '${nomeTrimmed}' já existe nesta empresa.`);
         }
@@ -96,7 +97,7 @@ const updateOrigem = async (id, companyId, data) => {
                  nome: { $regex: new RegExp(`^${fieldsToUpdate.nome}$`, 'i') },
                  company: companyId,
                  _id: { $ne: id }
-            });
+            }).lean(); // Added .lean()
             if (existing) {
                 throw new Error(`Já existe outra origem com o nome '${fieldsToUpdate.nome}' nesta empresa.`);
             }
@@ -130,12 +131,12 @@ const deleteOrigem = async (id, companyId) => { // <<< Aceita companyId
     if (!mongoose.Types.ObjectId.isValid(companyId)) throw new Error("ID da empresa inválido.");
 
     try {
-        const origemToDelete = await Origem.findOne({ _id: id, company: companyId });
+        const origemToDelete = await Origem.findOne({ _id: id, company: companyId }).lean(); // Added .lean()
         if (!origemToDelete) {
             throw new Error('Origem não encontrada ou não pertence a esta empresa.');
         }
 
-        const leadCount = await Lead.countDocuments({ origem: id, company: companyId });
+        const leadCount = await Lead.countDocuments({ origem: id, company: companyId }); // This is a count, no .lean() needed
         if (leadCount > 0) {
             throw new Error(`Não é possível excluir: A origem "${origemToDelete.nome}" está sendo usada por ${leadCount} lead(s) desta empresa.`);
         }
@@ -172,11 +173,14 @@ const findOrCreateOrigem = async (origemData, companyId) => {
     let origem = await Origem.findOne({
         nome: { $regex: new RegExp(`^${nomeOrigem}$`, 'i') },
         company: companyId
-    });
+    }).lean(); // Added .lean()
 
-    // Se encontrou, retorna o documento existente
+    // Se encontrou, retorna o documento existente (which is now a plain object)
     if (origem) {
         console.log(`[OrigemSvc] Origem '${nomeOrigem}' encontrada com ID: ${origem._id}`);
+        // If the rest of the system expects a Mongoose document, this might need adjustment
+        // or the caller needs to be aware it's a lean object.
+        // For findOrCreate, returning the lean object is often fine.
         return origem;
     }
 

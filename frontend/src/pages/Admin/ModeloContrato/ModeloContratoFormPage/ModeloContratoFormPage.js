@@ -1,6 +1,7 @@
 // src/pages/Admin/ModeloContrato/ModeloContratoFormPage/ModeloContratoFormPage.js
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 import { toast } from 'react-toastify';
 import { createModeloContrato, getModeloContratoById, updateModeloContrato } from '../../../../api/modeloContratoApi';
 import './ModeloContratoFormPage.css';
@@ -262,9 +263,9 @@ function ModeloContratoFormPage() {
                         <div className="form-group">
                             <label>Pré-visualização do HTML (como será renderizado):</label>
                             <div 
-                                className="html-preview" 
+                                className="html-preview ql-editor" // Added ql-editor for basic Quill styles
                                 style={{ border: '1px solid #ccc', padding: '15px', minHeight: '300px', background: '#f9f9f9', overflow: 'auto' }}
-                                dangerouslySetInnerHTML={{ __html: formData.conteudoHTMLTemplate }} 
+                                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(formData.conteudoHTMLTemplate, { USE_PROFILES: { html: true } }) }}
                             />
                         </div>
                     )}

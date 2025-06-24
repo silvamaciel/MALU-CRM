@@ -16,6 +16,34 @@ const getUsersByCompany = async (companyId) => {
     try {
         // Busca usuários da empresa, sem a senha, ordenados por nome
         const users = await User.find({ company: companyId, ativo: true }, "-senha")
+                                .sort({ nome: 1 })
+                                .lean(); // Added .lean()
+        console.log(`[UserService] Encontrados ${users.length} usuários para empresa ${companyId}`);
+        return users;
+    } catch (error) {
+        console.error(`[UserService] Erro ao buscar usuários para empresa ${companyId}:`, error);
+        throw new Error('Erro ao buscar usuários.');
+    }
+};
+
+/**
+ * Busca um usuário específico pelo ID, DENTRO de uma empresa específica.
+ * @param {string} id - ID do usuário.
+ * @param {string} companyId - ID da empresa.
+ * @returns {Promise<object|null>} - Documento do usuário (sem senha) ou null.
+ */
+const { findAndValidateOwnership, validateObjectIds, checkDuplicateField } = require('../utils/validationHelpers');
+
+/**
+ * Lista todos os usuários ATIVOS de uma empresa específica.
+ * @param {string} companyId - ID da empresa.
+ * @returns {Promise<Array>} - Array de usuários (sem senha).
+ */
+const getUsersByCompany = async (companyId) => {
+    validateObjectIds({ companyId }); // Using helper
+    try {
+        // Busca usuários da empresa, sem a senha, ordenados por nome
+        const users = await User.find({ company: companyId, ativo: true }, "-senha")
                                 .sort({ nome: 1 });
         console.log(`[UserService] Encontrados ${users.length} usuários para empresa ${companyId}`);
         return users;
@@ -32,18 +60,13 @@ const getUsersByCompany = async (companyId) => {
  * @returns {Promise<object|null>} - Documento do usuário (sem senha) ou null.
  */
 const getUserById = async (id, companyId) => {
-    if (!mongoose.Types.ObjectId.isValid(id)) throw new Error("ID de usuário inválido.");
-    if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) throw new Error('ID da empresa inválido.');
-
+    // validateObjectIds({ userId: id, companyId }); // This is now handled by findAndValidateOwnership
     try {
-        const user = await User.findOne({ _id: id, company: companyId }, '-senha'); // Filtra por ID e Empresa
-        if (!user) {
-            throw new Error('Usuário não encontrado nesta empresa.');
-        }
+        const user = await findAndValidateOwnership(User, id, companyId, 'Usuário', null, '-senha', true); // Added lean: true
         return user;
     } catch (error) {
         console.error(`[UserService] Erro ao buscar usuário ${id} para empresa ${companyId}:`, error);
-        throw new Error('Erro ao buscar usuário.');
+        throw new Error(error.message || 'Erro ao buscar usuário.'); // Re-throw specific or generic error
     }
 };
 
@@ -61,17 +84,20 @@ const createUser = async (userData, companyId) => {
     if (!nome || !email || !perfil) {
         throw new Error("Nome, Email e Perfil são obrigatórios para criar usuário.");
     }
-    if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
-        throw new Error('ID da empresa inválido ou não fornecido.');
-    }
+    validateObjectIds({ companyId }); // Using helper
 
     const emailLower = email.toLowerCase();
 
     try {
-        const existingEmail = await User.findOne({ email: emailLower });
-        if (existingEmail) {
-            throw new Error(`O email '${emailLower}' já está em uso.`);
-        }
+        // Using checkDuplicateField helper (which itself uses .lean() internally for the check)
+        await checkDuplicateField(User, { email: emailLower }, companyId, null, 'Email', 'Usuário');
+
+        // No need to add .lean() to the existing User.findOne call if it's removed due to checkDuplicateField
+        // If checkDuplicateField wasn't used, it would be:
+        // const existingEmail = await User.findOne({ email: emailLower }).lean();
+        // if (existingEmail) {
+        //     throw new Error(`O email '${emailLower}' já está em uso.`);
+        // }
 
         const newUser = new User({
             nome,
@@ -102,8 +128,7 @@ const createUser = async (userData, companyId) => {
  * @returns {Promise<object|null>} - O documento do usuário atualizado (sem senha).
  */
 const updateUser = async (id, companyId, updateData) => {
-    if (!mongoose.Types.ObjectId.isValid(id)) throw new Error("ID de usuário inválido.");
-    if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) throw new Error("ID da empresa inválido.");
+    validateObjectIds({ userId: id, companyId }); // Using helper for initial ID checks
 
     const { nome, email, perfil, ativo, senha } = updateData; 
     const fieldsToUpdate = {};
@@ -127,15 +152,13 @@ const updateUser = async (id, companyId, updateData) => {
     if (!hasUpdate) { throw new Error("Nenhum dado válido fornecido para atualização."); }
 
     try {
+        // Using checkDuplicateField helper if email is being updated
         if (fieldsToUpdate.email) {
-            const existingEmail = await User.findOne({
-                 email: fieldsToUpdate.email,
-                 _id: { $ne: id } 
-            });
-            if (existingEmail) {
-                throw new Error(`O email '${fieldsToUpdate.email}' já está em uso por outro usuário.`);
-            }
+            await checkDuplicateField(User, { email: fieldsToUpdate.email }, companyId, id, 'Email', 'Usuário');
         }
+
+        // The findOneAndUpdate call itself will handle the update.
+        // No separate read query that would need .lean() here before the update operation.
 
         const updatedUser = await User.findOneAndUpdate(
             { _id: id, company: companyId }, 
@@ -144,6 +167,8 @@ const updateUser = async (id, companyId, updateData) => {
         ).select('-senha');
 
         if (!updatedUser) {
+            // This error will be more specific if findAndValidateOwnership was used before,
+            // but findOneAndUpdate returning null also indicates not found or ownership issue.
             throw new Error('Usuário não encontrado nesta empresa ou não foi possível atualizar.');
         }
         console.log(`[UserService] Usuário atualizado para empresa ${companyId}:`, id);
@@ -162,15 +187,13 @@ const updateUser = async (id, companyId, updateData) => {
  * @param {string} companyId - ID da empresa do usuário logado (para segurança).
  */
 const deleteUser = async (id, companyId) => {
-    if (!mongoose.Types.ObjectId.isValid(id)) throw new Error("ID de usuário inválido.");
-    if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) throw new Error("ID da empresa inválido.");
+    // validateObjectIds({ userId: id, companyId }); // Initial ID validation
 
     try {
-        const userToDelete = await User.findOne({ _id: id, company: companyId });
-        if (!userToDelete) {
-            throw new Error('Usuário não encontrado nesta empresa.');
-        }
+        // Using findAndValidateOwnership to get the user and ensure it belongs to the company
+        const userToDelete = await findAndValidateOwnership(User, id, companyId, 'Usuário', null, '', true); // Added lean: true
 
+        // The rest of the deletion logic remains the same
         
          const leadCount = await Lead.countDocuments({ responsavel: id, company: companyId });
          if (leadCount > 0) {

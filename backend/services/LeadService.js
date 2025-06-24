@@ -8,6 +8,13 @@ const User = require("../models/User");
 const DiscardReason = require("../models/DiscardReason");
 const LeadHistory = require("../models/LeadHistory");
 const origemService = require("./origemService");
+const {
+    LEAD_HISTORY_ACTIONS,
+    LEAD_STAGE_NOME_DESCARTADO,
+    LEAD_STAGE_NOME_EM_RESERVA,
+    RESERVA_STATUS,
+    UNIDADE_STATUS
+} = require('../utils/constants');
 
 
 const cpfcnpj = require("cpf-cnpj-validator");
@@ -53,29 +60,39 @@ const getStageNameById = async (stageId, companyId) => {
 };
 
 // --- Função Auxiliar logHistory ---
-const logHistory = async (leadId, userId, action, details) => {
+const logHistory = async (leadId, userId, action, details, oldValue = null, newValue = null, entity = 'Lead', entityId = null, session = null) => {
   try {
     if (!leadId) {
       console.warn("[History] Tentativa de log sem leadId.");
       return;
     }
-    const historyEntry = new LeadHistory({
+    const historyData = {
       lead: leadId,
-      user: userId || null,
+      user: userId || null, // System action if userId is null
       action: action,
       details: details || "",
-    });
-    await historyEntry.save();
+      oldValue: oldValue ? JSON.stringify(oldValue) : undefined, // Store as JSON string if exists
+      newValue: newValue ? JSON.stringify(newValue) : undefined, // Store as JSON string if exists
+      entity: entity,
+      entityId: entityId
+    };
+    const historyEntry = new LeadHistory(historyData);
+
+    if (session) {
+        await historyEntry.save({ session });
+    } else {
+        await historyEntry.save();
+    }
+
     console.log(
-      `[History] Logged: Lead ${leadId}, Action: ${action}, User: ${
-        userId || "System"
-      }`
+      `[History] Logged: Lead ${leadId}, Action: ${action}, User: ${userId || "System"}, Entity: ${entity}, EntityID: ${entityId}`
     );
   } catch (error) {
     console.error(
-      `[History] FAILED to log: Lead ${leadId}, Action: ${action}`,
+      `[History] FAILED to log for Lead ${leadId}, Action: ${action}, Entity: ${entity}, EntityID: ${entityId}`,
       error
     );
+    // Não relançar o erro para não quebrar a operação principal que chamou o log
   }
 };
 
@@ -178,11 +195,12 @@ const getLeadById = async (id, companyId) => {
     throw new Error("ID da empresa inválido.");
   }
   try {
-    const lead = await Lead.findOne({ _id: id, company: companyId }) // Filtra por ID e Empresa
+    const lead = await Lead.findOne({ _id: id, company: companyId })
       .populate("situacao", "nome ordem")
       .populate("origem", "nome")
       .populate("responsavel", "nome perfil")
-      .populate("motivoDescarte", "nome");
+      .populate("motivoDescarte", "nome")
+      .lean(); // Added .lean()
     if (!lead) throw new Error("Lead não encontrado nesta empresa.");
     return lead;
   } catch (error) {
@@ -320,7 +338,7 @@ const createLead = async (leadData, companyId, userId) => {
     try {
         const leadSalvo = await novoLead.save();
         console.log(`[createLead] Lead criado com sucesso: ${leadSalvo._id}`);
-        await logHistory(leadSalvo._id, userId, "CRIACAO", "Lead criado no sistema.");
+        await logHistory(leadSalvo._id, userId, LEAD_HISTORY_ACTIONS.CRIACAO, "Lead criado no sistema.", null, leadSalvo.toObject(), 'Lead', leadSalvo._id);
         return leadSalvo;
     } catch (error) {
         console.error(`[createLead] Falha ao salvar lead no banco:`, error);
@@ -450,18 +468,19 @@ const updateLead = async (id, leadData, companyId, userId) => {
         if (!situacaoDoc) throw new Error("Situação inválida ou não pertence a esta empresa.");
         updateFields.situacao = situacao;
 
-        if (situacaoDoc.nome.toLowerCase() === "descartado") {
+        if (situacaoDoc.nome.toLowerCase() === LEAD_STAGE_NOME_DESCARTADO.toLowerCase()) {
             if (!motivoDescarte || !mongoose.Types.ObjectId.isValid(motivoDescarte)) {
-                throw new Error("Motivo de descarte (ID) é obrigatório ao mover o lead para 'Descartado'.");
+                throw new Error(`Motivo de descarte (ID) é obrigatório ao mover o lead para '${LEAD_STAGE_NOME_DESCARTADO}'.`);
             }
             const motivoDoc = await DiscardReason.findOne({ _id: motivoDescarte, company: companyId });
             if (!motivoDoc) throw new Error("Motivo de descarte inválido ou não pertence a esta empresa.");
             updateFields.motivoDescarte = motivoDescarte;
-            if (comentario !== undefined) updateFields.comentario = comentario;
+            if (comentario !== undefined) updateFields.comentario = comentario; // Allow comment update when discarding
         } else {
+            // If moving out of "Descartado" or to any other non-descartado status, clear motivoDescarte
             updateFields.motivoDescarte = null;
         }
-    } else {
+    } else { // If situacao is not being changed, but comentario is
         if (comentario !== undefined) updateFields.comentario = comentario;
     }
 
@@ -497,30 +516,49 @@ const updateLead = async (id, leadData, companyId, userId) => {
         if (!updatedLead) throw new Error("Falha ao encontrar ou atualizar o lead durante a transação.");
 
         // Lógica para liberar reserva se o status mudou de 'Em Reserva'
-        const nomeSituacaoAntiga = leadExistente.situacao?.nome || '';
-        const nomeSituacaoNova = (await LeadStage.findById(updatedLead.situacao).lean())?.nome || '';
+        const nomeSituacaoAntiga = leadExistente.situacao?.nome || ''; // situacao here is populated
+        const situacaoNovaDoc = await LeadStage.findById(updatedLead.situacao).lean(); // Fetch the new stage doc
+        const nomeSituacaoNova = situacaoNovaDoc?.nome || '';
+
         if (updateFields.situacao && String(leadExistente.situacao?._id) !== String(updatedLead.situacao)) {
-            if (nomeSituacaoAntiga.toLowerCase().includes('em reserva')) {
-                const proximosEstagiosPermitidos = ["em proposta", "proposta emitida", "contrato assinado", "vendido"];
-                if (!proximosEstagiosPermitidos.some(s => nomeSituacaoNova.toLowerCase().includes(s))) {
-                    console.log(`[updateLead] Lead ${id} saiu de 'Em Reserva'. Cancelando reserva ativa.`);
-                    const reservaAtiva = await Reserva.findOne({ lead: id, statusReserva: "Ativa", company: companyId }).session(session);
+            if (nomeSituacaoAntiga.toLowerCase().includes(LEAD_STAGE_NOME_EM_RESERVA.toLowerCase())) {
+                const proximosEstagiosPermitidos = [
+                    LEAD_STAGE_NOME_PROPOSTA_EMITIDA.toLowerCase(), // "em proposta", "proposta emitida"
+                    // Add other valid next stages like "contrato assinado", "vendido" if they exist
+                    // For now, assuming "Proposta Emitida" is the main one after "Em Reserva" before sale
+                ];
+                // If new stage is not one of the allowed next stages from "Em Reserva" (e.g., moving to "Novo", "Contato", or "Descartado")
+                if (!proximosEstagiosPermitidos.some(s => nomeSituacaoNova.toLowerCase().includes(s)) && nomeSituacaoNova.toLowerCase() !== LEAD_STAGE_NOME_VENDA_REALIZADA.toLowerCase()) {
+                    console.log(`[updateLead] Lead ${id} saiu de '${LEAD_STAGE_NOME_EM_RESERVA}'. Cancelando reserva ativa.`);
+                    // This logic assumes Reserva model is available
+                    const Reserva = mongoose.model('Reserva');
+                    const UnidadeModel = mongoose.model('Unidade'); // Assuming Unidade model
+                    const ImovelAvulsoModel = mongoose.model('ImovelAvulso');
+
+
+                    const reservaAtiva = await Reserva.findOne({ lead: id, statusReserva: RESERVA_STATUS.ATIVA, company: companyId }).session(session);
                     if (reservaAtiva) {
-                        reservaAtiva.statusReserva = "Cancelada";
-                        const unidadeParaLiberar = await Unidade.findById(reservaAtiva.unidade).session(session);
-                        if (unidadeParaLiberar && String(unidadeParaLiberar.currentReservaId) === String(reservaAtiva._id)) {
-                            unidadeParaLiberar.statusUnidade = "Disponível";
-                            unidadeParaLiberar.currentLeadId = null;
-                            unidadeParaLiberar.currentReservaId = null;
-                            await unidadeParaLiberar.save({ session });
+                        reservaAtiva.statusReserva = RESERVA_STATUS.CANCELADA;
+
+                        const ImovelReferencedModel = reservaAtiva.tipoImovel === 'Unidade' ? UnidadeModel : ImovelAvulsoModel;
+                        const imovelParaLiberar = await ImovelReferencedModel.findById(reservaAtiva.imovel).session(session);
+
+                        if (imovelParaLiberar && String(imovelParaLiberar.currentReservaId) === String(reservaAtiva._id)) {
+                            const statusField = reservaAtiva.tipoImovel === 'Unidade' ? 'statusUnidade' : 'status';
+                            imovelParaLiberar[statusField] = UNIDADE_STATUS.DISPONIVEL; // Assuming UNIDADE_STATUS.DISPONIVEL is generic
+                            imovelParaLiberar.currentLeadId = null;
+                            imovelParaLiberar.currentReservaId = null;
+                            await imovelParaLiberar.save({ session });
+                            await logHistory(updatedLead._id, userId, LEAD_HISTORY_ACTIONS.UNIDADE_LIBERADA, `Unidade/Imóvel ${imovelParaLiberar._id} liberado devido à mudança de status do lead.`, null, {imovelId: imovelParaLiberar._id, tipo: reservaAtiva.tipoImovel }, 'Lead', updatedLead._id, session);
                         }
                         await reservaAtiva.save({ session });
+                        await logHistory(updatedLead._id, userId, LEAD_HISTORY_ACTIONS.RESERVA_CANCELADA_STATUS_LEAD, `Reserva ${reservaAtiva._id} cancelada devido à mudança de status do lead.`, {oldStatus: RESERVA_STATUS.ATIVA}, {newStatus: RESERVA_STATUS.CANCELADA}, 'Reserva', reservaAtiva._id, session);
                     }
                 }
             }
         }
         
-        await logHistory(updatedLead._id, userId, "EDICAO_DADOS", `Lead atualizado.`, leadExistente.toObject(), updatedLead.toObject(), 'Lead', updatedLead._id, session);
+        await logHistory(updatedLead._id, userId, LEAD_HISTORY_ACTIONS.EDICAO_DADOS, `Lead atualizado.`, leadExistente.toObject(), updatedLead.toObject(), 'Lead', updatedLead._id, session);
         
         await session.commitTransaction();
 
@@ -567,9 +605,9 @@ const deleteLead = async (id, companyId, userId) => {
     await logHistory(
       id,
       userId,
-      "EXCLUSAO",
+      LEAD_HISTORY_ACTIONS.EXCLUSAO,
       `Lead ${deleted.nome || id} excluído.`
-    ); // <<< Passa userId
+    );
     return { message: "Lead deletado com sucesso" };
   } catch (error) {
     /* ... tratamento erro ... */
@@ -593,73 +631,44 @@ const descartarLead = async (id, dados, companyId, userId) => {
     throw new Error("ID do motivo de descarte inválido ou não fornecido.");
   }
 
-  // Define nome padrão e ordem alta
-  const nomeSituacaoDescartado = "Descartado";
-  const ordemSituacaoDescartado = 9999; // Ordem alta padrão
+  const nomeSituacaoDescartado = LEAD_STAGE_NOME_DESCARTADO; // Use constant
+  const ordemSituacaoDescartado = 9999;
 
   try {
-    // Busca Motivo de Descarte E Situação "Descartado" em paralelo
     const [reasonExists, situacaoDescartadoExistente] = await Promise.all([
-      DiscardReason.findOne({ _id: motivoDescarte, company: companyId }).lean(), // Busca Motivo na empresa
-      LeadStage.findOne({ nome: nomeSituacaoDescartado, company: companyId }), // Busca Situação na empresa (SEM .lean() para poder salvar se precisar criar)
+      DiscardReason.findOne({ _id: motivoDescarte, company: companyId }).lean(),
+      LeadStage.findOne({ nome: { $regex: new RegExp(`^${nomeSituacaoDescartado}$`, 'i') }, company: companyId }),
     ]);
 
-    // Valida Motivo
-    if (!reasonExists)
-      throw new Error(
-        `Motivo Descarte ID ${motivoDescarte} não encontrado nesta empresa.`
-      );
+    if (!reasonExists) {
+      throw new Error(`Motivo Descarte ID ${motivoDescarte} não encontrado nesta empresa.`);
+    }
 
     let situacaoDescartadoFinal = situacaoDescartadoExistente;
 
-    // <<< LÓGICA "FIND OR CREATE" PARA SITUAÇÃO DESCARTADO >>>
     if (!situacaoDescartadoFinal) {
-      // Se NÃO encontrou, CRIA a situação "Descartado" para esta empresa
-      console.warn(
-        `[descartarLead] Situação '${nomeSituacaoDescartado}' não encontrada para ${companyId}. Criando...`
-      );
+      console.warn(`[descartarLead] Situação '${nomeSituacaoDescartado}' não encontrada para ${companyId}. Criando...`);
       situacaoDescartadoFinal = new LeadStage({
-        nome: nomeSituacaoDescartado,
+        nome: nomeSituacaoDescartado, // Use constant for name
         ordem: ordemSituacaoDescartado,
         company: companyId,
-        ativo: true, // Garante que seja criada como ativa
+        ativo: true,
       });
       try {
-        await situacaoDescartadoFinal.save(); // Salva a nova situação padrão
-        console.log(
-          `[descartarLead] Situação '${nomeSituacaoDescartado}' criada para ${companyId} com ID: ${situacaoDescartadoFinal._id}`
-        );
+        await situacaoDescartadoFinal.save();
+        console.log(`[descartarLead] Situação '${nomeSituacaoDescartado}' criada para ${companyId} com ID: ${situacaoDescartadoFinal._id}`);
       } catch (creationError) {
-        // Pode dar erro se houver race condition (outra req criou ao mesmo tempo) ou outra validação
-        console.error(
-          `[descartarLead] Falha ao tentar criar situação '${nomeSituacaoDescartado}' para ${companyId}:`,
-          creationError
-        );
-        // Verifica se o erro foi de duplicidade (outra req criou antes)
         if (creationError.message.includes("já existe")) {
-          // Tenta buscar novamente
-          situacaoDescartadoFinal = await LeadStage.findOne({
-            nome: nomeSituacaoDescartado,
-            company: companyId,
-          });
+          situacaoDescartadoFinal = await LeadStage.findOne({ nome: { $regex: new RegExp(`^${nomeSituacaoDescartado}$`, 'i') }, company: companyId });
           if (!situacaoDescartadoFinal) {
-            // Se ainda não achar, lança erro definitivo
-            throw new Error(
-              `Falha crítica ao criar/encontrar situação padrão 'Descartado'.`
-            );
+            throw new Error(`Falha crítica ao criar/encontrar situação padrão '${nomeSituacaoDescartado}'.`);
           }
         } else {
-          throw new Error(
-            `Falha ao configurar a situação 'Descartado' para esta empresa.`
-          );
+          throw new Error(`Falha ao configurar a situação '${nomeSituacaoDescartado}' para esta empresa.`);
         }
       }
     }
-    // <<< FIM LÓGICA "FIND OR CREATE" >>>
 
-    // Agora temos certeza que situacaoDescartadoFinal contém o documento (encontrado ou criado)
-
-    // Atualiza o Lead
     const lead = await Lead.findOneAndUpdate(
       { _id: id, company: companyId }, // Filtra por empresa
       {
@@ -675,11 +684,9 @@ const descartarLead = async (id, dados, companyId, userId) => {
     if (!lead)
       throw new Error("Lead não encontrado nesta empresa (descarte falhou).");
 
-    // Log de Histórico (igual)
-    const details = `Motivo: ${reasonExists.nome}${
-      comentario ? ` | Comentário: ${comentario}` : ""
-    }`;
-    await logHistory(lead._id, userId, "DESCARTE", details);
+    // Log de Histórico
+    const details = `Motivo: ${reasonExists.nome}${comentario ? ` | Comentário: ${comentario}` : ""}`;
+    await logHistory(lead._id, userId, LEAD_HISTORY_ACTIONS.DESCARTE, details, {oldSituacao: lead.situacao?.toString()}, {newSituacao: situacaoDescartadoFinal._id.toString(), motivoDescarte: reasonExists._id.toString()}, 'Lead', lead._id);
 
     return lead;
   } catch (error) {
@@ -694,131 +701,240 @@ const descartarLead = async (id, dados, companyId, userId) => {
 
 
 /**
+const Papa = require('papaparse');
+
+/**
  * Importa leads de um buffer de arquivo CSV, pré-processando os dados
  * e chamando o serviço createLead para cada linha.
  */
 const importLeadsFromCSV = async (fileBuffer, companyId, createdByUserId) => {
     console.log(`[LeadSvc Import] Iniciando importação de CSV para Company: ${companyId}`);
-    
+
     // --- 1. Preparar Cache de Dados para Validação ---
     const [allStages, allOrigins, existingLeads] = await Promise.all([
         LeadStage.find({ company: companyId, ativo: true }).lean(),
         Origem.find({ company: companyId, ativo: true }).lean(),
-        // VVVVV BUSCA TAMBÉM O CPF PARA VERIFICAÇÃO DE DUPLICADOS VVVVV
         Lead.find({ company: companyId, ativo: true }).select('email contato cpf').lean()
     ]);
 
     const stagesMap = new Map(allStages.map(s => [s.nome.trim().toLowerCase(), s._id]));
     const originsMap = new Map(allOrigins.map(o => [o.nome.trim().toLowerCase(), o._id]));
     
-    // Cria Sets para verificação RÁPIDA de duplicados
     const existingEmails = new Set(existingLeads.map(l => l.email).filter(Boolean));
     const existingContatos = new Set(existingLeads.map(l => l.contato).filter(Boolean));
-    const existingCpfs = new Set(existingLeads.map(l => l.cpf).filter(Boolean)); // <<< NOVO SET PARA CPFs
+    const existingCpfs = new Set(existingLeads.map(l => l.cpf).filter(Boolean));
     
     console.log(`[LeadSvc Import] Cache preparado: ${stagesMap.size} situações, ${originsMap.size} origens. ${existingEmails.size} emails, ${existingContatos.size} contatos e ${existingCpfs.size} CPFs existentes.`);
 
-    // --- 2. Ler e Parsear o Arquivo CSV ---
-    const lines = fileBuffer.toString('utf8').split(/\r?\n/);
-    const headerLine = lines.shift()?.trim();
-    if (!headerLine) {
-        throw new Error("Arquivo CSV está vazio ou não contém um cabeçalho.");
-    }
-    const delimiter = headerLine.includes(';') ? ';' : ',';
-    const headers = headerLine.split(delimiter).map(h => h.trim().toLowerCase());
-    console.log(`[LeadSvc Import] Cabeçalhos detectados: [${headers.join(', ')}]. Delimitador: '${delimiter}'`);
-    
-    const dataRows = lines.filter(line => line.trim() !== '');
-    
-    // --- 3. Processar, Validar e Preparar Leads para Criação ---
-    let importedCount = 0;
+    // --- 2. Ler e Parsear o Arquivo CSV usando PapaParse ---
+    const csvString = fileBuffer.toString('utf8');
     const importErrors = [];
+    let importedCount = 0;
+    let processedRowCount = 0;
 
-    for (let i = 0; i < dataRows.length; i++) {
-        const line = dataRows[i];
-        const lineNumber = i + 2;
-        
-        const values = line.split(delimiter);
-        const row = headers.reduce((obj, header, index) => {
-            obj[header] = values[index]?.trim() || '';
-            return obj;
-        }, {});
+    // PapaParse config
+    const config = {
+        header: true, // Trata a primeira linha como cabeçalho
+        skipEmptyLines: true,
+        transformHeader: header => header.trim().toLowerCase(), // Normaliza cabeçalhos
+        complete: async (results) => {
+            processedRowCount = results.data.length;
+            console.log(`[LeadSvc Import] PapaParse processou ${processedRowCount} linhas de dados.`);
 
-        try {
-            // --- Validação de campos obrigatórios ---
-            if (!row.nome || !row.telefone) {
-                throw new Error("Campos 'nome' e 'telefone' são obrigatórios.");
+            if (results.errors.length > 0) {
+                results.errors.forEach(error => {
+                    importErrors.push({
+                        line: error.row + 2, // PapaParse row index is 0-based for data
+                        error: `Erro de parsing CSV: ${error.message} (Código: ${error.code})`,
+                        data: error.rowContent || 'Linha não pôde ser lida'
+                    });
+                });
+                console.warn(`[LeadSvc Import] Encontrados ${results.errors.length} erros durante o parsing do CSV.`);
             }
             
-            // --- Pré-processamento e formatação dos dados ---
-            const nomeFormatado = row.nome.trim();
-            const emailFormatado = row.email?.trim().toLowerCase() || null;
+            for (let i = 0; i < results.data.length; i++) {
+                const row = results.data[i];
+                const lineNumber = i + 2; // +1 for header, +1 for 1-based indexing
+
+                try {
+                    // --- Validação de campos obrigatórios ---
+                    if (!row.nome || !row.telefone) {
+                        throw new Error("Campos 'nome' e 'telefone' são obrigatórios.");
+                    }
             
-            let contatoFormatado = null;
-            if (row.telefone?.trim()) {
-                const phoneNumber = phoneUtil.parseAndKeepRawInput(String(row.telefone).trim(), 'BR');
-                if (phoneUtil.isValidNumber(phoneNumber)) {
-                    contatoFormatado = phoneUtil.format(phoneNumber, PNF.E164);
-                } else {
-                    throw new Error(`Número de telefone inválido: ${row.telefone}`);
+                    // --- Pré-processamento e formatação dos dados ---
+                    const nomeFormatado = String(row.nome).trim();
+                    const emailFormatado = row.email ? String(row.email).trim().toLowerCase() : null;
+            
+                    let contatoFormatado = null;
+                    if (row.telefone?.trim()) {
+                        const phoneNumber = phoneUtil.parseAndKeepRawInput(String(row.telefone).trim(), 'BR');
+                        if (phoneUtil.isValidNumber(phoneNumber)) {
+                            contatoFormatado = phoneUtil.format(phoneNumber, PNF.E164);
+                        } else {
+                            throw new Error(`Número de telefone inválido: ${row.telefone}`);
+                        }
+                    }
+            
+                    let cpfFormatado = null;
+                    if (row.cpf?.trim()) {
+                        const cpfLimpo = String(row.cpf).replace(/\D/g, "");
+                        if (cpfLimpo) {
+                             if (!cpfcnpj.cpf.isValid(cpfLimpo)) throw new Error(`CPF inválido: ${row.cpf}`);
+                             cpfFormatado = cpfLimpo;
+                        }
+                    }
+
+                    // --- VALIDAÇÃO COMPLETA DE DUPLICADOS ---
+                    if (emailFormatado && existingEmails.has(emailFormatado)) {
+                        throw new Error(`Email '${emailFormatado}' já existe no sistema.`);
+                    }
+                    if (contatoFormatado && existingContatos.has(contatoFormatado)) {
+                        throw new Error(`Telefone '${contatoFormatado}' já existe no sistema.`);
+                    }
+                    if (cpfFormatado && existingCpfs.has(cpfFormatado)) {
+                        throw new Error(`CPF '${row.cpf}' já existe no sistema.`);
+                    }
+
+                    // Monta o objeto final para chamar a função createLead
+                    const leadDataParaCriar = {
+                        nome: nomeFormatado,
+                        email: emailFormatado,
+                        contato: contatoFormatado,
+                        cpf: cpfFormatado,
+                        // Para origem e situacao, passamos o NOME. O createLead resolverá os IDs.
+                        origem: row.origem ? String(row.origem).trim() : undefined,
+                        situacao: row.situacao ? String(row.situacao).trim() : undefined,
+                        comentario: row.comentario ? String(row.comentario).trim() : null,
+                        tags: ['importado-csv'] // Adiciona tag padrão
+                    };
+
+                    // Chama a função createLead que já existe e é robusta
+                    await createLead(leadDataParaCriar, companyId, createdByUserId);
+                    importedCount++;
+
+                    // Adiciona os novos dados aos Sets para evitar duplicatas DENTRO do mesmo arquivo
+                    if(emailFormatado) existingEmails.add(emailFormatado);
+                    if(contatoFormatado) existingContatos.add(contatoFormatado);
+                    if(cpfFormatado) existingCpfs.add(cpfFormatado);
+
+                } catch (error) {
+                    console.error(`[LeadSvc Import] Erro ao processar linha ${lineNumber}:`, error.message);
+                    importErrors.push({
+                        line: lineNumber,
+                        error: error.message,
+                        data: row // row já é um objeto aqui
+                    });
                 }
             }
-            
-            let cpfFormatado = null;
-            if (row.cpf?.trim()) {
-                const cpfLimpo = String(row.cpf).replace(/\D/g, "");
-                if (cpfLimpo) {
-                     if (!cpfcnpj.cpf.isValid(cpfLimpo)) throw new Error(`CPF inválido: ${row.cpf}`);
-                     cpfFormatado = cpfLimpo;
-                }
-            }
-            
-            // --- VALIDAÇÃO COMPLETA DE DUPLICADOS ---
-            if (emailFormatado && existingEmails.has(emailFormatado)) {
-                throw new Error(`Email '${emailFormatado}' já existe no sistema.`);
-            }
-            if (contatoFormatado && existingContatos.has(contatoFormatado)) {
-                throw new Error(`Telefone '${contatoFormatado}' já existe no sistema.`);
-            }
-            if (cpfFormatado && existingCpfs.has(cpfFormatado)) { // <<< VALIDAÇÃO DE CPF ADICIONADA
-                throw new Error(`CPF '${row.cpf}' já existe no sistema.`);
-            }
-
-            // Monta o objeto final para chamar a função createLead
-            const leadDataParaCriar = {
-                nome: nomeFormatado,
-                email: emailFormatado,
-                contato: contatoFormatado,
-                cpf: cpfFormatado,
-                origem: row.origem,
-                situacao: row.situacao,
-                comentario: row.comentario,
-                tags: ['importado-csv']
-            };
-            
-            // Chama a função createLead que já existe e é robusta
-            await createLead(leadDataParaCriar, companyId, createdByUserId);
-            importedCount++;
-
-            // Adiciona os novos dados aos Sets para evitar duplicatas DENTRO do mesmo arquivo
-            if(emailFormatado) existingEmails.add(emailFormatado);
-            if(contatoFormatado) existingContatos.add(contatoFormatado);
-            if(cpfFormatado) existingCpfs.add(cpfFormatado); // <<< ADICIONADO AO SET
-
-        } catch (error) {
-            console.error(`[LeadSvc Import] Erro ao processar linha ${lineNumber}:`, error.message);
-            importErrors.push({
-                line: lineNumber,
-                error: error.message,
-                data: row
-            });
         }
-    }
-    
+    };
+
+    // Executa o parsing
+    // Usamos uma Promise para poder 'await' o resultado do 'complete' callback do PapaParse
+    await new Promise((resolve, reject) => {
+        config.complete = async (results) => {
+            processedRowCount = results.data.length;
+            console.log(`[LeadSvc Import] PapaParse processou ${processedRowCount} linhas de dados.`);
+
+            if (results.errors.length > 0) {
+                results.errors.forEach(error => {
+                    // error.row é o índice da linha no arquivo (0-based, incluindo header se não skipado)
+                    // Se header: true, error.row é o índice da linha de DADOS (0-based)
+                    const actualLineNumber = error.row + 2; // +1 for header, +1 for 1-based
+                    importErrors.push({
+                        line: actualLineNumber,
+                        error: `Erro de parsing CSV: ${error.message} (Código: ${error.code})`,
+                        data: results.data[error.row] || `Linha ${actualLineNumber} com erro de parsing severo.`
+                    });
+                });
+                console.warn(`[LeadSvc Import] Encontrados ${results.errors.length} erros durante o parsing do CSV.`);
+            }
+
+            for (let i = 0; i < results.data.length; i++) {
+                const row = results.data[i];
+                const lineNumber = i + 2;
+
+                try {
+                    if (!row.nome || !row.telefone) {
+                        throw new Error("Campos 'nome' e 'telefone' são obrigatórios.");
+                    }
+
+                    const nomeFormatado = String(row.nome).trim();
+                    const emailFormatado = row.email ? String(row.email).trim().toLowerCase() : null;
+            
+                    let contatoFormatado = null;
+                    if (row.telefone?.trim()) {
+                        const phoneNumber = phoneUtil.parseAndKeepRawInput(String(row.telefone).trim(), 'BR');
+                        if (phoneUtil.isValidNumber(phoneNumber)) {
+                            contatoFormatado = phoneUtil.format(phoneNumber, PNF.E164);
+                        } else {
+                            throw new Error(`Número de telefone inválido: ${row.telefone}`);
+                        }
+                    } else { // Se telefone estiver vazio na linha, é um erro pois é obrigatório
+                         throw new Error("Campo 'telefone' é obrigatório e não pode estar vazio.");
+                    }
+
+                    let cpfFormatado = null;
+                    if (row.cpf?.trim()) {
+                        const cpfLimpo = String(row.cpf).replace(/\D/g, "");
+                        if (cpfLimpo) {
+                             if (!cpfcnpj.cpf.isValid(cpfLimpo)) throw new Error(`CPF inválido: ${row.cpf}`);
+                             cpfFormatado = cpfLimpo;
+                        }
+                    }
+
+                    if (emailFormatado && existingEmails.has(emailFormatado)) {
+                        throw new Error(`Email '${emailFormatado}' já existe no sistema.`);
+                    }
+                    if (contatoFormatado && existingContatos.has(contatoFormatado)) {
+                        throw new Error(`Telefone '${contatoFormatado}' já existe no sistema.`);
+                    }
+                    if (cpfFormatado && existingCpfs.has(cpfFormatado)) {
+                        throw new Error(`CPF '${row.cpf}' já existe no sistema.`);
+                    }
+
+                    const leadDataParaCriar = {
+                        nome: nomeFormatado,
+                        email: emailFormatado,
+                        contato: contatoFormatado,
+                        cpf: cpfFormatado,
+                        origem: row.origem ? String(row.origem).trim() : undefined,
+                        situacao: row.situacao ? String(row.situacao).trim() : undefined,
+                        comentario: row.comentario ? String(row.comentario).trim() : null,
+                        tags: ['importado-csv']
+                    };
+
+                    await createLead(leadDataParaCriar, companyId, createdByUserId);
+                    importedCount++;
+
+                    if(emailFormatado) existingEmails.add(emailFormatado);
+                    if(contatoFormatado) existingContatos.add(contatoFormatado);
+                    if(cpfFormatado) existingCpfs.add(cpfFormatado);
+
+                } catch (error) {
+                    console.error(`[LeadSvc Import] Erro ao processar linha ${lineNumber} (Dados: ${JSON.stringify(row)}):`, error.message);
+                    importErrors.push({
+                        line: lineNumber,
+                        error: error.message,
+                        data: row
+                    });
+                }
+            }
+            resolve(); // Resolve a Promise quando o loop 'complete' terminar
+        };
+        config.error = (error) => { // Lida com erros fatais do PapaParse
+            console.error("[LeadSvc Import] Erro fatal no PapaParse:", error);
+            reject(new Error("Falha crítica ao parsear o arquivo CSV: " + error.message));
+        };
+
+        Papa.parse(csvString, config);
+    });
+
     // --- 4. Retorna o Resumo Final ---
     const summary = {
-        totalRows: dataRows.length,
-        importedCount, // Já foi incrementado no loop
+        totalRows: processedRowCount,
+        importedCount,
         errorCount: importErrors.length,
         errors: importErrors
     };

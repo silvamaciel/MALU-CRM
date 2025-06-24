@@ -1,5 +1,5 @@
 // src/App.jsx (ou App.js)
-import React, { useState } from "react";
+import React, { useState, Suspense, lazy } from "react"; // Added Suspense and lazy
 import {
   BrowserRouter as Router,
   Routes,
@@ -8,38 +8,41 @@ import {
   Link
 } from "react-router-dom";
 
-// Pages & Layout
-import LeadListPage from "./pages/LeadList/LeadListPage";
-import LeadFormPage from "./pages/LeadForm/LeadFormPage";
-import LeadDetailPage from "./pages/LeadDatail/LeadDetailPage";
-import LoginPage from "./pages/Login/LoginPage";
-import DashboardPage from './pages/Dashboard/DashboardPage';
-import LeadStageAdminPage from './pages/Admin/LeadStageAdminPage';
-import OrigensAdminPage from './pages/Admin/OrigensAdminPage';
-import DiscardReasonAdminPage from './pages/Admin/DiscardReasonAdminPage';
-import UsuariosAdminPage from './pages/Admin/UsuariosAdminPage';
-import MainLayout from './components/Layout/MainLayout';
-import BrokerContactsAdminPage from './pages/Admin/BrokerContactsAdminPage';
-import AdminGuard from './components/Auth/AdminGuard';
-import IntegrationsPage from './pages/Integrations/IntegrationsPage'; 
-import EmpreendimentoListPage from './pages/Empreendimento/EmpreendimentoListPage/EmpreendimentoListPage';
-import EmpreendimentoFormPage from './pages/Empreendimento/EmpreendimentoFormPage/EmpreendimentoFormPage';
-import EmpreendimentoDetailPage from './pages/Empreendimento/EmpreendimentoDetailPage/EmpreendimentoDetailPage';
-import UnidadeFormPage from './pages/Empreendimento/UnidadeFormPage/UnidadeFormPage';
-import ReservaListPage from './pages/Empreendimento/Reserva/ReservaListPage/ReservaListPage';
-import ModeloContratoListPage from './pages/Admin/ModeloContrato/ModeloContratoListPage/ModeloContratoListPage';
-import ModeloContratoFormPage from './pages/Admin/ModeloContrato/ModeloContratoFormPage/ModeloContratoFormPage';
-import PropostaContratoFormPage from './pages/PropostaContrato/PropostaContratoFormPage/PropostaContratoFormPage';
-import PropostaContratoDetailPage from './pages/PropostaContrato/PropostaContratoDetailPage/PropostaContratoDetailPage';
-import ImovelListPage from './pages/ImovelAvulso/ImovelListPage/ImovelListPage';
-import ImovelFormPage from './pages/ImovelAvulso/ImovelFormPage/ImovelFormPage';
-
+// Pages & Layout - Lazy load all page components
+const LeadListPage = lazy(() => import("./pages/LeadList/LeadListPage"));
+const LeadFormPage = lazy(() => import("./pages/LeadForm/LeadFormPage"));
+const LeadDetailPage = lazy(() => import("./pages/LeadDatail/LeadDetailPage"));
+const LoginPage = lazy(() => import("./pages/Login/LoginPage"));
+const DashboardPage = lazy(() => import('./pages/Dashboard/DashboardPage'));
+const LeadStageAdminPage = lazy(() => import('./pages/Admin/LeadStageAdminPage'));
+const OrigensAdminPage = lazy(() => import('./pages/Admin/OrigensAdminPage'));
+const DiscardReasonAdminPage = lazy(() => import('./pages/Admin/DiscardReasonAdminPage'));
+const UsuariosAdminPage = lazy(() => import('./pages/Admin/UsuariosAdminPage'));
+const MainLayout = lazy(() => import('./components/Layout/MainLayout')); // MainLayout can also be lazy loaded
+const BrokerContactsAdminPage = lazy(() => import('./pages/Admin/BrokerContactsAdminPage'));
+const AdminGuard = lazy(() => import('./components/Auth/AdminGuard')); // AdminGuard might not need lazy loading if small
+const IntegrationsPage = lazy(() => import('./pages/Integrations/IntegrationsPage'));
+const EmpreendimentoListPage = lazy(() => import('./pages/Empreendimento/EmpreendimentoListPage/EmpreendimentoListPage'));
+const EmpreendimentoFormPage = lazy(() => import('./pages/Empreendimento/EmpreendimentoFormPage/EmpreendimentoFormPage'));
+const EmpreendimentoDetailPage = lazy(() => import('./pages/Empreendimento/EmpreendimentoDetailPage/EmpreendimentoDetailPage'));
+const UnidadeFormPage = lazy(() => import('./pages/Empreendimento/UnidadeFormPage/UnidadeFormPage'));
+const ReservaListPage = lazy(() => import('./pages/Empreendimento/Reserva/ReservaListPage/ReservaListPage'));
+const ModeloContratoListPage = lazy(() => import('./pages/Admin/ModeloContrato/ModeloContratoListPage/ModeloContratoListPage'));
+const ModeloContratoFormPage = lazy(() => import('./pages/Admin/ModeloContrato/ModeloContratoFormPage/ModeloContratoFormPage'));
+const PropostaContratoFormPage = lazy(() => import('./pages/PropostaContrato/PropostaContratoFormPage/PropostaContratoFormPage'));
+const PropostaContratoDetailPage = lazy(() => import('./pages/PropostaContrato/PropostaContratoDetailPage/PropostaContratoDetailPage'));
+const ImovelListPage = lazy(() => import('./pages/ImovelAvulso/ImovelListPage/ImovelListPage'));
+const ImovelFormPage = lazy(() => import('./pages/ImovelAvulso/ImovelFormPage/ImovelFormPage'));
 
 
 // Libs & CSS
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./App.css";
+
+// Fallback component for Suspense
+const PageLoader = () => <div className="page-loading-spinner">Carregando página...</div>;
+
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(
@@ -74,8 +77,11 @@ function App() {
           <Route
               path="/login"
               element={
-                !isLoggedIn ? ( <LoginPage onLoginSuccess={handleLoginSuccess} /> )
-                 : ( <Navigate replace to="/dashboard" /> ) // Logado? Vai pro dashboard
+                <Suspense fallback={<PageLoader />}>
+                  {!isLoggedIn ? ( <LoginPage onLoginSuccess={handleLoginSuccess} /> )
+                   : ( <Navigate replace to="/dashboard" /> ) // Logado? Vai pro dashboard
+                  }
+                </Suspense>
               }
           />
 
@@ -83,9 +89,12 @@ function App() {
           <Route
               path="/" // Rota pai para o layout
               element={
-                  isLoggedIn
+                <Suspense fallback={<PageLoader />}>
+                  {isLoggedIn
                   ? <MainLayout userData={userData} handleLogout={handleLogout} /> 
                   : <Navigate replace to="/login" /> // Se não logado, vai para login
+                  }
+                </Suspense>
               }
           >
                 {/* --- Rotas Filhas (Renderizadas DENTRO do <Outlet/> do MainLayout) --- */}
@@ -94,49 +103,49 @@ function App() {
                 <Route index element={<Navigate replace to="/dashboard" />} />
 
                 {/* Rotas Comuns */}
-                <Route path="dashboard" element={<DashboardPage />} />
+                <Route path="dashboard" element={<Suspense fallback={<PageLoader />}><DashboardPage /></Suspense>} />
                 
-                <Route path="leads" element={<LeadListPage />} />
-                <Route path="leads/novo" element={<LeadFormPage />} />
-                <Route path="leads/:id" element={<LeadDetailPage />} />
-                <Route path="leads/:id/editar" element={<LeadFormPage />} />
+                <Route path="leads" element={<Suspense fallback={<PageLoader />}><LeadListPage /></Suspense>} />
+                <Route path="leads/novo" element={<Suspense fallback={<PageLoader />}><LeadFormPage /></Suspense>} />
+                <Route path="leads/:id" element={<Suspense fallback={<PageLoader />}><LeadDetailPage /></Suspense>} />
+                <Route path="leads/:id/editar" element={<Suspense fallback={<PageLoader />}><LeadFormPage /></Suspense>} />
                 
-                <Route path="/empreendimentos" element={<EmpreendimentoListPage />} />
-                <Route path="/empreendimentos/novo" element={<EmpreendimentoFormPage />} />
-                <Route path="/empreendimentos/:id" element={<EmpreendimentoDetailPage />} /> 
-                <Route path="/empreendimentos/:id/editar" element={<EmpreendimentoFormPage />} />
+                <Route path="/empreendimentos" element={<Suspense fallback={<PageLoader />}><EmpreendimentoListPage /></Suspense>} />
+                <Route path="/empreendimentos/novo" element={<Suspense fallback={<PageLoader />}><EmpreendimentoFormPage /></Suspense>} />
+                <Route path="/empreendimentos/:id" element={<Suspense fallback={<PageLoader />}><EmpreendimentoDetailPage /></Suspense>} />
+                <Route path="/empreendimentos/:id/editar" element={<Suspense fallback={<PageLoader />}><EmpreendimentoFormPage /></Suspense>} />
 
 
-                <Route path="/empreendimentos/:empreendimentoId/unidades/novo" element={<UnidadeFormPage />} />
-                <Route path="/empreendimentos/:empreendimentoId/unidades/:unidadeId/editar" element={<UnidadeFormPage />} />
+                <Route path="/empreendimentos/:empreendimentoId/unidades/novo" element={<Suspense fallback={<PageLoader />}><UnidadeFormPage /></Suspense>} />
+                <Route path="/empreendimentos/:empreendimentoId/unidades/:unidadeId/editar" element={<Suspense fallback={<PageLoader />}><UnidadeFormPage /></Suspense>} />
 
-                <Route path="/imoveis-avulsos" element={<ImovelListPage />} />
-                <Route path="/imoveis-avulsos/novo" element={<ImovelFormPage />} />
-                <Route path="/imoveis-avulsos/:id/editar" element={<ImovelFormPage />} />
+                <Route path="/imoveis-avulsos" element={<Suspense fallback={<PageLoader />}><ImovelListPage /></Suspense>} />
+                <Route path="/imoveis-avulsos/novo" element={<Suspense fallback={<PageLoader />}><ImovelFormPage /></Suspense>} />
+                <Route path="/imoveis-avulsos/:id/editar" element={<Suspense fallback={<PageLoader />}><ImovelFormPage /></Suspense>} />
 
-                <Route path="/reservas" element={<ReservaListPage />} />
+                <Route path="/reservas" element={<Suspense fallback={<PageLoader />}><ReservaListPage /></Suspense>} />
 
-                <Route path="/reservas/:reservaId/proposta-contrato/novo" element={<PropostaContratoFormPage />} />
-                <Route path="/propostas-contratos/:propostaContratoId" element={<PropostaContratoDetailPage />} />
-                <Route path="/propostas-contratos/:propostaContratoId/editar" element={<PropostaContratoFormPage />} />
+                <Route path="/reservas/:reservaId/proposta-contrato/novo" element={<Suspense fallback={<PageLoader />}><PropostaContratoFormPage /></Suspense>} />
+                <Route path="/propostas-contratos/:propostaContratoId" element={<Suspense fallback={<PageLoader />}><PropostaContratoDetailPage /></Suspense>} />
+                <Route path="/propostas-contratos/:propostaContratoId/editar" element={<Suspense fallback={<PageLoader />}><PropostaContratoFormPage /></Suspense>} />
 
 
 
 
                 {/* Rotas Admin (Renderizadas condicionalmente DENTRO do Outlet) */}
-                <Route element={<AdminGuard isAdmin={isAdmin} />}> {/* Pai que aplica a guarda */}
-                                <Route path="admin/situacoes" element={<LeadStageAdminPage />} />
-                                <Route path="admin/origens" element={<OrigensAdminPage />} />
-                                <Route path="admin/motivosdescarte" element={<DiscardReasonAdminPage />} />
-                                <Route path="admin/usuarios" element={<UsuariosAdminPage />} />
-                                <Route path="admin/brokers" element={<BrokerContactsAdminPage />} />
+                <Route element={<Suspense fallback={<PageLoader />}><AdminGuard isAdmin={isAdmin} /></Suspense>}> {/* Pai que aplica a guarda */}
+                                <Route path="admin/situacoes" element={<Suspense fallback={<PageLoader />}><LeadStageAdminPage /></Suspense>} />
+                                <Route path="admin/origens" element={<Suspense fallback={<PageLoader />}><OrigensAdminPage /></Suspense>} />
+                                <Route path="admin/motivosdescarte" element={<Suspense fallback={<PageLoader />}><DiscardReasonAdminPage /></Suspense>} />
+                                <Route path="admin/usuarios" element={<Suspense fallback={<PageLoader />}><UsuariosAdminPage /></Suspense>} />
+                                <Route path="admin/brokers" element={<Suspense fallback={<PageLoader />}><BrokerContactsAdminPage /></Suspense>} />
                                 
-                                <Route path="admin/modelos-contrato" element={<ModeloContratoListPage />} />
-                                <Route path="admin/modelos-contrato/novo" element={<ModeloContratoFormPage />} />
-                                <Route path="admin/modelos-contrato/:id/editar" element={<ModeloContratoFormPage />} />
+                                <Route path="admin/modelos-contrato" element={<Suspense fallback={<PageLoader />}><ModeloContratoListPage /></Suspense>} />
+                                <Route path="admin/modelos-contrato/novo" element={<Suspense fallback={<PageLoader />}><ModeloContratoFormPage /></Suspense>} />
+                                <Route path="admin/modelos-contrato/:id/editar" element={<Suspense fallback={<PageLoader />}><ModeloContratoFormPage /></Suspense>} />
                 </Route>
 
-                <Route path="integracoes" element={<IntegrationsPage />} />
+                <Route path="integracoes" element={<Suspense fallback={<PageLoader />}><IntegrationsPage /></Suspense>} />
 
                             
 
@@ -149,7 +158,7 @@ function App() {
 
           {/* Rota 404 (Fora do Layout Principal) */}
           {/* Esta rota pega qualquer coisa que não deu match acima */}
-          <Route path="*" element={ <div><h1>404 - Página Não Encontrada</h1><Link to="/">Voltar</Link></div> } />
+          <Route path="*" element={ <Suspense fallback={<PageLoader />}><div><h1>404 - Página Não Encontrada</h1><Link to="/">Voltar</Link></div></Suspense> } />
 
         </Routes>
       {/* </div> */} {/* Fim div.App (opcional) */}

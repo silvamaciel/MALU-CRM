@@ -2,6 +2,11 @@
 const mongoose = require('mongoose');
 const ModeloContrato = require('../models/ModeloContrato');
 const PropostaContrato = require('../models/PropostaContrato'); 
+const createDOMPurify = require('dompurify');
+const { JSDOM } = require('jsdom');
+
+const window = new JSDOM('').window;
+const DOMPurify = createDOMPurify(window);
 
 /**
  * Cria um novo modelo de contrato.
@@ -14,8 +19,14 @@ const createModeloContrato = async (modeloData, companyId) => {
         throw new Error('Dados insuficientes. Nome, tipo e conteúdo HTML são obrigatórios.');
     }
 
+    // Sanitize HTML content before saving
+    const sanitizedHtml = DOMPurify.sanitize(modeloData.conteudoHTMLTemplate, {
+      USE_PROFILES: { html: true } // Allow safe HTML tags
+    });
+
     const novoModelo = new ModeloContrato({
         ...modeloData,
+        conteudoHTMLTemplate: sanitizedHtml, // Use sanitized HTML
         company: companyId,
         ativo: true
     });
@@ -100,6 +111,13 @@ const updateModeloContrato = async (modeloId, updateData, companyId) => {
     console.log(`[ModContratoSvc] Atualizando Modelo ID: ${modeloId} para Company: ${companyId}`);
     delete updateData.company; delete updateData.ativo; delete updateData._id;
 
+    // Sanitize HTML content if it's being updated
+    if (updateData.conteudoHTMLTemplate) {
+      updateData.conteudoHTMLTemplate = DOMPurify.sanitize(updateData.conteudoHTMLTemplate, {
+        USE_PROFILES: { html: true }
+      });
+    }
+
     try {
         if (updateData.nomeModelo) {
             const existing = await ModeloContrato.findOne({
@@ -120,7 +138,7 @@ const updateModeloContrato = async (modeloId, updateData, companyId) => {
         console.log(`[ModContratoSvc] Modelo ID: ${modeloId} atualizado.`);
         return modeloAtualizado;
     } catch (error) {
-        if (error.code === 11000) {
+        if (error.code === 11000 && updateData.nomeModelo) { // Check if nomeModelo was part of the update
             throw new Error(`Já existe um modelo de contrato com o nome "${updateData.nomeModelo}" nesta empresa.`);
         }
         console.error(`[ModContratoSvc] Erro ao atualizar modelo ${modeloId}:`, error);
