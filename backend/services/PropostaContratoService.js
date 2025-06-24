@@ -444,69 +444,61 @@ const gerarPDFPropostaContrato = async (propostaContratoId, companyId) => {
 const updatePropostaContrato = async (propostaContratoId, updateData, companyId, actorUserId) => {
   console.log(`[PropContSvc] Atualizando Proposta/Contrato ID: ${propostaContratoId} para Company: ${companyId} por User: ${actorUserId}`);
 
-  if (
-    !mongoose.Types.ObjectId.isValid(propostaContratoId) ||
-    !mongoose.Types.ObjectId.isValid(companyId) ||
-    !mongoose.Types.ObjectId.isValid(actorUserId)
-  ) {
-    throw new Error("ID(s) inválido(s) fornecido(s).");
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const proposta = await PropostaContrato.findOne({ _id: propostaContratoId, company: companyId }).session(session);
+    if (!proposta) throw new Error('Proposta/Contrato não encontrada.');
+
+    // Atualizar corpoContrato apenas se veio no updateData
+    const corpoContratoAtual = proposta.corpoContratoHTMLGerado;
+    if (!updateData.corpoContratoHTMLGerado) {
+      updateData.corpoContratoHTMLGerado = corpoContratoAtual;
+    }
+
+    // Atualiza o snapshot
+    if (updateData.adquirentes) {
+      proposta.adquirentesSnapshot = updateData.adquirentes;
+    }
+
+    // Atualizar dados do lead principal
+    if (updateData.adquirentes?.length > 0) {
+      const principal = updateData.adquirentes[0];
+      const leadDoc = await Lead.findById(proposta.lead).session(session);
+      if (leadDoc) {
+        Object.assign(leadDoc, {
+          nome: principal.nome,
+          cpf: principal.cpf,
+          rg: principal.rg,
+          nacionalidade: principal.nacionalidade,
+          estadoCivil: principal.estadoCivil,
+          profissao: principal.profissao,
+          email: principal.email,
+          contato: principal.contato,
+          endereco: principal.endereco,
+          nascimento: principal.nascimento,
+        });
+        await leadDoc.save({ session });
+      }
+    }
+
+    // Atualizar proposta com os dados restantes
+    Object.assign(proposta, updateData);
+    proposta.updatedAt = new Date();
+    await proposta.save({ session });
+
+    await session.commitTransaction();
+    return proposta;
+
+  } catch (error) {
+    await session.abortTransaction();
+    console.error('[PropContSvc] Erro ao atualizar Proposta/Contrato:', error);
+    throw error;
+  } finally {
+    session.endSession();
   }
-
-  const proposta = await PropostaContrato.findOne({ _id: propostaContratoId, company: companyId });
-  if (!proposta) {
-    throw new Error("PropostaContrato não encontrada para atualização.");
-  }
-
-  const reserva = await Reserva.findById(updateData.reserva?._id || proposta.reserva).populate('lead').populate('imovel');
-  if (!reserva) {
-    throw new Error("Erro ao buscar dados relacionados para atualização.");
-  }
-
-  // Recuperar corpoContratoHTMLGerado existente para manter
-  const contratoAtual = proposta.corpoContratoHTMLGerado || "<p><em>Documento ainda não foi gerado. Selecione um modelo de contrato na página de detalhes para gerá-lo.</em></p>";
-
-  // Atualizar adquirentesSnapshot com base nos adquirentes enviados (lead + coadquirentes)
-  const coadquirentesViaForm = (updateData.adquirentes || []).filter(p => p.cpf !== reserva.lead.cpf);
-
-  const adquirentesSnapshot = [
-    {
-      nome: reserva.lead.nome,
-      cpf: reserva.lead.cpf,
-      rg: reserva.lead.rg,
-      nacionalidade: reserva.lead.nacionalidade,
-      estadoCivil: reserva.lead.estadoCivil,
-      profissao: reserva.lead.profissao,
-      email: reserva.lead.email,
-      contato: reserva.lead.contato,
-      endereco: reserva.lead.endereco,
-      nascimento: reserva.lead.nascimento
-    },
-    ...coadquirentesViaForm
-  ];
-
-  // Recalcular valor total da proposta
-  const entrada = parseFloat(updateData.valorEntrada) || 0;
-  const totalParcelas = (updateData.planoDePagamento || []).reduce((acc, parcela) => {
-    const valor = parseFloat(parcela.valorUnitario) || 0;
-    const qtd = parseInt(parcela.quantidade) || 1;
-    return acc + (valor * qtd);
-  }, 0);
-  const valorTotalProposta = entrada + totalParcelas;
-
-  Object.assign(proposta, {
-    ...updateData,
-    adquirentesSnapshot,
-    corpoContratoHTMLGerado: contratoAtual,
-    valorPropostaContrato: valorTotalProposta
-  });
-
-  proposta.$ignoreValidacaoParcelas = true;
-  await proposta.save();
-
-  console.log(`[PropContSvc] Proposta/Contrato ID ${proposta._id} atualizada com sucesso.`);
-  return proposta;
 };
-
 
 
 
