@@ -103,7 +103,7 @@ todosAdquirentes.forEach((adq, index) => {
 
     const tituloAssinatura = index === 0 ? '(COMPRADOR/A PRINCIPAL)' : `(COADQUIRENTE ${index})`;
     blocoAssinaturasCompradores += `
-        <p style="text-align: center; margin-top: 40px;">
+        <p style="text-align: center;  margin-top: 80px; margin-bottom: 60px">
         _________________________<br>
         <strong>${adq.nome || ''}</strong><br>
         ${tituloAssinatura}
