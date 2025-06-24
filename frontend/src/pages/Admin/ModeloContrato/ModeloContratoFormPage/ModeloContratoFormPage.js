@@ -12,51 +12,86 @@ const TIPO_DOCUMENTO_OPCOES = ["Proposta", "Contrato de Reserva", "Contrato de C
 
 //dadosParaTemplate dentro do PropostaContratoService.js
 const LISTA_PLACEHOLDERS_DISPONIVEIS = [
- { ph: "{{vendedor_nome_fantasia}}", desc: "Nome Fantasia da Empresa Vendedora (do CRM)" },
-  { ph: "{{vendedor_razao_social}}", desc: "Razão Social da Empresa Vendedora" },
-  { ph: "{{vendedor_cnpj}}", desc: "CNPJ da Empresa Vendedora" },
-  { ph: "{{vendedor_endereco_completo}}", desc: "Endereço Completo da Empresa Vendedora" },
-  { ph: "{{vendedor_representante_nome}}", desc: "Nome do Representante Legal da Empresa Vendedora" },
-  { ph: "{{vendedor_representante_cpf}}", desc: "CPF do Representante Legal da Empresa Vendedora" },
-  { ph: "{{lead_principal_nome}}", desc: "Nome Completo do Comprador Principal" },
-  { ph: "{{lead_principal_cpf}}", desc: "CPF do Comprador Principal" },
-  { ph: "{{lead_principal_rg}}", desc: "RG do Comprador Principal" },
-  { ph: "{{lead_principal_endereco}}", desc: "Endereço do Comprador Principal" },
-  { ph: "{{lead_principal_estadoCivil}}", desc: "Estado Civil do Comprador Principal" },
-  { ph: "{{lead_principal_profissao}}", desc: "Profissão do Comprador Principal" },
-  { ph: "{{lead_principal_nacionalidade}}", desc: "Nacionalidade do Comprador Principal" },
-  { ph: "{{lead_principal_email}}", desc: "Email do Comprador Principal" },
-  { ph: "{{lead_principal_contato}}", desc: "Telefone do Comprador Principal" },
-  { ph: "{{lead_principal_nascimento}}", desc: "Data de Nascimento do Comprador Principal" },
-  { ph: "{{coadquirente1_nome}}", desc: "Nome do Coadquirente 1" },
-  { ph: "{{coadquirente1_cpf}}", desc: "CPF do Coadquirente 1" },
-  { ph: "{{coadquirente1_rg}}", desc: "RG do Coadquirente 1" },
-  { ph: "{{coadquirente1_endereco}}", desc: "Endereço do Coadquirente 1" },
-  { ph: "{{coadquirente1_estadoCivil}}", desc: "Estado Civil do Coadquirente 1" },
-  { ph: "{{coadquirente1_profissao}}", desc: "Profissão do Coadquirente 1" },
-  { ph: "{{coadquirente1_nacionalidade}}", desc: "Nacionalidade do Coadquirente 1" },
-  { ph: "{{coadquirente1_email}}", desc: "Email do Coadquirente 1" },
-  { ph: "{{coadquirente1_contato}}", desc: "Telefone do Coadquirente 1" },
-  { ph: "{{coadquirente1_nascimento}}", desc: "Data de Nascimento do Coadquirente 1" },
-  { ph: "{{bloco_html_coadquirentes}}", desc: "Bloco HTML resumido com nomes/CPFs dos coadquirentes" },
-  { ph: "{{bloco_assinaturas_compradores}}", desc: "Bloco HTML com assinatura de todos os compradores" },
-  { ph: "{{imovel_descricao}}", desc: "Descrição do Imóvel" },
-  { ph: "{{imovel_identificador}}", desc: "Identificador do Imóvel (ex: AP303)" },
-  { ph: "{{empreendimento_nome}}", desc: "Nome do Empreendimento" },
-  { ph: "{{imovel_endereco_completo}}", desc: "Endereço do Imóvel" },
-  { ph: "{{unidade_matricula}}", desc: "Matrícula do Imóvel (se aplicável)" },
-  { ph: "{{unidade_memorial_incorporacao}}", desc: "Memorial de Incorporação (se aplicável)" },
-  { ph: "{{proposta_valor_total_formatado}}", desc: "Valor Total da Proposta" },
-  { ph: "{{proposta_valor_entrada_formatado}}", desc: "Valor de Entrada" },
-  { ph: "{{proposta_condicoes_pagamento_gerais}}", desc: "Texto das Condições de Pagamento" },
-  { ph: "{{plano_pagamento_string_formatada}}", desc: "Descrição formatada do plano de pagamento" },
-  { ph: "{{corretagem_valor_formatado}}", desc: "Valor da Corretagem" },
-  { ph: "{{corretagem_condicoes}}", desc: "Condições da Corretagem" },
-  { ph: "{{corretor_principal_nome}}", desc: "Nome do Corretor Principal" },
-  { ph: "{{corretor_principal_cpf_cnpj}}", desc: "CPF/CNPJ do Corretor" },
-  { ph: "{{corretor_principal_creci}}", desc: "CRECI do Corretor" },
-  { ph: "{{data_proposta_extenso}}", desc: "Data da Proposta (por extenso)" },
-  { ph: "{{cidade_contrato}}", desc: "Cidade de Assinatura do Contrato" }
+  {
+    grupo: "Empresa Vendedora",
+    placeholders: [
+      { ph: "{{vendedor_nome_fantasia}}", desc: "Nome Fantasia da Empresa Vendedora (do CRM)" },
+      { ph: "{{vendedor_razao_social}}", desc: "Razão Social da Empresa Vendedora" },
+      { ph: "{{vendedor_cnpj}}", desc: "CNPJ da Empresa Vendedora" },
+      { ph: "{{vendedor_endereco_completo}}", desc: "Endereço Completo da Empresa Vendedora" },
+      { ph: "{{vendedor_representante_nome}}", desc: "Nome do Representante Legal da Empresa Vendedora" },
+      { ph: "{{vendedor_representante_cpf}}", desc: "CPF do Representante Legal da Empresa Vendedora" }
+    ]
+  },
+  {
+    grupo: "Comprador Principal",
+    placeholders: [
+      { ph: "{{lead_principal_nome}}", desc: "Nome Completo do Comprador Principal" },
+      { ph: "{{lead_principal_cpf}}", desc: "CPF do Comprador Principal" },
+      { ph: "{{lead_principal_rg}}", desc: "RG do Comprador Principal" },
+      { ph: "{{lead_principal_endereco}}", desc: "Endereço do Comprador Principal" },
+      { ph: "{{lead_principal_estadoCivil}}", desc: "Estado Civil do Comprador Principal" },
+      { ph: "{{lead_principal_profissao}}", desc: "Profissão do Comprador Principal" },
+      { ph: "{{lead_principal_nacionalidade}}", desc: "Nacionalidade do Comprador Principal" },
+      { ph: "{{lead_principal_email}}", desc: "Email do Comprador Principal" },
+      { ph: "{{lead_principal_contato}}", desc: "Telefone do Comprador Principal" },
+      { ph: "{{lead_principal_nascimento}}", desc: "Data de Nascimento do Comprador Principal" }
+    ]
+  },
+  {
+    grupo: "Coadquirentes",
+    placeholders: [
+      { ph: "{{coadquirente1_nome}}", desc: "Nome do Coadquirente 1" },
+      { ph: "{{coadquirente1_cpf}}", desc: "CPF do Coadquirente 1" },
+      { ph: "{{coadquirente1_rg}}", desc: "RG do Coadquirente 1" },
+      { ph: "{{coadquirente1_endereco}}", desc: "Endereço do Coadquirente 1" },
+      { ph: "{{coadquirente1_estadoCivil}}", desc: "Estado Civil do Coadquirente 1" },
+      { ph: "{{coadquirente1_profissao}}", desc: "Profissão do Coadquirente 1" },
+      { ph: "{{coadquirente1_nacionalidade}}", desc: "Nacionalidade do Coadquirente 1" },
+      { ph: "{{coadquirente1_email}}", desc: "Email do Coadquirente 1" },
+      { ph: "{{coadquirente1_contato}}", desc: "Telefone do Coadquirente 1" },
+      { ph: "{{coadquirente1_nascimento}}", desc: "Data de Nascimento do Coadquirente 1" },
+      { ph: "{{bloco_html_coadquirentes}}", desc: "Bloco HTML resumido com nomes/CPFs dos coadquirentes" },
+      { ph: "{{bloco_assinaturas_compradores}}", desc: "Bloco HTML com assinatura de todos os compradores" }
+    ]
+  },
+  {
+    grupo: "Imóvel / Empreendimento",
+    placeholders: [
+      { ph: "{{imovel_descricao}}", desc: "Descrição do Imóvel" },
+      { ph: "{{imovel_identificador}}", desc: "Identificador do Imóvel (ex: AP303)" },
+      { ph: "{{empreendimento_nome}}", desc: "Nome do Empreendimento" },
+      { ph: "{{imovel_endereco_completo}}", desc: "Endereço do Imóvel" },
+      { ph: "{{unidade_matricula}}", desc: "Matrícula do Imóvel (se aplicável)" },
+      { ph: "{{unidade_memorial_incorporacao}}", desc: "Memorial de Incorporação (se aplicável)" }
+    ]
+  },
+  {
+    grupo: "Proposta e Pagamento",
+    placeholders: [
+      { ph: "{{proposta_valor_total_formatado}}", desc: "Valor Total da Proposta" },
+      { ph: "{{proposta_valor_entrada_formatado}}", desc: "Valor de Entrada" },
+      { ph: "{{proposta_condicoes_pagamento_gerais}}", desc: "Texto das Condições de Pagamento" },
+      { ph: "{{plano_pagamento_string_formatada}}", desc: "Descrição formatada do plano de pagamento" }
+    ]
+  },
+  {
+    grupo: "Corretagem",
+    placeholders: [
+      { ph: "{{corretagem_valor_formatado}}", desc: "Valor da Corretagem" },
+      { ph: "{{corretagem_condicoes}}", desc: "Condições da Corretagem" },
+      { ph: "{{corretor_principal_nome}}", desc: "Nome do Corretor Principal" },
+      { ph: "{{corretor_principal_cpf_cnpj}}", desc: "CPF/CNPJ do Corretor" },
+      { ph: "{{corretor_principal_creci}}", desc: "CRECI do Corretor" }
+    ]
+  },
+  {
+    grupo: "Outros",
+    placeholders: [
+      { ph: "{{data_proposta_extenso}}", desc: "Data da Proposta (por extenso)" },
+      { ph: "{{cidade_contrato}}", desc: "Cidade de Assinatura do Contrato" }
+    ]
+  }
 ];
 
 function ModeloContratoFormPage() {
@@ -234,16 +269,21 @@ function ModeloContratoFormPage() {
                         </div>
                     )}
                     
-                    <div className="form-section" style={{marginTop: '20px'}}>
-                        <h3>Placeholders Disponíveis para o Template</h3>
+                    <div className="form-section" style={{ marginTop: '20px' }}>
+                    <h3>Placeholders Disponíveis para o Template</h3>
+                    {LISTA_PLACEHOLDERS_DISPONIVEIS.map((grupo, index) => (
+                        <div key={index} style={{ marginBottom: '15px' }}>
+                        <strong>{grupo.grupo}</strong>
                         <ul className="placeholders-list">
-                            {LISTA_PLACEHOLDERS_DISPONIVEIS.map(item => (
-                                <li key={item.ph}>
-                                    <code>{item.ph}</code> - {item.desc}
-                                </li>
+                            {grupo.placeholders.map(item => (
+                            <li key={item.ph}>
+                                <code>{item.ph}</code> - {item.desc}
+                            </li>
                             ))}
                         </ul>
-                    </div>
+                        </div>
+                    ))}
+</div>
 
                     {/* TODO: Adicionar interface para gerenciar 'placeholdersDisponiveis' se necessário */}
 
