@@ -270,6 +270,7 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
 
 
 
+
 const preencherTemplateContrato = (templateHtml = "", dados = {}) => {
   let corpoProcessado = templateHtml;
   for (const key in dados) {
@@ -512,6 +513,7 @@ const updatePropostaContrato = async (propostaContratoId, updateData, companyId,
   console.log(`[PropContSvc] Proposta/Contrato ID ${proposta._id} atualizada com sucesso.`);
   return proposta;
 };
+
 
 
 
