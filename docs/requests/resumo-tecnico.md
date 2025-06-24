@@ -88,4 +88,3 @@ Use o prompt original de resumo técnico para IA (já colado)
 **Formato de saída**: preencha cada arquivo `.md` no padrão Markdown, com títulos e subtítulos claros.
 
 **Objetivo final**: esta documentação será usada por IAs (ChatGPT Plus, Claude, etc) e novos devs no onboarding. Deve estar o mais completa, robusta e legível possível.
-
