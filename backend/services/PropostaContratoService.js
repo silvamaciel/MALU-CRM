@@ -107,6 +107,11 @@ todosAdquirentes.forEach((adq, index) => {
         _________________________<br>
         <strong>${adq.nome || ''}</strong><br>
         ${tituloAssinatura}
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
         </p>
     `;
     });
