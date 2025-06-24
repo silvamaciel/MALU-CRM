@@ -162,29 +162,26 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
       .session(session);
 
     if (!reserva) throw new Error("Reserva associada não encontrada.");
-    if (reserva.statusReserva !== 'Ativa') {
-      throw new Error(`A reserva não está mais ativa. Status atual: ${reserva.statusReserva}`);
+    if (reserva.statusReserva !== 'Ativa') throw new Error(`A reserva não está mais ativa. Status atual: ${reserva.statusReserva}`);
+
+    // Atualizar dados do lead com base no primeiro adquirente
+    if (propostaData.adquirentes?.length > 0) {
+      const principal = propostaData.adquirentes[0];
+      Object.assign(reserva.lead, {
+        nome: principal.nome,
+        cpf: principal.cpf,
+        rg: principal.rg,
+        nacionalidade: principal.nacionalidade,
+        estadoCivil: principal.estadoCivil,
+        profissao: principal.profissao,
+        email: principal.email,
+        contato: principal.contato,
+        endereco: principal.endereco,
+        nascimento: principal.nascimento,
+      });
     }
 
-    // Separar coadquirentes do form
-    const coadquirentesViaForm = (propostaData.adquirentes || []).filter(p => p.cpf !== reserva.lead.cpf);
-
-    // Montar adquirentesSnapshot (lead + coadquirentes)
-    const adquirentesSnapshot = [
-      {
-        nome: reserva.lead.nome,
-        cpf: reserva.lead.cpf,
-        rg: reserva.lead.rg,
-        nacionalidade: reserva.lead.nacionalidade,
-        estadoCivil: reserva.lead.estadoCivil,
-        profissao: reserva.lead.profissao,
-        email: reserva.lead.email,
-        contato: reserva.lead.contato,
-        endereco: reserva.lead.endereco,
-        nascimento: reserva.lead.nascimento
-      },
-      ...coadquirentesViaForm
-    ];
+    const adquirentesSnapshot = propostaData.adquirentes || [];
 
     const entrada = parseFloat(propostaData.valorEntrada) || 0;
     const totalParcelas = (propostaData.planoDePagamento || []).reduce((acc, parcela) => {
@@ -192,6 +189,7 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
       const qtd = parseInt(parcela.quantidade) || 1;
       return acc + (valor * qtd);
     }, 0);
+
     const valorTotalProposta = entrada + totalParcelas;
     propostaData.valorPropostaContrato = valorTotalProposta;
 
@@ -204,22 +202,16 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
       company: companyId,
       createdBy: creatingUserId,
       adquirentesSnapshot,
-      empreendimentoNomeSnapshot:
-        reserva.tipoImovel === 'Unidade' ? reserva.imovel.empreendimento?.nome : 'Imóvel Avulso',
-      unidadeIdentificadorSnapshot:
-        reserva.tipoImovel === 'Unidade' ? reserva.imovel.identificador : reserva.imovel.titulo,
-      precoTabelaUnidadeNoMomento:
-        reserva.tipoImovel === 'Unidade' ? reserva.imovel.precoTabela : reserva.imovel.preco,
-      corpoContratoHTMLGerado:
-        "<p><em>Documento ainda não foi gerado. Selecione um modelo de contrato na página de detalhes para gerá-lo.</em></p>",
-      modeloContratoUtilizado: null
+      empreendimentoNomeSnapshot: reserva.tipoImovel === 'Unidade' ? reserva.imovel.empreendimento?.nome : 'Imóvel Avulso',
+      unidadeIdentificadorSnapshot: reserva.tipoImovel === 'Unidade' ? reserva.imovel.identificador : reserva.imovel.titulo,
+      precoTabelaUnidadeNoMomento: reserva.tipoImovel === 'Unidade' ? reserva.imovel.precoTabela : reserva.imovel.preco,
+      corpoContratoHTMLGerado: "<p><em>Documento ainda não foi gerado. Selecione um modelo de contrato na página de detalhes para gerá-lo.</em></p>",
+      modeloContratoUtilizado: null,
     };
 
     const proposta = new PropostaContrato(dadosParaNovaProposta);
     proposta.$ignoreValidacaoParcelas = true;
     const propostaSalva = await proposta.save({ session });
-
-    console.log('[PropostaContrato] Proposta (dados) criada com ID:', propostaSalva._id);
 
     reserva.statusReserva = 'ConvertidaEmProposta';
     reserva.propostaId = propostaSalva._id;
@@ -234,13 +226,13 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
     const leadStage = await LeadStage.findOneAndUpdate(
       { company: companyId, nome: { $regex: new RegExp(`^${nomeEstagio}$`, 'i') } },
       { $setOnInsert: { nome: nomeEstagio, company: companyId, ativo: true } },
-      { new: true, upsert: true, runValidators: true, session: session }
+      { new: true, upsert: true, runValidators: true, session }
     );
     reserva.lead.situacao = leadStage._id;
 
     await Promise.all([
       reserva.save({ session }),
-      reserva.lead.save({ session })
+      reserva.lead.save({ session }),
     ]);
 
     await logHistory(
@@ -267,6 +259,7 @@ const createPropostaContrato = async (reservaId, propostaData, companyId, creati
     session.endSession();
   }
 };
+
 
 
 
