@@ -134,6 +134,8 @@ const montarDadosParaTemplate = (propostaData, leadDoc, imovelDoc, empresaVended
   dados['data_proposta_extenso'] = formatDateExtenso(propostaData.dataProposta);
   dados['cidade_contrato'] = empresaVendedora.endereco?.cidade || '';
 
+  console.log('[DEBUG CONTRATO] Placeholders disponíveis para o modelo:', JSON.stringify(dados, null, 2));
+
   return dados;
 };
 
