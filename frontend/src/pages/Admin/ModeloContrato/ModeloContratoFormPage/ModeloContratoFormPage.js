@@ -12,44 +12,86 @@ const TIPO_DOCUMENTO_OPCOES = ["Proposta", "Contrato de Reserva", "Contrato de C
 
 //dadosParaTemplate dentro do PropostaContratoService.js
 const LISTA_PLACEHOLDERS_DISPONIVEIS = [
-    { ph: "{{vendedor_nome_fantasia}}", desc: "Nome Fantasia da Empresa Vendedora (do CRM)" },
-    { ph: "{{vendedor_razao_social}}", desc: "Razão Social da Empresa Vendedora" },
-    { ph: "{{vendedor_cnpj}}", desc: "CNPJ da Empresa Vendedora" },
-    { ph: "{{vendedor_endereco_completo}}", desc: "Endereço Completo da Empresa Vendedora" },
-    { ph: "{{vendedor_representante_nome}}", desc: "Nome do Representante Legal da Empresa Vendedora" },
-    { ph: "{{vendedor_representante_cpf}}", desc: "CPF do Representante Legal da Empresa Vendedora" },
-    { ph: "{{lead_nome}}", desc: "Nome Completo do Lead Principal" },
-    { ph: "{{lead_cpf}}", desc: "CPF do Lead Principal" },
-    { ph: "{{lead_rg}}", desc: "RG do Lead Principal" },
-    { ph: "{{lead_endereco_completo}}", desc: "Endereço Completo do Lead" },
-    { ph: "{{lead_estado_civil}}", desc: "Estado Civil do Lead" },
-    { ph: "{{lead_profissao}}", desc: "Profissão do Lead" },
-    { ph: "{{lead_nacionalidade}}", desc: "Nacionalidade do Lead" },
-    { ph: "{{lead_email}}", desc: "Email do Lead" },
-    { ph: "{{lead_telefone}}", desc: "Telefone do Lead (formatado)" },
-    { ph: "{{empreendimento_nome}}", desc: "Nome do Empreendimento" },
-    { ph: "{{unidade_identificador}}", desc: "Identificador da Unidade (Ex: Apto 101)" },
-    { ph: "{{unidade_tipologia}}", desc: "Tipologia da Unidade" },
-    { ph: "{{unidade_area_privativa}}", desc: "Área Privativa da Unidade (Ex: 70m²)" },
-    { ph: "{{empreendimento_endereco_completo}}", desc: "Endereço Completo do Empreendimento" },
-    { ph: "{{unidade_memorial_incorporacao}}", desc: "Nº Memorial de Incorporação do Empreendimento" },
-    { ph: "{{unidade_matricula}}", desc: "Nº Matrícula da Unidade" },
-    { ph: "{{proposta_valor_total_formatado}}", desc: "Valor Total da Proposta (Ex: R$ 238.000,00)" },
-    { ph: "{{proposta_valor_entrada_formatado}}", desc: "Valor da Entrada/Sinal (Ex: R$ 1.000,00)" },
-    { ph: "{{proposta_condicoes_pagamento_gerais}}", desc: "Texto das Condições Gerais de Pagamento" },
-    { ph: "{{pagamento_banco_nome}}", desc: "Nome do Banco para Pagamento" },
-    { ph: "{{pagamento_agencia}}", desc: "Agência para Pagamento" },
-    { ph: "{{pagamento_conta_corrente}}", desc: "Conta Corrente para Pagamento" },
-    { ph: "{{pagamento_cnpj_favorecido}}", desc: "CNPJ do Favorecido para Pagamento" },
-    { ph: "{{pagamento_pix}}", desc: "Chave PIX para Pagamento" },
-    { ph: "{{plano_pagamento_string_formatada}}", desc: "String formatada do Plano de Pagamento detalhado" },
-    { ph: "{{corretagem_valor_formatado}}", desc: "Valor da Corretagem (Ex: R$ 14.280,00)" },
-    { ph: "{{corretor_principal_nome}}", desc: "Nome do Corretor Principal da Venda" },
-    { ph: "{{corretor_principal_cpf_cnpj}}", desc: "CPF/CNPJ do Corretor Principal" },
-    { ph: "{{corretor_principal_creci}}", desc: "CRECI/Registro Profissional do Corretor" },
-    { ph: "{{corretagem_condicoes}}", desc: "Condições de Pagamento da Corretagem" },
-    { ph: "{{data_proposta_extenso}}", desc: "Data da Proposta por Extenso (Ex: 27 de Maio de 2025)" },
-    { ph: "{{cidade_contrato}}", desc: "Cidade de Emissão do Contrato (da Empresa Vendedora)" },
+   {
+    grupo: "Empresa Vendedora",
+    placeholders: [
+      { ph: "{{vendedor_nome_fantasia}}", desc: "Nome Fantasia da Empresa Vendedora (do CRM)" },
+      { ph: "{{vendedor_razao_social}}", desc: "Razão Social da Empresa Vendedora" },
+      { ph: "{{vendedor_cnpj}}", desc: "CNPJ da Empresa Vendedora" },
+      { ph: "{{vendedor_endereco_completo}}", desc: "Endereço Completo da Empresa Vendedora" },
+      { ph: "{{vendedor_representante_nome}}", desc: "Nome do Representante Legal da Empresa Vendedora" },
+      { ph: "{{vendedor_representante_cpf}}", desc: "CPF do Representante Legal da Empresa Vendedora" }
+    ]
+  },
+  {
+    grupo: "Comprador Principal",
+    placeholders: [
+      { ph: "{{lead_principal_nome}}", desc: "Nome Completo do Comprador Principal" },
+      { ph: "{{lead_principal_cpf}}", desc: "CPF do Comprador Principal" },
+      { ph: "{{lead_principal_rg}}", desc: "RG do Comprador Principal" },
+      { ph: "{{lead_principal_endereco}}", desc: "Endereço do Comprador Principal" },
+      { ph: "{{lead_principal_estadoCivil}}", desc: "Estado Civil do Comprador Principal" },
+      { ph: "{{lead_principal_profissao}}", desc: "Profissão do Comprador Principal" },
+      { ph: "{{lead_principal_nacionalidade}}", desc: "Nacionalidade do Comprador Principal" },
+      { ph: "{{lead_principal_email}}", desc: "Email do Comprador Principal" },
+      { ph: "{{lead_principal_contato}}", desc: "Telefone do Comprador Principal" },
+      { ph: "{{lead_principal_nascimento}}", desc: "Data de Nascimento do Comprador Principal" }
+    ]
+  },
+  {
+    grupo: "Coadquirentes",
+    placeholders: [
+      { ph: "{{coadquirente1_nome}}", desc: "Nome do Coadquirente 1" },
+      { ph: "{{coadquirente1_cpf}}", desc: "CPF do Coadquirente 1" },
+      { ph: "{{coadquirente1_rg}}", desc: "RG do Coadquirente 1" },
+      { ph: "{{coadquirente1_endereco}}", desc: "Endereço do Coadquirente 1" },
+      { ph: "{{coadquirente1_estadoCivil}}", desc: "Estado Civil do Coadquirente 1" },
+      { ph: "{{coadquirente1_profissao}}", desc: "Profissão do Coadquirente 1" },
+      { ph: "{{coadquirente1_nacionalidade}}", desc: "Nacionalidade do Coadquirente 1" },
+      { ph: "{{coadquirente1_email}}", desc: "Email do Coadquirente 1" },
+      { ph: "{{coadquirente1_contato}}", desc: "Telefone do Coadquirente 1" },
+      { ph: "{{coadquirente1_nascimento}}", desc: "Data de Nascimento do Coadquirente 1" },
+      { ph: "{{bloco_html_coadquirentes}}", desc: "Bloco HTML resumido com nomes/CPFs dos coadquirentes" },
+      { ph: "{{bloco_assinaturas_compradores}}", desc: "Bloco HTML com assinatura de todos os compradores" }
+    ]
+  },
+  {
+    grupo: "Imóvel / Empreendimento",
+    placeholders: [
+      { ph: "{{imovel_descricao}}", desc: "Descrição do Imóvel" },
+      { ph: "{{imovel_identificador}}", desc: "Identificador do Imóvel (ex: AP303)" },
+      { ph: "{{empreendimento_nome}}", desc: "Nome do Empreendimento" },
+      { ph: "{{imovel_endereco_completo}}", desc: "Endereço do Imóvel" },
+      { ph: "{{unidade_matricula}}", desc: "Matrícula do Imóvel (se aplicável)" },
+      { ph: "{{unidade_memorial_incorporacao}}", desc: "Memorial de Incorporação (se aplicável)" }
+    ]
+  },
+  {
+    grupo: "Proposta e Pagamento",
+    placeholders: [
+      { ph: "{{proposta_valor_total_formatado}}", desc: "Valor Total da Proposta" },
+      { ph: "{{proposta_valor_entrada_formatado}}", desc: "Valor de Entrada" },
+      { ph: "{{proposta_condicoes_pagamento_gerais}}", desc: "Texto das Condições de Pagamento" },
+      { ph: "{{plano_pagamento_string_formatada}}", desc: "Descrição formatada do plano de pagamento" }
+    ]
+  },
+  {
+    grupo: "Corretagem",
+    placeholders: [
+      { ph: "{{corretagem_valor_formatado}}", desc: "Valor da Corretagem" },
+      { ph: "{{corretagem_condicoes}}", desc: "Condições da Corretagem" },
+      { ph: "{{corretor_principal_nome}}", desc: "Nome do Corretor Principal" },
+      { ph: "{{corretor_principal_cpf_cnpj}}", desc: "CPF/CNPJ do Corretor" },
+      { ph: "{{corretor_principal_creci}}", desc: "CRECI do Corretor" }
+    ]
+  },
+  {
+    grupo: "Outros",
+    placeholders: [
+      { ph: "{{data_proposta_extenso}}", desc: "Data da Proposta (por extenso)" },
+      { ph: "{{cidade_contrato}}", desc: "Cidade de Assinatura do Contrato" }
+    ]
+  }
 ];
 
 function ModeloContratoFormPage() {
