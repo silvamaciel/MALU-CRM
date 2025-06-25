@@ -92,7 +92,7 @@ const criarEventoLocal = async ({ companyId, userId, titulo, descricao, dataInic
 
 
 const deleteEventoAgenda = async (id) => {
-  const evento = await Agenda.findByIdAndDelete(id);
+  const evento = await AgendaEvento.findByIdAndDelete(id);
   if (!evento) throw new Error('Evento não encontrado');
   return evento;
 };
