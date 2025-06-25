@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getEventosAgenda, criarEventoAgenda, deletarEventoAgenda } from "../api/agendaApi";
+import { getEventosAgenda, criarEventoAgenda, deletarEventoAgenda } from "../../api/agendaApi";
 import './AgendaPage.css';
 
 const AgendaPage = () => {
