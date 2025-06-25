@@ -68,9 +68,26 @@ const criarEventoLocal = async (req, res) => {
   }
 };
 
+
+const deleteEventoAgenda = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await agendaService.deleteEventoAgenda(id);
+    return res.json({ message: 'Evento excluído com sucesso' });
+  } catch (error) {
+    console.error('Erro ao excluir evento:', error);
+    if (error.message === 'Evento não encontrado') {
+      return res.status(404).json({ message: error.message });
+    }
+    return res.status(500).json({ message: 'Erro interno ao excluir evento' });
+  }
+};
+
+
 module.exports = {
   listarEventosLocais,
   sincronizarEventosGoogle,
   criarEventoLocal,
-  saveOrUpdateEvento
+  saveOrUpdateEvento,
+  deleteEventoAgenda
 };

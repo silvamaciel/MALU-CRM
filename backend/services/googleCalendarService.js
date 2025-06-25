@@ -91,9 +91,17 @@ const criarEventoLocal = async ({ companyId, userId, titulo, descricao, dataInic
 };
 
 
+const deleteEventoAgenda = async (id) => {
+  const evento = await Agenda.findByIdAndDelete(id);
+  if (!evento) throw new Error('Evento não encontrado');
+  return evento;
+};
+
+
 module.exports = {
   saveOrUpdateEvento,
   buscarEventosGoogleDoUsuario,
   sincronizarEventosGoogle,
-  criarEventoLocal
+  criarEventoLocal,
+  deleteEventoAgenda
 };
