@@ -33,7 +33,7 @@ function Sidebar({ userData, handleLogout, closeMobileSidebar }) {
                     <li><NavLink to="/empreendimentos" onClick={handleLinkClick} className={({isActive}) => isActive || location.pathname.startsWith('/empreendimentos') ? 'active' : ''}>Empreendimentos</NavLink></li>
                      <li><NavLink to="/imoveis-avulsos" onClick={handleLinkClick} className={({isActive}) => isActive || location.pathname.startsWith('/imoveis-avulsos') ? 'active' : ''}>Imóveis Avulsos</NavLink></li>
                     <li><NavLink to="/reservas" onClick={handleLinkClick} className={({isActive}) => isActive || location.pathname.startsWith('/reservas') ? 'active' : ''}>Reservas</NavLink></li>
-                    <li><NavLink to="/agenda" onClick={handleLinkClick} className={({isActive}) => isActive || location.pathname.startsWith('/agenda') ? 'active' : ''}>Agenda</NavLink></li>
+                    {/* <li><NavLink to="/agenda" onClick={handleLinkClick} className={({isActive}) => isActive || location.pathname.startsWith('/agenda') ? 'active' : ''}>Agenda</NavLink></li> */}
 
 
                     {/* Links de Administração */}
