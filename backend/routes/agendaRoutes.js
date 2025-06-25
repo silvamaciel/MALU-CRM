@@ -8,7 +8,7 @@ const { protect, authorize } = require('../middlewares/authMiddleware');
 router.get('/', protect, listarEventosLocais);
 router.post('/sync-google', protect, sincronizarEventosGoogle);
 router.post('/', protect, criarEventoLocal);
-router.delete('/:id', protect, authorize, deleteEventoAgenda);
+router.delete('/:id', protect, deleteEventoAgenda);
 
 
 module.exports = router;
