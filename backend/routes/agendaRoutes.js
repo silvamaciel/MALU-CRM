@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { listarEventosLocais, sincronizarEventosGoogle } = require('../controllers/agendaController');
-const authMiddleware = require('../middlewares/authMiddleware');
+const { protect, authorize } = require('../middlewares/authMiddleware');
 
-router.get('/', authMiddleware, listarEventosLocais);
-router.post('/sync-google', authMiddleware, sincronizarEventosGoogle);
+
+
+router.get('/', protect, listarEventosLocais);
+router.post('/sync-google', protect, sincronizarEventosGoogle);
 
 module.exports = router;
