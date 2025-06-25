@@ -1,5 +1,5 @@
 const AgendaEvento = require('../models/AgendaEvento');
-const agendaService = require('../services/agendaService');
+const agendaService = require('../services/googleCalendarService');
 
 // Lista eventos do usuário e empresa
 const listarEventosLocais = async (req, res) => {
