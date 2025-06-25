@@ -178,7 +178,23 @@ const loginUser = async (email, password) => {
 };
 
 
+/**
+ * Retorna um client OAuth2 configurado com os tokens de um usuário
+ * @param {object} tokens - { access_token, refresh_token, expiry_date }
+ */
+const getGoogleAuthClient = (tokens) => {
+    const clientInstance = new OAuth2Client(
+        GOOGLE_CLIENT_ID,
+        GOOGLE_CLIENT_SECRET,
+        REDIRECT_URI
+    );
+    clientInstance.setCredentials(tokens);
+    return clientInstance;
+};
+
+
 module.exports = {
     processGoogleCode,
-    loginUser
+    loginUser,
+    getGoogleAuthClient
 };

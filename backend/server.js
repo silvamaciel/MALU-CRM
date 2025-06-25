@@ -70,6 +70,8 @@ app.use('/api/propostas-contratos', require('./routes/propostaContratoRoutes'));
 
 app.use('/api/modelos-contrato', require('./routes/modeloContratoRoutes'));
 
+app.use('/api/agenda', require('./routes/agendaRoutes'));
+
 
 
 
