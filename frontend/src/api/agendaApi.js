@@ -37,6 +37,7 @@ export const criarEventoAgenda = async (eventoData) => {
  * @returns {Promise<object>} Resposta da API.
  */
 export const deletarEventoAgenda = async (eventoId) => {
+    console.log(eventoId);
   if (!eventoId) throw new Error("ID do evento obrigatório.");
   try {
     const response = await axiosInstance.delete(`${API_URL}/${eventoId}`);
