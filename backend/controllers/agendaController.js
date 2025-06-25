@@ -1,4 +1,5 @@
 const AgendaEvento = require('../models/AgendaEvento');
+const agendaService = require('../services/agendaService');
 
 // Lista eventos do usuário e empresa
 const listarEventosLocais = async (req, res) => {
@@ -49,7 +50,26 @@ const sincronizarEventosGoogle = async (req, res) => {
   }
 };
 
+
+const criarEventoLocal = async (req, res) => {
+  try {
+    const { titulo, descricao, dataInicio, dataFim } = req.body;
+    const companyId = req.user.company;
+    const userId = req.user._id;
+
+    const novoEvento = await agendaService.criarEventoLocal({
+      companyId, userId, titulo, descricao, dataInicio, dataFim
+    });
+
+    return res.status(201).json(novoEvento);
+  } catch (error) {
+    console.error('[AgendaController] Erro ao criar evento local:', error);
+    return res.status(500).json({ error: error.message || 'Erro ao criar evento' });
+  }
+};
+
 module.exports = {
   listarEventosLocais,
   sincronizarEventosGoogle,
+  criarEventoLocal
 };

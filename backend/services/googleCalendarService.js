@@ -71,8 +71,29 @@ const sincronizarEventosGoogle = async (user) => {
   return googleEvents.length;
 };
 
+
+const criarEventoLocal = async ({ companyId, userId, titulo, descricao, dataInicio, dataFim }) => {
+  if (!titulo || !dataInicio || !dataFim) {
+    throw new Error('Campos obrigatórios faltando para criar evento.');
+  }
+
+  const evento = new AgendaEvento({
+    companyId,
+    userId,
+    titulo,
+    descricao,
+    dataInicio: new Date(dataInicio),
+    dataFim: new Date(dataFim),
+    origem: 'local',
+  });
+
+  return await evento.save();
+};
+
+
 module.exports = {
   saveOrUpdateEvento,
   buscarEventosGoogleDoUsuario,
   sincronizarEventosGoogle,
+  criarEventoLocal
 };
