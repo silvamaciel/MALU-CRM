@@ -1,6 +1,6 @@
 import axiosInstance from "./axiosInstance";
 
-const API_URL = '/api/agenda';
+const API_URL = '/agenda';
 
 /**
  * Busca eventos da agenda (aplicando filtro de companyId via token).
@@ -41,6 +41,7 @@ export const deletarEventoAgenda = async (eventoId) => {
   if (!eventoId) throw new Error("ID do evento obrigatório.");
   try {
     const response = await axiosInstance.delete(`${API_URL}/${eventoId}`);
+    console,log(response);
     return response.data;
   } catch (error) {
     console.error("Erro ao excluir evento:", error.response?.data || error.message);
