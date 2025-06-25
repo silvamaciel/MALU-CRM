@@ -71,5 +71,6 @@ const criarEventoLocal = async (req, res) => {
 module.exports = {
   listarEventosLocais,
   sincronizarEventosGoogle,
-  criarEventoLocal
+  criarEventoLocal,
+  saveOrUpdateEvento
 };
