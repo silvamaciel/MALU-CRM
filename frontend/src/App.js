@@ -33,7 +33,7 @@ import PropostaContratoFormPage from './pages/PropostaContrato/PropostaContratoF
 import PropostaContratoDetailPage from './pages/PropostaContrato/PropostaContratoDetailPage/PropostaContratoDetailPage';
 import ImovelListPage from './pages/ImovelAvulso/ImovelListPage/ImovelListPage';
 import ImovelFormPage from './pages/ImovelAvulso/ImovelFormPage/ImovelFormPage';
-import AgendaPage from './pages/AgendaPage';
+import AgendaPage from './pages/AgendaPage/AgendaPage';
 
 
 
