@@ -1,6 +1,6 @@
 import axiosInstance from "./axiosInstance";
 
-const API_URL = '/agenda';
+const API_URL = '/api/agenda';
 
 /**
  * Busca eventos da agenda (aplicando filtro de companyId via token).
