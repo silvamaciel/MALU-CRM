@@ -98,23 +98,26 @@ const LISTA_PLACEHOLDERS_DISPONIVEIS = [
 const editorConfiguration = {
     toolbar: [
         'heading', '|',
-        'bold', 'italic', 'link', '|',
-        'bulletedList', 'numberedList', '|',
-        'alignment', '|',
-        'fontColor', 'fontBackgroundColor', '|',
-        'insertTable', 'tableColumn', 'tableRow', 'mergeTableCells', '|',
-        'sourceEditing', '|',
+        'bold', 'italic', '|',
+        'alignment:left', 'alignment:center', 'alignment:right', 'alignment:justify', '|',
+        'insertTable', '|',
+        // Itens removidos da toolbar principal para seguir a especificação da tarefa:
+        // 'link', 'bulletedList', 'numberedList', 'fontColor', 'fontBackgroundColor',
+        // 'sourceEditing' (este último pode ser importante manter, confirmar se a remoção foi intencional)
+        // 'tableColumn', 'tableRow', 'mergeTableCells' (movidos para table.contentToolbar)
         'undo', 'redo'
     ],
     language: 'pt-br',
     table: {
         contentToolbar: [
-            'tableColumn', 'tableRow', 'mergeTableCells'
+            'tableColumn', 'tableRow', 'mergeTableCells', '|',
+            'tableProperties', 'tableCellProperties', '|',
+            'alignment:left', 'alignment:center', 'alignment:right', 'alignment:justify'
         ]
     },
-     // CKEditor precisa de uma altura mínima via CSS ou inline style no container
-    // A propriedade 'height' no config não é padrão para ClassicEditor.
-    // Vamos controlar a altura no container div.
+    // Os plugins Alignment, TableProperties e TableCellProperties são ativados
+    // automaticamente pelo ClassicEditor quando seus respectivos botões são
+    // adicionados às configurações de toolbar.
 };
 
 function ModeloContratoFormPage() {

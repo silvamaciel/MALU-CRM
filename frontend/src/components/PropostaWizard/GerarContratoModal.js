@@ -12,22 +12,25 @@ import './GerarContratoModal.css';
 const editorConfiguration = {
     toolbar: [
         'heading', '|',
-        'bold', 'italic', 'link', '|',
-        'bulletedList', 'numberedList', '|',
-        'alignment', '|',
-        'fontColor', 'fontBackgroundColor', '|',
-        'insertTable', 'tableColumn', 'tableRow', 'mergeTableCells', '|',
-        'sourceEditing', '|',
+        'bold', 'italic', '|',
+        'alignment:left', 'alignment:center', 'alignment:right', 'alignment:justify', '|',
+        'insertTable', '|', // Removido 'tableColumn', 'tableRow', 'mergeTableCells' da toolbar principal conforme solicitado implicitamente
+        // 'link', '|', // Removido
+        // 'bulletedList', 'numberedList', '|', // Removido
+        // 'fontColor', 'fontBackgroundColor', '|', // Removido
+        // 'sourceEditing', '|', // Removido da toolbar principal, pode ser adicionado se necessário em outro local ou mantido se a remoção não foi intencional
         'undo', 'redo'
     ],
-    language: 'pt-br', // Se tiver tradução, caso contrário pode remover
+    language: 'pt-br',
     table: {
         contentToolbar: [
-            'tableColumn', 'tableRow', 'mergeTableCells'
+            'tableColumn', 'tableRow', 'mergeTableCells', '|',
+            'tableProperties', 'tableCellProperties', '|',
+            'alignment:left', 'alignment:center', 'alignment:right', 'alignment:justify'
         ]
     },
-    // Outras configurações como plugins podem ser adicionadas aqui
-    // Por exemplo, para o 'SourceEditing' estar disponível, ele já vem no build classic.
+    // Alignment plugin é carregado por padrão no ClassicBuild quando os botões são especificados na toolbar.
+    // TableProperties e TableCellProperties também.
 };
 
 
