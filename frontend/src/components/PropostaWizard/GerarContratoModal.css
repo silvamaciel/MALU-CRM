@@ -27,17 +27,16 @@
     flex-shrink: 0;
 }
 
-.form-modal-content.large .quill-editor-container {
+.form-modal-content.large .ckeditor-container { /* Renomeado de quill-editor-container */
     flex-grow: 1; /* Faz o editor ocupar o espaço vertical restante */
     display: flex;
     flex-direction: column;
-    min-height: 300px; /* Garante uma altura mínima */
+    min-height: 300px; /* Garante uma altura mínima para o container do editor */
 }
 
-.form-modal-content.large .ql-container.ql-snow {
-    flex-grow: 1;
-    overflow-y: auto;
-}
+/* O CKEditor gerencia seu próprio scroll e crescimento interno.
+   A regra para .ql-container.ql-snow pode ser removida ou ajustada se houver um seletor equivalente para CKEditor se necessário.
+   Por agora, vamos manter o flex-grow no container principal do editor. */
 
 .form-modal-content.large .loading-message {
     flex-grow: 1;

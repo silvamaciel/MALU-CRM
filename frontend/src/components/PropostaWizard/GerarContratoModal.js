@@ -1,22 +1,35 @@
 // src/components/PropostaWizard/GerarContratoModal.js
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import { CKEditor } from '@ckeditor/ckeditor5-react';
+import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 
 import { getModelosContrato } from '../../api/modeloContratoApi';
 import { gerarDocumentoApi, updatePropostaContratoApi } from '../../api/propostaContratoApi';
 import './GerarContratoModal.css';
 
-const quillModules = {
+// Configuração do editor CKEditor
+const editorConfiguration = {
     toolbar: [
-        [{ header: [1, 2, 3, false] }], ['bold', 'italic', 'underline'],
-        [{ list: "ordered" }, { list: "bullet" }], [{ align: [] }],
-        [{ color: [] }, { background: [] }], ['clean']
+        'heading', '|',
+        'bold', 'italic', 'link', '|',
+        'bulletedList', 'numberedList', '|',
+        'alignment', '|',
+        'fontColor', 'fontBackgroundColor', '|',
+        'insertTable', 'tableColumn', 'tableRow', 'mergeTableCells', '|',
+        'sourceEditing', '|',
+        'undo', 'redo'
     ],
+    language: 'pt-br', // Se tiver tradução, caso contrário pode remover
+    table: {
+        contentToolbar: [
+            'tableColumn', 'tableRow', 'mergeTableCells'
+        ]
+    },
+    // Outras configurações como plugins podem ser adicionadas aqui
+    // Por exemplo, para o 'SourceEditing' estar disponível, ele já vem no build classic.
 };
 
-const quillFormats = ["header", "bold", "italic", "underline", "list", "bullet", "align", "color", "background"];
 
 function GerarContratoModal({ isOpen, onClose, proposta, onSaveSuccess }) {
     const [modelos, setModelos] = useState([]);
@@ -24,6 +37,7 @@ function GerarContratoModal({ isOpen, onClose, proposta, onSaveSuccess }) {
     const [htmlContent, setHtmlContent] = useState('');
     const [loading, setLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [editorInstance, setEditorInstance] = useState(null);
 
     useEffect(() => {
         if (isOpen) {
@@ -66,8 +80,10 @@ function GerarContratoModal({ isOpen, onClose, proposta, onSaveSuccess }) {
     const handleSaveContrato = async () => {
         setIsSaving(true);
         try {
+            // Pega o conteúdo mais recente do editor, caso o estado não tenha atualizado a tempo
+            const currentData = editorInstance ? editorInstance.getData() : htmlContent;
             await updatePropostaContratoApi(proposta._id, {
-                corpoContratoHTMLGerado: htmlContent,
+                corpoContratoHTMLGerado: currentData,
                 modeloContratoUtilizado: selectedModelo
             });
             toast.success("Documento do contrato salvo com sucesso!");
@@ -104,14 +120,28 @@ function GerarContratoModal({ isOpen, onClose, proposta, onSaveSuccess }) {
                 {loading ? (
                     <div className="loading-message">Gerando documento...</div>
                 ) : (
-                    <div className="quill-editor-container" style={{ marginTop: '20px' }}>
-                        <ReactQuill
-                            theme="snow"
-                            value={htmlContent}
-                            onChange={setHtmlContent}
-                            modules={quillModules}
-                            formats={quillFormats}
-                            readOnly={isSaving}
+                    <div className="ckeditor-container" style={{ marginTop: '20px' }}>
+                        <CKEditor
+                            editor={ClassicEditor}
+                            config={editorConfiguration}
+                            data={htmlContent}
+                            onReady={editor => {
+                                // Você pode guardar a instância do editor se precisar interagir com ela.
+                                setEditorInstance(editor);
+                                // console.log('Editor is ready to use!', editor);
+                            }}
+                            onChange={(event, editor) => {
+                                const data = editor.getData();
+                                setHtmlContent(data);
+                                // console.log({ event, editor, data });
+                            }}
+                            onBlur={(event, editor) => {
+                                // console.log('Blur.', editor);
+                            }}
+                            onFocus={(event, editor) => {
+                                // console.log('Focus.', editor);
+                            }}
+                            disabled={isSaving}
                         />
                     </div>
                 )}

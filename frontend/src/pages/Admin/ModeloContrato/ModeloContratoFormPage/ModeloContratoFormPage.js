@@ -1,12 +1,12 @@
 // src/pages/Admin/ModeloContrato/ModeloContratoFormPage/ModeloContratoFormPage.js
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { createModeloContrato, getModeloContratoById, updateModeloContrato } from '../../../../api/modeloContratoApi';
 import './ModeloContratoFormPage.css';
 
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css'; 
+import { CKEditor } from '@ckeditor/ckeditor5-react';
+import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 
 const TIPO_DOCUMENTO_OPCOES = ["Proposta", "Contrato de Reserva", "Contrato de Compra e Venda", "Outro"];
 
@@ -94,6 +94,29 @@ const LISTA_PLACEHOLDERS_DISPONIVEIS = [
   }
 ];
 
+// Configuração do editor CKEditor
+const editorConfiguration = {
+    toolbar: [
+        'heading', '|',
+        'bold', 'italic', 'link', '|',
+        'bulletedList', 'numberedList', '|',
+        'alignment', '|',
+        'fontColor', 'fontBackgroundColor', '|',
+        'insertTable', 'tableColumn', 'tableRow', 'mergeTableCells', '|',
+        'sourceEditing', '|',
+        'undo', 'redo'
+    ],
+    language: 'pt-br',
+    table: {
+        contentToolbar: [
+            'tableColumn', 'tableRow', 'mergeTableCells'
+        ]
+    },
+     // CKEditor precisa de uma altura mínima via CSS ou inline style no container
+    // A propriedade 'height' no config não é padrão para ClassicEditor.
+    // Vamos controlar a altura no container div.
+};
+
 function ModeloContratoFormPage() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -102,15 +125,14 @@ function ModeloContratoFormPage() {
     const [formData, setFormData] = useState({
         nomeModelo: '',
         tipoDocumento: TIPO_DOCUMENTO_OPCOES[0],
-        conteudoHTMLTemplate: '<h1>Título do Contrato</h1>\n<p>Prezado(a) {{lead_nome}},</p>\n<p>Segue a proposta para a unidade {{unidade_identificador}} do empreendimento {{empreendimento_nome}}.</p>\n<p>Valor: {{proposta_valor_total_formatado}}</p>\n<pAtenciosamente,</p>\n<p>{{vendedor_nome_fantasia}}</p>',
+        conteudoHTMLTemplate: '<h1>Título do Contrato</h1>\n<p>Prezado(a) {{lead_principal_nome}},</p>\n<p>Segue a proposta para a unidade {{imovel_identificador}} do empreendimento {{empreendimento_nome}}.</p>\n<p>Valor: {{proposta_valor_total_formatado}}</p>\n<p>Atenciosamente,</p>\n<p>{{vendedor_nome_fantasia}}</p>',
     });
 
     const [loading, setLoading] = useState(false);
-    const [pageTitle, setPageTitle] = useState('Novo Modelo de Contrato');
+    // const [pageTitle, setPageTitle] = useState('Novo Modelo de Contrato'); // setPageTitle não era usado, removido para limpar
     const [formError, setFormError] = useState('');
-
-    // Para controlar a aba visível: 'editor' ou 'preview'
     const [activeTab, setActiveTab] = useState('editor');
+    const [editorInstance, setEditorInstance] = useState(null);
 
 
     useEffect(() => {
@@ -123,7 +145,7 @@ function ModeloContratoFormPage() {
                         tipoDocumento: data.tipoDocumento || TIPO_DOCUMENTO_OPCOES[0],
                         conteudoHTMLTemplate: data.conteudoHTMLTemplate || '',
                     });
-                    setPageTitle(`Editar Modelo: ${data.nomeModelo}`);
+                    // setPageTitle(`Editar Modelo: ${data.nomeModelo}`); // Removido pois não é usado
                 })
                 .catch(err => {
                     toast.error("Erro ao carregar modelo: " + (err.error || err.message));
@@ -138,21 +160,19 @@ function ModeloContratoFormPage() {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleConteudoHTMLChange = (htmlContent) => { // Handler específico para o editor
-        setFormData(prev => ({ ...prev, conteudoHTMLTemplate: htmlContent }));
+    const handleConteudoHTMLChange = (event, editor) => {
+        const data = editor.getData();
+        setFormData(prev => ({ ...prev, conteudoHTMLTemplate: data }));
     };
-
-
-    // Para placeholders (se for uma lista editável mais complexa, precisará de mais lógica)
-    // Por agora, vamos assumir que placeholders é um campo de texto simples ou não editável aqui.
-    // Se for um array de objetos, você precisará de handlers para adicionar/remover/editar placeholders.
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setFormError('');
 
-        if (!formData.nomeModelo || !formData.tipoDocumento || !formData.conteudoHTMLTemplate) {
+        const currentHtmlContent = editorInstance ? editorInstance.getData() : formData.conteudoHTMLTemplate;
+
+        if (!formData.nomeModelo || !formData.tipoDocumento || !currentHtmlContent) {
             setFormError("Nome, Tipo e Conteúdo HTML são obrigatórios.");
             setLoading(false);
             toast.error("Preencha os campos obrigatórios.");
@@ -162,7 +182,7 @@ function ModeloContratoFormPage() {
         const dataToSubmit = {
             nomeModelo: formData.nomeModelo,
             tipoDocumento: formData.tipoDocumento,
-            conteudoHTMLTemplate: formData.conteudoHTMLTemplate,
+            conteudoHTMLTemplate: currentHtmlContent,
         };
 
         try {
@@ -183,28 +203,6 @@ function ModeloContratoFormPage() {
         }
     };
 
-    // Configurações para a barra de ferramentas do ReactQuill (opcional, mas recomendado)
-    const quillModules = {
-        toolbar: [
-            [{ 'header': [1, 2, 3, false] }],
-            ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-            [{'list': 'ordered'}, {'list': 'bullet'}, {'indent': '-1'}, {'indent': '+1'}],
-            ['link', /*'image'*/], // Removi 'image' por simplicidade, pode adicionar se precisar de upload de imagem no contrato
-            [{ 'align': [] }],
-            [{ 'font': [] }],
-            [{ 'color': [] }, { 'background': [] }],
-            ['clean']
-        ],
-    };
-
-    const quillFormats = [ // Lista dos formatos que a toolbar acima suporta
-        'header', 'font',
-        'bold', 'italic', 'underline', 'strike', 'blockquote',
-        'list', 'bullet', 'indent',
-        'link', 'image','color', 'background', 'align'
-    ];
-
-
     if (loading && isEditMode && !formData.nomeModelo) {
          return <div className="admin-page loading"><p>Carregando modelo...</p></div>;
     }
@@ -212,7 +210,7 @@ function ModeloContratoFormPage() {
     return (
         <div className="admin-page modelo-contrato-form-page">
             <header className="page-header">
-                <h1>{isEditMode ? 'Editar Modelo de Contrato' : 'Novo Modelo de Contrato'}</h1>
+                <h1>{isEditMode ? `Editar Modelo: ${formData.nomeModelo}` : 'Novo Modelo de Contrato'}</h1>
             </header>
            
             <div className="page-content">
@@ -230,7 +228,6 @@ function ModeloContratoFormPage() {
                         </select>
                     </div>
 
-                    {/* Abas para Editor e Preview */}
                     <div className="tabs-container" style={{ marginBottom: '15px', borderBottom: '1px solid #ccc' }}>
                         <button type="button" onClick={() => setActiveTab('editor')} className={`tab-button ${activeTab === 'editor' ? 'active' : ''}`} disabled={loading}>
                             Editor HTML
@@ -243,18 +240,19 @@ function ModeloContratoFormPage() {
                     {activeTab === 'editor' && (
                         <div className="form-group">
                             <label htmlFor="conteudoHTMLTemplate">Conteúdo HTML do Modelo*</label>
-                            <p><small>Use placeholders da lista abaixo. Ex: {"{{lead_nome}}"}, {"{{unidade_identificador}}"}</small></p>
-                            <div className="quill-editor-container"> 
-                            <ReactQuill
-                                theme="snow"
-                                value={formData.conteudoHTMLTemplate}
-                                onChange={handleConteudoHTMLChange}
-                                modules={quillModules}
-                                formats={quillFormats}
-                                readOnly={loading}
-                                style={{ minHeight: '350px' }}
-                            />
-                        </div>
+                            <p><small>Use placeholders da lista abaixo. Ex: {"{{lead_principal_nome}}"}, {"{{imovel_identificador}}"}</small></p>
+                            <div className="ckeditor-container" style={{ minHeight: '350px', border: '1px solid #ccc' }}>
+                                <CKEditor
+                                    editor={ClassicEditor}
+                                    config={editorConfiguration}
+                                    data={formData.conteudoHTMLTemplate}
+                                    onReady={editor => {
+                                        setEditorInstance(editor);
+                                    }}
+                                    onChange={handleConteudoHTMLChange}
+                                    disabled={loading}
+                                />
+                            </div>
                         </div>
                     )}
 
@@ -270,22 +268,20 @@ function ModeloContratoFormPage() {
                     )}
                     
                     <div className="form-section" style={{ marginTop: '20px' }}>
-                    <h3>Placeholders Disponíveis para o Template</h3>
-                    {LISTA_PLACEHOLDERS_DISPONIVEIS.map((grupo, index) => (
-                        <div key={index} style={{ marginBottom: '15px' }}>
-                        <strong>{grupo.grupo}</strong>
-                        <ul className="placeholders-list">
-                            {grupo.placeholders.map(item => (
-                            <li key={item.ph}>
-                                <code>{item.ph}</code> - {item.desc}
-                            </li>
-                            ))}
-                        </ul>
-                        </div>
-                    ))}
-</div>
-
-                    {/* TODO: Adicionar interface para gerenciar 'placeholdersDisponiveis' se necessário */}
+                        <h3>Placeholders Disponíveis para o Template</h3>
+                        {LISTA_PLACEHOLDERS_DISPONIVEIS.map((grupo, index) => (
+                            <div key={index} style={{ marginBottom: '15px' }}>
+                            <strong>{grupo.grupo}</strong>
+                            <ul className="placeholders-list">
+                                {grupo.placeholders.map(item => (
+                                <li key={item.ph}>
+                                    <code>{item.ph}</code> - {item.desc}
+                                </li>
+                                ))}
+                            </ul>
+                            </div>
+                        ))}
+                    </div>
 
                     <div className="form-actions">
                         <button type="submit" className="button submit-button" disabled={loading}>

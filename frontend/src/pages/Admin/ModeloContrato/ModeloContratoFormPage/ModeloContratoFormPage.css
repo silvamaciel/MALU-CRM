@@ -154,66 +154,45 @@
   border-bottom: none;
 }
 .modelo-contrato-form-page .placeholders-list code {
-  background-color: #e9ecef;
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-family: 'Courier New', Courier, monospace;
-}
-
-.modelo-contrato-form-page .quill-editor-container .ql-toolbar.ql-snow {
-  border-top-left-radius: 5px;
-  border-top-right-radius: 5px;
-  border-color: #ced4da;
-}
-
-.modelo-contrato-form-page .quill-editor-container .ql-container.ql-snow {
-  border-bottom-left-radius: 5px;
-  border-bottom-right-radius: 5px;
-  border-color: #ced4da;
-  min-height: 350px; /* Garante que o editor tenha uma boa altura */
-  font-size: 1rem; /* Ajusta o tamanho da fonte dentro do editor */
-  line-height: 1.6;
-}
-
-.modelo-contrato-form-page .quill-editor-container .ql-editor {
-  min-height: 330px; /* Menor que o container para dar espaço */
-  background-color: #fff;
-}
-
-.modelo-contrato-form-page .quill-editor-container .ql-editor p,
-.modelo-contrato-form-page .quill-editor-container .ql-editor ol,
-.modelo-contrato-form-page .quill-editor-container .ql-editor ul,
-.modelo-contrato-form-page .quill-editor-container .ql-editor pre,
-.modelo-contrato-form-page .quill-editor-container .ql-editor h1,
-.modelo-contrato-form-page .quill-editor-container .ql-editor h2,
-.modelo-contrato-form-page .quill-editor-container .ql-editor h3 {
-  margin-bottom: 0.75rem; /* Espaçamento padrão entre parágrafos/títulos no editor */
-}
-
-/* Estilos para a lista de placeholders (como antes, pode ajustar) */
-.modelo-contrato-form-page .placeholders-list {
-  list-style: none;
-  padding: 10px;
-  max-height: 150px;
-  overflow-y: auto;
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 4px;
-  font-size: 0.85em;
-  margin-top: 10px; /* Espaço acima da lista */
-}
-
-.modelo-contrato-form-page .placeholders-list li {
-  padding: 5px 0;
-  border-bottom: 1px solid #e9ecef;
-}
-.modelo-contrato-form-page .placeholders-list li:last-child {
-  border-bottom: none;
-}
-.modelo-contrato-form-page .placeholders-list code {
   background-color: #e0e0e0; /* Fundo um pouco mais escuro para o placeholder */
   padding: 2px 5px;
   border-radius: 3px;
   font-family: 'Courier New', Courier, monospace;
   color: #c7254e; /* Cor para o placeholder */
 }
+
+/* Estilos para o container do CKEditor */
+.modelo-contrato-form-page .ckeditor-container {
+  /* min-height já foi definido inline no JS, mas podemos definir aqui se quisermos um padrão */
+  /* border já foi definido inline no JS */
+  margin-top: 5px; /* Espaço acima do editor */
+}
+
+/* O CKEditor por padrão já vem com estilos para a toolbar e a área de edição.
+   A altura do editor CKEditor pode ser controlada pela configuração 'height' ou
+   pelo CSS no elemento .ck-editor__editable.
+   Para o ClassicBuild, a altura é geralmente definida no container da área editável.
+   Se for necessário forçar uma altura mínima para a área de edição: */
+.modelo-contrato-form-page .ckeditor-container .ck-editor__editable_inline {
+  min-height: 330px; /* Altura mínima para a área de edição */
+  border: 1px solid #ced4da; /* Adiciona borda se não estiver presente por padrão ou para sobrescrever */
+  border-top: none; /* CKEditor classic build geralmente tem a toolbar e o editável como blocos separados */
+  padding: 0 10px; /* Espaçamento interno */
+  background-color: #fff;
+  border-bottom-left-radius: 5px; /* Arredondar cantos inferiores */
+  border-bottom-right-radius: 5px;
+}
+
+/* A toolbar do CKEditor já tem seus próprios estilos.
+   Se precisar customizar a toolbar (ex: bordas arredondadas no topo): */
+.modelo-contrato-form-page .ckeditor-container .ck-toolbar {
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  border-color: #ced4da; /* Garante que a borda da toolbar combine */
+}
+
+/* As regras específicas para .quill-editor-container, .ql-toolbar.ql-snow,
+   .ql-container.ql-snow, e .ql-editor foram removidas. */
+
+/* A lista de placeholders já tem estilos definidos acima e não precisa ser repetida.
+   Apenas garantindo que a última definição seja a que prevalece, se houver sobreposição. */
