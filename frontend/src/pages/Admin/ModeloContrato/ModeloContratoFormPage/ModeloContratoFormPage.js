@@ -5,10 +5,9 @@ import { toast } from 'react-toastify';
 import { createModeloContrato, getModeloContratoById, updateModeloContrato } from '../../../../api/modeloContratoApi';
 import './ModeloContratoFormPage.css';
 
+import { CKEditor } from '@ckeditor/ckeditor5-react';
+// Importar o editor do build customizado simulado
 import ClassicEditor from '../../libs/ckeditor5-custom-build/ckeditor';
-
-
-import ClassicEditor from './../../../../ckeditor5-custom-build/ckeditor';
 
 const TIPO_DOCUMENTO_OPCOES = ["Proposta", "Contrato de Reserva", "Contrato de Compra e Venda", "Outro"];
 
