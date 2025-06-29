@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 // Importar o editor do build customizado simulado
-import ClassicEditor from './../../libs/ckeditor5-custom-build/build/ckeditor';
+import ClassicEditor from '../../libs/ckeditor5-custom-build/build/ckeditor';
 
 import { getModelosContrato } from '../../api/modeloContratoApi';
 import { gerarDocumentoApi, updatePropostaContratoApi } from '../../api/propostaContratoApi';
