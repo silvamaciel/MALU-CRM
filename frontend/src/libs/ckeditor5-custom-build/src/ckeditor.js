@@ -15,7 +15,7 @@ import TableToolbar from '@ckeditor/ckeditor5-table/src/tabletoolbar';
 import TableProperties from '@ckeditor/ckeditor5-table/src/tableproperties';
 import TableCellProperties from '@ckeditor/ckeditor5-table/src/tablecellproperties';
 import Undo from '@ckeditor/ckeditor5-undo/src/undo';
-import Redo from '@ckeditor/ckeditor5-undo/src/redo';
+
 
 export default class ClassicEditor extends ClassicEditorBase { }
 
@@ -30,7 +30,7 @@ ClassicEditor.defaultConfig = {
     toolbar: [
         'heading', '|',
         'bold', 'italic', 'underline', '|',
-        'alignment:left', 'alignment:center', 'alignment:right', 'alignment:justify', '|',
+        'alignment', '|',
         'insertTable', 'tableColumn', 'tableRow', 'mergeTableCells', '|',
         'tableProperties', 'tableCellProperties', '|',
         'sourceEditing', '|',
@@ -41,7 +41,7 @@ ClassicEditor.defaultConfig = {
         contentToolbar: [
             'tableColumn', 'tableRow', 'mergeTableCells',
             'tableProperties', 'tableCellProperties',
-            'alignment:left', 'alignment:center', 'alignment:right', 'alignment:justify'
+            'alignment'
         ]
     },
     language: 'pt-br'

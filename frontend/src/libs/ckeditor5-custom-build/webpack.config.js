@@ -1,4 +1,3 @@
-
 const path = require('path');
 
 module.exports = {
@@ -14,7 +13,11 @@ module.exports = {
     rules: [
       {
         test: /\.css$/,
-        use: [ 'style-loader', 'css-loader' ]
+        use: ['style-loader', 'css-loader']
+      },
+      {
+        test: /\.svg$/,
+        use: ['raw-loader']
       }
     ]
   },
