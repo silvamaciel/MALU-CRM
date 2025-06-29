@@ -1,0 +1,29 @@
+
+{
+  "name": "ckeditor5-build-richtext",
+  "version": "1.0.0",
+  "description": "CKEditor 5 custom build with alignment, table tools and source editing",
+  "main": "build/ckeditor.js",
+  "scripts": {
+    "build": "webpack --mode production"
+  },
+  "dependencies": {
+    "@ckeditor/ckeditor5-editor-classic": "^39.0.1",
+    "@ckeditor/ckeditor5-essentials": "^39.0.1",
+    "@ckeditor/ckeditor5-paragraph": "^39.0.1",
+    "@ckeditor/ckeditor5-basic-styles": "^39.0.1",
+    "@ckeditor/ckeditor5-link": "^39.0.1",
+    "@ckeditor/ckeditor5-heading": "^39.0.1",
+    "@ckeditor/ckeditor5-list": "^39.0.1",
+    "@ckeditor/ckeditor5-alignment": "^39.0.1",
+    "@ckeditor/ckeditor5-source-editing": "^39.0.1",
+    "@ckeditor/ckeditor5-table": "^39.0.1",
+    "@ckeditor/ckeditor5-undo": "^39.0.1"
+  },
+  "devDependencies": {
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4",
+    "css-loader": "^6.8.1",
+    "style-loader": "^3.3.3"
+  }
+}
