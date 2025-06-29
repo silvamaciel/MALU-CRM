@@ -34,7 +34,7 @@ ClassicEditor.builtinPlugins = [
     TableProperties,
     TableCellProperties,
     Undo,
-    Redo
+    
 ];
 
 ClassicEditor.defaultConfig = {
@@ -46,7 +46,7 @@ ClassicEditor.defaultConfig = {
         'tableProperties', 'tableCellProperties', '|',
         'sourceEditing', '|',
         'link', 'bulletedList', 'numberedList', '|',
-        'undo', 'redo'
+        'undo'
     ],
     table: {
         contentToolbar: [
