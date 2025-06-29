@@ -143,13 +143,14 @@ function GerarContratoModal({ isOpen, onClose, proposta, onSaveSuccess }) {
                     </div>
                 )}
                 
-                <div className="form-actions">
+            </div>
+
+            <div className="form-actions">
                     <button type="button" className="button cancel-button" onClick={onClose} disabled={isSaving}>Cancelar</button>
                     <button type="button" className="button submit-button" onClick={handleSaveContrato} disabled={isSaving || loading}>
                         {isSaving ? 'Salvando...' : 'Salvar Documento Final'}
                     </button>
                 </div>
-            </div>
         </div>
     );
 }
