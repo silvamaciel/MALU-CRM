@@ -1,0 +1,7 @@
+{
+  "name": "ckeditor5-custom-build",
+  "version": "1.0.0",
+  "description": "Simulated custom build of CKEditor 5 for CRM project.",
+  "main": "ckeditor.js",
+  "license": "ISC"
+}
