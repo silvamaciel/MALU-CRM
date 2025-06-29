@@ -11,21 +11,25 @@ import './GerarContratoModal.css';
 
 // Configuração do editor CKEditor atualizada
 const editorConfiguration = {
-    toolbar: [
-        'heading', '|',
-        'bold', 'italic', '|',
-        'alignment:left', 'alignment:center', 'alignment:right', 'alignment:justify', '|',
-        'insertTable', '|', 'tableColumn', 'tableRow', 'mergeTableCells',
-        'link', '|', 'bulletedList', 'numberedList', '|', 'fontColor', 'fontBackgroundColor', '|', 'sourceEditing', '|', 'undo', 'redo'
-    ],
-    language: 'pt-br',
-    table: {
-        contentToolbar: [ // Mantendo a toolbar de tabela rica em funcionalidades
-            'tableColumn', 'tableRow', 'mergeTableCells', '|',
-            'tableProperties', 'tableCellProperties', '|',
-            'alignment:left', 'alignment:center', 'alignment:right', 'alignment:justify'
-        ]
-    },
+  toolbar: [
+    'heading', '|',
+    'bold', 'italic', '|',
+    'alignment', '|',
+    'insertTable', 'tableColumn', 'tableRow', 'mergeTableCells', '|',
+    'tableProperties', 'tableCellProperties', '|',
+    'sourceEditing', '|',
+    'link', 'bulletedList', 'numberedList', '|',
+    'fontColor', 'fontBackgroundColor', '|',
+    'undo', 'redo'
+  ],
+  language: 'pt-br',
+  table: {
+    contentToolbar: [
+      'tableColumn', 'tableRow', 'mergeTableCells', '|',
+      'tableProperties', 'tableCellProperties', '|',
+      'alignment'
+    ]
+  }
 };
 
 
