@@ -5,23 +5,26 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, 'build'),
     filename: 'ckeditor.js',
-    library: 'ClassicEditor',
-    libraryTarget: 'umd',
-    libraryExport: 'default'
+    library: {
+      type: 'module',
+    },
+  },
+  experiments: {
+    outputModule: true,
   },
   module: {
     rules: [
       {
-        test: /\.css$/,
-        use: ['style-loader', 'css-loader']
+        test: /\.css$/i,
+        use: ['style-loader', 'css-loader'],
       },
       {
-        test: /\.svg$/,
-        use: ['raw-loader']
-      }
-    ]
+        test: /\.svg$/i,
+        use: ['raw-loader'],
+      },
+    ],
   },
   resolve: {
-    extensions: ['.js']
-  }
+    extensions: ['.js'],
+  },
 };
