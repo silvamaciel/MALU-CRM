@@ -6,7 +6,8 @@ import { createModeloContrato, getModeloContratoById, updateModeloContrato } fro
 import './ModeloContratoFormPage.css';
 
 import { CKEditor } from '@ckeditor/ckeditor5-react';
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+// Importar o editor do build customizado simulado
+import ClassicEditor from './../../../../ckeditor5-custom-build/ckeditor';
 
 const TIPO_DOCUMENTO_OPCOES = ["Proposta", "Contrato de Reserva", "Contrato de Compra e Venda", "Outro"];
 
@@ -94,30 +95,28 @@ const LISTA_PLACEHOLDERS_DISPONIVEIS = [
   }
 ];
 
-// Configuração do editor CKEditor
+// Configuração do editor CKEditor atualizada
 const editorConfiguration = {
     toolbar: [
         'heading', '|',
         'bold', 'italic', '|',
         'alignment:left', 'alignment:center', 'alignment:right', 'alignment:justify', '|',
-        'insertTable', '|',
-        // Itens removidos da toolbar principal para seguir a especificação da tarefa:
-        // 'link', 'bulletedList', 'numberedList', 'fontColor', 'fontBackgroundColor',
-        // 'sourceEditing' (este último pode ser importante manter, confirmar se a remoção foi intencional)
-        // 'tableColumn', 'tableRow', 'mergeTableCells' (movidos para table.contentToolbar)
+        'insertTable', 'tableColumn', 'tableRow', 'mergeTableCells', '|',
+        'tableProperties', 'tableCellProperties', '|',
+        'sourceEditing', '|',
+        'link', 'bulletedList', 'numberedList', 'fontColor', 'fontBackgroundColor', '|',
         'undo', 'redo'
     ],
     language: 'pt-br',
     table: {
-        contentToolbar: [
+        contentToolbar: [ // Mantendo a toolbar de tabela rica em funcionalidades
             'tableColumn', 'tableRow', 'mergeTableCells', '|',
             'tableProperties', 'tableCellProperties', '|',
             'alignment:left', 'alignment:center', 'alignment:right', 'alignment:justify'
         ]
     },
-    // Os plugins Alignment, TableProperties e TableCellProperties são ativados
-    // automaticamente pelo ClassicEditor quando seus respectivos botões são
-    // adicionados às configurações de toolbar.
+    // Os plugins (Alignment, TableProperties, TableCellProperties, SourceEditing, etc.)
+    // são esperados estarem inclusos e ativos no 'ClassicEditor' importado do build customizado.
 };
 
 function ModeloContratoFormPage() {

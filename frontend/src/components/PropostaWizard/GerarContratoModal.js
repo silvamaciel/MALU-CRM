@@ -2,35 +2,35 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+// Importar o editor do build customizado simulado
+import ClassicEditor from './../../ckeditor5-custom-build/ckeditor';
 
 import { getModelosContrato } from '../../api/modeloContratoApi';
 import { gerarDocumentoApi, updatePropostaContratoApi } from '../../api/propostaContratoApi';
 import './GerarContratoModal.css';
 
-// Configuração do editor CKEditor
+// Configuração do editor CKEditor atualizada
 const editorConfiguration = {
     toolbar: [
         'heading', '|',
         'bold', 'italic', '|',
         'alignment:left', 'alignment:center', 'alignment:right', 'alignment:justify', '|',
-        'insertTable', '|', // Removido 'tableColumn', 'tableRow', 'mergeTableCells' da toolbar principal conforme solicitado implicitamente
-        // 'link', '|', // Removido
-        // 'bulletedList', 'numberedList', '|', // Removido
-        // 'fontColor', 'fontBackgroundColor', '|', // Removido
-        // 'sourceEditing', '|', // Removido da toolbar principal, pode ser adicionado se necessário em outro local ou mantido se a remoção não foi intencional
+        'insertTable', 'tableColumn', 'tableRow', 'mergeTableCells', '|',
+        'tableProperties', 'tableCellProperties', '|',
+        'sourceEditing', '|',
+        'link', 'bulletedList', 'numberedList', 'fontColor', 'fontBackgroundColor', '|',
         'undo', 'redo'
     ],
     language: 'pt-br',
     table: {
-        contentToolbar: [
+        contentToolbar: [ // Mantendo a toolbar de tabela rica em funcionalidades
             'tableColumn', 'tableRow', 'mergeTableCells', '|',
             'tableProperties', 'tableCellProperties', '|',
             'alignment:left', 'alignment:center', 'alignment:right', 'alignment:justify'
         ]
     },
-    // Alignment plugin é carregado por padrão no ClassicBuild quando os botões são especificados na toolbar.
-    // TableProperties e TableCellProperties também.
+    // Os plugins (Alignment, TableProperties, TableCellProperties, SourceEditing, etc.)
+    // são esperados estarem inclusos e ativos no 'ClassicEditor' importado do build customizado.
 };
 
 
