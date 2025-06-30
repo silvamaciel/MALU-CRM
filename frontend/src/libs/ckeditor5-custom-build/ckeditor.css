@@ -1,0 +1,38 @@
+/* frontend/src/libs/ckeditor5-custom-build/ckeditor.css */
+
+/* Correção para o tamanho dos ícones SVG na toolbar e no conteúdo */
+.ck.ck-icon {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+/* Garante que SVGs dentro do conteúdo do editor não fiquem excessivamente grandes */
+.ck-content svg {
+  width: 1em !important; /* Relativo ao tamanho da fonte do elemento pai */
+  height: 1em !important; /* Relativo ao tamanho da fonte do elemento pai */
+  vertical-align: middle; /* Alinha o SVG com o texto ao redor, se houver */
+}
+
+/* Outros estilos customizados para o editor podem ser adicionados aqui. */
+
+/* Exemplo de como garantir que o conteúdo do editor não seja afetado por estilos globais de <p> ou <h1>, etc.
+   Isto é geralmente bem tratado pelo CKEditor, mas se houver problemas específicos:
+.ck-content p {
+    margin: 0 0 1em 0 !important;
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
+}
+.ck-content h1 {
+    font-size: 2em !important;
+    margin-bottom: 0.67em !important;
+}
+*/
+
+/* Ajustes para dropdowns, se necessário, embora o problema de não recolher seja mais JS.
+   Mas, por exemplo, para garantir que o z-index seja adequado: */
+.ck.ck-dropdown__panel {
+  z-index: 1060 !important; /* Ajustar conforme necessário para sobrepor outros elementos da UI */
+}
+.ck.ck-balloon-panel {
+  z-index: 1060 !important; /* Para painéis flutuantes como o de link ou tabela */
+}

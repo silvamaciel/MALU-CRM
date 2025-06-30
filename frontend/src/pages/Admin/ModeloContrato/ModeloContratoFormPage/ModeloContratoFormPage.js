@@ -6,8 +6,11 @@ import { createModeloContrato, getModeloContratoById, updateModeloContrato } fro
 import './ModeloContratoFormPage.css';
 
 import { CKEditor } from '@ckeditor/ckeditor5-react';
-// Importar o editor do build customizado simulado
-import ClassicEditor from './../../../../ckeditor5-custom-build/ckeditor';
+// Importar o editor do build customizado simulado do novo local
+import ClassicEditor from './../../../../libs/ckeditor5-custom-build/ckeditor';
+// Importar o CSS customizado do editor
+import './../../../../libs/ckeditor5-custom-build/ckeditor.css';
+
 
 const TIPO_DOCUMENTO_OPCOES = ["Proposta", "Contrato de Reserva", "Contrato de Compra e Venda", "Outro"];
 
@@ -250,6 +253,21 @@ function ModeloContratoFormPage() {
                                     data={formData.conteudoHTMLTemplate}
                                     onReady={editor => {
                                         setEditorInstance(editor);
+                                        // Lógica para fechar dropdowns
+                                        if (editor && editor.ui && editor.ui.focusTracker) {
+                                            editor.ui.focusTracker.on('change:isFocused', (evt, name, isFocused) => {
+                                                if (!isFocused) {
+                                                    const openPanels = editor.ui.view.element.ownerDocument.querySelectorAll(
+                                                        '.ck.ck-dropdown.ck-expanded, .ck.ck-dropdown__panel.ck-dropdown__panel_visible'
+                                                    );
+                                                    openPanels.forEach(panel => {
+                                                        if (panel.classList.contains('ck-expanded')) {
+                                                            panel.classList.remove('ck-expanded');
+                                                        }
+                                                    });
+                                                }
+                                            });
+                                        }
                                     }}
                                     onChange={handleConteudoHTMLChange}
                                     disabled={loading}

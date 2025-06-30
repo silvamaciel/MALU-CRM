@@ -1,4 +1,4 @@
-// frontend/src/ckeditor5-custom-build/ckeditor.js
+// frontend/src/libs/ckeditor5-custom-build/ckeditor.js
 // Este arquivo simula um build customizado do CKEditor 5.
 // Em um cenário real, este arquivo seria gerado pelo processo de build do CKEditor
 // e conteria o editor compilado com todos os plugins customizados.

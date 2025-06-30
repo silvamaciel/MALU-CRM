@@ -2,8 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
-// Importar o editor do build customizado simulado
-import ClassicEditor from './../../ckeditor5-custom-build/ckeditor';
+// Importar o editor do build customizado simulado do novo local
+import ClassicEditor from './../../libs/ckeditor5-custom-build/ckeditor';
+// Importar o CSS customizado do editor
+import './../../libs/ckeditor5-custom-build/ckeditor.css';
 
 import { getModelosContrato } from '../../api/modeloContratoApi';
 import { gerarDocumentoApi, updatePropostaContratoApi } from '../../api/propostaContratoApi';
@@ -129,9 +131,31 @@ function GerarContratoModal({ isOpen, onClose, proposta, onSaveSuccess }) {
                             config={editorConfiguration}
                             data={htmlContent}
                             onReady={editor => {
-                                // Você pode guardar a instância do editor se precisar interagir com ela.
                                 setEditorInstance(editor);
-                                // console.log('Editor is ready to use!', editor);
+                                // Lógica para fechar dropdowns
+                                if (editor && editor.ui && editor.ui.focusTracker) {
+                                    editor.ui.focusTracker.on('change:isFocused', (evt, name, isFocused) => {
+                                        if (!isFocused) {
+                                            const openPanels = editor.ui.view.element.ownerDocument.querySelectorAll(
+                                                // Seletor mais genérico para painéis de dropdown que usam ck-expanded
+                                                '.ck.ck-dropdown.ck-expanded, .ck.ck-dropdown__panel.ck-dropdown__panel_visible'
+                                            );
+                                            openPanels.forEach(panel => {
+                                                // Para dropdowns normais que usam ck-expanded
+                                                if (panel.classList.contains('ck-expanded')) {
+                                                    panel.classList.remove('ck-expanded');
+                                                }
+                                                // Para painéis flutuantes (balloons) que usam ck-dropdown__panel_visible ou similar
+                                                // A remoção direta da classe _visible pode não ser o ideal se o CKEditor
+                                                // tiver lógica interna para controlar isso. A melhor forma seria
+                                                // disparar um evento ou chamar um método do componente de UI do CKEditor.
+                                                // A sugestão original era `panel.classList.remove('ck-expanded')`.
+                                                // Para balões, pode ser necessário identificar o componente do dropdown e chamar .isOpen = false ou similar.
+                                                // Por agora, focamos no 'ck-expanded' que é mais comum para dropdowns de toolbar.
+                                            });
+                                        }
+                                    });
+                                }
                             }}
                             onChange={(event, editor) => {
                                 const data = editor.getData();
