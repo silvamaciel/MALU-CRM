@@ -16,7 +16,7 @@
 }
 
 .modelo-contrato-form-page .form-container {
-  max-width: 800px; /* Ou a largura que preferir para o formulário */
+  max-width: 90%; /* Ou a largura que preferir para o formulário */
   margin: 0 auto; /* Centraliza o formulário na página */
   background-color: #fff;
   padding: 25px 30px;
