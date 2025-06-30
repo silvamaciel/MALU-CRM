@@ -735,25 +735,30 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
     try {
         const propostaContrato = await PropostaContrato.findOne({ _id: propostaContratoId, company: companyId })
             .populate('lead')
-            .populate({ // Garante que o empreendimento da unidade seja populado para o nome no comentário
-                path: 'unidade',
+            .populate({
+                path: 'imovel',
                 populate: {
                     path: 'empreendimento',
-                    select: 'nome _id' // Seleciona nome e ID do empreendimento da unidade
+                    select: 'nome _id'
                 }
             })
             .populate('reserva')
-            // Popula o empreendimento principal da proposta também, caso necessário separadamente
-            .populate({ path: 'empreendimento', select: 'nome _id'}) 
+            .populate({ path: 'empreendimento', select: 'nome _id' })
             .session(session);
 
         if (!propostaContrato) {
             throw new Error("Proposta/Contrato não encontrada ou não pertence a esta empresa.");
         }
+
+        if (propostaContrato.tipoImovel === 'Unidade') {
+            propostaContrato.unidade = propostaContrato.imovel;
+        }
+
         if (propostaContrato.statusPropostaContrato !== "Vendido") {
             throw new Error(`Apenas Propostas/Contratos com status "Vendido" podem ser distratadas. Status atual: "${propostaContrato.statusPropostaContrato}".`);
         }
-        if (!propostaContrato.lead || !propostaContrato.unidade || !propostaContrato.reserva || !propostaContrato.empreendimento) { // Adicionado !propostaContrato.empreendimento
+
+        if (!propostaContrato.lead || !propostaContrato.unidade || !propostaContrato.reserva || !propostaContrato.empreendimento) {
             throw new Error("Dados vinculados (Lead, Unidade, Empreendimento ou Reserva) não encontrados ou incompletos.");
         }
 
@@ -765,77 +770,68 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
         propostaContrato.dataDistrato = dadosDistrato.dataDistrato ? new Date(dadosDistrato.dataDistrato) : new Date();
 
         // 2. Atualizar Reserva associada
-        const reservaDoc = propostaContrato.reserva; // Referência ao documento populado
+        const reservaDoc = propostaContrato.reserva;
         reservaDoc.statusReserva = "Distratada";
 
         // 3. Liberar Unidade
-        const unidadeDoc = propostaContrato.unidade; // Referência ao documento populado
+        const unidadeDoc = propostaContrato.unidade;
         unidadeDoc.statusUnidade = "Disponível";
         unidadeDoc.currentLeadId = null;
         unidadeDoc.currentReservaId = null;
 
         // 4. Atualizar Lead
-        const nomeEstagioDescartado = "Descartado"; 
+        const nomeEstagioDescartado = "Descartado";
         const situacaoDescartado = await LeadStage.findOneAndUpdate(
             { company: companyId, nome: { $regex: new RegExp(`^${nomeEstagioDescartado}$`, "i") } },
             { $setOnInsert: { nome: nomeEstagioDescartado, company: companyId, ativo: true, descricao: "Lead descartado devido a distrato de contrato." } },
             { new: true, upsert: true, runValidators: true, session: session }
         );
-        if (!situacaoDescartado) throw new Error (`Estágio de Lead '${nomeEstagioDescartado}' não pôde ser encontrado ou criado.`);
-        
-        const leadDoc = propostaContrato.lead; // Referência ao documento populado
+        if (!situacaoDescartado) throw new Error(`Estágio de Lead '${nomeEstagioDescartado}' não pôde ser encontrado ou criado.`);
+
+        const leadDoc = propostaContrato.lead;
         const oldLeadStatusId = leadDoc.situacao;
         leadDoc.situacao = situacaoDescartado._id;
 
-        // Monta o comentário detalhado do distrato
-        // Usa unidadeDoc.empreendimento.nome se disponível, senão propostaContrato.empreendimento.nome
         const nomeEmpreendimentoParaComentario = unidadeDoc.empreendimento?.nome || propostaContrato.empreendimento?.nome || 'N/A';
         const comentarioDistrato = `Distrato da Proposta/Contrato ID ${propostaContrato._id} (Unidade: ${unidadeDoc.identificador} do Empr.: ${nomeEmpreendimentoParaComentario}). Motivo original fornecido: ${dadosDistrato.motivoDistrato}.`;
-        leadDoc.comentario = leadDoc.comentario 
-            ? `${leadDoc.comentario}\n\n--- DISTRATO ---\n${comentarioDistrato}` 
+        leadDoc.comentario = leadDoc.comentario
+            ? `${leadDoc.comentario}\n\n--- DISTRATO ---\n${comentarioDistrato}`
             : `--- DISTRATO ---\n${comentarioDistrato}`;
 
-        // Lida com o motivoDeDescarte estruturado
         if (dadosDistrato.leadMotivoDescarteId && mongoose.Types.ObjectId.isValid(dadosDistrato.leadMotivoDescarteId)) {
-            const motivoDoc = await DiscardReason.findOne({_id: dadosDistrato.leadMotivoDescarteId, company: companyId}).session(session);
+            const motivoDoc = await DiscardReason.findOne({ _id: dadosDistrato.leadMotivoDescarteId, company: companyId }).session(session);
             if (motivoDoc) {
                 leadDoc.motivoDescarte = dadosDistrato.leadMotivoDescarteId;
                 console.log(`[PropContSvc Distrato] Motivo de Descarte ID ${dadosDistrato.leadMotivoDescarteId} definido para o Lead.`);
             } else {
                 console.warn(`[PropContSvc Distrato] Motivo de Descarte ID ${dadosDistrato.leadMotivoDescarteId} fornecido não encontrado ou não pertence à empresa. Usando/Criando default.`);
                 const motivoDistratoDefault = await DiscardReason.findOneAndUpdate(
-                { company: companyId, nome: "Distrato Contratual" }, // Nome padrão para motivo de distrato
-                { $setOnInsert: { nome: "Distrato Contratual", company: companyId, ativo: true, descricao: "Venda cancelada via distrato." } },
-                { new: true, upsert: true, runValidators: true, session: session }
-            );
+                    { company: companyId, nome: "Distrato Contratual" },
+                    { $setOnInsert: { nome: "Distrato Contratual", company: companyId, ativo: true, descricao: "Venda cancelada via distrato." } },
+                    { new: true, upsert: true, runValidators: true, session: session }
+                );
                 if (motivoDistratoDefault) leadDoc.motivoDescarte = motivoDistratoDefault._id;
             }
         } else {
             console.log(`[PropContSvc Distrato] Nenhum ID de Motivo de Descarte específico fornecido. Usando/Criando default "Distrato Contratual".`);
             const motivoDistratoDefault = await DiscardReason.findOneAndUpdate(
-                { company: companyId, nome: "Distrato Contratual" }, // Nome padrão para motivo de distrato
+                { company: companyId, nome: "Distrato Contratual" },
                 { $setOnInsert: { nome: "Distrato Contratual", company: companyId, ativo: true, descricao: "Venda cancelada via distrato." } },
                 { new: true, upsert: true, runValidators: true, session: session }
             );
             if (motivoDistratoDefault) leadDoc.motivoDescarte = motivoDistratoDefault._id;
         }
-        
-        // Salvar todas as entidades MODIFICADAS
 
-        console.log('[DEBUG] Unidade:', unidadeDoc.statusUnidade);
-        console.log('[DEBUG] Lead:', leadDoc.situacao);
-        console.log('[DEBUG] Reserva:', reservaDoc.statusReserva);
-        await unidadeDoc.save({ session });       // Salva as alterações na unidade
-        await reservaDoc.save({ session });       // Salva as alterações na reserva
-        await leadDoc.save({ session });          // Salva as alterações no lead
-        const propostaAtualizada = await propostaContrato.save({ session }); // Salva as alterações na proposta
+        await unidadeDoc.save({ session });
+        await reservaDoc.save({ session });
+        await leadDoc.save({ session });
+        const propostaAtualizada = await propostaContrato.save({ session });
 
-        // 5. Log de Histórico
-        const leadStatusAntigoNomeDoc = await LeadStage.findById(oldLeadStatusId).select('nome').lean(); // Fora da session, é uma leitura
+        const leadStatusAntigoNomeDoc = await LeadStage.findById(oldLeadStatusId).select('nome').lean();
         const logDetails = `Distrato registrado. Motivo: ${dadosDistrato.motivoDistrato}. Unidade ${unidadeDoc.identificador} liberada. Lead movido para "${situacaoDescartado.nome}".`;
         await logHistory(
             leadDoc._id, actorUserId, "DISTRATO_REALIZADO", logDetails,
-            { oldStatusProposta: statusAntigoProposta, oldStatusUnidade: "Vendido" }, 
+            { oldStatusProposta: statusAntigoProposta, oldStatusUnidade: "Vendido" },
             { newStatusProposta: "Distrato Realizado", newStatusUnidade: "Disponível" },
             'PropostaContrato', propostaAtualizada._id, session
         );
@@ -851,12 +847,13 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
         console.error("[PropContSvc Distrato] Erro ao registrar distrato:", error);
         throw new Error(error.message || "Erro interno ao registrar o distrato.");
     } finally {
-        if (session.inTransaction()) { // Garante que aborta se não foi commitado
+        if (session.inTransaction()) {
             await session.abortTransaction();
         }
         session.endSession();
     }
 };
+
 
 
 /**
