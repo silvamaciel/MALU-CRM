@@ -154,3 +154,28 @@
   background-color: #e6f0ff;
   border-radius: 4px;
 }
+
+.ck-content table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.ck-content table td,
+.ck-content table th {
+  border: 1px solid #ccc; /* você pode customizar isso */
+  padding: 8px;
+}
+
+/* Garante que cor de fundo definida inline funcione */
+.ck-content table td,
+.ck-content table th {
+  background-color: inherit;
+}
+
+/* Permite bordas personalizadas definidas inline */
+.ck-content td,
+.ck-content th {
+  border-style: inherit;
+  border-width: inherit;
+  border-color: inherit;
+}
