@@ -15,13 +15,19 @@
   color: #333;
 }
 
-.modelo-contrato-form-page .form-container {
+.modelo-contrato-form-page {
   max-width: 90%; /* Ou a largura que preferir para o formulário */
   margin: 0 auto; /* Centraliza o formulário na página */
   background-color: #fff;
   padding: 25px 30px;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.form-container {
+  display: flex;
+  flex-direction: column;
+  width: 90%;
 }
 
 .modelo-contrato-form-page .form-group {
