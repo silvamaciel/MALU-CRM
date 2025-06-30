@@ -34,7 +34,7 @@ import PropostaContratoDetailPage from './pages/PropostaContrato/PropostaContrat
 import ImovelListPage from './pages/ImovelAvulso/ImovelListPage/ImovelListPage';
 import ImovelFormPage from './pages/ImovelAvulso/ImovelFormPage/ImovelFormPage';
 import AgendaPage from './pages/AgendaPage/AgendaPage';
-import 'libs/ckeditor5-custom-build/ckeditor.css';
+import '../../../../libs/ckeditor5-custom-build/ckeditor.css';
 
 
 
