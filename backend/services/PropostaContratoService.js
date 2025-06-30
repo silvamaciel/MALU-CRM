@@ -556,10 +556,20 @@ const updateStatusPropostaContrato = async (propostaContratoId, novoStatus, dado
 
     try {
         const propostaContrato = await PropostaContrato.findOne({ _id: propostaContratoId, company: companyId })
-            .populate('lead')
-            .populate('unidade')
-            .populate('reserva')
-            .session(session);
+    .populate('lead')
+    .populate('reserva')
+    .populate('imovel') // correto
+    .session(session);
+
+      if (!propostaContrato) throw new Error("Proposta/Contrato não encontrada ou não pertence a esta empresa.");
+      if (!propostaContrato.lead || !propostaContrato.reserva || !propostaContrato.imovel) {
+          throw new Error("Dados vinculados (Lead, Imóvel ou Reserva) não encontrados para esta Proposta/Contrato.");
+      }
+
+      const imovel = propostaContrato.imovel;
+      if (propostaContrato.tipoImovel === 'Unidade') {
+          propostaContrato.unidade = imovel; // alias para continuar usando `unidade` no restante
+      }
 
         if (!propostaContrato) {
             throw new Error("Proposta/Contrato não encontrada ou não pertence a esta empresa.");
@@ -662,7 +672,6 @@ const updateStatusPropostaContrato = async (propostaContratoId, novoStatus, dado
         session.endSession();
     }
 };
-
 
 /**
  * Registra o distrato de uma Proposta/Contrato que estava Vendida.
