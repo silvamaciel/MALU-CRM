@@ -5,11 +5,83 @@ import { toast } from 'react-toastify';
 import { createModeloContrato, getModeloContratoById, updateModeloContrato } from '../../../../api/modeloContratoApi';
 import './ModeloContratoFormPage.css';
 
-import { CKEditor } from '@ckeditor/ckeditor5-react';
-// Importar o editor do build customizado simulado
-import ClassicEditor from '../../../../libs/ckeditor5-custom-build/ckeditor';
-import '../../../../libs/ckeditor5-custom-build/ckeditor.css';
+// CKEditor imports removidos
 
+import ReactQuill, { Quill } from 'react-quill';
+import 'react-quill/dist/quill.snow.css'; // Estilo padrão Snow
+
+// KaTeX para fórmulas
+import 'katex/dist/katex.min.css';
+import katex from 'katex';
+
+// Módulos de imagem
+// Assumindo que os módulos estão instalados e acessíveis via node_modules
+import ImageUploader from 'quill-image-uploader';
+import 'quill-image-uploader/dist/quill.imageUploader.min.css';
+import { ImageResize } from 'quill-image-resize-module-react';
+
+// --- Configuração do ReactQuill ---
+// TODO: Mover estas configurações para um arquivo compartilhado (ex: src/config/quillConfig.js)
+//      para evitar duplicação com GerarContratoModal.js e facilitar a manutenção.
+
+// Registrar módulos do Quill. Fazemos isso de forma condicional para evitar erros
+// se esta página for carregada após outra que já os registrou.
+if (typeof window !== 'undefined') { // Garante que estamos no browser
+    if (Quill && !Quill.imports['modules/imageUploader']) {
+        Quill.register('modules/imageUploader', ImageUploader);
+    }
+    if (Quill && !Quill.imports['modules/imageResize']) {
+        Quill.register('modules/imageResize', ImageResize);
+    }
+    if (!window.katex) {
+        window.katex = katex; // Expor KaTeX globalmente para o módulo de fórmula do Quill
+    }
+}
+
+const toolbarOptions = [
+    [{ 'font': [] }],
+    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+    [{ 'size': ['small', false, 'large', 'huge'] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ 'color': [] }, { 'background': [] }],
+    [{ 'script': 'sub'}, { 'script': 'super' }],
+    ['blockquote', 'code-block'],
+    [{ 'list': 'ordered'}, { 'list': 'bullet' }, { 'list': 'check' }],
+    [{ 'indent': '-1'}, { 'indent': '+1' }],
+    [{ 'direction': 'rtl' }],
+    [{ 'align': [] }],
+    ['link', 'image', 'video', 'formula'],
+    ['clean']
+];
+
+const quillModules = {
+    toolbar: toolbarOptions,
+    history: {
+        delay: 2000,
+        maxStack: 500,
+        userOnly: true
+    },
+    imageUploader: {
+        upload: file => {
+            return new Promise((resolve, reject) => {
+                // Simulação de upload de imagem (igual à do GerarContratoModal)
+                // TODO: Substituir pela lógica real de upload para o backend.
+                setTimeout(() => {
+                    console.log("Simulando upload do arquivo (ModeloContratoFormPage):", file.name);
+                    toast.info(`Simulando upload de ${file.name}...`);
+                    const placeholderImageUrl = `https://via.placeholder.com/350x150.png?text=ModeloContrato+${encodeURIComponent(file.name)}`;
+                    resolve(placeholderImageUrl);
+                    toast.success(`${file.name} "enviada" com sucesso (simulação).`);
+                }, 3500);
+            });
+        }
+    },
+    imageResize: {
+        parchment: Quill.import('parchment'), // Importar parchment dinamicamente dentro do if (window) seria mais seguro
+        modules: ['Resize', 'DisplaySize', 'Toolbar']
+    },
+};
+// --- Fim da Configuração do ReactQuill ---
 
 const TIPO_DOCUMENTO_OPCOES = ["Proposta", "Contrato de Reserva", "Contrato de Compra e Venda", "Outro"];
 
@@ -97,29 +169,7 @@ const LISTA_PLACEHOLDERS_DISPONIVEIS = [
   }
 ];
 
-// Configuração do editor CKEditor atualizada
-const editorConfiguration = {
-    toolbar: [
-        'heading', '|',
-        'bold', 'italic', '|',
-        'alignment:left', 'alignment:center', 'alignment:right', 'alignment:justify', '|',
-        'insertTable', 'tableColumn', 'tableRow', 'mergeTableCells', '|',
-        'tableProperties', 'tableCellProperties', '|',
-        'sourceEditing', '|',
-        'link', 'bulletedList', 'numberedList', 'fontColor', 'fontBackgroundColor', '|',
-        'undo', 'redo'
-    ],
-    language: 'pt-br',
-    table: {
-        contentToolbar: [ // Mantendo a toolbar de tabela rica em funcionalidades
-            'tableColumn', 'tableRow', 'mergeTableCells', '|',
-            'tableProperties', 'tableCellProperties', '|',
-            'alignment:left', 'alignment:center', 'alignment:right', 'alignment:justify'
-        ]
-    },
-    // Os plugins (Alignment, TableProperties, TableCellProperties, SourceEditing, etc.)
-    // são esperados estarem inclusos e ativos no 'ClassicEditor' importado do build customizado.
-};
+// Configuração do editor CKEditor removida
 
 function ModeloContratoFormPage() {
     const { id } = useParams();
@@ -136,7 +186,8 @@ function ModeloContratoFormPage() {
     // const [pageTitle, setPageTitle] = useState('Novo Modelo de Contrato'); // setPageTitle não era usado, removido para limpar
     const [formError, setFormError] = useState('');
     const [activeTab, setActiveTab] = useState('editor');
-    const [editorInstance, setEditorInstance] = useState(null);
+    // editorInstance não é mais necessário para ReactQuill da mesma forma
+    // const [editorInstance, setEditorInstance] = useState(null);
 
 
     useEffect(() => {
@@ -164,9 +215,9 @@ function ModeloContratoFormPage() {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleConteudoHTMLChange = (event, editor) => {
-        const data = editor.getData();
-        setFormData(prev => ({ ...prev, conteudoHTMLTemplate: data }));
+    // Modificado para ReactQuill: o primeiro argumento é o conteúdo HTML
+    const handleConteudoHTMLChange = (html) => {
+        setFormData(prev => ({ ...prev, conteudoHTMLTemplate: html }));
     };
 
     const handleSubmit = async (e) => {
@@ -174,9 +225,8 @@ function ModeloContratoFormPage() {
         setLoading(true);
         setFormError('');
 
-        const currentHtmlContent = editorInstance ? editorInstance.getData() : formData.conteudoHTMLTemplate;
-
-        if (!formData.nomeModelo || !formData.tipoDocumento || !currentHtmlContent) {
+        // formData.conteudoHTMLTemplate já está atualizado pelo onChange do ReactQuill
+        if (!formData.nomeModelo || !formData.tipoDocumento || !formData.conteudoHTMLTemplate) {
             setFormError("Nome, Tipo e Conteúdo HTML são obrigatórios.");
             setLoading(false);
             toast.error("Preencha os campos obrigatórios.");
@@ -186,7 +236,7 @@ function ModeloContratoFormPage() {
         const dataToSubmit = {
             nomeModelo: formData.nomeModelo,
             tipoDocumento: formData.tipoDocumento,
-            conteudoHTMLTemplate: currentHtmlContent,
+            conteudoHTMLTemplate: formData.conteudoHTMLTemplate, // Usar diretamente do estado
         };
 
         try {
@@ -245,16 +295,15 @@ function ModeloContratoFormPage() {
                         <div className="form-group">
                             <label htmlFor="conteudoHTMLTemplate">Conteúdo HTML do Modelo*</label>
                             <p><small>Use placeholders da lista abaixo. Ex: {"{{lead_principal_nome}}"}, {"{{imovel_identificador}}"}</small></p>
-                            <div className="ckeditor-container" style={{ minHeight: '350px', border: '1px solid #ccc' }}>
-                                <CKEditor
-                                    editor={ClassicEditor}
-                                    config={editorConfiguration}
-                                    data={formData.conteudoHTMLTemplate}
-                                    onReady={editor => {
-                                        setEditorInstance(editor);
-                                    }}
+                            {/* Ajustar o container para o ReactQuill */}
+                            <div className="quill-editor-container" style={{ minHeight: '350px', border: '1px solid #ccc', display: 'flex', flexDirection: 'column' }}>
+                                <ReactQuill
+                                    theme="snow"
+                                    value={formData.conteudoHTMLTemplate}
                                     onChange={handleConteudoHTMLChange}
-                                    disabled={loading}
+                                    modules={quillModules}
+                                    readOnly={loading}
+                                    style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }} // Para o editor preencher o container
                                 />
                             </div>
                         </div>

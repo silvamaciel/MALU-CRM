@@ -167,38 +167,76 @@
   color: #c7254e; /* Cor para o placeholder */
 }
 
-/* Estilos para o container do CKEditor */
-.modelo-contrato-form-page .ckeditor-container {
-  /* min-height já foi definido inline no JS, mas podemos definir aqui se quisermos um padrão */
-  /* border já foi definido inline no JS */
+/* Estilos para o container do ReactQuill */
+.modelo-contrato-form-page .quill-editor-container {
   margin-top: 5px; /* Espaço acima do editor */
+  /* min-height e border são definidos inline no JS para este componente, mas podem ser padronizados aqui */
+  /* Exemplo:
+  border: 1px solid #ced4da;
+  border-radius: 5px;
+  */
+  display: flex; /* Necessário para o ReactQuill com style flexGrow funcionar */
+  flex-direction: column; /* Necessário para o ReactQuill com style flexGrow funcionar */
 }
 
-/* O CKEditor por padrão já vem com estilos para a toolbar e a área de edição.
-   A altura do editor CKEditor pode ser controlada pela configuração 'height' ou
-   pelo CSS no elemento .ck-editor__editable.
-   Para o ClassicBuild, a altura é geralmente definida no container da área editável.
-   Se for necessário forçar uma altura mínima para a área de edição: */
-.modelo-contrato-form-page .ckeditor-container .ck-editor__editable_inline {
-  min-height: 330px; /* Altura mínima para a área de edição */
-  border: 1px solid #ced4da; /* Adiciona borda se não estiver presente por padrão ou para sobrescrever */
-  border-top: none; /* CKEditor classic build geralmente tem a toolbar e o editável como blocos separados */
-  padding: 0 10px; /* Espaçamento interno */
-  background-color: #fff;
-  border-bottom-left-radius: 5px; /* Arredondar cantos inferiores */
+/* Ajustes para o ReactQuill ocupar o espaço do container e ter bom visual */
+.modelo-contrato-form-page .quill-editor-container .ql-toolbar.ql-snow {
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6; /* Linha divisória */
+  padding: 8px;
+}
+
+.modelo-contrato-form-page .quill-editor-container .ql-container.ql-snow {
+  flex-grow: 1;
+  display: flex; /* Para o .ql-editor crescer */
+  flex-direction: column;
+  overflow-y: auto; /* Scroll para o conteúdo do editor */
+  border-bottom-left-radius: 5px;
   border-bottom-right-radius: 5px;
 }
 
-/* A toolbar do CKEditor já tem seus próprios estilos.
-   Se precisar customizar a toolbar (ex: bordas arredondadas no topo): */
-.modelo-contrato-form-page .ckeditor-container .ck-toolbar {
-  border-top-left-radius: 5px;
-  border-top-right-radius: 5px;
-  border-color: #ced4da; /* Garante que a borda da toolbar combine */
+.modelo-contrato-form-page .quill-editor-container .ql-editor {
+  flex-grow: 1;
+  padding: 12px;
+  font-size: 1em; /* Usar o mesmo que os textareas para consistência ou um específico */
+  line-height: 1.6;
+  /* min-height é gerenciado pelo container ReactQuill com style={{flexGrow:1}} e o min-height do .quill-editor-container */
 }
 
-/* As regras específicas para .quill-editor-container, .ql-toolbar.ql-snow,
-   .ql-container.ql-snow, e .ql-editor foram removidas. */
+/* Garantir que os pickers e tooltips do Quill fiquem acima de outros elementos da página, se necessário.
+   O z-index do modal é 1050, então aqui pode ser menor se não houver modal.
+   Se houver outros elementos sobrepostos, ajustar conforme necessidade. */
+.ql-picker.ql-expanded .ql-picker-options {
+    z-index: 10; /* Ajustar conforme necessidade da página */
+}
+.ql-tooltip {
+    z-index: 10; /* Ajustar conforme necessidade da página */
+}
 
-/* A lista de placeholders já tem estilos definidos acima e não precisa ser repetida.
-   Apenas garantindo que a última definição seja a que prevalece, se houver sobreposição. */
+/* Estilos para tabelas dentro do editor Quill (copiado de GerarContratoModal.css para consistência) */
+.modelo-contrato-form-page .ql-editor table {
+  border-collapse: collapse;
+  width: auto;
+  margin-bottom: 1em;
+}
+.modelo-contrato-form-page .ql-editor table td,
+.modelo-contrato-form-page .ql-editor table th {
+  border: 1px solid #ccc;
+  padding: 5px 10px;
+}
+.modelo-contrato-form-page .ql-editor table th {
+  background-color: #f0f0f0;
+  font-weight: bold;
+}
+
+/* Para garantir que as imagens redimensionadas não quebrem o layout (copiado de GerarContratoModal.css) */
+.modelo-contrato-form-page .ql-editor img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0.5em auto;
+}
+
+/* Estilos específicos do CKEditor foram removidos. */
