@@ -1,0 +1,1656 @@
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+/**
+ * A class which hides an element in DOM.
+ */
+.ck-hidden {
+	/* Override selector specificity. Otherwise, all elements with some display
+	style defined will override this one, which is not a desired result. */
+	display: none !important;
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck.ck-reset,
+.ck.ck-reset_all,
+.ck-reset_all *:not(.ck-reset_all-excluded *) {
+	box-sizing: border-box;
+	width: auto;
+	height: auto;
+	position: static;
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+:root {
+	--ck-z-default: 1;
+	--ck-z-modal: calc( var(--ck-z-default) + 999 );
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+/**
+ * A class that disables all transitions of the element and its children.
+ */
+.ck-transitions-disabled,
+.ck-transitions-disabled * {
+	transition: none !important;
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+:root {
+	--ck-powered-by-line-height: 10px;
+	--ck-powered-by-padding-vertical: 2px;
+	--ck-powered-by-padding-horizontal: 4px;
+	--ck-powered-by-text-color: hsl(0, 0%, 31%);
+	--ck-powered-by-border-radius: var(--ck-border-radius);
+	--ck-powered-by-background: hsl(0, 0%, 100%);
+	--ck-powered-by-border-color: var(--ck-color-focus-border);
+}
+
+.ck.ck-balloon-panel.ck-powered-by-balloon {
+	--ck-border-radius: var(--ck-powered-by-border-radius);
+
+	box-shadow: none;
+	background: var(--ck-powered-by-background);
+	min-height: unset;
+	z-index: calc( var(--ck-z-modal) - 1 );
+
+	& .ck.ck-powered-by {
+		line-height: var(--ck-powered-by-line-height);
+
+		& a {
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			opacity: .66;
+			filter: grayscale(80%);
+			line-height: var(--ck-powered-by-line-height);
+			padding: var(--ck-powered-by-padding-vertical) var(--ck-powered-by-padding-horizontal);
+		}
+
+		& .ck-powered-by__label {
+			font-size: 7.5px;
+			letter-spacing: -.2px;
+			padding-left: 2px;
+			text-transform: uppercase;
+			font-weight: bold;
+			margin-right: 4px;
+			cursor: pointer;
+			line-height: normal;
+			color: var(--ck-powered-by-text-color);
+
+		}
+
+		& .ck-icon {
+			display: block;
+			cursor: pointer;
+		}
+
+		&:hover {
+			& a {
+				filter: grayscale(0%);
+				opacity: 1;
+			}
+		}
+	}
+
+	&[class*="position_inside"] {
+		border-color: transparent;
+	}
+
+	&[class*="position_border"] {
+		border: var(--ck-focus-ring);
+		border-color: var(--ck-powered-by-border-color);
+	}
+}
+
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck.ck-icon {
+	vertical-align: middle;
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+/**
+ * Makes element unselectable.
+ */
+@define-mixin ck-unselectable {
+	-moz-user-select: none;
+	-webkit-user-select: none;
+	-ms-user-select: none;
+	user-select: none
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck.ck-button,
+a.ck.ck-button {
+	@mixin ck-unselectable;
+
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: left;
+
+	& .ck-button__label {
+		display: none;
+	}
+
+	&.ck-button_with-text {
+		& .ck-button__label {
+			display: inline-block;
+		}
+	}
+
+	/* Center the icon horizontally in a button without text. */
+	&:not(.ck-button_with-text)  {
+		justify-content: center;
+	}
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck.ck-button.ck-switchbutton {
+	& .ck-button__toggle {
+		display: block;
+
+		& .ck-button__toggle__inner {
+			display: block;
+		}
+	}
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck.ck-color-grid {
+	display: grid;
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck.ck-label {
+	display: block;
+}
+
+.ck.ck-voice-label {
+	display: none;
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck.ck-labeled-field-view {
+	& > .ck.ck-labeled-field-view__input-wrapper {
+		display: flex;
+		position: relative;
+	}
+
+	& .ck.ck-label {
+		display: block;
+		position: absolute;
+	}
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+/*
+ * Note: This file should contain the wireframe styles only. But since there are no such styles,
+ * it acts as a message to the builder telling that it should look for the corresponding styles
+ * **in the theme** when compiling the editor.
+ */
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+:root {
+	--ck-dropdown-max-width: 75vw;
+}
+
+.ck.ck-dropdown {
+	display: inline-block;
+	position: relative;
+
+	& .ck-dropdown__arrow {
+		pointer-events: none;
+		z-index: var(--ck-z-default);
+	}
+
+	/* Dropdown button should span horizontally, e.g. in vertical toolbars */
+	& .ck-button.ck-dropdown__button {
+		width: 100%;
+	}
+
+	& .ck-dropdown__panel {
+		display: none;
+		z-index: var(--ck-z-modal);
+		max-width: var(--ck-dropdown-max-width);
+
+		position: absolute;
+
+		&.ck-dropdown__panel-visible {
+			display: inline-block;
+		}
+
+		&.ck-dropdown__panel_ne,
+		&.ck-dropdown__panel_nw,
+		&.ck-dropdown__panel_n,
+		&.ck-dropdown__panel_nmw,
+		&.ck-dropdown__panel_nme {
+			bottom: 100%;
+		}
+
+		&.ck-dropdown__panel_se,
+		&.ck-dropdown__panel_sw,
+		&.ck-dropdown__panel_smw,
+		&.ck-dropdown__panel_sme,
+		&.ck-dropdown__panel_s {
+			/*
+			 * Using transform: translate3d( 0, 100%, 0 ) causes blurry dropdown on Chrome 67-78+ on non-retina displays.
+			 * See https://github.com/ckeditor/ckeditor5/issues/1053.
+			 */
+			top: 100%;
+			bottom: auto;
+		}
+
+		&.ck-dropdown__panel_ne,
+		&.ck-dropdown__panel_se {
+			left: 0px;
+		}
+
+		&.ck-dropdown__panel_nw,
+		&.ck-dropdown__panel_sw {
+			right: 0px;
+		}
+
+		&.ck-dropdown__panel_s,
+		&.ck-dropdown__panel_n {
+			/* Positioning panels relative to the center of the button */
+			left: 50%;
+			transform: translateX(-50%);
+		}
+
+		&.ck-dropdown__panel_nmw,
+		&.ck-dropdown__panel_smw {
+			/* Positioning panels relative to the middle-west of the button */
+			left: 75%;
+			transform: translateX(-75%);
+		}
+
+		&.ck-dropdown__panel_nme,
+		&.ck-dropdown__panel_sme {
+			/* Positioning panels relative to the middle-east of the button */
+			left: 25%;
+			transform: translateX(-25%);
+		}
+	}
+}
+
+/*
+ * Toolbar dropdown panels should be always above the UI (eg. other dropdown panels) from the editor's content.
+ * See https://github.com/ckeditor/ckeditor5/issues/7874
+ */
+.ck.ck-toolbar .ck-dropdown__panel {
+	z-index: calc( var(--ck-z-modal) + 1 );
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+/* See ckeditor/ckeditor5#936. */
+.ck.ck-placeholder,
+.ck .ck-placeholder {
+	position: relative;
+
+	&::before {
+		position: absolute;
+		left: 0;
+		right: 0;
+		content: attr(data-placeholder);
+
+		/* See ckeditor/ckeditor5#469. */
+		pointer-events: none;
+	}
+}
+
+/* See ckeditor/ckeditor5#1987. */
+.ck.ck-read-only .ck-placeholder {
+	&::before {
+		display: none;
+	}
+}
+
+/*
+ * Rules for the `ck-placeholder` are loaded before the rules for `ck-reset_all` in the base CKEditor 5 DLL build.
+ * This fix overwrites the incorrectly set `position: static` from `ck-reset_all`.
+ * See https://github.com/ckeditor/ckeditor5/issues/11418.
+ */
+.ck.ck-reset_all .ck-placeholder {
+	position: relative;
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+/* Elements marked by the Renderer as hidden should be invisible in the editor. */
+.ck.ck-editor__editable span[data-ck-unsafe-element] {
+	display: none;
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck.ck-toolbar {
+	@mixin ck-unselectable;
+
+	display: flex;
+	flex-flow: row nowrap;
+	align-items: center;
+
+	& > .ck-toolbar__items {
+		display: flex;
+		flex-flow: row wrap;
+		align-items: center;
+		flex-grow: 1;
+
+	}
+
+	& .ck.ck-toolbar__separator {
+		display: inline-block;
+
+		/*
+		 * A leading or trailing separator makes no sense (separates from nothing on one side).
+		 * For instance, it can happen when toolbar items (also separators) are getting grouped one by one and
+		 * moved to another toolbar in the dropdown.
+		 */
+		&:first-child,
+		&:last-child {
+			display: none;
+		}
+	}
+
+	& .ck-toolbar__line-break {
+		flex-basis: 100%;
+	}
+
+	&.ck-toolbar_grouping > .ck-toolbar__items {
+		flex-wrap: nowrap;
+	}
+
+	&.ck-toolbar_vertical > .ck-toolbar__items {
+		flex-direction: column;
+	}
+
+	&.ck-toolbar_floating > .ck-toolbar__items {
+		flex-wrap: nowrap;
+	}
+
+	& > .ck.ck-toolbar__grouped-dropdown {
+		& > .ck-dropdown__button .ck-dropdown__arrow {
+			display: none;
+		}
+	}
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck.ck-list {
+	@mixin ck-unselectable;
+
+	display: flex;
+	flex-direction: column;
+
+	& .ck-list__item,
+	& .ck-list__separator {
+		display: block;
+	}
+
+	/* Make sure that whatever child of the list item gets focus, it remains on the
+	top. Thanks to that, styles like box-shadow, outline, etc. are not masked by
+	adjacent list items. */
+	& .ck-list__item > *:focus {
+		position: relative;
+		z-index: var(--ck-z-default);
+	}
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck.ck-splitbutton {
+	/* Enable font size inheritance, which allows fluid UI scaling. */
+	font-size: inherit;
+
+	& .ck-splitbutton__action:focus {
+		z-index: calc(var(--ck-z-default) + 1);
+	}
+}
+
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+:root {
+	--ck-toolbar-dropdown-max-width: 60vw;
+}
+
+.ck.ck-toolbar-dropdown > .ck-dropdown__panel {
+	/* https://github.com/ckeditor/ckeditor5/issues/5586 */
+	width: max-content;
+	max-width: var(--ck-toolbar-dropdown-max-width);
+
+	& .ck-button {
+		&:focus {
+			z-index: calc(var(--ck-z-default) + 1);
+		}
+	}
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+/*
+ * Note: This file should contain the wireframe styles only. But since there are no such styles,
+ * it acts as a message to the builder telling that it should look for the corresponding styles
+ * **in the theme** when compiling the editor.
+ */
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.color-picker-hex-input {
+	width: max-content;
+
+	& .ck.ck-input {
+		min-width: unset;
+	}
+}
+
+.ck.ck-color-picker__row {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	justify-content: space-between;
+	margin: var(--ck-spacing-large) 0 0;
+	width: unset;
+
+	& .ck.ck-labeled-field-view {
+		padding-top: unset;
+	}
+
+	& .ck.ck-input-text {
+		width: unset;
+	}
+
+	& .ck-color-picker__hash-view {
+		padding-top: var(--ck-spacing-tiny);
+		padding-right: var(--ck-spacing-medium);
+	}
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+@define-mixin ck-dir $direction {
+	@nest [dir="$(direction)"] & {
+		@mixin-content;
+	}
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck.ck-color-selector {
+	/* View fragment with color grids. */
+	& .ck-color-grids-fragment {
+		& .ck-button.ck-color-selector__remove-color,
+		& .ck-button.ck-color-selector__color-picker {
+			display: flex;
+			align-items: center;
+
+			@mixin ck-dir rtl {
+				justify-content: flex-start;
+			}
+		}
+	}
+
+	/* View fragment with a color picker. */
+	& .ck-color-picker-fragment {
+		& .ck.ck-color-selector_action-bar {
+			display: flex;
+			flex-direction: row;
+			justify-content: space-around;
+
+			& .ck-button-save,
+			& .ck-button-cancel {
+				flex: 1
+			}
+		}
+	}
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+:root {
+	/* Make sure the balloon arrow does not float over its children. */
+	--ck-balloon-panel-arrow-z-index: calc(var(--ck-z-default) - 3);
+}
+
+.ck.ck-balloon-panel {
+	display: none;
+	position: absolute;
+
+	z-index: var(--ck-z-modal);
+
+	&.ck-balloon-panel_with-arrow {
+		&::before,
+		&::after {
+			content: "";
+			position: absolute;
+		}
+
+		&::before {
+			z-index: var(--ck-balloon-panel-arrow-z-index);
+		}
+
+		&::after {
+			z-index: calc(var(--ck-balloon-panel-arrow-z-index) + 1);
+		}
+	}
+
+	&[class*="arrow_n"] {
+		&::before {
+			z-index: var(--ck-balloon-panel-arrow-z-index);
+		}
+
+		&::after {
+			z-index: calc(var(--ck-balloon-panel-arrow-z-index) + 1);
+		}
+	}
+
+	&[class*="arrow_s"] {
+		&::before {
+			z-index: var(--ck-balloon-panel-arrow-z-index);
+		}
+
+		&::after {
+			z-index: calc(var(--ck-balloon-panel-arrow-z-index) + 1);
+		}
+	}
+
+	&.ck-balloon-panel_visible {
+		display: block;
+	}
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck.ck-balloon-panel.ck-tooltip {
+	/* Keep tooltips transparent for any interactions. */
+	pointer-events: none;
+
+	z-index: calc( var(--ck-z-modal) + 100 );
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+/*
+ * Note: This file should contain the wireframe styles only. But since there are no such styles,
+ * it acts as a message to the builder telling that it should look for the corresponding styles
+ * **in the theme** when compiling the editor.
+ */
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck.ck-form__header {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	align-items: center;
+	justify-content: space-between;
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck .ck-balloon-rotator__navigation {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* Buttons inside a toolbar should be centered when rotator bar is wider.
+ * See: https://github.com/ckeditor/ckeditor5-ui/issues/495
+ */
+.ck .ck-balloon-rotator__content .ck-toolbar {
+	justify-content: center;
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck .ck-fake-panel {
+	position: absolute;
+
+	/* Fake panels should be placed under main balloon content. */
+	z-index: calc(var(--ck-z-modal) - 1);
+}
+
+.ck .ck-fake-panel div {
+	position: absolute;
+}
+
+.ck .ck-fake-panel div:nth-child( 1 ) {
+	z-index: 2;
+}
+
+.ck .ck-fake-panel div:nth-child( 2 ) {
+	z-index: 1;
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck.ck-sticky-panel {
+	& .ck-sticky-panel__content_sticky {
+		z-index: var(--ck-z-modal); /* #315 */
+		position: fixed;
+		top: 0;
+	}
+
+	& .ck-sticky-panel__content_sticky_bottom-limit {
+		top: auto;
+		position: absolute;
+	}
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck.ck-block-toolbar-button {
+	position: absolute;
+	z-index: var(--ck-z-default);
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck.ck-editor {
+	/* All the elements within `.ck-editor` are positioned relatively to it.
+	 If any element needs to be positioned with respect to the <body>, etc.,
+	 it must land outside of the `.ck-editor` in DOM. */
+	position: relative;
+
+	& .ck-editor__top .ck-sticky-panel .ck-toolbar {
+		/* https://github.com/ckeditor/ckeditor5-editor-classic/issues/62 */
+		z-index: var(--ck-z-modal);
+	}
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck .ck-widget {
+	/*
+	 * Styles of the type around buttons
+	 */
+	& .ck-widget__type-around__button {
+		display: block;
+		position: absolute;
+		overflow: hidden;
+		z-index: var(--ck-z-default);
+
+		& svg {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			z-index: calc(var(--ck-z-default) + 2);
+		}
+
+		&.ck-widget__type-around__button_before {
+			/* Place it in the middle of the outline */
+			top: calc(-0.5 * var(--ck-widget-outline-thickness));
+			left: min(10%, 30px);
+
+			transform: translateY(-50%);
+		}
+
+		&.ck-widget__type-around__button_after {
+			/* Place it in the middle of the outline */
+			bottom: calc(-0.5 * var(--ck-widget-outline-thickness));
+			right: min(10%, 30px);
+
+			transform: translateY(50%);
+		}
+	}
+
+	/*
+	 * Styles for the buttons when:
+	 * - the widget is selected,
+	 * - or the button is being hovered (regardless of the widget state).
+	 */
+	&.ck-widget_selected > .ck-widget__type-around > .ck-widget__type-around__button,
+	& > .ck-widget__type-around > .ck-widget__type-around__button:hover {
+		&::after {
+			content: "";
+			display: block;
+			position: absolute;
+			top: 1px;
+			left: 1px;
+			z-index: calc(var(--ck-z-default) + 1);
+		}
+	}
+
+	/*
+	 * Styles for the horizontal "fake caret" which is displayed when the user navigates using the keyboard.
+	 */
+	& > .ck-widget__type-around > .ck-widget__type-around__fake-caret {
+		display: none;
+		position: absolute;
+		left: 0;
+		right: 0;
+	}
+
+	/*
+	 * When the widget is hovered the "fake caret" would normally be narrower than the
+	 * extra outline displayed around the widget. Let's extend the "fake caret" to match
+	 * the full width of the widget.
+	 */
+	&:hover > .ck-widget__type-around > .ck-widget__type-around__fake-caret {
+		left: calc( -1 * var(--ck-widget-outline-thickness) );
+		right: calc( -1 * var(--ck-widget-outline-thickness) );
+	}
+
+	/*
+	 * Styles for the horizontal "fake caret" when it should be displayed before the widget (backward keyboard navigation).
+	 */
+	&.ck-widget_type-around_show-fake-caret_before > .ck-widget__type-around > .ck-widget__type-around__fake-caret {
+		top: calc( -1 * var(--ck-widget-outline-thickness) - 1px );
+		display: block;
+	}
+
+	/*
+	 * Styles for the horizontal "fake caret" when it should be displayed after the widget (forward keyboard navigation).
+	 */
+	&.ck-widget_type-around_show-fake-caret_after > .ck-widget__type-around > .ck-widget__type-around__fake-caret {
+		bottom: calc( -1 * var(--ck-widget-outline-thickness) - 1px );
+		display: block;
+	}
+}
+
+/*
+ * Integration with the read-only mode of the editor.
+ */
+.ck.ck-editor__editable.ck-read-only .ck-widget__type-around {
+	display: none;
+}
+
+/*
+ * Integration with the restricted editing mode (feature) of the editor.
+ */
+.ck.ck-editor__editable.ck-restricted-editing_mode_restricted .ck-widget__type-around {
+	display: none;
+}
+
+/*
+ * Integration with the #isEnabled property of the WidgetTypeAround plugin.
+ */
+.ck.ck-editor__editable.ck-widget__type-around_disabled .ck-widget__type-around {
+	display: none;
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+:root {
+	--ck-color-resizer: var(--ck-color-focus-border);
+	--ck-color-resizer-tooltip-background: hsl(0, 0%, 15%);
+	--ck-color-resizer-tooltip-text: hsl(0, 0%, 95%);
+
+	--ck-resizer-border-radius: var(--ck-border-radius);
+	--ck-resizer-tooltip-offset: 10px;
+	--ck-resizer-tooltip-height: calc(var(--ck-spacing-small) * 2 + 10px);
+}
+
+.ck .ck-widget {
+	/* This is neccessary for type around UI to be positioned properly. */
+	position: relative;
+}
+
+.ck .ck-widget.ck-widget_with-selection-handle {
+	/* Make the widget wrapper a relative positioning container for the drag handle. */
+	position: relative;
+
+	& .ck-widget__selection-handle {
+		position: absolute;
+
+		& .ck-icon {
+			/* Make sure the icon in not a subject to font-size or line-height to avoid
+			unnecessary spacing around it. */
+			display: block;
+		}
+	}
+
+	/* Show the selection handle on mouse hover over the widget, but not for nested widgets. */
+	&:hover > .ck-widget__selection-handle {
+		visibility: visible;
+	}
+
+	/* Show the selection handle when the widget is selected, but not for nested widgets. */
+	&.ck-widget_selected > .ck-widget__selection-handle {
+		visibility: visible;
+	}
+}
+
+.ck .ck-size-view {
+	background: var(--ck-color-resizer-tooltip-background);
+	color: var(--ck-color-resizer-tooltip-text);
+	border: 1px solid var(--ck-color-resizer-tooltip-text);
+	border-radius: var(--ck-resizer-border-radius);
+	font-size: var(--ck-font-size-tiny);
+	display: block;
+	padding: 0 var(--ck-spacing-small);
+	height: var(--ck-resizer-tooltip-height);
+	line-height: var(--ck-resizer-tooltip-height);
+
+	&.ck-orientation-top-left,
+	&.ck-orientation-top-right,
+	&.ck-orientation-bottom-right,
+	&.ck-orientation-bottom-left,
+	&.ck-orientation-above-center {
+		position: absolute;
+	}
+
+	&.ck-orientation-top-left {
+		top: var(--ck-resizer-tooltip-offset);
+		left: var(--ck-resizer-tooltip-offset);
+	}
+
+	&.ck-orientation-top-right {
+		top: var(--ck-resizer-tooltip-offset);
+		right: var(--ck-resizer-tooltip-offset);
+	}
+
+	&.ck-orientation-bottom-right {
+		bottom: var(--ck-resizer-tooltip-offset);
+		right: var(--ck-resizer-tooltip-offset);
+	}
+
+	&.ck-orientation-bottom-left {
+		bottom: var(--ck-resizer-tooltip-offset);
+		left: var(--ck-resizer-tooltip-offset);
+	}
+
+	/* Class applied if the widget is too small to contain the size label */
+	&.ck-orientation-above-center {
+		top: calc(var(--ck-resizer-tooltip-height) * -1);
+		left: 50%;
+		transform: translate(-50%);
+	}
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck .ck-widget_with-resizer {
+	/* Make the widget wrapper a relative positioning container for the drag handle. */
+	position: relative;
+}
+
+.ck .ck-widget__resizer {
+	display: none;
+	position: absolute;
+
+	/* The wrapper itself should not interfere with the pointer device, only the handles should. */
+	pointer-events: none;
+
+	left: 0;
+	top: 0;
+}
+
+.ck-focused .ck-widget_with-resizer.ck-widget_selected {
+	& > .ck-widget__resizer {
+		display: block;
+	}
+}
+
+.ck .ck-widget__resizer__handle {
+	position: absolute;
+
+	/* Resizers are the only UI elements that should interfere with a pointer device. */
+	pointer-events: all;
+
+	&.ck-widget__resizer__handle-top-left,
+	&.ck-widget__resizer__handle-bottom-right {
+		cursor: nwse-resize;
+	}
+
+	&.ck-widget__resizer__handle-top-right,
+	&.ck-widget__resizer__handle-bottom-left {
+		cursor: nesw-resize;
+	}
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck.ck-editor__editable {
+	/*
+	 * Vertical drop target (in text).
+	 */
+	& .ck.ck-clipboard-drop-target-position {
+		display: inline;
+		position: relative;
+		pointer-events: none;
+
+		& span {
+			position: absolute;
+			width: 0;
+		}
+	}
+
+	/*
+	 * Styles of the widget being dragged (its preview).
+	 */
+	& .ck-widget:-webkit-drag {
+		& > .ck-widget__selection-handle {
+			display: none;
+		}
+
+		& > .ck-widget__type-around {
+			display: none;
+		}
+	}
+}
+
+.ck.ck-clipboard-drop-target-line {
+	position: absolute;
+	pointer-events: none;
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+/*
+ * Note: This file should contain the wireframe styles only. But since there are no such styles,
+ * it acts as a message to the builder telling that it should look for the corresponding styles
+ * **in the theme** when compiling the editor.
+ */
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+@define-mixin ck-media-phone {
+	@media screen and (max-width: 600px) {
+		@mixin-content;
+	}
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck-vertical-form .ck-button {
+	&::after {
+		content: "";
+		width: 0;
+		position: absolute;
+		right: -1px;
+		top: -1px;
+		bottom: -1px;
+		z-index: 1;
+	}
+
+	&:focus::after {
+		display: none;
+	}
+}
+
+.ck.ck-responsive-form {
+	@mixin ck-media-phone {
+		& .ck-button {
+			&::after {
+				content: "";
+				width: 0;
+				position: absolute;
+				right: -1px;
+				top: -1px;
+				bottom: -1px;
+				z-index: 1;
+			}
+
+			&:focus::after {
+				display: none;
+			}
+		}
+	}
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck.ck-link-form {
+	display: flex;
+
+	& .ck-label {
+		display: none;
+	}
+
+	@mixin ck-media-phone {
+		flex-wrap: wrap;
+
+		& .ck-labeled-field-view {
+			flex-basis: 100%;
+		}
+
+		& .ck-button {
+			flex-basis: 50%;
+		}
+	}
+}
+
+/*
+ * Style link form differently when manual decorators are available.
+ * See: https://github.com/ckeditor/ckeditor5-link/issues/186.
+ */
+.ck.ck-link-form_layout-vertical {
+	display: block;
+
+	/*
+	 * Whether the form is in the responsive mode or not, if there are decorator buttons
+	 * keep the top margin of action buttons medium.
+	 */
+	& .ck-button {
+		&.ck-button-save,
+		&.ck-button-cancel {
+			margin-top: var(--ck-spacing-medium);
+		}
+	}
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck.ck-link-actions {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+
+	& .ck-link-actions__preview {
+		display: inline-block;
+
+		& .ck-button__label {
+			overflow: hidden;
+		}
+	}
+
+	@mixin ck-media-phone {
+		flex-wrap: wrap;
+
+		& .ck-link-actions__preview {
+			flex-basis: 100%;
+		}
+
+		& .ck-button:not(.ck-link-actions__preview) {
+			flex-basis: 50%;
+		}
+	}
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck.ck-heading_heading1 {
+	font-size: 20px;
+}
+
+.ck.ck-heading_heading2 {
+	font-size: 17px;
+}
+
+.ck.ck-heading_heading3 {
+	font-size: 14px;
+}
+
+.ck[class*="ck-heading_heading"] {
+	font-weight: bold;
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck-content ol {
+	list-style-type: decimal;
+
+	& ol {
+		list-style-type: lower-latin;
+
+		& ol {
+			list-style-type: lower-roman;
+
+			& ol {
+				list-style-type: upper-latin;
+
+				& ol {
+					list-style-type: upper-roman;
+				}
+			}
+		}
+	}
+}
+
+.ck-content ul {
+	list-style-type: disc;
+
+	& ul {
+		list-style-type: circle;
+
+		& ul {
+			list-style-type: square;
+
+			& ul {
+				list-style-type: square;
+			}
+		}
+	}
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+/**
+ * Implements rounded corner interface for .ck-rounded-corners class.
+ *
+ * @see $ck-border-radius
+ */
+@define-mixin ck-rounded-corners {
+	border-radius: 0;
+
+	@nest .ck-rounded-corners &,
+	&.ck-rounded-corners {
+		border-radius: var(--ck-border-radius);
+		@mixin-content;
+	}
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+/**
+ * A visual style of focused element's border.
+ */
+@define-mixin ck-focus-ring {
+	/* Disable native outline. */
+	outline: none;
+	border: var(--ck-focus-ring)
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+/**
+ * A helper to combine multiple shadows.
+ */
+@define-mixin ck-box-shadow $shadowA, $shadowB: 0 0 {
+	box-shadow: $shadowA, $shadowB;
+}
+
+/**
+ * Gives an element a drop shadow so it looks like a floating panel.
+ */
+@define-mixin ck-drop-shadow {
+	@mixin ck-box-shadow var(--ck-drop-shadow);
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck-source-editing-area {
+	position: relative;
+	overflow: hidden;
+}
+
+.ck-source-editing-area::after,
+.ck-source-editing-area textarea {
+	padding: var(--ck-spacing-large);
+	margin: 0;
+	border: 1px solid transparent;
+	line-height: var(--ck-line-height-base);
+	font-size: var(--ck-font-size-normal);
+	font-family: monospace;
+	white-space: pre-wrap;
+}
+
+.ck-source-editing-area::after {
+	content: attr(data-value) " ";
+	visibility: hidden;
+	display: block;
+}
+
+.ck-source-editing-area textarea {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	resize: none;
+	outline: none;
+	overflow: hidden;
+	box-sizing: border-box;
+
+	border-color: var(--ck-color-base-border);
+
+	@mixin ck-rounded-corners {
+		border-top-left-radius: 0;
+		border-top-right-radius: 0;
+	}
+
+	&:not([readonly]):focus {
+		@mixin ck-focus-ring;
+		@mixin ck-box-shadow var(--ck-inner-shadow);
+	}
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+/*
+ * Note: This file should contain the wireframe styles only. But since there are no such styles,
+ * it acts as a message to the builder telling that it should look for the corresponding styles
+ * **in the theme** when compiling the editor.
+ */
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck .ck-insert-table-dropdown__grid {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+/*
+ * Note: This file should contain the wireframe styles only. But since there are no such styles,
+ * it acts as a message to the builder telling that it should look for the corresponding styles
+ * **in the theme** when compiling the editor.
+ */
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck-content .table {
+	/* Give the table widget some air and center it horizontally */
+	/* The first value should be equal to --ck-spacing-large variable if used in the editor context
+	to avoid the content jumping (See https://github.com/ckeditor/ckeditor5/issues/9825). */
+	margin: 0.9em auto;
+	display: table;
+
+	& table {
+		/* The table cells should have slight borders */
+		border-collapse: collapse;
+		border-spacing: 0;
+
+		/* Table width and height are set on the parent <figure>. Make sure the table inside stretches
+		to the full dimensions of the container (https://github.com/ckeditor/ckeditor5/issues/6186). */
+		width: 100%;
+		height: 100%;
+
+		/* The outer border of the table should be slightly darker than the inner lines.
+		Also see https://github.com/ckeditor/ckeditor5-table/issues/50. */
+		border: 1px double hsl(0, 0%, 70%);
+
+		& td,
+		& th {
+			min-width: 2em;
+			padding: .4em;
+
+			/* The border is inherited from .ck-editor__nested-editable styles, so theoretically it's not necessary here.
+			However, the border is a content style, so it should use .ck-content (so it works outside the editor).
+			Hence, the duplication. See https://github.com/ckeditor/ckeditor5/issues/6314 */
+			border: 1px solid hsl(0, 0%, 75%);
+		}
+
+		& th {
+			font-weight: bold;
+			background: hsla(0, 0%, 0%, 5%);
+		}
+	}
+}
+
+/* Text alignment of the table header should match the editor settings and override the native browser styling,
+when content is available outside the editor. See https://github.com/ckeditor/ckeditor5/issues/6638 */
+.ck-content[dir="rtl"] .table th {
+	text-align: right;
+}
+
+.ck-content[dir="ltr"] .table th {
+	text-align: left;
+}
+
+.ck-editor__editable .ck-table-bogus-paragraph {
+	/*
+	 * Use display:inline-block to force Chrome/Safari to limit text mutations to this element.
+	 * See https://github.com/ckeditor/ckeditor5/issues/6062.
+	 */
+	display: inline-block;
+
+	/*
+	 * Inline HTML elements nested in the span should always be dimensioned in relation to the whole cell width.
+	 * See https://github.com/ckeditor/ckeditor5/issues/9117.
+	 */
+	width: 100%;
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck.ck-input-color {
+	width: 100%;
+	display: flex;
+	flex-direction: row-reverse;
+
+	& > input.ck.ck-input-text {
+		min-width: auto;
+		flex-grow: 1;
+	}
+
+	& > div.ck.ck-dropdown {
+		min-width: auto;
+
+		/* This dropdown has no arrow but a color preview instead. */
+		& > .ck-input-color__button .ck-dropdown__arrow {
+			display: none;
+		}
+	}
+
+	& .ck.ck-input-color__button {
+		/* Resolving issue with misaligned buttons on Safari (see #10589) */
+		display: flex;
+
+		& .ck.ck-input-color__button__preview {
+			position: relative;
+			overflow: hidden;
+
+			& > .ck.ck-input-color__button__preview__no-color-indicator {
+				position: absolute;
+				display: block;
+			}
+		}
+	}
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck.ck-form__row {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	justify-content: space-between;
+
+	/* Ignore labels that work as fieldset legends */
+	& > *:not(.ck-label) {
+		flex-grow: 1;
+	}
+
+	&.ck-table-form__action-row {
+		& .ck-button-save,
+		& .ck-button-cancel {
+			justify-content: center;
+		}
+	}
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+/*
+ * Note: This file should contain the wireframe styles only. But since there are no such styles,
+ * it acts as a message to the builder telling that it should look for the corresponding styles
+ * **in the theme** when compiling the editor.
+ */
+
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck.ck-table-form {
+	& .ck-form__row {
+		&.ck-table-form__border-row {
+			flex-wrap: wrap;
+		}
+
+		&.ck-table-form__background-row {
+			flex-wrap: wrap;
+		}
+
+		&.ck-table-form__dimensions-row {
+			flex-wrap: wrap;
+			align-items: center;
+
+			& .ck-labeled-field-view {
+				display: flex;
+				flex-direction: column-reverse;
+				align-items: center;
+
+				& .ck.ck-dropdown {
+					flex-grow: 0;
+				}
+			}
+
+			& .ck-table-form__dimension-operator {
+				flex-grow: 0;
+			}
+		}
+	}
+
+	& .ck.ck-labeled-field-view {
+		/* Allow absolute positioning of the status (error) balloons. */
+		position: relative;
+
+		& .ck.ck-labeled-field-view__status {
+			position: absolute;
+			left: 50%;
+			bottom: calc( -1 * var(--ck-table-properties-error-arrow-size) );
+			transform: translate(-50%,100%);
+
+			/* Make sure the balloon status stays on top of other form elements. */
+			z-index: 1;
+
+			/* The arrow pointing towards the field. */
+			&::after {
+				content: "";
+				position: absolute;
+				top: calc( -1 * var(--ck-table-properties-error-arrow-size) );
+				left: 50%;
+				transform: translateX( -50% );
+			}
+		}
+	}
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck.ck-table-properties-form {
+	& .ck-form__row {
+		&.ck-table-properties-form__alignment-row {
+			flex-wrap: wrap;
+			flex-basis: 0;
+			align-content: baseline;
+
+			& .ck.ck-toolbar .ck-toolbar__items {
+				flex-wrap: nowrap;
+			}
+		}
+	}
+}
+
+/*
+ * Copyright (c) 2003-2023, CKSource Holding sp. z o.o. All rights reserved.
+ * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
+ */
+
+.ck.ck-table-cell-properties-form {
+	& .ck-form__row {
+		&.ck-table-cell-properties-form__alignment-row {
+			flex-wrap: wrap;
+
+			& .ck.ck-toolbar {
+				&:first-of-type {
+					/* 4 buttons out of 7 (h-alignment + v-alignment) = 0.57 */
+					flex-grow: 0.57;
+				}
+
+				&:last-of-type {
+					/* 3 buttons out of 7 (h-alignment + v-alignment) = 0.43 */
+					flex-grow: 0.43;
+				}
+
+				& .ck-button {
+					flex-grow: 1;
+				}
+			}
+		}
+	}
+}
+

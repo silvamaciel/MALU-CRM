@@ -1,4 +1,5 @@
 const path = require('path');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = {
   entry: './src/ckeditor.js',
@@ -8,6 +9,7 @@ module.exports = {
     library: {
       type: 'module',
     },
+    clean: true, // limpa a pasta build antes de buildar
   },
   experiments: {
     outputModule: true,
@@ -16,7 +18,7 @@ module.exports = {
     rules: [
       {
         test: /\.css$/i,
-        use: ['style-loader', 'css-loader'],
+        use: [MiniCssExtractPlugin.loader, 'css-loader'],
       },
       {
         test: /\.svg$/i,
@@ -27,4 +29,9 @@ module.exports = {
   resolve: {
     extensions: ['.js'],
   },
+  plugins: [
+    new MiniCssExtractPlugin({
+      filename: 'ckeditor.css', // saída do CSS
+    }),
+  ],
 };
