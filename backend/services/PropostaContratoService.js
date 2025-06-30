@@ -737,13 +737,7 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
         const propostaContrato = await PropostaContrato.findOne({ _id: propostaContratoId, company: companyId })
             .populate('lead')
             .populate('reserva')
-            .populate({
-                path: 'imovel',
-                populate: {
-                    path: 'empreendimento',
-                    select: 'nome _id'
-                }
-            })
+            .populate('imovel')  // só popular imovel simples, sem aninhamento
             .session(session);
 
         if (!propostaContrato) {
@@ -767,22 +761,18 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
 
         const statusAntigoProposta = propostaContrato.statusPropostaContrato;
 
-        // 1. Atualizar Proposta/Contrato
         propostaContrato.statusPropostaContrato = "Distrato Realizado";
         propostaContrato.motivoDistrato = dadosDistrato.motivoDistrato;
         propostaContrato.dataDistrato = dadosDistrato.dataDistrato ? new Date(dadosDistrato.dataDistrato) : new Date();
 
-        // 2. Atualizar Reserva associada
         const reservaDoc = propostaContrato.reserva;
         reservaDoc.statusReserva = "Distratada";
 
-        // 3. Liberar Unidade
         const unidadeDoc = propostaContrato.unidade;
         unidadeDoc.statusUnidade = "Disponível";
         unidadeDoc.currentLeadId = null;
         unidadeDoc.currentReservaId = null;
 
-        // 4. Atualizar Lead
         const nomeEstagioDescartado = "Descartado";
         const situacaoDescartado = await LeadStage.findOneAndUpdate(
             { company: companyId, nome: { $regex: new RegExp(`^${nomeEstagioDescartado}$`, "i") } },
@@ -795,14 +785,13 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
         const oldLeadStatusId = leadDoc.situacao;
         leadDoc.situacao = situacaoDescartado._id;
 
-        // Monta o comentário detalhado do distrato
-        const nomeEmpreendimentoParaComentario = unidadeDoc.empreendimento?.nome || 'N/A';
+        // Como não tem empreendimento populado, ajusta comentário sem ele:
+        const nomeEmpreendimentoParaComentario = 'N/A';
         const comentarioDistrato = `Distrato da Proposta/Contrato ID ${propostaContrato._id} (Unidade: ${unidadeDoc.identificador} do Empr.: ${nomeEmpreendimentoParaComentario}). Motivo original fornecido: ${dadosDistrato.motivoDistrato}.`;
         leadDoc.comentario = leadDoc.comentario 
             ? `${leadDoc.comentario}\n\n--- DISTRATO ---\n${comentarioDistrato}` 
             : `--- DISTRATO ---\n${comentarioDistrato}`;
 
-        // Motivo de descarte estruturado
         if (dadosDistrato.leadMotivoDescarteId && mongoose.Types.ObjectId.isValid(dadosDistrato.leadMotivoDescarteId)) {
             const motivoDoc = await DiscardReason.findOne({_id: dadosDistrato.leadMotivoDescarteId, company: companyId}).session(session);
             if (motivoDoc) {
@@ -827,13 +816,11 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
             if (motivoDistratoDefault) leadDoc.motivoDescarte = motivoDistratoDefault._id;
         }
 
-        // Salva entidades modificadas
         await unidadeDoc.save({ session });
         await reservaDoc.save({ session });
         await leadDoc.save({ session });
         const propostaAtualizada = await propostaContrato.save({ session });
 
-        // Log histórico
         const leadStatusAntigoNomeDoc = await LeadStage.findById(oldLeadStatusId).select('nome').lean();
         const logDetails = `Distrato registrado. Motivo: ${dadosDistrato.motivoDistrato}. Unidade ${unidadeDoc.identificador} liberada. Lead movido para "${situacaoDescartado.nome}".`;
         await logHistory(
@@ -860,6 +847,7 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
         session.endSession();
     }
 };
+
 
 
 
