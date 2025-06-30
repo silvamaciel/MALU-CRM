@@ -7,7 +7,8 @@ import './ModeloContratoFormPage.css';
 
 // CKEditor imports removidos
 
-import ReactQuill, { Quill } from 'react-quill';
+import ReactQuill from 'react-quill';
+import Quill from 'quill'; // Importar Quill diretamente
 import 'react-quill/dist/quill.snow.css'; // Estilo padrão Snow
 
 // KaTeX para fórmulas
