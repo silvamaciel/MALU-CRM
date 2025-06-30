@@ -23,7 +23,7 @@ const editorConfiguration = {
     'link', 'bulletedList', 'numberedList', '|',
     'fontColor', 'fontBackgroundColor', '|',
     'undo', 'redo'
-  ],
+  ], 
   language: 'pt-br',
   table: {
     contentToolbar: [
