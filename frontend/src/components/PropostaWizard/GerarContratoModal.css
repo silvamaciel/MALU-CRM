@@ -138,4 +138,19 @@
 .ck.ck-balloon-panel,
 .ck.ck-list {
   z-index: 9999 !important;
+  background-color: #f9f9f9 !important;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  padding: 4px;
+}
+
+.ck.ck-list__item {
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.ck.ck-list__item:hover {
+  background-color: #e6f0ff;
+  border-radius: 4px;
 }
