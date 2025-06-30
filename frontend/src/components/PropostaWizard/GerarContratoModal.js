@@ -5,6 +5,8 @@ import { CKEditor } from '@ckeditor/ckeditor5-react';
 // Importar o editor do build customizado simulado
 import ClassicEditor from '../../libs/ckeditor5-custom-build/ckeditor';
 
+import './../../libs/ckeditor5-custom-build/ckeditor.css';
+
 import { getModelosContrato } from '../../api/modeloContratoApi';
 import { gerarDocumentoApi, updatePropostaContratoApi } from '../../api/propostaContratoApi';
 import './GerarContratoModal.css';
