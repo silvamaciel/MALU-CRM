@@ -27,16 +27,50 @@
     flex-shrink: 0;
 }
 
-.form-modal-content.large .ckeditor-container { /* Renomeado de quill-editor-container */
-    flex-grow: 1; /* Faz o editor ocupar o espaço vertical restante */
+/* Container do Editor Quill */
+.form-modal-content.large .quill-editor-container {
+    flex-grow: 1; /* Faz o container do editor ocupar o espaço vertical restante */
     display: flex;
     flex-direction: column;
-    min-height: 300px; /* Garante uma altura mínima para o container do editor */
+    min-height: 300px; /* Altura mínima */
+    overflow: hidden; /* Para conter o editor Quill que gerencia seu próprio scroll */
 }
 
-/* O CKEditor gerencia seu próprio scroll e crescimento interno.
-   A regra para .ql-container.ql-snow pode ser removida ou ajustada se houver um seletor equivalente para CKEditor se necessário.
-   Por agora, vamos manter o flex-grow no container principal do editor. */
+/* Ajustes para o ReactQuill ocupar o espaço do container */
+.quill-editor-container .ql-container.ql-snow {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto; /* Scroll para o conteúdo do editor */
+    border-bottom-left-radius: 8px; /* Ajuste estético */
+    border-bottom-right-radius: 8px;
+}
+
+.quill-editor-container .ql-editor {
+    flex-grow: 1;
+    padding: 12px; /* Padding interno da área de edição */
+    font-size: 16px; /* Tamanho de fonte base para o conteúdo */
+    line-height: 1.6;
+    /* min-height é gerenciado pelo container, mas pode ser definido aqui se necessário */
+}
+
+/* Ajuste para a toolbar do Quill */
+.quill-editor-container .ql-toolbar.ql-snow {
+    border-top-left-radius: 8px; /* Ajuste estético */
+    border-top-right-radius: 8px;
+    background-color: #f8f9fa; /* Cor de fundo suave para a toolbar */
+    padding: 8px;
+    border-bottom: 1px solid #dee2e6; /* Linha divisória entre toolbar e editor */
+}
+
+/* Garantir que os pickers e tooltips do Quill fiquem acima */
+.ql-picker.ql-expanded .ql-picker-options {
+    z-index: 1051 !important; /* Acima do overlay do modal (1050) */
+}
+.ql-tooltip {
+    z-index: 1051 !important; /* Acima do overlay do modal */
+}
+
 
 .form-modal-content.large .loading-message {
     flex-grow: 1;
@@ -54,128 +88,37 @@
     flex-shrink: 0;
 }
 
+/* Estilos específicos do CKEditor foram removidos.
+   O ReactQuill utiliza os estilos de `quill.snow.css` que já foi importado,
+   e os ajustes acima são para integrar melhor o editor ao layout do modal.
+*/
 
-/* Contêiner principal da toolbar */
-.ck.ck-toolbar {
-  background-color: #f8f8f8;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  padding: 5px;
-  gap: 4px;
-  display: flex;
-  flex-wrap: wrap;
+/* Estilos para tabelas dentro do editor Quill, se necessário customizar além do padrão */
+.ql-editor table {
+  border-collapse: collapse;
+  width: auto; /* Ou 100% se preferir que tabelas ocupem toda a largura */
+  margin-bottom: 1em;
 }
-
-/* Botões */
-.ck.ck-button {
-  background-color: #fff;
+.ql-editor table td,
+.ql-editor table th {
   border: 1px solid #ccc;
-  color: #333;
-  border-radius: 4px;
-  padding: 6px;
-  margin: 2px;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 5px 10px;
+  /* background-color: inherit;  Quill geralmente lida bem com isso */
 }
-
-.ck.ck-button:hover {
-  background-color: #e6f0ff;
-  border-color: #99c2ff;
-}
-
-/* Ícones (SVGs internos do CKEditor) */
-.ck.ck-button .ck-icon {
-  width: 16px;
-  height: 16px;
-  fill: #333;
-}
-
-/* Botão ativo */
-.ck.ck-button.ck-on {
-  background-color: #dbeaff;
-  border-color: #66a3ff;
-}
-
-/* Dropdowns */
-.ck.ck-dropdown {
-  margin: 2px;
-}
-
-.ck.ck-dropdown__button {
-  background-color: #fff;
-  border: 1px solid #ccc;
-  padding: 6px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.ck.ck-dropdown__panel {
-  background-color: white;
-  border: 1px solid #ccc;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-
-/* Select de Heading */
-.ck.ck-heading-dropdown .ck-button__label {
+.ql-editor table th {
+  background-color: #f0f0f0;
   font-weight: bold;
 }
 
-/* Área de edição */
-.ck.ck-editor__editable {
-  min-height: 300px;
-  border: 1px solid #ddd;
-  padding: 12px;
-  border-radius: 4px;
-  background-color: #fff;
-  font-family: 'Segoe UI', sans-serif;
-  font-size: 16px;
+/* Para garantir que as imagens redimensionadas não quebrem o layout */
+.ql-editor img {
+  max-width: 100%;
+  height: auto;
+  display: block; /* Para evitar espaço extra abaixo da imagem */
+  margin: 0.5em auto; /* Centraliza e adiciona margem */
 }
 
-/* Garante que os dropdowns/flutuantes fiquem acima do modal */
-.ck.ck-dropdown__panel,
-.ck.ck-balloon-panel,
-.ck.ck-list {
-  z-index: 9999 !important;
-  background-color: #f9f9f9 !important;
-  border: 1px solid #ccc;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border-radius: 6px;
-  padding: 4px;
-}
-
-.ck.ck-list__item {
-  padding: 6px 10px;
-  cursor: pointer;
-}
-
-.ck.ck-list__item:hover {
-  background-color: #e6f0ff;
-  border-radius: 4px;
-}
-
-.ck-content table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-.ck-content table td,
-.ck-content table th {
-  border: 1px solid #ccc; /* você pode customizar isso */
-  padding: 8px;
-}
-
-/* Garante que cor de fundo definida inline funcione */
-.ck-content table td,
-.ck-content table th {
-  background-color: inherit;
-}
-
-/* Permite bordas personalizadas definidas inline */
-.ck-content td,
-.ck-content th {
-  border-style: inherit;
-  border-width: inherit;
-  border-color: inherit;
+/* Estilos para o módulo de redimensionamento de imagem, se necessário */
+.ql-image-resize {
+  /* Estilos para as alças de redimensionamento podem ser adicionados aqui se o padrão não for adequado */
 }
