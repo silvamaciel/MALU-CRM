@@ -738,13 +738,7 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
     const propostaContrato = await PropostaContrato.findOne({ _id: propostaContratoId, company: companyId })
       .populate('lead')
       .populate('reserva')
-      .populate({
-        path: 'imovel',
-        populate: {
-          path: 'empreendimento',
-          select: 'nome _id'
-        }
-      })
+      .populate('imovel') // populate básico do campo polimórfico
       .session(session);
 
     if (!propostaContrato) {
@@ -754,9 +748,6 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
     if (!propostaContrato.lead || !propostaContrato.reserva || !propostaContrato.imovel) {
       throw new Error("Dados vinculados (Lead, Imóvel ou Reserva) não encontrados ou incompletos.");
     }
-
-    // Compatibilidade: trata imovel como unidade se for tipo Unidade
-    const unidadeDoc = propostaContrato.tipoImovel === 'Unidade' ? propostaContrato.imovel : null;
 
     const statusAntigoProposta = propostaContrato.statusPropostaContrato;
     if (statusAntigoProposta !== "Vendido") {
@@ -771,11 +762,27 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
     // Atualiza reserva
     propostaContrato.reserva.statusReserva = "Distratada";
 
-    // Libera unidade, se for aplicável
-    if (unidadeDoc) {
+    // Se for unidade, libera a unidade
+    let unidadeDoc = null;
+    let nomeEmpreendimento = 'N/A';
+    let identificadorUnidade = 'N/A';
+
+    if (propostaContrato.tipoImovel === 'Unidade') {
+      unidadeDoc = propostaContrato.imovel;
       unidadeDoc.statusUnidade = "Disponível";
       unidadeDoc.currentLeadId = null;
       unidadeDoc.currentReservaId = null;
+
+      // Safe populate manual do empreendimento
+      await unidadeDoc.populate({
+        path: 'empreendimento',
+        select: 'nome',
+        strictPopulate: false,
+      });
+
+      nomeEmpreendimento = unidadeDoc.empreendimento?.nome || 'N/A';
+      identificadorUnidade = unidadeDoc.identificador || 'N/A';
+
       await unidadeDoc.save({ session });
     }
 
@@ -791,8 +798,7 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
     const oldLeadStatusId = leadDoc.situacao;
     leadDoc.situacao = situacaoDescartado._id;
 
-    const nomeEmpreendimento = unidadeDoc?.empreendimento?.nome || 'N/A';
-    const comentarioDistrato = `Distrato da Proposta/Contrato ID ${propostaContrato._id} (Unidade: ${unidadeDoc?.identificador || 'N/A'} do Empr.: ${nomeEmpreendimento}). Motivo original fornecido: ${dadosDistrato.motivoDistrato}.`;
+    const comentarioDistrato = `Distrato da Proposta/Contrato ID ${propostaContrato._id} (Unidade: ${identificadorUnidade} do Empr.: ${nomeEmpreendimento}). Motivo original fornecido: ${dadosDistrato.motivoDistrato}.`;
     leadDoc.comentario = leadDoc.comentario
       ? `${leadDoc.comentario}\n\n--- DISTRATO ---\n${comentarioDistrato}`
       : `--- DISTRATO ---\n${comentarioDistrato}`;
@@ -805,7 +811,6 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
       }
     }
 
-    // Default para motivo de descarte se não fornecido
     if (!leadDoc.motivoDescarte) {
       const motivoDistratoDefault = await DiscardReason.findOneAndUpdate(
         { company: companyId, nome: "Distrato Contratual" },
@@ -815,7 +820,7 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
       if (motivoDistratoDefault) leadDoc.motivoDescarte = motivoDistratoDefault._id;
     }
 
-    // Salvar entidades modificadas
+    // Save tudo
     await propostaContrato.reserva.save({ session });
     await leadDoc.save({ session });
     const propostaAtualizada = await propostaContrato.save({ session });
@@ -846,10 +851,6 @@ const registrarDistratoPropostaContrato = async (propostaContratoId, dadosDistra
     session.endSession();
   }
 };
-
-
-
-
 
 
 
