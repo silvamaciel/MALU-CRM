@@ -132,3 +132,10 @@
   font-family: 'Segoe UI', sans-serif;
   font-size: 16px;
 }
+
+/* Garante que os dropdowns/flutuantes fiquem acima do modal */
+.ck.ck-dropdown__panel,
+.ck.ck-balloon-panel,
+.ck.ck-list {
+  z-index: 9999 !important;
+}
