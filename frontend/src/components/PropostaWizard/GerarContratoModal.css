@@ -137,3 +137,38 @@ textarea:focus {
 .submit-button:hover {
   background-color: #218838;
 }
+
+
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: normal;
+    color: #111;
+  }
+
+  .ql-align-center {
+    text-align: center;
+  }
+  .ql-align-right {
+    text-align: right;
+  }
+  .ql-align-justify {
+    text-align: justify;
+  }
+
+  .ql-font-sans-serif {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  }
+  .ql-font-serif {
+    font-family: Georgia, 'Times New Roman', serif;
+  }
+  .ql-font-monospace {
+    font-family: 'Courier New', Courier, monospace;
+  }
+  .ql-font-arial {
+    font-family: Arial, sans-serif;
+  }
+  .ql-font-times-new-roman {
+    font-family: "Times New Roman", Times, serif;
+  }
+  .ql-font-comic-sans {
+    font-family: "Comic Sans MS", cursive, sans-serif;
+  }
