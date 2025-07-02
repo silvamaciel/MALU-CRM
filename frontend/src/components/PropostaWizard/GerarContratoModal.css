@@ -195,3 +195,19 @@
   gap: 6px;
   margin-bottom: 12px;
 }
+
+#toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.ql-editor table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.ql-editor td,
+.ql-editor th {
+  border: 1px solid #ccc;
+  padding: 8px;
+}

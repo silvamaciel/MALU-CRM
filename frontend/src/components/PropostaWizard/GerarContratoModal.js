@@ -1,33 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import ReactQuill from 'react-quill';
-import Quill from 'quill';
-import { CustomToolbar } from './CustomToolbar';
+import ReactQuill, { Quill } from 'react-quill';
+import Table from 'quill-table-ui';
 import 'react-quill/dist/quill.snow.css';
 import 'quill-table-ui/dist/index.css';
-import Table from 'quill-table-ui';
+import { CustomToolbar } from './CustomToolbar';
 
 import { getModelosContrato } from '../../api/modeloContratoApi';
 import { gerarDocumentoApi, updatePropostaContratoApi } from '../../api/propostaContratoApi';
 import './GerarContratoModal.css';
 
-// REGISTRA o módulo de tabela
 Quill.register({ 'modules/tableUI': Table }, true);
 
 const modules = {
   toolbar: {
-    container: '#toolbar'
+    container: '#toolbar',
+    handlers: {
+      placeholder: function () {
+        const cursor = this.quill.getSelection();
+        if (cursor) {
+          this.quill.insertText(cursor.index, '{{placeholder}}');
+        }
+      },
+      html: function () {
+        const container = document.querySelector('.ql-editor');
+        const html = container.innerHTML;
+        alert('HTML atual:\n\n' + html);
+      }
+    }
   },
   tableUI: true
 };
 
 const formats = [
   'header', 'font', 'size',
-  'bold', 'italic', 'underline',
+  'bold', 'italic', 'underline', 'strike', 'clean',
   'list', 'bullet', 'indent',
-  'align', 'blockquote',
+  'align', 'blockquote', 'code-block',
   'color', 'background',
-  'code-block',
+  'link', 'video',
   'table'
 ];
 
@@ -126,6 +137,7 @@ function GerarContratoModal({ isOpen, onClose, proposta, onSaveSuccess }) {
               formats={formats}
               readOnly={isSaving}
               theme="snow"
+              placeholder="Digite o contrato aqui..."
             />
           </>
         )}
