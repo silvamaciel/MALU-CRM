@@ -296,3 +296,52 @@
 .modelo-contrato-form-page .ql-html-button:hover {
   background-color: #0056b3;
 }
+
+
+/* Alinhamento */
+.ql-editor .ql-align-center {
+  text-align: center;
+}
+.ql-editor .ql-align-right {
+  text-align: right;
+}
+.ql-editor .ql-align-justify {
+  text-align: justify;
+}
+
+/* Fontes */
+.ql-editor .ql-font-sans-serif {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+.ql-editor .ql-font-serif {
+  font-family: Georgia, 'Times New Roman', serif;
+}
+.ql-editor .ql-font-monospace {
+  font-family: 'Courier New', Courier, monospace;
+}
+.ql-editor .ql-font-arial {
+  font-family: Arial, sans-serif;
+}
+.ql-editor .ql-font-times-new-roman {
+  font-family: "Times New Roman", Times, serif;
+}
+.ql-editor .ql-font-comic-sans {
+  font-family: "Comic Sans MS", cursive, sans-serif;
+}
+
+/* Preview igual ao editor */
+.html-preview {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  line-height: 1.6;
+  color: #333;
+}
+
+.html-preview .ql-align-center {
+  text-align: center;
+}
+.html-preview .ql-align-right {
+  text-align: right;
+}
+.html-preview .ql-align-justify {
+  text-align: justify;
+}
