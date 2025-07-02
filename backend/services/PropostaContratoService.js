@@ -410,12 +410,45 @@ const gerarPDFPropostaContrato = async (propostaContratoId, companyId) => {
                 <meta charset="UTF-8">
                 <title>Proposta/Contrato</title>
                 <style>
-                    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 40px; line-height: 1.6; color: #333; }
-                    h1, h2, h3, h4, h5, h6 { font-weight: normal; color: #111; }
-                    /* Adicione aqui estilos CSS que você quer que sejam aplicados ao PDF */
-                    /* Ex: table { width: 100%; border-collapse: collapse; } */
-                    /* td, th { border: 1px solid #ccc; padding: 8px; } */
-                    /* .assinatura { margin-top: 50px; border-top: 1px solid #000; width: 250px; text-align: center; } */
+                  body {
+                        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                        margin: 40px;
+                        line-height: 1.6;
+                        color: #333;
+                      }
+                      h1, h2, h3, h4, h5, h6 {
+                        font-weight: normal;
+                        color: #111;
+                      }
+
+                      .ql-align-center {
+                        text-align: center;
+                      }
+                      .ql-align-right {
+                        text-align: right;
+                      }
+                      .ql-align-justify {
+                        text-align: justify;
+                      }
+
+                      .ql-font-sans-serif {
+                        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                      }
+                      .ql-font-serif {
+                        font-family: Georgia, 'Times New Roman', serif;
+                      }
+                      .ql-font-monospace {
+                        font-family: 'Courier New', Courier, monospace;
+                      }
+                      .ql-font-arial {
+                        font-family: Arial, sans-serif;
+                      }
+                      .ql-font-times-new-roman {
+                        font-family: "Times New Roman", Times, serif;
+                      }
+                      .ql-font-comic-sans {
+                        font-family: "Comic Sans MS", cursive, sans-serif;
+                      }
                 </style>
             </head>
             <body>
