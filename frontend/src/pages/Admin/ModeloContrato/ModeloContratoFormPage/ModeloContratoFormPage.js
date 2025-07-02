@@ -2,18 +2,55 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { createModeloContrato, getModeloContratoById, updateModeloContrato } from '../../../../api/modeloContratoApi';
+import {
+  createModeloContrato,
+  getModeloContratoById,
+  updateModeloContrato
+} from '../../../../api/modeloContratoApi';
+
+import ReactQuill, { Quill } from 'react-quill';
+import Table from 'quill-table-ui';
+import 'react-quill/dist/quill.snow.css';
+import 'quill-table-ui/dist/index.css';
+import { CustomToolbar } from '../../../../components/CustomToolbar'; // ajuste o path se necessário
+
 import './ModeloContratoFormPage.css';
 
-import { CKEditor } from '@ckeditor/ckeditor5-react';
-// Importar o editor do build customizado simulado
-import ClassicEditor from '../../../../libs/ckeditor5-custom-build/ckeditor';
-import '../../../../libs/ckeditor5-custom-build/ckeditor.css';
+Quill.register({ 'modules/tableUI': Table }, true);
 
+const modules = {
+  toolbar: {
+    container: '#toolbar',
+    handlers: {
+      placeholder: function () {
+        const cursor = this.quill.getSelection();
+        if (cursor) {
+          this.quill.insertText(cursor.index, '{{placeholder}}');
+        }
+      },
+      html: function () {
+        const container = document.querySelector('.ql-editor');
+        const html = container.innerHTML;
+        navigator.clipboard.writeText(html);
+        toast.success('HTML copiado para a área de transferência!');
+      }
+    }
+  },
+  tableUI: true
+};
+
+const formats = [
+  'header', 'font', 'size',
+  'bold', 'italic', 'underline', 'strike', 'clean',
+  'list', 'bullet', 'indent',
+  'align', 'blockquote', 'code-block',
+  'color', 'background',
+  'link', 'video',
+  'table'
+];
 
 const TIPO_DOCUMENTO_OPCOES = ["Proposta", "Contrato de Reserva", "Contrato de Compra e Venda", "Outro"];
 
-//dadosParaTemplate dentro do PropostaContratoService.js
 const LISTA_PLACEHOLDERS_DISPONIVEIS = [
   {
     grupo: "Empresa Vendedora",
@@ -97,208 +134,177 @@ const LISTA_PLACEHOLDERS_DISPONIVEIS = [
   }
 ];
 
-// Configuração do editor CKEditor atualizada
-const editorConfiguration = {
-    toolbar: [
-        'heading', '|',
-        'bold', 'italic', '|',
-        'alignment:left', 'alignment:center', 'alignment:right', 'alignment:justify', '|',
-        'insertTable', 'tableColumn', 'tableRow', 'mergeTableCells', '|',
-        'tableProperties', 'tableCellProperties', '|',
-        'sourceEditing', '|',
-        'link', 'bulletedList', 'numberedList', 'fontColor', 'fontBackgroundColor', '|',
-        'undo', 'redo'
-    ],
-    language: 'pt-br',
-    table: {
-        contentToolbar: [ // Mantendo a toolbar de tabela rica em funcionalidades
-            'tableColumn', 'tableRow', 'mergeTableCells', '|',
-            'tableProperties', 'tableCellProperties', '|',
-            'alignment:left', 'alignment:center', 'alignment:right', 'alignment:justify'
-        ]
-    },
-    // Os plugins (Alignment, TableProperties, TableCellProperties, SourceEditing, etc.)
-    // são esperados estarem inclusos e ativos no 'ClassicEditor' importado do build customizado.
-};
-
 function ModeloContratoFormPage() {
-    const { id } = useParams();
-    const navigate = useNavigate();
-    const isEditMode = Boolean(id);
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const isEditMode = Boolean(id);
 
-    const [formData, setFormData] = useState({
-        nomeModelo: '',
-        tipoDocumento: TIPO_DOCUMENTO_OPCOES[0],
-        conteudoHTMLTemplate: '<h1>Título do Contrato</h1>\n<p>Prezado(a) {{lead_principal_nome}},</p>\n<p>Segue a proposta para a unidade {{imovel_identificador}} do empreendimento {{empreendimento_nome}}.</p>\n<p>Valor: {{proposta_valor_total_formatado}}</p>\n<p>Atenciosamente,</p>\n<p>{{vendedor_nome_fantasia}}</p>',
-    });
+  const [formData, setFormData] = useState({
+    nomeModelo: '',
+    tipoDocumento: TIPO_DOCUMENTO_OPCOES[0],
+    conteudoHTMLTemplate: '<h1>Título do Contrato</h1>\n<p>Prezado(a) {{lead_principal_nome}},</p>\n<p>Segue a proposta para a unidade {{imovel_identificador}} do empreendimento {{empreendimento_nome}}.</p>\n<p>Valor: {{proposta_valor_total_formatado}}</p>\n<p>Atenciosamente,</p>\n<p>{{vendedor_nome_fantasia}}</p>',
+  });
 
-    const [loading, setLoading] = useState(false);
-    // const [pageTitle, setPageTitle] = useState('Novo Modelo de Contrato'); // setPageTitle não era usado, removido para limpar
-    const [formError, setFormError] = useState('');
-    const [activeTab, setActiveTab] = useState('editor');
-    const [editorInstance, setEditorInstance] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [activeTab, setActiveTab] = useState('editor');
 
+  useEffect(() => {
+    if (isEditMode && id) {
+      setLoading(true);
+      getModeloContratoById(id)
+        .then(data => {
+          setFormData({
+            nomeModelo: data.nomeModelo || '',
+            tipoDocumento: data.tipoDocumento || TIPO_DOCUMENTO_OPCOES[0],
+            conteudoHTMLTemplate: data.conteudoHTMLTemplate || '',
+          });
+        })
+        .catch(err => {
+          toast.error("Erro ao carregar modelo: " + (err.error || err.message));
+          navigate('/admin/modelos-contrato');
+        })
+        .finally(() => setLoading(false));
+    }
+  }, [id, isEditMode, navigate]);
 
-    useEffect(() => {
-        if (isEditMode && id) {
-            setLoading(true);
-            getModeloContratoById(id)
-                .then(data => {
-                    setFormData({
-                        nomeModelo: data.nomeModelo || '',
-                        tipoDocumento: data.tipoDocumento || TIPO_DOCUMENTO_OPCOES[0],
-                        conteudoHTMLTemplate: data.conteudoHTMLTemplate || '',
-                    });
-                    // setPageTitle(`Editar Modelo: ${data.nomeModelo}`); // Removido pois não é usado
-                })
-                .catch(err => {
-                    toast.error("Erro ao carregar modelo: " + (err.error || err.message));
-                    navigate('/admin/modelos-contrato');
-                })
-                .finally(() => setLoading(false));
-        }
-    }, [id, isEditMode, navigate]);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setFormError('');
 
-    const handleConteudoHTMLChange = (event, editor) => {
-        const data = editor.getData();
-        setFormData(prev => ({ ...prev, conteudoHTMLTemplate: data }));
-    };
+    const currentHtmlContent = formData.conteudoHTMLTemplate;
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setFormError('');
-
-        const currentHtmlContent = editorInstance ? editorInstance.getData() : formData.conteudoHTMLTemplate;
-
-        if (!formData.nomeModelo || !formData.tipoDocumento || !currentHtmlContent) {
-            setFormError("Nome, Tipo e Conteúdo HTML são obrigatórios.");
-            setLoading(false);
-            toast.error("Preencha os campos obrigatórios.");
-            return;
-        }
-
-        const dataToSubmit = {
-            nomeModelo: formData.nomeModelo,
-            tipoDocumento: formData.tipoDocumento,
-            conteudoHTMLTemplate: currentHtmlContent,
-        };
-
-        try {
-            if (isEditMode) {
-                await updateModeloContrato(id, dataToSubmit);
-                toast.success("Modelo de contrato atualizado!");
-            } else {
-                await createModeloContrato(dataToSubmit);
-                toast.success("Modelo de contrato criado!");
-            }
-            navigate('/admin/modelos-contrato');
-        } catch (err) {
-            const errMsg = err.error || err.message || "Erro ao salvar modelo.";
-            setFormError(errMsg);
-            toast.error(errMsg);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    if (loading && isEditMode && !formData.nomeModelo) {
-         return <div className="admin-page loading"><p>Carregando modelo...</p></div>;
+    if (!formData.nomeModelo || !formData.tipoDocumento || !currentHtmlContent) {
+      setFormError("Nome, Tipo e Conteúdo HTML são obrigatórios.");
+      toast.error("Preencha os campos obrigatórios.");
+      setLoading(false);
+      return;
     }
 
-    return (
-        <div className="admin-page modelo-contrato-form-page">
-            <header className="page-header">
-                <h1>{isEditMode ? `Editar Modelo: ${formData.nomeModelo}` : 'Novo Modelo de Contrato'}</h1>
-            </header>
-           
-            <div className="page-content">
-                <form onSubmit={handleSubmit} className="form-container">
-                    {formError && <p className="error-message">{formError}</p>}
+    const dataToSubmit = {
+      nomeModelo: formData.nomeModelo,
+      tipoDocumento: formData.tipoDocumento,
+      conteudoHTMLTemplate: currentHtmlContent
+    };
 
-                    <div className="form-group">
-                        <label htmlFor="nomeModelo">Nome do Modelo*</label>
-                        <input type="text" id="nomeModelo" name="nomeModelo" value={formData.nomeModelo} onChange={handleChange} required disabled={loading} />
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="tipoDocumento">Tipo de Documento*</label>
-                        <select id="tipoDocumento" name="tipoDocumento" value={formData.tipoDocumento} onChange={handleChange} required disabled={loading}>
-                            {TIPO_DOCUMENTO_OPCOES.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                        </select>
-                    </div>
+    try {
+      if (isEditMode) {
+        await updateModeloContrato(id, dataToSubmit);
+        toast.success("Modelo de contrato atualizado!");
+      } else {
+        await createModeloContrato(dataToSubmit);
+        toast.success("Modelo de contrato criado!");
+      }
+      navigate('/admin/modelos-contrato');
+    } catch (err) {
+      const errMsg = err.error || err.message || "Erro ao salvar modelo.";
+      setFormError(errMsg);
+      toast.error(errMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-                    <div className="tabs-container" style={{ marginBottom: '15px', borderBottom: '1px solid #ccc' }}>
-                        <button type="button" onClick={() => setActiveTab('editor')} className={`tab-button ${activeTab === 'editor' ? 'active' : ''}`} disabled={loading}>
-                            Editor HTML
-                        </button>
-                        <button type="button" onClick={() => setActiveTab('preview')} className={`tab-button ${activeTab === 'preview' ? 'active' : ''}`} disabled={loading}>
-                            Pré-visualizar HTML
-                        </button>
-                    </div>
+  if (loading && isEditMode && !formData.nomeModelo) {
+    return <div className="admin-page loading"><p>Carregando modelo...</p></div>;
+  }
 
-                    {activeTab === 'editor' && (
-                        <div className="form-group">
-                            <label htmlFor="conteudoHTMLTemplate">Conteúdo HTML do Modelo*</label>
-                            <p><small>Use placeholders da lista abaixo. Ex: {"{{lead_principal_nome}}"}, {"{{imovel_identificador}}"}</small></p>
-                            <div className="ckeditor-container" style={{ minHeight: '350px', border: '1px solid #ccc' }}>
-                                <CKEditor
-                                    editor={ClassicEditor}
-                                    config={editorConfiguration}
-                                    data={formData.conteudoHTMLTemplate}
-                                    onReady={editor => {
-                                        setEditorInstance(editor);
-                                    }}
-                                    onChange={handleConteudoHTMLChange}
-                                    disabled={loading}
-                                />
-                            </div>
-                        </div>
-                    )}
+  return (
+    <div className="admin-page modelo-contrato-form-page">
+      <header className="page-header">
+        <h1>{isEditMode ? `Editar Modelo: ${formData.nomeModelo}` : 'Novo Modelo de Contrato'}</h1>
+      </header>
 
-                    {activeTab === 'preview' && (
-                        <div className="form-group">
-                            <label>Pré-visualização do HTML (como será renderizado):</label>
-                            <div 
-                                className="html-preview" 
-                                style={{ border: '1px solid #ccc', padding: '15px', minHeight: '300px', background: '#f9f9f9', overflow: 'auto' }}
-                                dangerouslySetInnerHTML={{ __html: formData.conteudoHTMLTemplate }} 
-                            />
-                        </div>
-                    )}
-                    
-                    <div className="form-section" style={{ marginTop: '20px' }}>
-                        <h3>Placeholders Disponíveis para o Template</h3>
-                        {LISTA_PLACEHOLDERS_DISPONIVEIS.map((grupo, index) => (
-                            <div key={index} style={{ marginBottom: '15px' }}>
-                            <strong>{grupo.grupo}</strong>
-                            <ul className="placeholders-list">
-                                {grupo.placeholders.map(item => (
-                                <li key={item.ph}>
-                                    <code>{item.ph}</code> - {item.desc}
-                                </li>
-                                ))}
-                            </ul>
-                            </div>
-                        ))}
-                    </div>
+      <div className="page-content">
+        <form onSubmit={handleSubmit} className="form-container">
+          {formError && <p className="error-message">{formError}</p>}
 
-                    <div className="form-actions">
-                        <button type="submit" className="button submit-button" disabled={loading}>
-                            {loading ? (isEditMode ? 'Atualizando...' : 'Salvando...') : 'Salvar Modelo'}
-                        </button>
-                        <button type="button" className="button cancel-button" onClick={() => navigate('/admin/modelos-contrato')} disabled={loading}>
-                            Cancelar
-                        </button>
-                    </div>
-                </form>
+          <div className="form-group">
+            <label htmlFor="nomeModelo">Nome do Modelo*</label>
+            <input type="text" id="nomeModelo" name="nomeModelo" value={formData.nomeModelo} onChange={handleChange} required disabled={loading} />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="tipoDocumento">Tipo de Documento*</label>
+            <select id="tipoDocumento" name="tipoDocumento" value={formData.tipoDocumento} onChange={handleChange} required disabled={loading}>
+              {TIPO_DOCUMENTO_OPCOES.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+            </select>
+          </div>
+
+          <div className="tabs-container" style={{ marginBottom: '15px', borderBottom: '1px solid #ccc' }}>
+            <button type="button" onClick={() => setActiveTab('editor')} className={`tab-button ${activeTab === 'editor' ? 'active' : ''}`} disabled={loading}>
+              Editor HTML
+            </button>
+            <button type="button" onClick={() => setActiveTab('preview')} className={`tab-button ${activeTab === 'preview' ? 'active' : ''}`} disabled={loading}>
+              Pré-visualizar HTML
+            </button>
+          </div>
+
+          {activeTab === 'editor' && (
+            <div className="form-group">
+              <label htmlFor="conteudoHTMLTemplate">Conteúdo HTML do Modelo*</label>
+              <p><small>Use placeholders da lista abaixo. Ex: {"{{lead_principal_nome}}"}, {"{{imovel_identificador}}"}</small></p>
+              <CustomToolbar />
+              <ReactQuill
+                value={formData.conteudoHTMLTemplate}
+                onChange={(value) =>
+                  setFormData((prev) => ({ ...prev, conteudoHTMLTemplate: value }))
+                }
+                modules={modules}
+                formats={formats}
+                theme="snow"
+                readOnly={loading}
+                placeholder="Digite o conteúdo do modelo aqui..."
+                style={{ height: '350px', marginBottom: '30px' }}
+              />
             </div>
-        </div>
-    );
+          )}
+
+          {activeTab === 'preview' && (
+            <div className="form-group">
+              <label>Pré-visualização do HTML (como será renderizado):</label>
+              <div
+                className="html-preview"
+                style={{ border: '1px solid #ccc', padding: '15px', minHeight: '300px', background: '#f9f9f9', overflow: 'auto' }}
+                dangerouslySetInnerHTML={{ __html: formData.conteudoHTMLTemplate }}
+              />
+            </div>
+          )}
+
+          <div className="form-section" style={{ marginTop: '20px' }}>
+            <h3>Placeholders Disponíveis para o Template</h3>
+            {LISTA_PLACEHOLDERS_DISPONIVEIS.map((grupo, index) => (
+              <div key={index} style={{ marginBottom: '15px' }}>
+                <strong>{grupo.grupo}</strong>
+                <ul className="placeholders-list">
+                  {grupo.placeholders.map(item => (
+                    <li key={item.ph}>
+                      <code>{item.ph}</code> - {item.desc}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          <div className="form-actions">
+            <button type="submit" className="button submit-button" disabled={loading}>
+              {loading ? (isEditMode ? 'Atualizando...' : 'Salvando...') : 'Salvar Modelo'}
+            </button>
+            <button type="button" className="button cancel-button" onClick={() => navigate('/admin/modelos-contrato')} disabled={loading}>
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 }
 
 export default ModeloContratoFormPage;

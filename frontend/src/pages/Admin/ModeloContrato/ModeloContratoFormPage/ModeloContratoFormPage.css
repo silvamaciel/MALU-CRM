@@ -202,3 +202,97 @@
 
 /* A lista de placeholders já tem estilos definidos acima e não precisa ser repetida.
    Apenas garantindo que a última definição seja a que prevalece, se houver sobreposição. */
+
+/* === ReactQuill Editor === */
+.modelo-contrato-form-page .ql-toolbar {
+  border: 1px solid #ced4da;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  background-color: #f8f9fa;
+  padding: 8px;
+  margin-top: 5px;
+}
+
+.modelo-contrato-form-page .ql-container {
+  border: 1px solid #ced4da;
+  border-top: none;
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+  background-color: #fff;
+  min-height: 330px;
+  font-size: 1em;
+}
+
+.modelo-contrato-form-page .ql-editor {
+  min-height: 280px;
+  line-height: 1.6;
+  padding: 12px;
+  font-family: 'Arial', sans-serif;
+  color: #333;
+}
+
+.modelo-contrato-form-page .ql-editor strong {
+  font-weight: bold;
+}
+
+.modelo-contrato-form-page .ql-editor code {
+  background-color: #eee;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+}
+
+/* Corrige alinhamento dos botões da toolbar customizada */
+.modelo-contrato-form-page #toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+/* Botões personalizados da toolbar (se tiver ícones ou texto) */
+.modelo-contrato-form-page .ql-toolbar button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.modelo-contrato-form-page .ql-toolbar button:hover {
+  background-color: #e2e6ea;
+  border-radius: 4px;
+}
+
+/* Ajusta visual da tabela inserida no Quill */
+.modelo-contrato-form-page .ql-editor table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.modelo-contrato-form-page .ql-editor table,
+.modelo-contrato-form-page .ql-editor th,
+.modelo-contrato-form-page .ql-editor td {
+  border: 1px solid #ccc;
+}
+
+.modelo-contrato-form-page .ql-editor th,
+.modelo-contrato-form-page .ql-editor td {
+  padding: 8px;
+  text-align: left;
+}
+
+/* Copiar HTML (caso use handler custom de source/html) */
+.modelo-contrato-form-page .ql-html-button {
+  font-size: 0.85em;
+  padding: 5px 8px;
+  background-color: #007bff;
+  color: #fff;
+  border-radius: 4px;
+  margin-left: 10px;
+  cursor: pointer;
+  border: none;
+}
+
+.modelo-contrato-form-page .ql-html-button:hover {
+  background-color: #0056b3;
+}
