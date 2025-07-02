@@ -13,6 +13,7 @@ import './GerarContratoModal.css';
 
 import { Font } from 'quill/formats/font';
 
+const Font = Quill.import('formats/font');
 Font.whitelist = ['sans-serif', 'serif', 'monospace', 'arial', 'times-new-roman', 'comic-sans'];
 Quill.register(Font, true);
 
