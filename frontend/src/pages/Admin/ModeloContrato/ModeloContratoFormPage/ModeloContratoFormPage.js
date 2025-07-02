@@ -257,7 +257,6 @@ function ModeloContratoFormPage() {
           {activeTab === 'editor' && (
             <div className="form-group">
               <label htmlFor="conteudoHTMLTemplate">Editor Visual (ReactQuill)</label>
-              <p><small>Use placeholders como: {{lead_principal_nome}}, {{imovel_identificador}}</small></p>
               <CustomToolbar />
               <ReactQuill
                 value={formData.conteudoHTMLTemplate}
