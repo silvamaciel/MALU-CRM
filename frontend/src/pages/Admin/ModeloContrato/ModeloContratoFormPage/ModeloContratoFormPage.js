@@ -12,7 +12,7 @@ import ReactQuill, { Quill } from 'react-quill';
 import Table from 'quill-table-ui';
 import 'react-quill/dist/quill.snow.css';
 import 'quill-table-ui/dist/index.css';
-import { CustomToolbar } from '../../../../components/CustomToolbar'; // ajuste o path se necessário
+import { CustomToolbar } from '../../../../components/PropostaWizard/CustomToolbar'; // ajuste o path se necessário
 
 import './ModeloContratoFormPage.css';
 
