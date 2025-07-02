@@ -1,55 +1,15 @@
-// src/pages/Admin/ModeloContrato/ModeloContratoFormPage/ModeloContratoFormPage.js
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import {
-  createModeloContrato,
-  getModeloContratoById,
-  updateModeloContrato
-} from '../../../../api/modeloContratoApi';
-
-import ReactQuill, { Quill } from 'react-quill';
-import Table from 'quill-table-ui';
-import 'react-quill/dist/quill.snow.css';
-import 'quill-table-ui/dist/index.css';
-import { CustomToolbar } from '../../../../components/PropostaWizard/CustomToolbar'; // ajuste o path se necessário
-
+import { createModeloContrato, getModeloContratoById, updateModeloContrato } from '../../../../api/modeloContratoApi';
 import './ModeloContratoFormPage.css';
 
-Quill.register({ 'modules/tableUI': Table }, true);
-
-const modules = {
-  toolbar: {
-    container: '#toolbar',
-    handlers: {
-      placeholder: function () {
-        const cursor = this.quill.getSelection();
-        if (cursor) {
-          this.quill.insertText(cursor.index, '{{placeholder}}');
-        }
-      },
-      html: function () {
-        const container = document.querySelector('.ql-editor');
-        const html = container.innerHTML;
-        navigator.clipboard.writeText(html);
-        toast.success('HTML copiado para a área de transferência!');
-      }
-    }
-  },
-  tableUI: true
-};
-
-const formats = [
-  'header', 'font', 'size',
-  'bold', 'italic', 'underline', 'strike', 'clean',
-  'list', 'bullet', 'indent',
-  'align', 'blockquote', 'code-block',
-  'color', 'background',
-  'link', 'video',
-  'table'
-];
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+import { CustomToolbar } from '../../../components/Editor/CustomToolbar';
 
 const TIPO_DOCUMENTO_OPCOES = ["Proposta", "Contrato de Reserva", "Contrato de Compra e Venda", "Outro"];
+
 
 const LISTA_PLACEHOLDERS_DISPONIVEIS = [
   {
@@ -134,6 +94,34 @@ const LISTA_PLACEHOLDERS_DISPONIVEIS = [
   }
 ];
 
+const modules = {
+  toolbar: {
+    container: '#toolbar',
+    handlers: {
+      placeholder: function () {
+        const cursor = this.quill.getSelection();
+        if (cursor) {
+          this.quill.insertText(cursor.index, '{{placeholder}}');
+        }
+      },
+      html: function () {
+        const container = document.querySelector('.ql-editor');
+        const html = container.innerHTML;
+        alert('HTML atual:\n\n' + html);
+      }
+    }
+  }
+};
+
+const formats = [
+  'header', 'font', 'size',
+  'bold', 'italic', 'underline', 'strike', 'clean',
+  'list', 'bullet', 'indent',
+  'align', 'blockquote', 'code-block',
+  'color', 'background',
+  'link', 'video', 'image'
+];
+
 function ModeloContratoFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -142,7 +130,7 @@ function ModeloContratoFormPage() {
   const [formData, setFormData] = useState({
     nomeModelo: '',
     tipoDocumento: TIPO_DOCUMENTO_OPCOES[0],
-    conteudoHTMLTemplate: '<h1>Título do Contrato</h1>\n<p>Prezado(a) {{lead_principal_nome}},</p>\n<p>Segue a proposta para a unidade {{imovel_identificador}} do empreendimento {{empreendimento_nome}}.</p>\n<p>Valor: {{proposta_valor_total_formatado}}</p>\n<p>Atenciosamente,</p>\n<p>{{vendedor_nome_fantasia}}</p>',
+    conteudoHTMLTemplate: '<h1>Título do Contrato</h1><p>Olá {{lead_principal_nome}}</p>'
   });
 
   const [loading, setLoading] = useState(false);
@@ -157,7 +145,7 @@ function ModeloContratoFormPage() {
           setFormData({
             nomeModelo: data.nomeModelo || '',
             tipoDocumento: data.tipoDocumento || TIPO_DOCUMENTO_OPCOES[0],
-            conteudoHTMLTemplate: data.conteudoHTMLTemplate || '',
+            conteudoHTMLTemplate: data.conteudoHTMLTemplate || ''
           });
         })
         .catch(err => {
@@ -182,8 +170,8 @@ function ModeloContratoFormPage() {
 
     if (!formData.nomeModelo || !formData.tipoDocumento || !currentHtmlContent) {
       setFormError("Nome, Tipo e Conteúdo HTML são obrigatórios.");
-      toast.error("Preencha os campos obrigatórios.");
       setLoading(false);
+      toast.error("Preencha os campos obrigatórios.");
       return;
     }
 
@@ -227,80 +215,126 @@ function ModeloContratoFormPage() {
 
           <div className="form-group">
             <label htmlFor="nomeModelo">Nome do Modelo*</label>
-            <input type="text" id="nomeModelo" name="nomeModelo" value={formData.nomeModelo} onChange={handleChange} required disabled={loading} />
+            <input
+              type="text"
+              id="nomeModelo"
+              name="nomeModelo"
+              value={formData.nomeModelo}
+              onChange={handleChange}
+              required
+              disabled={loading}
+            />
           </div>
 
           <div className="form-group">
             <label htmlFor="tipoDocumento">Tipo de Documento*</label>
-            <select id="tipoDocumento" name="tipoDocumento" value={formData.tipoDocumento} onChange={handleChange} required disabled={loading}>
-              {TIPO_DOCUMENTO_OPCOES.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+            <select
+              id="tipoDocumento"
+              name="tipoDocumento"
+              value={formData.tipoDocumento}
+              onChange={handleChange}
+              required
+              disabled={loading}
+            >
+              {TIPO_DOCUMENTO_OPCOES.map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
             </select>
           </div>
 
-          <div className="tabs-container" style={{ marginBottom: '15px', borderBottom: '1px solid #ccc' }}>
+          <div className="tabs-container">
             <button type="button" onClick={() => setActiveTab('editor')} className={`tab-button ${activeTab === 'editor' ? 'active' : ''}`} disabled={loading}>
-              Editor HTML
+              Editor Visual
+            </button>
+            <button type="button" onClick={() => setActiveTab('source')} className={`tab-button ${activeTab === 'source' ? 'active' : ''}`} disabled={loading}>
+              Código Fonte
             </button>
             <button type="button" onClick={() => setActiveTab('preview')} className={`tab-button ${activeTab === 'preview' ? 'active' : ''}`} disabled={loading}>
-              Pré-visualizar HTML
+              Pré-visualização
             </button>
           </div>
 
           {activeTab === 'editor' && (
             <div className="form-group">
-              <label htmlFor="conteudoHTMLTemplate">Conteúdo HTML do Modelo*</label>
-              <p><small>Use placeholders da lista abaixo. Ex: {"{{lead_principal_nome}}"}, {"{{imovel_identificador}}"}</small></p>
+              <label htmlFor="conteudoHTMLTemplate">Editor Visual (ReactQuill)</label>
+              <p><small>Use placeholders como: {{lead_principal_nome}}, {{imovel_identificador}}</small></p>
               <CustomToolbar />
               <ReactQuill
                 value={formData.conteudoHTMLTemplate}
                 onChange={(value) =>
-                  setFormData((prev) => ({ ...prev, conteudoHTMLTemplate: value }))
+                  setFormData(prev => ({ ...prev, conteudoHTMLTemplate: value }))
                 }
                 modules={modules}
                 formats={formats}
-                theme="snow"
-                readOnly={loading}
-                placeholder="Digite o conteúdo do modelo aqui..."
-                style={{ height: '350px', marginBottom: '30px' }}
+                placeholder="Digite o conteúdo do contrato..."
+              />
+            </div>
+          )}
+
+          {activeTab === 'source' && (
+            <div className="form-group">
+              <label htmlFor="htmlFonte">Código HTML (Fonte)</label>
+              <textarea
+                id="htmlFonte"
+                style={{
+                  minHeight: '330px',
+                  width: '100%',
+                  fontFamily: 'Courier New, monospace',
+                  fontSize: '0.95em',
+                  padding: '12px',
+                  border: '1px solid #ced4da',
+                  borderRadius: '5px'
+                }}
+                value={formData.conteudoHTMLTemplate}
+                onChange={(e) =>
+                  setFormData(prev => ({ ...prev, conteudoHTMLTemplate: e.target.value }))
+                }
               />
             </div>
           )}
 
           {activeTab === 'preview' && (
             <div className="form-group">
-              <label>Pré-visualização do HTML (como será renderizado):</label>
+              <label>Pré-visualização do HTML:</label>
               <div
                 className="html-preview"
-                style={{ border: '1px solid #ccc', padding: '15px', minHeight: '300px', background: '#f9f9f9', overflow: 'auto' }}
+                style={{
+                  border: '1px solid #ccc',
+                  padding: '15px',
+                  minHeight: '330px',
+                  background: '#f9f9f9',
+                  overflow: 'auto'
+                }}
                 dangerouslySetInnerHTML={{ __html: formData.conteudoHTMLTemplate }}
               />
             </div>
           )}
 
-          <div className="form-section" style={{ marginTop: '20px' }}>
-            <h3>Placeholders Disponíveis para o Template</h3>
-            {LISTA_PLACEHOLDERS_DISPONIVEIS.map((grupo, index) => (
-              <div key={index} style={{ marginBottom: '15px' }}>
-                <strong>{grupo.grupo}</strong>
-                <ul className="placeholders-list">
-                  {grupo.placeholders.map(item => (
-                    <li key={item.ph}>
-                      <code>{item.ph}</code> - {item.desc}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-
           <div className="form-actions">
             <button type="submit" className="button submit-button" disabled={loading}>
-              {loading ? (isEditMode ? 'Atualizando...' : 'Salvando...') : 'Salvar Modelo'}
+                {loading ? (isEditMode ? 'Atualizando...' : 'Salvando...') : 'Salvar Modelo'}
             </button>
             <button type="button" className="button cancel-button" onClick={() => navigate('/admin/modelos-contrato')} disabled={loading}>
-              Cancelar
+                Cancelar
             </button>
-          </div>
+            </div>
+          <div className="form-section" style={{ marginTop: '20px' }}>
+                <h3>Placeholders Disponíveis para o Template</h3>
+                {LISTA_PLACEHOLDERS_DISPONIVEIS.map((grupo, index) => (
+                    <div key={index} style={{ marginBottom: '15px' }}>
+                    <strong>{grupo.grupo}</strong>
+                    <ul className="placeholders-list">
+                        {grupo.placeholders.map(item => (
+                        <li key={item.ph}>
+                            <code>{item.ph}</code> - {item.desc}
+                        </li>
+                        ))}
+                    </ul>
+                    </div>
+                ))}
+           </div>
+
+
         </form>
       </div>
     </div>
