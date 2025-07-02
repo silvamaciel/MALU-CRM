@@ -1,213 +1,139 @@
-/* src/components/PropostaWizard/GerarContratoModal.css */
 .form-modal-overlay {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
-  display: flex; align-items: center; justify-content: center; z-index: 1050;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
 }
 
 .form-modal-content.large {
-    max-width: 90%;
-    width: 90vw;
-    background-color: #fff;
-    padding: 25px 30px;
-    border-radius: 8px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    display: flex;
-    flex-direction: column;
-    height: 90vh; /* Ocupa 90% da altura da tela */
+  background: #fff;
+  border-radius: 8px;
+  padding: 25px 30px;
+  max-width: 900px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
 
-.form-modal-content.large h2 {
-    margin-top: 0;
-    flex-shrink: 0; /* Impede que o título encolha */
+.form-modal-content h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-weight: 700;
+  font-size: 1.5rem;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
 }
 
-.form-modal-content.large .form-group {
-    margin-bottom: 15px;
-    flex-shrink: 0;
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #333;
 }
 
-.form-modal-content.large .ckeditor-container { /* Renomeado de quill-editor-container */
-    flex-grow: 1; /* Faz o editor ocupar o espaço vertical restante */
-    display: flex;
-    flex-direction: column;
-    min-height: 300px; /* Garante uma altura mínima para o container do editor */
+.form-group select {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 1rem;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
 }
 
-/* O CKEditor gerencia seu próprio scroll e crescimento interno.
-   A regra para .ql-container.ql-snow pode ser removida ou ajustada se houver um seletor equivalente para CKEditor se necessário.
-   Por agora, vamos manter o flex-grow no container principal do editor. */
-
-.form-modal-content.large .loading-message {
-    flex-grow: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-style: italic;
-    color: #555;
+.form-group select:focus {
+  border-color: #007bff;
+  outline: none;
 }
 
-.form-modal-content.large .form-actions {
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 1px solid #eee;
-    flex-shrink: 0;
-}
-
-
-/* Contêiner principal da toolbar */
-.ck.ck-toolbar {
-  background-color: #f8f8f8;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  padding: 5px;
-  gap: 4px;
+/* Abas */
+.tabs-container {
   display: flex;
-  flex-wrap: wrap;
+  border-bottom: 2px solid #007bff;
+  margin-bottom: 20px;
+  gap: 5px;
+}
+
+.tab-button {
+  background: #e7f1ff;
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: 8px 18px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #007bff;
+  border-radius: 5px 5px 0 0;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+.tab-button:hover:not(.active) {
+  background: #cde2ff;
+}
+
+.tab-button.active {
+  background: #007bff;
+  color: #fff;
+  border-bottom-color: #004aab;
+  cursor: default;
+}
+
+/* Textarea de código */
+textarea {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9rem;
+  width: 100%;
+  min-height: 300px;
+  padding: 12px 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-sizing: border-box;
+  resize: vertical;
+  background-color: #fefefe;
+  color: #333;
+  transition: border-color 0.2s;
+}
+
+textarea:focus {
+  border-color: #007bff;
+  outline: none;
 }
 
 /* Botões */
-.ck.ck-button {
-  background-color: #fff;
-  border: 1px solid #ccc;
-  color: #333;
-  border-radius: 4px;
-  padding: 6px;
-  margin: 2px;
-  transition: all 0.2s ease;
+.form-actions {
+  margin-top: 25px;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
-.ck.ck-button:hover {
-  background-color: #e6f0ff;
-  border-color: #99c2ff;
-}
-
-/* Ícones (SVGs internos do CKEditor) */
-.ck.ck-button .ck-icon {
-  width: 16px;
-  height: 16px;
-  fill: #333;
-}
-
-/* Botão ativo */
-.ck.ck-button.ck-on {
-  background-color: #dbeaff;
-  border-color: #66a3ff;
-}
-
-/* Dropdowns */
-.ck.ck-dropdown {
-  margin: 2px;
-}
-
-.ck.ck-dropdown__button {
-  background-color: #fff;
-  border: 1px solid #ccc;
-  padding: 6px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.ck.ck-dropdown__panel {
-  background-color: white;
-  border: 1px solid #ccc;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-
-/* Select de Heading */
-.ck.ck-heading-dropdown .ck-button__label {
-  font-weight: bold;
-}
-
-/* Área de edição */
-.ck.ck-editor__editable {
-  min-height: 300px;
-  border: 1px solid #ddd;
-  padding: 12px;
-  border-radius: 4px;
-  background-color: #fff;
-  font-family: 'Segoe UI', sans-serif;
-  font-size: 16px;
-}
-
-/* Garante que os dropdowns/flutuantes fiquem acima do modal */
-.ck.ck-dropdown__panel,
-.ck.ck-balloon-panel,
-.ck.ck-list {
-  z-index: 9999 !important;
-  background-color: #f9f9f9 !important;
-  border: 1px solid #ccc;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.button {
+  padding: 10px 25px;
   border-radius: 6px;
-  padding: 4px;
-}
-
-.ck.ck-list__item {
-  padding: 6px 10px;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
+  border: none;
+  transition: background-color 0.3s;
 }
 
-.ck.ck-list__item:hover {
-  background-color: #e6f0ff;
-  border-radius: 4px;
+.cancel-button {
+  background-color: #ccc;
+  color: #333;
 }
 
-.ck-content table {
-  border-collapse: collapse;
-  width: 100%;
+.cancel-button:hover {
+  background-color: #b3b3b3;
 }
 
-.ck-content table td,
-.ck-content table th {
-  border: 1px solid #ccc; /* você pode customizar isso */
-  padding: 8px;
+.submit-button {
+  background-color: #28a745;
+  color: white;
 }
 
-/* Garante que cor de fundo definida inline funcione */
-.ck-content table td,
-.ck-content table th {
-  background-color: inherit;
-}
-
-/* Permite bordas personalizadas definidas inline */
-.ck-content td,
-.ck-content th {
-  border-style: inherit;
-  border-width: inherit;
-  border-color: inherit;
-}
-
-.ql-editor table {
-  border-collapse: collapse;
-  width: 100%;
-}
-.ql-editor td,
-.ql-editor th {
-  border: 1px solid #ccc;
-  padding: 8px;
-}
-#toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 12px;
-}
-
-#toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 12px;
-}
-.ql-editor table {
-  border-collapse: collapse;
-  width: 100%;
-}
-.ql-editor td,
-.ql-editor th {
-  border: 1px solid #ccc;
-  padding: 8px;
+.submit-button:hover {
+  background-color: #218838;
 }
