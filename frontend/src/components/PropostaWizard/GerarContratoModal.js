@@ -17,7 +17,7 @@ const editorConfiguration = {
     'heading', '|',
     'bold', 'italic', '|',
     'alignment', '|',
-    'insertTable', 'tableColumn', 'tableRow', 'mergeTableCells', '|',
+    'insertTable', 'tableColumn', 'tableRow', 'mergeTableCells', '|', 
     'tableProperties', 'tableCellProperties', '|',
     'sourceEditing', '|',
     'link', 'bulletedList', 'numberedList', '|',
