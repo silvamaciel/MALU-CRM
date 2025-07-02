@@ -11,16 +11,10 @@ import { getModelosContrato } from '../../api/modeloContratoApi';
 import { gerarDocumentoApi, updatePropostaContratoApi } from '../../api/propostaContratoApi';
 import './GerarContratoModal.css';
 
-import Font from 'quill/formats/font';
-Font.whitelist = [
-  'sans-serif',
-  'serif',
-  'monospace',
-  'arial',
-  'times-new-roman',
-  'comic-sans'
-];
-Quill.register(Font, true);
+import * as QuillFont from 'quill/formats/font';
+QuillFont.default.whitelist = ['sans-serif', 'serif', 'monospace', 'arial', 'times-new-roman', 'comic-sans'];
+Quill.register(QuillFont.default, true);
+
 Quill.register({ 'modules/tableUI': Table }, true);
 
 const modules = {
