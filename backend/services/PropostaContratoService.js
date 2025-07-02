@@ -465,10 +465,10 @@ const gerarPDFPropostaContrato = async (propostaContratoId, companyId) => {
             format: 'A4',
             printBackground: true, // Importante para imprimir cores e imagens de fundo do CSS
             margin: {
-                top: '2.5cm',    // Ajuste conforme necessário
-                right: '2cm',
-                bottom: '2.5cm',
-                left: '2cm'
+                top: '1.5cm',    // Ajuste conforme necessário
+                right: '1cm',
+                bottom: '1.5cm',
+                left: '1cm'
             },
             displayHeaderFooter: true,
             footerTemplate: `<div style="font-size:8px; width:100%; text-align:center; padding:5px 0;">Página <span class="pageNumber"></span> de <span class="totalPages"></span></div>`,
