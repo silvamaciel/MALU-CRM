@@ -6,7 +6,7 @@ import './ModeloContratoFormPage.css';
 
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import { CustomToolbar } from '../../../components/Editor/CustomToolbar';
+import { CustomToolbar } from '../../../../components/PropostaWizard/CustomToolbar';
 
 const TIPO_DOCUMENTO_OPCOES = ["Proposta", "Contrato de Reserva", "Contrato de Compra e Venda", "Outro"];
 
