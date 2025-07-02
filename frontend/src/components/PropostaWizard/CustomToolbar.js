@@ -37,5 +37,15 @@ export const CustomToolbar = () => (
     <button className="ql-video" />
     <button className="ql-placeholder">🔗Placeholder</button>
     <button className="ql-html">💻 Código-Fonte</button>
+
+    <select class="ql-font">
+      <option value="sans-serif" selected>Sans</option>
+      <option value="serif">Serif</option>
+      <option value="monospace">Mono</option>
+      <option value="arial">Arial</option>
+      <option value="times-new-roman">Times</option>
+      <option value="comic-sans">Comic Sans</option>
+    </select>
   </div>
+  
 );

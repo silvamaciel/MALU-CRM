@@ -4,12 +4,23 @@ import ReactQuill, { Quill } from 'react-quill';
 import Table from 'quill-table-ui';
 import 'react-quill/dist/quill.snow.css';
 import 'quill-table-ui/dist/index.css';
+import './quill-fonts.css'; // Importa as fontes customizadas
 import { CustomToolbar } from './CustomToolbar';
 
 import { getModelosContrato } from '../../api/modeloContratoApi';
 import { gerarDocumentoApi, updatePropostaContratoApi } from '../../api/propostaContratoApi';
 import './GerarContratoModal.css';
 
+import Font from 'quill/formats/font';
+Font.whitelist = [
+  'sans-serif',
+  'serif',
+  'monospace',
+  'arial',
+  'times-new-roman',
+  'comic-sans'
+];
+Quill.register(Font, true);
 Quill.register({ 'modules/tableUI': Table }, true);
 
 const modules = {
@@ -21,11 +32,6 @@ const modules = {
         if (cursor) {
           this.quill.insertText(cursor.index, '{{placeholder}}');
         }
-      },
-      html: function () {
-        const container = document.querySelector('.ql-editor');
-        const html = container.innerHTML;
-        alert('HTML atual:\n\n' + html);
       }
     }
   },
@@ -48,7 +54,7 @@ function GerarContratoModal({ isOpen, onClose, proposta, onSaveSuccess }) {
   const [htmlContent, setHtmlContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState('editor'); // 'editor' | 'html' | 'preview'
+  const [activeTab, setActiveTab] = useState('editor');
 
   useEffect(() => {
     if (isOpen) {
@@ -194,6 +200,7 @@ function GerarContratoModal({ isOpen, onClose, proposta, onSaveSuccess }) {
 
             {activeTab === 'preview' && (
               <div
+                className="ql-editor"
                 style={{
                   border: '1px solid #ccc',
                   padding: '15px',
@@ -208,18 +215,15 @@ function GerarContratoModal({ isOpen, onClose, proposta, onSaveSuccess }) {
           </>
         )}
 
-        
-      <div className="form-actions">
-        <button type="button" className="button cancel-button" onClick={onClose} disabled={isSaving}>
-          Cancelar
-        </button>
-        <button type="button" className="button submit-button" onClick={handleSaveContrato} disabled={isSaving || loading}>
-          {isSaving ? 'Salvando...' : 'Salvar Documento Final'}
-        </button>
+        <div className="form-actions">
+          <button type="button" className="button cancel-button" onClick={onClose} disabled={isSaving}>
+            Cancelar
+          </button>
+          <button type="button" className="button submit-button" onClick={handleSaveContrato} disabled={isSaving || loading}>
+            {isSaving ? 'Salvando...' : 'Salvar Documento Final'}
+          </button>
+        </div>
       </div>
-      
-      </div>
-
     </div>
   );
 }
