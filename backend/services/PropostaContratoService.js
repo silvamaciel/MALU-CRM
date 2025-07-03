@@ -119,6 +119,41 @@ todosAdquirentes.forEach((adq, index) => {
   dados['bloco_html_coadquirentes'] = blocoHtmlCoadquirentes || '<p>Não há coadquirentes.</p>';
   dados['bloco_assinaturas_compradores'] = blocoAssinaturasCompradores;
 
+
+  // --- Clausula de Compradores ---
+  const adquirentePrincipal = todosAdquirentes[0];
+  const coadquirentes = todosAdquirentes.slice(1);
+
+  let clausulaCompradores = '';
+  const enderecoFormatado = adquirentePrincipal.endereco || '';
+
+  const basePrincipal = `${adquirentePrincipal.nome?.toUpperCase()}, ${adquirentePrincipal.nacionalidade?.toUpperCase() || ''}, ${adquirentePrincipal.profissao?.toUpperCase() || ''}, E-MAIL ${adquirentePrincipal.email || ''}, TELEFONE ${adquirentePrincipal.contato || ''},  INSCRITO NO CPF SOB O Nº ${adquirentePrincipal.cpf || ''}, ${adquirentePrincipal.estadoCivil?.toUpperCase() || ''}`;
+
+  // Caso: Casado e existe 1 coadquirente
+  if (
+    adquirentePrincipal.estadoCivil?.toLowerCase() === 'casado' &&
+    coadquirentes.length === 1
+  ) {
+    const c = coadquirentes[0];
+    clausulaCompradores = `COMPRADOR(ES): ${basePrincipal} COM ${c.nome?.toUpperCase() || ''}, ${c.nacionalidade?.toUpperCase() || ''}, ${c.profissao?.toUpperCase() || ''}, E-MAIL ${c.email || ''}, TELEFONE ${c.contato || ''},  INSCRITO NO CPF SOB O Nº ${c.cpf || ''}, AMBOS RESIDENTES EM ${enderecoFormatado}, DORAVANTE DENOMINADOS DE COMPRADOR(ES);`;
+  }
+
+  // Caso: Solteiro ou outro estado civil sem coadquirente
+  else if (coadquirentes.length === 0) {
+    clausulaCompradores = `COMPRADOR(ES): ${basePrincipal}, RESIDENTE EM ${enderecoFormatado}, DORAVANTE DENOMINADA DE COMPRADOR(ES);`;
+  }
+
+  // Caso: Tem coadquirentes e estado civil diferente de casado
+  else {
+    const outros = coadquirentes.map((c, i) =>
+      `${c.nome?.toUpperCase() || ''}, ${c.nacionalidade?.toUpperCase() || ''}, ${c.profissao?.toUpperCase() || ''}, E-MAIL ${c.email || ''}, TELEFONE ${c.contato || ''}, INSCRITO NO CPF SOB O Nº ${c.cpf || ''}`
+    ).join(' E ');
+    clausulaCompradores = `COMPRADOR(ES): ${basePrincipal}, RESIDENTE EM ${enderecoFormatado}, E ${outros} DORAVANTES DENOMINADAS DE COMPRADOR(ES);`;
+  }
+
+  dados['clausula_compradores'] = clausulaCompradores;
+
+
   // --- 3. Dados do Imóvel (Polimórfico) ---
   if (imovelDoc) {
     const tipo = imovelDoc.constructor?.modelName;
