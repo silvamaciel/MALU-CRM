@@ -36,6 +36,7 @@ const LISTA_PLACEHOLDERS_DISPONIVEIS = [
       { ph: "{{lead_principal_email}}", desc: "Email do Comprador Principal" },
       { ph: "{{lead_principal_contato}}", desc: "Telefone do Comprador Principal" },
       { ph: "{{lead_principal_nascimento}}", desc: "Data de Nascimento do Comprador Principal" }
+      { ph: "{{clausula_compradores}}", desc: "Compradores principais + coadquirentes se houver" },
     ]
   },
   {
