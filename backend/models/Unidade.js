@@ -46,7 +46,7 @@ const unidadeSchema = new Schema(
       },
       default: "Disponível",
     },
-    observacoesInternas: {
+    descricao: {
       type: String,
       trim: true,
     },

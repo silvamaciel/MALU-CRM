@@ -20,7 +20,7 @@ function UnidadeFormPage() {
         areaTotal: '',
         precoTabela: '',
         statusUnidade: 'Disponível',
-        observacoesInternas: '',
+        descricao: '',
         destaque: false,
     });
 
@@ -47,7 +47,7 @@ function UnidadeFormPage() {
                     areaTotal: data.areaTotal || '',
                     precoTabela: data.precoTabela || '',
                     statusUnidade: data.statusUnidade || 'Disponível',
-                    observacoesInternas: data.observacoesInternas || '',
+                    descricao: data.descricao || '',
                     destaque: data.destaque || false,
                 });
                 setPageTitle(`Editar Unidade: ${data.identificador}`);
@@ -59,7 +59,7 @@ function UnidadeFormPage() {
                     areaTotal: '',
                     precoTabela: '',
                     statusUnidade: 'Disponível',
-                    observacoesInternas: '',
+                    descricao: '',
                     destaque: false,
                 });
                 setPageTitle(`Nova Unidade para: ${empData.nome}`);
@@ -106,7 +106,7 @@ function UnidadeFormPage() {
         };
 
         if (!dataToSubmit.areaTotal) delete dataToSubmit.areaTotal;
-        if (!dataToSubmit.observacoesInternas) delete dataToSubmit.observacoesInternas;
+        if (!dataToSubmit.descricao) delete dataToSubmit.descricao;
 
         try {
             if (isEditMode) {
@@ -175,8 +175,8 @@ function UnidadeFormPage() {
                         </div>
                         <div className="form-row">
                             <div className="form-group full-width">
-                                <label htmlFor="observacoesInternas">Observações Internas</label>
-                                <textarea id="observacoesInternas" name="observacoesInternas" value={formData.observacoesInternas} onChange={handleChange} rows="3"></textarea>
+                                <label htmlFor="descricao">Descrição da Unidade:</label>
+                                <textarea id="descricao" name="descricao" value={formData.descricao} onChange={handleChange} rows="3"></textarea>
                             </div>
                         </div>
                         <div className="form-row">
