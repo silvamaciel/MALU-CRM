@@ -135,12 +135,12 @@ todosAdquirentes.forEach((adq, index) => {
     coadquirentes.length === 1
   ) {
     const c = coadquirentes[0];
-    clausulaCompradores = `COMPRADOR(ES): ${basePrincipal} COM ${c.nome?.toUpperCase() || ''}, ${c.nacionalidade?.toUpperCase() || ''}, ${c.profissao?.toUpperCase() || ''}, E-MAIL ${c.email || ''}, TELEFONE ${c.contato || ''},  INSCRITO NO CPF SOB O Nº ${c.cpf || ''}, AMBOS RESIDENTES EM ${enderecoFormatado}, DORAVANTE DENOMINADOS DE COMPRADOR(ES);`;
+    clausulaCompradores = `${basePrincipal} COM ${c.nome?.toUpperCase() || ''}, ${c.nacionalidade?.toUpperCase() || ''}, ${c.profissao?.toUpperCase() || ''}, E-MAIL ${c.email || ''}, TELEFONE ${c.contato || ''},  INSCRITO NO CPF SOB O Nº ${c.cpf || ''}, AMBOS RESIDENTES EM ${enderecoFormatado}, DORAVANTE DENOMINADOS DE COMPRADOR(ES);`;
   }
 
   // Caso: Solteiro ou outro estado civil sem coadquirente
   else if (coadquirentes.length === 0) {
-    clausulaCompradores = `COMPRADOR(ES): ${basePrincipal}, RESIDENTE EM ${enderecoFormatado}, DORAVANTE DENOMINADA DE COMPRADOR(ES);`;
+    clausulaCompradores = ` ${basePrincipal}, RESIDENTE EM ${enderecoFormatado}`;
   }
 
   // Caso: Tem coadquirentes e estado civil diferente de casado
@@ -148,7 +148,7 @@ todosAdquirentes.forEach((adq, index) => {
     const outros = coadquirentes.map((c, i) =>
       `${c.nome?.toUpperCase() || ''}, ${c.nacionalidade?.toUpperCase() || ''}, ${c.profissao?.toUpperCase() || ''}, E-MAIL ${c.email || ''}, TELEFONE ${c.contato || ''}, INSCRITO NO CPF SOB O Nº ${c.cpf || ''}`
     ).join(' E ');
-    clausulaCompradores = `COMPRADOR(ES): ${basePrincipal}, RESIDENTE EM ${enderecoFormatado}, E ${outros} DORAVANTES DENOMINADAS DE COMPRADOR(ES);`;
+    clausulaCompradores = ` ${basePrincipal}, RESIDENTE EM ${enderecoFormatado}, E ${outros}`;
   }
 
   dados['clausula_compradores'] = clausulaCompradores;
