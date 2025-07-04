@@ -116,7 +116,7 @@ todosAdquirentes.forEach((adq, index) => {
     `;
     });
 
-  dados['bloco_html_coadquirentes'] = blocoHtmlCoadquirentes || '<p>Não há coadquirentes.</p>';
+  dados['bloco_html_coadquirentes'] = blocoHtmlCoadquirentes || '';
   dados['bloco_assinaturas_compradores'] = blocoAssinaturasCompradores;
 
 
@@ -127,7 +127,7 @@ todosAdquirentes.forEach((adq, index) => {
   let clausulaCompradores = '';
   const enderecoFormatado = adquirentePrincipal.endereco || '';
 
-  const basePrincipal = `${adquirentePrincipal.nome?.toUpperCase()}, ${adquirentePrincipal.nacionalidade?.toUpperCase() || ''}, ${adquirentePrincipal.profissao?.toUpperCase() || ''}, E-MAIL ${adquirentePrincipal.email || ''}, TELEFONE ${adquirentePrincipal.contato || ''},  INSCRITO NO CPF SOB O Nº ${adquirentePrincipal.cpf || ''}, ${adquirentePrincipal.estadoCivil?.toUpperCase() || ''}`;
+  const basePrincipal = `${adquirentePrincipal.nome?.toUpperCase()}, ${adquirentePrincipal.nacionalidade?.toUpperCase() || ''}, ${adquirentePrincipal.profissao?.toUpperCase() || ''}, E-MAIL ${adquirentePrincipal.email?.toUpperCase() || ''}, TELEFONE ${adquirentePrincipal.contato || ''},  INSCRITO NO CPF SOB O Nº ${adquirentePrincipal.cpf || ''}, ${adquirentePrincipal.estadoCivil?.toUpperCase() || ''}`;
 
   // Caso: Casado e existe 1 coadquirente
   if (
@@ -135,7 +135,7 @@ todosAdquirentes.forEach((adq, index) => {
     coadquirentes.length === 1
   ) {
     const c = coadquirentes[0];
-    clausulaCompradores = `${basePrincipal} COM ${c.nome?.toUpperCase() || ''}, ${c.nacionalidade?.toUpperCase() || ''}, ${c.profissao?.toUpperCase() || ''}, E-MAIL ${c.email || ''}, TELEFONE ${c.contato || ''},  INSCRITO NO CPF SOB O Nº ${c.cpf || ''}, AMBOS RESIDENTES EM ${enderecoFormatado}, DORAVANTE DENOMINADOS DE COMPRADOR(ES);`;
+    clausulaCompradores = `${basePrincipal} COM ${c.nome?.toUpperCase() || ''}, ${c.nacionalidade?.toUpperCase() || ''}, ${c.profissao?.toUpperCase() || ''}, E-MAIL ${c.email?.toUpperCase() || ''}, TELEFONE ${c.contato || ''},  INSCRITO NO CPF SOB O Nº ${c.cpf || ''}, AMBOS RESIDENTES EM ${enderecoFormatado}, DORAVANTE DENOMINADOS DE COMPRADOR(ES);`;
   }
 
   // Caso: Solteiro ou outro estado civil sem coadquirente
@@ -146,7 +146,7 @@ todosAdquirentes.forEach((adq, index) => {
   // Caso: Tem coadquirentes e estado civil diferente de casado
   else {
     const outros = coadquirentes.map((c, i) =>
-      `${c.nome?.toUpperCase() || ''}, ${c.nacionalidade?.toUpperCase() || ''}, ${c.profissao?.toUpperCase() || ''}, E-MAIL ${c.email || ''}, TELEFONE ${c.contato || ''}, INSCRITO NO CPF SOB O Nº ${c.cpf || ''}`
+      `${c.nome?.toUpperCase() || ''}, ${c.nacionalidade?.toUpperCase() || ''}, ${c.profissao?.toUpperCase() || ''}, E-MAIL ${c.email?.toUpperCase() || ''}, TELEFONE ${c.contato || ''}, INSCRITO NO CPF SOB O Nº ${c.cpf || ''}`
     ).join(' E ');
     clausulaCompradores = ` ${basePrincipal}, RESIDENTE EM ${enderecoFormatado}, E ${outros}`;
   }
