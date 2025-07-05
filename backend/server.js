@@ -25,7 +25,11 @@ dotenv.config();
 const app = express();
 
 // Middlewares
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'https://malucrm.vercel.app',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true
+}));
 
 app.use(express.json({verify: (req, res, buf) => {req.rawBody = buf;}  }));
 app.use(express.urlencoded({ extended: true }));
