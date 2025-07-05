@@ -13,7 +13,7 @@ const ModeloContrato = require('../models/ModeloContrato');
 const BrokerContact = require('../models/BrokerContact');
 const puppeteer = require('puppeteer-core');
 const DiscardReason = require('../models/DiscardReason');
-import html_to_pdf from 'html-pdf-node';
+const html_to_pdf = require('html-pdf-node');
 
 
 
