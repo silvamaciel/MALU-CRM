@@ -11,9 +11,8 @@ const { logHistory } = require('./LeadService');
 const User = require('../models/User');
 const ModeloContrato = require('../models/ModeloContrato');
 const BrokerContact = require('../models/BrokerContact');
-const puppeteer = require('puppeteer-core');
 const DiscardReason = require('../models/DiscardReason');
-const html_to_pdf = require('html-pdf-node');
+const wkhtmltopdf = require('wkhtmltopdf');
 
 
 
@@ -410,10 +409,9 @@ const gerarPDFPropostaContrato = async (propostaContratoId, companyId) => {
 
   const propostaContrato = await PropostaContrato.findOne({
     _id: propostaContratoId,
-    company: companyId
+    company: companyId,
   })
-    .select('corpoContratoHTMLGerado lead empreendimento unidade')
-    .populate({ path: 'lead', select: 'nome' })
+    .select('corpoContratoHTMLGerado')
     .lean();
 
   if (!propostaContrato || !propostaContrato.corpoContratoHTMLGerado) {
@@ -454,22 +452,30 @@ const gerarPDFPropostaContrato = async (propostaContratoId, companyId) => {
     </html>
   `;
 
-  const options = {
-    format: 'A4',
-    printBackground: true,
-    margin: {
-      top: '1.5cm',
-      right: '0.3cm',
-      bottom: '1.5cm',
-      left: '0.3cm'
-    }
-  };
+  try {
+    const pdfBuffer = await new Promise((resolve, reject) => {
+      const stream = wkhtmltopdf(htmlContent, {
+        pageSize: 'A4',
+        marginTop: '15mm',
+        marginBottom: '15mm',
+        marginLeft: '5mm',
+        marginRight: '5mm',
+        printMediaType: true
+      });
 
-  const file = { content: htmlContent };
-  const pdfBuffer = await html_to_pdf.generatePdf(file, options);
+      const chunks = [];
+      stream.on('data', chunk => chunks.push(chunk));
+      stream.on('end', () => resolve(Buffer.concat(chunks)));
+      stream.on('error', reject);
+    });
 
-  console.log(`[PDF] Geração concluída para ${propostaContratoId}`);
-  return pdfBuffer;
+    console.log(`[PDF] Geração concluída para ${propostaContratoId}`);
+    return pdfBuffer;
+
+  } catch (error) {
+    console.error(`[PDF] Erro ao gerar PDF: ${error.message}`);
+    throw new Error('Falha na geração do PDF com wkhtmltopdf.');
+  }
 };
 
 /**
