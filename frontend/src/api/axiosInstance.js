@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // Define a URL base da sua API (leia do .env se preferir)
-const API_BASE_URL = process.env.REACT_APP_API_URL || process.env.VITE_API_URL || 'https://malu-crm.onrender.com/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || process.env.VITE_API_URL
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
