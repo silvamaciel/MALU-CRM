@@ -98,7 +98,7 @@ const downloadPropostaContratoPDFController = asyncHandler(async (req, res, next
         const filename = `proposta_contrato_${propostaContratoId}.pdf`;
 
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+        res.setHeader('Content-Disposition', `inline; filename=${filename}`);
         res.send(pdfBuffer); 
         console.log(`[PropContCtrl PDF] PDF para Proposta/Contrato ${propostaContratoId} enviado para download.`);
 

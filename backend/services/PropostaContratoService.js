@@ -13,6 +13,7 @@ const ModeloContrato = require('../models/ModeloContrato');
 const BrokerContact = require('../models/BrokerContact');
 const puppeteer = require('puppeteer-core');
 const DiscardReason = require('../models/DiscardReason');
+import html_to_pdf from 'html-pdf-node';
 
 
 
@@ -398,132 +399,77 @@ const getPropostaContratoById = async (propostaContratoId, companyId) => {
  * @throws {Error} Se a proposta não for encontrada ou falhar a geração do PDF.
  */
 const gerarPDFPropostaContrato = async (propostaContratoId, companyId) => {
-    if (!mongoose.Types.ObjectId.isValid(propostaContratoId) || !mongoose.Types.ObjectId.isValid(companyId)) {
-        throw new Error("ID da Proposta/Contrato ou da Empresa inválido para gerar PDF.");
-    }
-    console.log(`[PropContSvc PDF] Iniciando geração de PDF para Proposta/Contrato ID: ${propostaContratoId}, Company: ${companyId}`);
+  if (
+    !mongoose.Types.ObjectId.isValid(propostaContratoId) ||
+    !mongoose.Types.ObjectId.isValid(companyId)
+  ) {
+    throw new Error("ID da Proposta/Contrato ou da Empresa inválido.");
+  }
 
-    let browser = null; // Define o browser fora do try para poder fechar no finally
+  console.log(`[PDF] Iniciando geração para proposta ${propostaContratoId} da empresa ${companyId}`);
 
-    try {
-        const propostaContrato = await PropostaContrato.findOne({ 
-            _id: propostaContratoId, 
-            company: companyId 
-        })
-        .select('corpoContratoHTMLGerado lead empreendimento unidade') // Campos para nome do arquivo, se desejar
-        .populate({ path: 'lead', select: 'nome' })
-        .lean();
+  const propostaContrato = await PropostaContrato.findOne({
+    _id: propostaContratoId,
+    company: companyId
+  })
+    .select('corpoContratoHTMLGerado lead empreendimento unidade')
+    .populate({ path: 'lead', select: 'nome' })
+    .lean();
 
-        if (!propostaContrato || !propostaContrato.corpoContratoHTMLGerado) {
-            throw new Error("Proposta/Contrato não encontrada ou sem conteúdo HTML para gerar PDF.");
+  if (!propostaContrato || !propostaContrato.corpoContratoHTMLGerado) {
+    throw new Error("Contrato não encontrado ou sem conteúdo HTML.");
+  }
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+      <meta charset="UTF-8">
+      <title>Contrato</title>
+      <style>
+        body {
+          font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+          margin: 40px;
+          line-height: 1.6;
+          color: #333;
         }
-        console.log(`[PropContSvc PDF] Proposta/Contrato encontrada. Conteúdo HTML (início): ${propostaContrato.corpoContratoHTMLGerado.substring(0, 100)}...`);
-
-        console.log("[PropContSvc PDF] Lançando Puppeteer...");
-        browser = await puppeteer.launch({
-            headless: true, // 'new' é o padrão mais recente para headless
-            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable',
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',     
-                '--disable-accelerated-2d-canvas',
-                '--no-first-run',
-                '--no-zygote',
-                '--disable-gpu'         
-            ],
-        });
-        console.log("[PropContSvc PDF] Navegador Puppeteer lançado.");
-
-        const page = await browser.newPage();
-        console.log("[PropContSvc PDF] Nova página Puppeteer criada.");
-
-        const fullHtml = `
-            <!DOCTYPE html>
-            <html lang="pt-BR">
-            <head>
-                <meta charset="UTF-8">
-                <title>Proposta/Contrato</title>
-                <style>
-                  body {
-                        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-                        margin: 40px;
-                        line-height: 1.6;
-                        color: #333;
-                      }
-                      h1, h2, h3, h4, h5, h6 {
-                        font-weight: normal;
-                        color: #111;
-                      }
-
-                      .ql-align-center {
-                        text-align: center;
-                      }
-                      .ql-align-right {
-                        text-align: right;
-                      }
-                      .ql-align-justify {
-                        text-align: justify;
-                      }
-
-                      .ql-font-sans-serif {
-                        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-                      }
-                      .ql-font-serif {
-                        font-family: Georgia, 'Times New Roman', serif;
-                      }
-                      .ql-font-monospace {
-                        font-family: 'Courier New', Courier, monospace;
-                      }
-                      .ql-font-arial {
-                        font-family: Arial, sans-serif;
-                      }
-                      .ql-font-times-new-roman {
-                        font-family: "Times New Roman", Times, serif;
-                      }
-                      .ql-font-comic-sans {
-                        font-family: "Comic Sans MS", cursive, sans-serif;
-                      }
-                </style>
-            </head>
-            <body>
-                ${propostaContrato.corpoContratoHTMLGerado}
-            </body>
-            </html>
-        `;
-
-        console.log("[PropContSvc PDF] Definindo conteúdo da página...");
-        await page.setContent(fullHtml, { waitUntil: 'networkidle0' }); // Espera a rede ficar ociosa
-        console.log("[PropContSvc PDF] Conteúdo definido. Gerando PDF...");
-
-        const pdfBuffer = await page.pdf({
-            format: 'A4',
-            printBackground: true, // Importante para imprimir cores e imagens de fundo do CSS
-            margin: {
-                top: '1.5cm',    // Ajuste conforme necessário
-                right: '0.3cm',
-                bottom: '1.5cm',
-                left: '0.3cm'
-            },
-            displayHeaderFooter: true,
-            footerTemplate: `<div style="font-size:8px; width:100%; text-align:center; padding:5px 0;">Página <span class="pageNumber"></span> de <span class="totalPages"></span></div>`,
-            headerTemplate: '<div></div>',
-        });
-        console.log("[PropContSvc PDF] Buffer do PDF gerado.");
-
-        return pdfBuffer; // Retorna o buffer
-
-    } catch (error) {
-        console.error(`[PropContSvc PDF] ERRO DETALHADO ao gerar PDF para Proposta/Contrato ${propostaContratoId}:`, error);
-        // Lança um erro mais genérico ou o erro original se preferir
-        throw new Error(`Falha ao gerar o PDF da Proposta/Contrato. Detalhe: ${error.message}`);
-    } finally {
-        if (browser !== null) {
-            console.log("[PropContSvc PDF] Fechando navegador Puppeteer...");
-            await browser.close();
-            console.log("[PropContSvc PDF] Navegador Puppeteer fechado.");
+        h1, h2, h3, h4, h5, h6 {
+          font-weight: normal;
+          color: #111;
         }
+        .ql-align-center { text-align: center; }
+        .ql-align-right { text-align: right; }
+        .ql-align-justify { text-align: justify; }
+        .ql-font-sans-serif { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+        .ql-font-serif { font-family: Georgia, 'Times New Roman', serif; }
+        .ql-font-monospace { font-family: 'Courier New', Courier, monospace; }
+        .ql-font-arial { font-family: Arial, sans-serif; }
+        .ql-font-times-new-roman { font-family: "Times New Roman", Times, serif; }
+        .ql-font-comic-sans { font-family: "Comic Sans MS", cursive, sans-serif; }
+      </style>
+    </head>
+    <body>
+      ${propostaContrato.corpoContratoHTMLGerado}
+    </body>
+    </html>
+  `;
+
+  const options = {
+    format: 'A4',
+    printBackground: true,
+    margin: {
+      top: '1.5cm',
+      right: '0.3cm',
+      bottom: '1.5cm',
+      left: '0.3cm'
     }
+  };
+
+  const file = { content: htmlContent };
+  const pdfBuffer = await html_to_pdf.generatePdf(file, options);
+
+  console.log(`[PDF] Geração concluída para ${propostaContratoId}`);
+  return pdfBuffer;
 };
 
 /**
