@@ -89,7 +89,6 @@ function LoginPage({ onLoginSuccess }) {
         } finally { setIsLoading(false); }
    }, [onLoginSuccess]);
 
-
   return (
     <div className="login-page">
       <div className="login-box">
