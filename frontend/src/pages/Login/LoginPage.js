@@ -4,6 +4,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 import { sendGoogleAuthCode, loginWithPassword } from '../../api/auth';
 import './LoginPage.css';
 import googleIcon from '../../assets/icons-google.svg';
+import maluIcon from "../../assets/malucrmhorizontal.png";
 
 //quem sabe vou usar depois
 //import { toast } from 'react-toastify';
@@ -92,8 +93,11 @@ function LoginPage({ onLoginSuccess }) {
   return (
     <div className="login-page">
       <div className="login-box">
-        <h1>Login - CRM</h1>
-
+        {/* Cabeçalho do Sidebar com Logo */}
+        <div className="sidebar-header">
+            <img src={maluIcon} alt="Logo" style={{ height: "98px" }} />
+        </div>
+        <p className="login-description">Faça login para acessar sua conta CRM Malu</p>
         {/* Formulário de Login Local */}
         <form onSubmit={handleLocalLoginSubmit} className="local-login-form">
            <div className="form-group">
