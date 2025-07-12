@@ -93,10 +93,7 @@ function LoginPage({ onLoginSuccess }) {
     <div className="login-page">
       <div className="login-box">
         {/* Cabeçalho do Sidebar com Logo */}
-        <div className="sidebar-header">
-            <img src={maluIcon} alt="Logo" style={{ height: "98px" }} />
-        </div>
-        <p className="login-description">Faça login para acessar sua conta CRM Malu</p>
+         <img src={maluIcon} alt="Logo" style={{ height: "98px" }} />
         {/* Formulário de Login Local */}
         <form onSubmit={handleLocalLoginSubmit} className="local-login-form">
            <div className="form-group">

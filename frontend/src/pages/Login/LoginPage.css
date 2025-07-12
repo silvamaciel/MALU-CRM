@@ -1,4 +1,7 @@
 /* src/pages/Login/LoginPage.css (Exemplo Básico) */
+body{
+  background-color: #f4f7f6;
+}
 .login-page {
   display: flex;
   justify-content: center;
