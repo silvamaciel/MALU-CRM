@@ -27,7 +27,7 @@ router.post('/evolution/create-instance', protect, authorize(['admin']), integra
 
 router.get('/evolution/instance/:instanceId/status', protect, authorize(['admin']), integrationController.getEvolutionInstanceStatusController);
 
-router.get('/evolution/instances', protect, authorize(['admin']), IntegrationsController.listEvolutionInstancesController);
+router.get('/evolution/instances', protect, authorize(['admin']), integrationController.listEvolutionInstancesController);
 
 
 
