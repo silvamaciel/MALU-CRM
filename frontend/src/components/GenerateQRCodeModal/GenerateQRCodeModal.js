@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getEvolutionInstanceStatusApi } from '../../api/integrations';
 
-function GenerateQRCodeModal({ isOpen, onClose, instance }) {
+function GenerateQRCodeModal({ isOpen, onClose, instance, onConnected }) {
  const [qrCode, setQrCode] = useState(null);
     const [status, setStatus] = useState('INICIAL'); // INICIAL, CARREGANDO, QR_CODE, CONECTADO
     const [error, setError] = useState('');
