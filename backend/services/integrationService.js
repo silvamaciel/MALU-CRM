@@ -910,6 +910,20 @@ const listEvolutionInstances = async (companyId) => {
     return instances;
 };
 
+const updateInstanceSettings = async (instanceId, companyId, settings) => {
+    const { receiveFromGroups } = settings;
+    
+    const updatedInstance = await EvolutionInstance.findOneAndUpdate(
+        { _id: instanceId, company: companyId },
+        { $set: { receiveFromGroups: Boolean(receiveFromGroups) } },
+        { new: true }
+    );
+
+    if (!updatedInstance) throw new Error("Instância não encontrada.");
+    return updatedInstance;
+};
+
+
 
 module.exports = {
   connectFacebookPageIntegration,
@@ -922,5 +936,6 @@ module.exports = {
   saveLinkedFacebookForms,
   createEvolutionInstance,
   getEvolutionInstanceConnectionState,
-  listEvolutionInstances
+  listEvolutionInstances,
+  updateInstanceSettings
 };

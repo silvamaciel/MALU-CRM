@@ -63,53 +63,66 @@ function IntegrationsPage() {
   // States Evolution API 
 
   const [evolutionInstances, setEvolutionInstances] = useState([]);
-    const [loadingInstances, setLoadingInstances] = useState(true);
-    const [instanceName, setInstanceName] = useState('');
-    const [isCreatingInstance, setIsCreatingInstance] = useState(false);
-    const [selectedInstanceForQR, setSelectedInstanceForQR] = useState(null);
-    const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+  const [loadingInstances, setLoadingInstances] = useState(true);
+  const [instanceName, setInstanceName] = useState('');
+  const [isCreatingInstance, setIsCreatingInstance] = useState(false);
+  const [selectedInstanceForQR, setSelectedInstanceForQR] = useState(null);
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
 
-    // Função Principal para Carregar Dados da Página
-    const fetchIntegrations = useCallback(async () => {
-        setLoadingInstances(true);
-        try {
-            const instancesData = await listEvolutionInstancesApi(); 
-            setEvolutionInstances(instancesData || []);
-        } catch (error) {
-            toast.error("Falha ao carregar instâncias do WhatsApp.");
-        } finally {
-            setLoadingInstances(false);
-        }
-    }, []);
+  // Função Principal para Carregar Dados da Página
+  const fetchIntegrations = useCallback(async () => {
+    setLoadingInstances(true);
+    try {
+      const instancesData = await listEvolutionInstancesApi();
+      setEvolutionInstances(instancesData || []);
+    } catch (error) {
+      toast.error("Falha ao carregar instâncias do WhatsApp.");
+    } finally {
+      setLoadingInstances(false);
+    }
+  }, []);
 
-    useEffect(() => {
-        fetchIntegrations();
-    }, [fetchIntegrations]);
+  useEffect(() => {
+    fetchIntegrations();
+  }, [fetchIntegrations]);
 
-    // Handler para criar uma nova instância
-    const handleCreateInstance = async (e) => {
-        e.preventDefault();
-        if (!instanceName.trim()) {
-            toast.warn("Por favor, digite um nome para a instância.");
-            return;
-        }
-        setIsCreatingInstance(true);
-        try {
-            const newInstance = await createEvolutionInstanceApi(instanceName.trim());
-            toast.success(`Instância "${newInstance.instanceName}" criada com sucesso!`);
-            setInstanceName('');
-            fetchIntegrations(); // Recarrega a lista para mostrar a nova instância
-        } catch (error) {
-            toast.error(error.error || error.message || "Falha ao criar instância.");
-        } finally {
-            setIsCreatingInstance(false);
-        }
-    };
+  // Handler para criar uma nova instância
+  const handleCreateInstance = async (e) => {
+    e.preventDefault();
+    if (!instanceName.trim()) {
+      toast.warn("Por favor, digite um nome para a instância.");
+      return;
+    }
+    setIsCreatingInstance(true);
+    try {
+      const newInstance = await createEvolutionInstanceApi(instanceName.trim());
+      toast.success(`Instância "${newInstance.instanceName}" criada com sucesso!`);
+      setInstanceName('');
+      fetchIntegrations(); // Recarrega a lista para mostrar a nova instância
+    } catch (error) {
+      toast.error(error.error || error.message || "Falha ao criar instância.");
+    } finally {
+      setIsCreatingInstance(false);
+    }
+  };
 
-    const openQRModal = (instance) => {
-        setSelectedInstanceForQR(instance);
-        setIsQRModalOpen(true);
-    };
+  const openQRModal = (instance) => {
+    setSelectedInstanceForQR(instance);
+    setIsQRModalOpen(true);
+  };
+
+  const handleToggleGroups = async (instanceId, currentValue) => {
+    try {
+      const updated = await updateInstanceSettingsApi(instanceId, { receiveFromGroups: !currentValue });
+      // Atualiza o estado local para refletir a mudança instantaneamente
+      setEvolutionInstances(prev =>
+        prev.map(inst => inst._id === instanceId ? updated : inst)
+      );
+      toast.success(`Configuração da instância '${updated.instanceName}' atualizada.`);
+    } catch (error) {
+      toast.error("Falha ao atualizar configuração.");
+    }
+  };
 
   // Fim do Evolutoin Api
 
@@ -959,49 +972,60 @@ function IntegrationsPage() {
 
         {/* Placeholder Cards */}
         <div className="integration-card">
-                    <div className="integration-header">
-                        <div className="integration-info">
-                            <h3>WhatsApp (Evolution API)</h3>
-                            <p>Conecte e gerencie instâncias do WhatsApp para automações.</p>
-                        </div>
+          <div className="integration-header">
+            <div className="integration-info">
+              <h3>WhatsApp (Evolution API)</h3>
+              <p>Conecte e gerencie instâncias do WhatsApp para automações.</p>
+            </div>
+          </div>
+          <div className="integration-body">
+            {loadingInstances ? (
+              <p>Carregando instâncias...</p>
+            ) : evolutionInstances.length > 0 ? (
+              <ul className="instance-list">
+                {evolutionInstances.map(instance => (
+                  <li key={instance._id}>
+                    <div className="instance-info">
+                      <span className="instance-name">{instance.instanceName}</span>
+                      {/* Switch para ligar/desligar mensagens de grupo */}
+                      <div className="toggle-switch">
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={instance.receiveFromGroups}
+                            onChange={() => handleToggleGroups(instance._id, instance.receiveFromGroups)}
+                          />
+                          <span className="slider"></span>
+                        </label>
+                        <span className="toggle-label">Receber de Grupos</span>
+                      </div>
                     </div>
-                    <div className="integration-body">
-                        {loadingInstances ? (
-                            <p>Carregando instâncias...</p>
-                        ) : evolutionInstances.length > 0 ? (
-                            <ul className="instance-list">
-                                {evolutionInstances.map(instance => (
-                                    <li key={instance._id}>
-                                        <div className="instance-info">
-                                            <span className="instance-name">{instance.instanceName}</span>
-                                            <span className={`instance-status status-${instance.status}`}>{instance.status}</span>
-                                        </div>
-                                        <button onClick={() => openQRModal(instance)} className="button small-button">
-                                            Conectar / Ver QR Code
-                                        </button>
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p className="no-data-message">Nenhuma instância do WhatsApp foi criada ainda.</p>
-                        )}
-                    </div>
-                    <div className="integration-footer">
-                        <h4>Criar Nova Instância</h4>
-                        <form onSubmit={handleCreateInstance} className="create-instance-form">
-                            <input
-                                type="text"
-                                value={instanceName}
-                                onChange={(e) => setInstanceName(e.target.value)}
-                                placeholder="Nome da nova instância (ex: comercial)"
-                                disabled={isCreatingInstance}
-                            />
-                            <button type="submit" className="button primary-button" disabled={isCreatingInstance}>
-                                {isCreatingInstance ? 'Criando...' : 'Criar Instância'}
-                            </button>
-                        </form>
-                    </div>
-                </div>
+                    <button onClick={() => openQRModal(instance)} className="button small-button">
+                      Conectar / Ver QR Code
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="no-data-message">Nenhuma instância do WhatsApp foi criada ainda.</p>
+            )}
+          </div>
+          <div className="integration-footer">
+            <h4>Criar Nova Instância</h4>
+            <form onSubmit={handleCreateInstance} className="create-instance-form">
+              <input
+                type="text"
+                value={instanceName}
+                onChange={(e) => setInstanceName(e.target.value)}
+                placeholder="Nome da nova instância (ex: comercial)"
+                disabled={isCreatingInstance}
+              />
+              <button type="submit" className="button primary-button" disabled={isCreatingInstance}>
+                {isCreatingInstance ? 'Criando...' : 'Criar Instância'}
+              </button>
+            </form>
+          </div>
+        </div>
 
         <div className="integration-card placeholder">
           <h2>WhatsApp Business API</h2>
@@ -1109,14 +1133,14 @@ function IntegrationsPage() {
         )}
 
         <GenerateQRCodemodal
-            isOpen={isQRModalOpen}
-            onClose={() => setIsQRModalOpen(false)}
-            instance={selectedInstanceForQR}
-            onConnected={() => {
+          isOpen={isQRModalOpen}
+          onClose={() => setIsQRModalOpen(false)}
+          instance={selectedInstanceForQR}
+          onConnected={() => {
             toast.success("WhatsApp conectado com sucesso!");
-                  setIsQRModalOpen(false);
-                  fetchIntegrations(); // Recarrega a lista para mostrar o novo status
-              }}
+            setIsQRModalOpen(false);
+            fetchIntegrations(); // Recarrega a lista para mostrar o novo status
+          }}
         />
 
 

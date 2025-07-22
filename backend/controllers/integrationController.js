@@ -236,6 +236,17 @@ const listEvolutionInstancesController = asyncHandler(async (req, res, next) => 
 });
 
 
+const updateInstanceSettingsController = asyncHandler(async (req, res, next) => {
+    const { instanceId } = req.params;
+    const companyId = req.user.company;
+    const settings = req.body;
+
+    const updatedInstance = await IntegrationService.updateInstanceSettings(instanceId, companyId, settings);
+    res.status(200).json({ success: true, data: updatedInstance });
+});
+
+
+
 
 
 module.exports = {
@@ -249,5 +260,6 @@ module.exports = {
     saveLinkedFormsController,
     createEvolutionInstanceController,
     getEvolutionInstanceStatusController,
-    listEvolutionInstancesController
+    listEvolutionInstancesController,
+    updateInstanceSettingsController
 };

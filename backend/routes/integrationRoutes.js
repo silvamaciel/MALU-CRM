@@ -29,6 +29,9 @@ router.get('/evolution/instance/:instanceId/status', protect, authorize('admin')
 
 router.get('/evolution/instances', protect, authorize('admin'), integrationController.listEvolutionInstancesController);
 
+router.put('/evolution/instance/:instanceId/settings', protect, authorize('admin'), integrationController.updateInstanceSettingsController);
+
+
 
 
 module.exports = router;

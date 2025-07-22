@@ -209,3 +209,12 @@ export const listEvolutionInstancesApi = async () => {
         throw error.response?.data || new Error("Falha ao carregar as instâncias.");
     }
 };
+
+
+export const updateInstanceSettingsApi = async (instanceId, settings) => {
+    try {
+        const response = await axiosInstance.put(`/integrations/evolution/instance/${instanceId}/settings`, settings);
+        return response.data.data;
+    } catch (error) { console.error("Erro ao atualizar instancias da Evolution API:", error.response?.data || error.message);
+        throw error.response?.data || new Error("Falha ao carregar as instâncias.");}
+};
