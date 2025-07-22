@@ -765,68 +765,58 @@ const saveLinkedFacebookForms = async (companyId, pageId, selectedForms) => {
  * @returns {Promise<EvolutionInstance>} A instância salva no banco do CRM.
  */
 const createEvolutionInstance = async (instanceName, companyId, creatingUserId) => {
-    console.log(`[IntegSvc Evolution] Tentando criar instância '${instanceName}' para Company: ${companyId}`);
+    console.log(`[IntegSvc Evolution] Tentando criar instância '${instanceName}'...`);
 
     const { EVOLUTION_API_URL, EVOLUTION_API_KEY } = process.env;
     if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) {
-        throw new Error("A URL e a Chave da Evolution API não estão configuradas no servidor.");
+        throw new Error("Evolution API não configurada no servidor.");
     }
 
     const existingInstance = await EvolutionInstance.findOne({ instanceName, company: companyId });
     if (existingInstance) {
-        throw new Error(`Uma instância com o nome '${instanceName}' já está registrada neste CRM para sua empresa.`);
+        throw new Error(`Instância com o nome '${instanceName}' já existe.`);
     }
+
     try {
-        // --- PASSO 2: Chama a API Externa da Evolution ---
         const response = await axios.post(
             `${EVOLUTION_API_URL}/instance/create`,
-            {
-                instanceName: instanceName,
-                qrcode: true,
-                integration: "WHATSAPP-BAILEYS"
-            },
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': EVOLUTION_API_KEY
-                }
-            }
+            { instanceName, qrcode: true, integration: "WHATSAPP-BAILEYS" },
+            { headers: { 'Content-Type': 'application/json', 'apikey': EVOLUTION_API_KEY } }
         );
 
         const evolutionData = response.data;
         console.log("[IntegSvc Evolution] Resposta da Evolution API:", evolutionData);
 
         if (!evolutionData.instance || !evolutionData.hash?.apikey) {
-            throw new Error("A resposta da Evolution API foi inválida.");
+            // Se o nome já existe na Evolution API, a resposta pode ser diferente
+            if (evolutionData.error && evolutionData.error.includes("already in use")) {
+                 throw new Error(`O nome de instância '${instanceName}' já está em uso. Escolha outro nome.`);
+            }
+            throw new Error("A resposta da Evolution API foi inválida ou incompleta.");
         }
 
-        // --- PASSO 3. Salva os dados da instância no nosso banco de dados ---
         const newInstance = new EvolutionInstance({
             instanceName: evolutionData.instance.instanceName,
             instanceId: evolutionData.instance.instanceId,
             apiKey: evolutionData.hash.apikey,
             status: evolutionData.instance.status,
-            ownerNumber: evolutionData.instance.number || null,
             company: companyId,
             createdBy: creatingUserId
         });
 
         await newInstance.save();
-        console.log(`[IntegSvc Evolution] Instância '${newInstance.instanceName}' salva no DB com ID: ${newInstance._id}`);
-
+        console.log(`[IntegSvc Evolution] Instância '${newInstance.instanceName}' salva no DB.`);
         return newInstance;
 
     } catch (error) {
-        // Captura erros da Evolution API (como "nome já existe LÁ")
-        const errorMsg = error.response?.data?.message?.[0] || error.response?.data?.error || error.message || "Erro desconhecido ao criar instância.";
+        const errorMsg = error.response?.data?.message?.[0] || error.response?.data?.error || error.message;
         console.error("[IntegSvc Evolution] Erro ao comunicar com a Evolution API:", error.response?.data || error);
         
-        // Adiciona uma mensagem mais clara para o usuário
-        if (errorMsg.includes('already in use')) {
+        if (errorMsg && errorMsg.includes("already in use")) {
             throw new Error(`O nome de instância '${instanceName}' já está em uso na API do WhatsApp. Por favor, escolha outro nome.`);
         }
         
-        throw new Error(errorMsg);
+        throw new Error(errorMsg || "Erro desconhecido ao criar instância.");
     }
 };
 

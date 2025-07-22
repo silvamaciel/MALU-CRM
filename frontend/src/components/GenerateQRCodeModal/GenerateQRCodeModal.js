@@ -1,38 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import { getEvolutionInstanceStatusApi } from '../../api/integrations'; // Adicionaremos esta função na API
-import './GenarateQRCodeModal.css';
+import { getEvolutionInstanceStatusApi } from '../../api/integrations';
+import './GenerateQRCodeModal.css';
 
-function GenerateQRCodemodal({ isOpen, onClose, instance, onConnected }) {
+function GenerateQRCodeModal({ isOpen, onClose, instance }) {
     const [qrCode, setQrCode] = useState(null);
-    const [status, setStatus] = useState('CARREGANDO'); // CARREGANDO, AGUARDANDO_QR_CODE, CONECTADO
+    const [status, setStatus] = useState('INICIAL'); // INICIAL, CARREGANDO, QR_CODE, CONECTADO
     const [error, setError] = useState('');
 
     useEffect(() => {
-        if (!isOpen || !instance) return;
+        // Reseta o estado quando o modal é aberto com uma nova instância
+        if (isOpen) {
+            setStatus('INICIAL');
+            setQrCode(null);
+            setError('');
+        }
+    }, [isOpen]);
 
-        // Inicia o "polling": verifica o status a cada 5 segundos
-        const intervalId = setInterval(async () => {
-            try {
-                const state = await getEvolutionInstanceStatusApi(instance._id);
-                setStatus(state.status);
-
-                if (state.status === 'CONECTADO') {
-                    setQrCode(null);
-                    clearInterval(intervalId); // Para o polling
-                    onConnected(); // Avisa o pai que conectou
-                } else if (state.status === 'AGUARDANDO_QR_CODE') {
-                    setQrCode(state.qrcode);
-                }
-            } catch (err) {
-                setError(err.message || 'Falha ao buscar status.');
-                clearInterval(intervalId); // Para o polling em caso de erro
+    const fetchQRCode = async () => {
+        if (!instance) return;
+        setStatus('CARREGANDO');
+        setError('');
+        try {
+            const state = await getEvolutionInstanceStatusApi(instance._id);
+            if (state.status === 'CONECTADO') {
+                setStatus('CONECTADO');
+                setQrCode(null);
+            } else if (state.status === 'AGUARDANDO_QR_CODE' && state.qrcode) {
+                setStatus('QR_CODE');
+                setQrCode(state.qrcode);
+            } else {
+                throw new Error("Não foi possível gerar o QR Code. Tente novamente em alguns instantes.");
             }
-        }, 5000); // a cada 5 segundos
-
-        // Limpa o intervalo quando o modal é fechado ou o componente desmontado
-        return () => clearInterval(intervalId);
-
-    }, [isOpen, instance, onConnected]);
+        } catch (err) {
+            setError(err.message || 'Falha ao buscar status.');
+            setStatus('ERRO');
+        }
+    };
 
     if (!isOpen) return null;
 
@@ -41,18 +44,20 @@ function GenerateQRCodemodal({ isOpen, onClose, instance, onConnected }) {
             <div className="qr-modal-content" onClick={(e) => e.stopPropagation()}>
                 <h3>Conectar WhatsApp à Instância: {instance.instanceName}</h3>
                 <div className="qr-modal-body">
-                    {status === 'CARREGANDO' && <p>Buscando status da conexão...</p>}
-                    {status === 'CONECTADO' && <div className="qr-success">✅<p>Conectado com sucesso!</p></div>}
-                    {error && <p className="error-message">{error}</p>}
-
-                    {status === 'AGUARDANDO_QR_CODE' && (
+                    {status === 'INICIAL' && (
                         <>
-                            <p>Abra o WhatsApp no seu celular, vá em Aparelhos Conectados e escaneie o QR Code abaixo.</p>
-                            {qrCode ? (
-                                <img src={`data:image/png;base64,${qrCode}`} alt="QR Code para conectar WhatsApp" />
-                            ) : (
-                                <p>Gerando QR Code...</p>
-                            )}
+                            <p>Clique no botão abaixo para gerar um novo QR Code.</p>
+                            <button onClick={fetchQRCode} className="button primary-button">Gerar QR Code</button>
+                        </>
+                    )}
+                    {status === 'CARREGANDO' && <p>Gerando QR Code...</p>}
+                    {status === 'CONECTADO' && <div className="qr-success">✅<p>Conectado com sucesso!</p></div>}
+                    {status === 'ERRO' && <p className="error-message">{error}</p>}
+                    {status === 'QR_CODE' && (
+                        <>
+                            <p>Escaneie o QR Code abaixo com seu celular. Ele é válido por cerca de 30 segundos.</p>
+                            <img src={`data:image/png;base64,${qrCode}`} alt="QR Code para conectar WhatsApp" />
+                            <button onClick={fetchQRCode} className="button outline-button" style={{marginTop: '15px'}}>Gerar Novo QR Code</button>
                         </>
                     )}
                 </div>
@@ -63,5 +68,4 @@ function GenerateQRCodemodal({ isOpen, onClose, instance, onConnected }) {
         </div>
     );
 }
-
-export default GenerateQRCodemodal;
+export default GenerateQRCodeModal;

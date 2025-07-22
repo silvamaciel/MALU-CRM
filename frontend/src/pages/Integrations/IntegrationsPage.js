@@ -970,7 +970,8 @@ function IntegrationsPage() {
         {/* Placeholder Cards */}
         <div className="integration-card">
           <div className="integration-header">
-            {/* Use um ícone local ou remova a tag <img> se não tiver um */}
+            {/* Se você tiver um ícone do WhatsApp, pode colocar aqui */}
+            {/* <img src="/whatsapp-icon.png" alt="WhatsApp Icon" className="integration-icon" /> */}
             <div className="integration-info">
               <h3>WhatsApp (Evolution API)</h3>
               <p>Conecte e gerencie instâncias do WhatsApp para automações.</p>
