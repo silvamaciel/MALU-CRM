@@ -15,7 +15,8 @@ import {
   saveLinkedFacebookFormsApi,
   createEvolutionInstanceApi,
   getEvolutionInstanceStatusApi,
-  listEvolutionInstancesApi
+  listEvolutionInstancesApi,
+  updateInstanceSettingsApi
 } from "../../api/integrations";
 
 import GenerateQRCodemodal from "../../components/GenerateQRCodeModal/GenerateQRCodeModal";
