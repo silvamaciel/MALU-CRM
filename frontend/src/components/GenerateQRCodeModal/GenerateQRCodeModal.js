@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { getEvolutionInstanceStatusApi } from '../../api/integrations';
-import './GenerateQRCodeModal.css';
 
 function GenerateQRCodeModal({ isOpen, onClose, instance }) {
     const [qrCode, setQrCode] = useState(null);
