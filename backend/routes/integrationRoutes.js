@@ -23,11 +23,11 @@ router.get('/facebook/pages/:pageId/forms', protect, integrationController.listP
 
 router.post('/facebook/pages/:pageId/linked-forms', protect, integrationController.saveLinkedFormsController);
 
-router.post('/evolution/create-instance', protect, authorize(['admin']), integrationController.createEvolutionInstanceController);
+router.post('/evolution/create-instance', protect, authorize('admin'), integrationController.createEvolutionInstanceController);
 
-router.get('/evolution/instance/:instanceId/status', protect, authorize(['admin']), integrationController.getEvolutionInstanceStatusController);
+router.get('/evolution/instance/:instanceId/status', protect, authorize('admin'), integrationController.getEvolutionInstanceStatusController);
 
-router.get('/evolution/instances', protect, authorize(['admin']), integrationController.listEvolutionInstancesController);
+router.get('/evolution/instances', protect, authorize('admin'), integrationController.listEvolutionInstancesController);
 
 
 
