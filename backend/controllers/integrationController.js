@@ -241,7 +241,7 @@ const updateInstanceSettingsController = asyncHandler(async (req, res, next) => 
     const companyId = req.user.company;
     const settings = req.body;
 
-    const updatedInstance = await IntegrationService.updateInstanceSettings(instanceId, companyId, settings);
+    const updatedInstance = await integrationService.updateInstanceSettings(instanceId, companyId, settings);
     res.status(200).json({ success: true, data: updatedInstance });
 });
 
