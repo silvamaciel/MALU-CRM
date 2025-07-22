@@ -765,33 +765,48 @@ const saveLinkedFacebookForms = async (companyId, pageId, selectedForms) => {
  * @returns {Promise<EvolutionInstance>} A instância salva no banco do CRM.
  */
 const createEvolutionInstance = async (instanceName, companyId, creatingUserId) => {
-    console.log(`[IntegSvc Evolution] Tentando criar instância '${instanceName}'...`);
+    console.log(`[IntegSvc Evolution] Tentando criar instância '${instanceName}' para Company: ${companyId}`);
 
     const { EVOLUTION_API_URL, EVOLUTION_API_KEY } = process.env;
     if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) {
         throw new Error("Evolution API não configurada no servidor.");
     }
 
-    // PASSO 1: Verifica duplicados no NOSSO banco de dados primeiro
+    // PASSO 1: Verifica duplicados no nosso banco de dados primeiro
     const existingInstance = await EvolutionInstance.findOne({ instanceName, company: companyId });
     if (existingInstance) {
-        throw new Error(`Uma instância com o nome '${instanceName}' já existe neste CRM.`);
+        throw new Error(`Uma instância com o nome '${instanceName}' já está registrada neste CRM para sua empresa.`);
     }
 
     try {
-        // PASSO 2: Chama a API Externa da Evolution
+        // --- PASSO 2: Chama a API Externa da Evolution ---
         const response = await axios.post(
             `${EVOLUTION_API_URL}/instance/create`,
-            { instanceName, qrcode: true, integration: "WHATSAPP-BAILEYS" },
-            { headers: { 'Content-Type': 'application/json', 'apikey': EVOLUTION_API_KEY } }
+            {
+                instanceName: instanceName,
+                qrcode: true,
+                integration: "WHATSAPP-BAILEYS"
+            },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': EVOLUTION_API_KEY
+                }
+            }
         );
 
         const evolutionData = response.data;
+        console.log("[IntegSvc Evolution] Resposta da Evolution API:", evolutionData);
+
         if (!evolutionData.instance || !evolutionData.hash?.apikey) {
+            // Se a resposta contém um erro conhecido, lança-o
+            if (evolutionData.error) {
+                throw new Error(`Erro da Evolution API: ${evolutionData.error}`);
+            }
             throw new Error("A resposta da Evolution API foi inválida ou incompleta.");
         }
 
-        // PASSO 3: Salva a instância no nosso banco de dados
+        // --- PASSO 3. Salva os dados da instância no nosso banco de dados ---
         const newInstance = new EvolutionInstance({
             instanceName: evolutionData.instance.instanceName,
             instanceId: evolutionData.instance.instanceId,
@@ -801,16 +816,28 @@ const createEvolutionInstance = async (instanceName, companyId, creatingUserId) 
             createdBy: creatingUserId
         });
         await newInstance.save();
+        console.log(`[IntegSvc Evolution] Instância '${newInstance.instanceName}' salva no DB com ID: ${newInstance._id}`);
+
         return newInstance;
 
     } catch (error) {
-        // PASSO 4: Trata erros vindos da Evolution API
-        const errorMsg = error.response?.data?.message?.[0] || error.response?.data?.error || error.message;
-        console.error("[IntegSvc Evolution] Erro ao comunicar com a Evolution API:", error.response?.data || error);
-        if (errorMsg && (errorMsg.includes("already in use") || errorMsg.includes("already exists"))) {
+        // --- PASSO 4 (MELHORADO): Trata erros vindos da Evolution API ---
+        const errorData = error.response?.data;
+        console.error("[IntegSvc Evolution] ERRO DETALHADO ao comunicar com a Evolution API:", errorData || error.message);
+        
+        let errorMsg = "Erro desconhecido ao criar instância.";
+        if (errorData) {
+            // Padrões de erro comuns da Evolution API
+            if (errorData.message && Array.isArray(errorData.message)) errorMsg = errorData.message.join(', ');
+            else if (errorData.error) errorMsg = errorData.error;
+            else if (typeof errorData === 'string') errorMsg = errorData;
+        }
+
+        if (errorMsg.includes("already in use") || errorMsg.includes("already exists")) {
             throw new Error(`O nome de instância '${instanceName}' já está em uso na API do WhatsApp. Por favor, escolha outro nome.`);
         }
-        throw new Error(errorMsg || "Erro desconhecido ao criar instância.");
+        
+        throw new Error(`Erro da Evolution API: ${errorMsg}`);
     }
 };
 
