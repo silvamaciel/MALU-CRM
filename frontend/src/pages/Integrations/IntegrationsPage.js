@@ -17,6 +17,9 @@ import {
   getEvolutionInstanceStatusApi,
   listEvolutionInstancesApi
 } from "../../api/integrations";
+
+import GenerateQRCodemodal from "../../components/GenerateQRCodeModal/GenerateQRCodeModal";
+
 import "./IntegrationsPage.css";
 
 const facebookAppId =
@@ -1116,7 +1119,7 @@ function IntegrationsPage() {
           </div>
         )}
 
-        <QRCodeModal
+        <GenerateQRCodemodal
           isOpen={isQRModalOpen}
           onClose={() => setIsQRModalOpen(false)}
           instance={selectedInstanceForQR}
