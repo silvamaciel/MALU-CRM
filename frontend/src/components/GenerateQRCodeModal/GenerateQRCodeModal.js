@@ -57,7 +57,7 @@ function GenerateQRCodeModal({ isOpen, onClose, instance, onConnected }) {
                     {status === 'QR_CODE' && (
                         <>
                             <p>Escaneie o QR Code abaixo com seu celular. Ele é válido por cerca de 30 segundos.</p>
-                            {qrCode && <img src={`data:image/png;base64,${qrCode}`} alt="QR Code para conectar WhatsApp" />}
+                            {qrCode && <img src={qrCode} alt="QR Code para conectar WhatsApp" />}
                             <button onClick={fetchQRCode} className="button outline-button" style={{marginTop: '15px'}}>Gerar Novo QR Code</button>
                         </>
                     )}
