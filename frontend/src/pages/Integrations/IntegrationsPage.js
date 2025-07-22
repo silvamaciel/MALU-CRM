@@ -4,6 +4,7 @@ import { sendGoogleAuthCode } from "../../api/auth";
 import { toast } from "react-toastify";
 import FacebookLogin from "@greatsumini/react-facebook-login";
 import axios from "axios";
+import QRCodeModal from '../../components/QRCodeModal/QRCodeModal.js';
 import {
   connectFacebookPage,
   getFacebookConnectionStatus,
