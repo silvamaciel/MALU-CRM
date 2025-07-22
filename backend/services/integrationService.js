@@ -774,11 +774,10 @@ const createEvolutionInstance = async (instanceName, companyId, creatingUserId) 
 
     const existingInstance = await EvolutionInstance.findOne({ instanceName, company: companyId });
     if (existingInstance) {
-        throw new Error(`Uma instância com o nome '${instanceName}' já existe para esta empresa.`);
+        throw new Error(`Uma instância com o nome '${instanceName}' já está registrada neste CRM para sua empresa.`);
     }
-
     try {
-        // --- 1. Chama a API Externa da Evolution ---
+        // --- PASSO 2: Chama a API Externa da Evolution ---
         const response = await axios.post(
             `${EVOLUTION_API_URL}/instance/create`,
             {
@@ -801,7 +800,7 @@ const createEvolutionInstance = async (instanceName, companyId, creatingUserId) 
             throw new Error("A resposta da Evolution API foi inválida.");
         }
 
-        // --- 2. Salva os dados da instância no nosso banco de dados ---
+        // --- PASSO 3. Salva os dados da instância no nosso banco de dados ---
         const newInstance = new EvolutionInstance({
             instanceName: evolutionData.instance.instanceName,
             instanceId: evolutionData.instance.instanceId,
@@ -818,9 +817,15 @@ const createEvolutionInstance = async (instanceName, companyId, creatingUserId) 
         return newInstance;
 
     } catch (error) {
-        // O erro 'Invalid integration' será capturado aqui
-        const errorMsg = error.response?.data?.response?.message?.[0] || error.response?.data?.message || error.message || "Erro desconhecido ao criar instância.";
-        console.error("[IntegSvc Evolution] Erro ao criar instância na Evolution API:", error.response?.data || error);
+        // Captura erros da Evolution API (como "nome já existe LÁ")
+        const errorMsg = error.response?.data?.message?.[0] || error.response?.data?.error || error.message || "Erro desconhecido ao criar instância.";
+        console.error("[IntegSvc Evolution] Erro ao comunicar com a Evolution API:", error.response?.data || error);
+        
+        // Adiciona uma mensagem mais clara para o usuário
+        if (errorMsg.includes('already in use')) {
+            throw new Error(`O nome de instância '${instanceName}' já está em uso na API do WhatsApp. Por favor, escolha outro nome.`);
+        }
+        
         throw new Error(errorMsg);
     }
 };
