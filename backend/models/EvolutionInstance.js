@@ -12,6 +12,12 @@ const evolutionInstanceSchema = new Schema({
         required: true,
         unique: true
     },
+
+    receiveFromGroups: {
+        type: Boolean,
+        default: false
+    },
+
     apiKey: { // API Key específica desta instância, retornada pela Evolution API
         type: String,
         required: true
