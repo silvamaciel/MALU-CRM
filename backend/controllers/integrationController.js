@@ -215,7 +215,7 @@ const createEvolutionInstanceController = asyncHandler(async (req, res, next) =>
     const companyId = req.user.company;
     const creatingUserId = req.user._id;
 
-    const newInstance = await IntegrationService.createEvolutionInstance(instanceName, companyId, creatingUserId);
+    const newInstance = await integrationService.createEvolutionInstance(instanceName, companyId, creatingUserId);
     
     res.status(201).json({ success: true, data: newInstance });
 });
@@ -224,14 +224,14 @@ const getEvolutionInstanceStatusController = asyncHandler(async (req, res, next)
     const { instanceId } = req.params;
     const companyId = req.user.company;
 
-    const state = await IntegrationService.getEvolutionInstanceConnectionState(instanceId, companyId);
+    const state = await integrationService.getEvolutionInstanceConnectionState(instanceId, companyId);
     
     res.status(200).json({ success: true, data: state });
 });
 
 const listEvolutionInstancesController = asyncHandler(async (req, res, next) => {
     const companyId = req.user.company;
-    const instances = await IntegrationService.listEvolutionInstances(companyId);
+    const instances = await integrationService.listEvolutionInstances(companyId);
     res.status(200).json({ success: true, data: instances });
 });
 
