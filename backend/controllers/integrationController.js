@@ -204,6 +204,21 @@ const saveLinkedFormsController = async (req, res) => {
     }
 };
 
+
+const createEvolutionInstanceController = asyncHandler(async (req, res, next) => {
+    const { instanceName } = req.body;
+    if (!instanceName) {
+        return next(new ErrorResponse('O nome da instância é obrigatório.', 400));
+    }
+    const companyId = req.user.company;
+    const creatingUserId = req.user._id;
+
+    const newInstance = await IntegrationService.createEvolutionInstance(instanceName, companyId, creatingUserId);
+    
+    res.status(201).json({ success: true, data: newInstance });
+});
+
+
 module.exports = {
     connectFacebookPage,
     getFacebookStatus,
@@ -212,5 +227,6 @@ module.exports = {
     listGoogleContactsController,
     importSelectedGoogleContactsController,
     listPageFormsController,
-    saveLinkedFormsController
+    saveLinkedFormsController,
+    createEvolutionInstanceController
 };

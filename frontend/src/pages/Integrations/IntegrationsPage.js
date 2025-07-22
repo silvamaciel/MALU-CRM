@@ -54,6 +54,34 @@ function IntegrationsPage() {
   const [selectedFormIds, setSelectedFormIds] = useState({});
   const [isSavingForms, setIsSavingForms] = useState(false);
 
+  // States Evolution API 
+
+  const [instanceName, setInstanceName] = useState('');
+  const [isCreatingInstance, setIsCreatingInstance] = useState(false);
+
+  const handleCreateInstance = async (e) => {
+        e.preventDefault();
+        if (!instanceName.trim()) {
+            toast.warn("Por favor, digite um nome para a instância.");
+            return;
+        }
+        setIsCreatingInstance(true);
+        try {
+            const newInstance = await createEvolutionInstanceApi(instanceName.trim());
+            toast.success(`Instância "${newInstance.instanceName}" criada com sucesso!`);
+            setInstanceName('');
+            // TODO: Adicionar a nova instância à lista de instâncias na tela
+            // ou chamar uma função para recarregar os dados das integrações.
+        } catch (error) {
+            toast.error(error.error || error.message || "Falha ao criar instância.");
+        } finally {
+            setIsCreatingInstance(false);
+        }
+  };
+
+  // Fim do Evolutoin Api
+
+
   // Persisted Facebook Connection Status
   const [persistedFbConnection, setPersistedFbConnection] = useState({
     isConnected: false,
@@ -899,6 +927,34 @@ function IntegrationsPage() {
         </div>
 
         {/* Placeholder Cards */}
+        <div className="integration-card">
+                    <div className="integration-header">
+                        <img src="/path/to/whatsapp-icon.png" alt="WhatsApp Icon" className="integration-icon" />
+                        <div className="integration-info">
+                            <h3>WhatsApp (Evolution API)</h3>
+                            <p>Conecte uma instância do WhatsApp para enviar e receber mensagens.</p>
+                        </div>
+                    </div>
+                    <div className="integration-body">
+                        {/* No futuro, aqui você listaria as instâncias existentes */}
+                        <p>Nenhuma instância conectada.</p>
+                    </div>
+                    <div className="integration-footer">
+                        <form onSubmit={handleCreateInstance} className="create-instance-form">
+                            <input
+                                type="text"
+                                value={instanceName}
+                                onChange={(e) => setInstanceName(e.target.value)}
+                                placeholder="Nome da nova instância (ex: comercial)"
+                                disabled={isCreatingInstance}
+                            />
+                            <button type="submit" className="button primary-button" disabled={isCreatingInstance}>
+                                {isCreatingInstance ? 'Criando...' : 'Criar Instância'}
+                            </button>
+                        </form>
+                    </div>
+        </div>
+
         <div className="integration-card placeholder">
           <h2>WhatsApp Business API</h2>
           <p>

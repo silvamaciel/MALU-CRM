@@ -165,3 +165,18 @@ export const saveLinkedFacebookFormsApi = async (pageId, linkedFormsArray) => {
         throw error.response?.data || new Error('Falha ao salvar seleção de formulários.');
     }
 };
+
+
+/**
+ * Solicita a criação de uma nova instância da Evolution API.
+ * @param {string} instanceName - O nome da instância a ser criada.
+ */
+export const createEvolutionInstanceApi = async (instanceName) => {
+    try {
+        const response = await axiosInstance.post('/integrations/evolution/create-instance', { instanceName });
+        return response.data.data;
+    } catch (error) {
+        console.error("Erro ao criar instância da Evolution API:", error.response?.data || error.message);
+        throw error.response?.data || new Error("Falha ao criar a instância.");
+    }
+};

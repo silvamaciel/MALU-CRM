@@ -755,6 +755,74 @@ const saveLinkedFacebookForms = async (companyId, pageId, selectedForms) => {
   }
 };
 
+/**
+ * Cria uma nova instância na Evolution API e a salva no banco de dados do CRM.
+ * @param {string} instanceName - O nome desejado para a nova instância.
+ * @param {string} companyId - ID da empresa.
+ * @param {string} creatingUserId - ID do usuário que está criando.
+ * @returns {Promise<EvolutionInstance>} A instância salva no banco do CRM.
+ */
+const createEvolutionInstance = async (instanceName, companyId, creatingUserId) => {
+    console.log(`[IntegSvc Evolution] Tentando criar instância '${instanceName}' para Company: ${companyId}`);
+
+    const { EVOLUTION_API_URL, EVOLUTION_API_KEY } = process.env;
+    if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) {
+        throw new Error("A URL e a Chave da Evolution API não estão configuradas no servidor.");
+    }
+
+    // Verifica se já existe uma instância com este nome para a empresa
+    const existingInstance = await EvolutionInstance.findOne({ instanceName, company: companyId });
+    if (existingInstance) {
+        throw new Error(`Uma instância com o nome '${instanceName}' já existe para esta empresa.`);
+    }
+
+    try {
+        // --- 1. Chama a API Externa da Evolution ---
+        const response = await axios.post(
+            `${EVOLUTION_API_URL}/instance/create`,
+            {
+                instanceName: instanceName,
+                qrcode: true // Pede para gerar o QR Code automaticamente
+            },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': EVOLUTION_API_KEY
+                }
+            }
+        );
+
+        const evolutionData = response.data;
+        console.log("[IntegSvc Evolution] Resposta da Evolution API:", evolutionData);
+
+        if (!evolutionData.instance || !evolutionData.hash?.apikey) {
+            throw new Error("A resposta da Evolution API foi inválida ou não continha os dados necessários.");
+        }
+
+        // --- 2. Salva os dados da instância no nosso banco de dados ---
+        const newInstance = new EvolutionInstance({
+            instanceName: evolutionData.instance.instanceName,
+            instanceId: evolutionData.instance.instanceId,
+            apiKey: evolutionData.hash.apikey,
+            status: evolutionData.instance.status,
+            ownerNumber: evolutionData.instance.number || null,
+            company: companyId,
+            createdBy: creatingUserId
+        });
+
+        await newInstance.save();
+        console.log(`[IntegSvc Evolution] Instância '${newInstance.instanceName}' salva no DB com ID: ${newInstance._id}`);
+
+        return newInstance;
+
+    } catch (error) {
+        const errorMsg = error.response?.data?.message || error.message || "Erro desconhecido ao criar instância.";
+        console.error("[IntegSvc Evolution] Erro ao criar instância na Evolution API:", error.response?.data || error);
+        throw new Error(errorMsg);
+    }
+};
+
+
 
 module.exports = {
   connectFacebookPageIntegration,
@@ -764,5 +832,6 @@ module.exports = {
   listGoogleContacts,
   processSelectedGoogleContacts,
   listFormsForFacebookPage,
-  saveLinkedFacebookForms
+  saveLinkedFacebookForms,
+  createEvolutionInstance
 };
