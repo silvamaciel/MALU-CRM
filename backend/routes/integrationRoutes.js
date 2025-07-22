@@ -25,6 +25,9 @@ router.post('/facebook/pages/:pageId/linked-forms', protect, integrationControll
 
 router.post('/evolution/create-instance', protect, authorize(['admin']), integrationController.createEvolutionInstanceController);
 
+router.get('/evolution/instance/:instanceId/status', protect, authorize(['admin']), integrationController.getEvolutionInstanceStatusController);
+
+router.get('/evolution/instances', protect, authorize(['admin']), IntegrationsController.listEvolutionInstancesController);
 
 
 

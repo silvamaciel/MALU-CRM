@@ -180,3 +180,32 @@ export const createEvolutionInstanceApi = async (instanceName) => {
         throw error.response?.data || new Error("Falha ao criar a instância.");
     }
 };
+
+/**
+ * 
+ * @param {string} instanceId 
+ * @returns 
+ */
+
+export const getEvolutionInstanceStatusApi = async (instanceId) => {
+    try {
+        const response = await axiosInstance.get(`/integrations/evolution/instance/${instanceId}/status`);
+        return response.data.data;
+    } catch (error) {
+        console.error(`Erro ao buscar status da instância ${instanceId}:`, error.response?.data || error.message);
+        throw error.response?.data || new Error("Falha ao buscar status da instância.");
+    }
+};
+
+/**
+ * Busca a lista de instâncias da Evolution API salvas no CRM.
+ */
+export const listEvolutionInstancesApi = async () => {
+    try {
+        const response = await axiosInstance.get('/integrations/evolution/instances');
+        return response.data.data;
+    } catch (error) {
+        console.error("Erro ao listar instâncias da Evolution API:", error.response?.data || error.message);
+        throw error.response?.data || new Error("Falha ao carregar as instâncias.");
+    }
+};

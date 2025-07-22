@@ -13,6 +13,9 @@ import {
   processSelectedGoogleContactsApi,
   listFacebookPageFormsApi,
   saveLinkedFacebookFormsApi,
+  createEvolutionInstanceApi,
+  getEvolutionInstanceStatusApi,
+  listEvolutionInstancesApi
 } from "../../api/integrations";
 import "./IntegrationsPage.css";
 
@@ -59,25 +62,61 @@ function IntegrationsPage() {
   const [instanceName, setInstanceName] = useState('');
   const [isCreatingInstance, setIsCreatingInstance] = useState(false);
 
+  const [evolutionInstances, setEvolutionInstances] = useState([]);
+  const [selectedInstanceForQR, setSelectedInstanceForQR] = useState(null);
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+  const [loadingInstances, setLoadingInstances] = useState(false);
+
+
+
   const handleCreateInstance = async (e) => {
-        e.preventDefault();
-        if (!instanceName.trim()) {
-            toast.warn("Por favor, digite um nome para a instância.");
-            return;
-        }
-        setIsCreatingInstance(true);
-        try {
-            const newInstance = await createEvolutionInstanceApi(instanceName.trim());
-            toast.success(`Instância "${newInstance.instanceName}" criada com sucesso!`);
-            setInstanceName('');
-            // TODO: Adicionar a nova instância à lista de instâncias na tela
-            // ou chamar uma função para recarregar os dados das integrações.
-        } catch (error) {
-            toast.error(error.error || error.message || "Falha ao criar instância.");
-        } finally {
-            setIsCreatingInstance(false);
-        }
+    e.preventDefault();
+    if (!instanceName.trim()) {
+      toast.warn("Por favor, digite um nome para a instância.");
+      return;
+    }
+    setIsCreatingInstance(true);
+    try {
+      const newInstance = await createEvolutionInstanceApi(instanceName.trim());
+      toast.success(`Instância "${newInstance.instanceName}" criada com sucesso!`);
+      setInstanceName('');
+      // TODO: Adicionar a nova instância à lista de instâncias na tela
+      // ou chamar uma função para recarregar os dados das integrações.
+    } catch (error) {
+      toast.error(error.error || error.message || "Falha ao criar instância.");
+    } finally {
+      setIsCreatingInstance(false);
+    }
   };
+
+
+  const fetchIntegrations = async () => {
+    setLoadingInstances(true);
+    try {
+      const instancesData = await listEvolutionInstancesApi();
+      setEvolutionInstances(instancesData || []);
+    } catch (error) {
+      toast.error("Falha ao carregar instâncias do WhatsApp.");
+    } finally {
+      setLoadingInstances(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchIntegrations();
+  }, []);
+
+  const handleCreateInstanceSuccess = () => {
+    fetchIntegrations(); // Recarrega a lista após criar uma nova
+  };
+
+  const openQRModal = (instance) => {
+    setSelectedInstanceForQR(instance);
+    setIsQRModalOpen(true);
+  };
+
+
+
 
   // Fim do Evolutoin Api
 
@@ -688,236 +727,235 @@ function IntegrationsPage() {
           {isLoadingStatus ? (
             <p>Verificando status da conexão com Facebook...</p>
           ) : // 2. Se NÃO estiver num fluxo ativo de login/seleção de página do FB (fbUserData é null)
-          !fbUserData ? (
-            persistedFbConnection.isConnected ? (
-              // 2a. JÁ CONECTADO: Mostra status, opções de Reconectar/Desconectar e lista de Formulários
-              <div>
-                <p
-                  style={{
-                    color: "green",
-                    fontWeight: "bold",
-                    marginBottom: "0.5rem",
-                  }}
-                >
-                  ✓ Conectado à Página:{" "}
-                  {persistedFbConnection.pageName ||
-                    persistedFbConnection.pageId}
-                </p>
-                <p>
-                  <small>
-                    Para alterar a página, reconectar sua conta ou configurar
-                    formulários, use as opções abaixo.
-                  </small>
-                </p>
-
-                <div
-                  style={{
-                    marginTop: "1rem",
-                    display: "flex",
-                    gap: "10px",
-                    flexWrap: "wrap",
-                    marginBottom: "1.5rem",
-                  }}
-                >
-                  <FacebookLogin
-                    appId={facebookAppId || "FB_APP_ID_NOT_CONFIGURED"}
-                    autoLoad={false}
-                    scope="pages_show_list,pages_manage_metadata,leads_retrieval,pages_read_engagement,ads_management,pages_manage_ads"
-                    onSuccess={handleFacebookResponse} // Mesmo handler para iniciar fluxo
-                    onFail={(error) => {
-                      console.error("Facebook Reconnect/Change Failed!", error);
-                      setFbError(
-                        error?.status ||
-                          "Falha ao tentar reconectar com Facebook."
-                      );
-                      setIsConnectingFb(false);
-                    }}
-                    render={(renderProps) => (
-                      <button
-                        onClick={() => {
-                          setIsConnectingFb(true);
-                          renderProps.onClick();
-                        }}
-                        disabled={
-                          isConnectingFb || isDisconnectingFb || isSavingForms
-                        }
-                        className="button facebook-connect-button"
-                      >
-                        {isConnectingFb && !isFetchingPages
-                          ? "Aguarde..."
-                          : "Reconectar / Alterar Página"}
-                      </button>
-                    )}
-                  />
-                  <button
-                    onClick={handleDisconnectFacebookPage}
-                    className="button delete-button"
-                    disabled={
-                      isDisconnectingFb || isConnectingFb || isSavingForms
-                    }
-                    style={{ backgroundColor: "#dc3545" }}
-                  >
-                    {isDisconnectingFb
-                      ? "Desconectando..."
-                      : "Desconectar Página"}
-                  </button>
-                </div>
-
-                {/* LISTA DE FORMULÁRIOS E BOTÃO SALVAR */}
-                {fbFormPermissionError ? (
+            !fbUserData ? (
+              persistedFbConnection.isConnected ? (
+                // 2a. JÁ CONECTADO: Mostra status, opções de Reconectar/Desconectar e lista de Formulários
+                <div>
                   <p
                     style={{
-                      marginTop: "1rem",
-                      color: "#FFA500",
+                      color: "green",
                       fontWeight: "bold",
-                    }}
-                  >
-                    {fbFormPermissionError}
-                  </p>
-                ) : isLoadingPageForms ? (
-                  <p style={{ marginTop: "1rem" }}>
-                    Carregando formulários da página...
-                  </p>
-                ) : pageForms.length > 0 ? (
-                  <div className="form-selection-section">
-                    <h4>Vincular Formulários de Lead Ad Ativos:</h4>
-                    <ul className="forms-list-modal">
-                      {pageForms.map((form) => (
-                        <li key={form.id}>
-                          <input
-                            type="checkbox"
-                            id={`fbform-${form.id}`}
-                            checked={!!selectedFormIds[form.id]}
-                            onChange={() => handleFormSelectionChange(form.id)}
-                            disabled={isSavingForms}
-                          />
-                          <label htmlFor={`fbform-${form.id}`}>
-                            {form.name}{" "}
-                            <small>
-                              (ID: {form.id} | Status: {form.status})
-                            </small>
-                          </label>
-                        </li>
-                      ))}
-                    </ul>
-                    <button
-                      onClick={handleSaveFormSelection}
-                      className="button submit-button"
-                      style={{ marginTop: "0.5rem" }}
-                      disabled={
-                        isSavingForms ||
-                        Object.values(selectedFormIds).filter(Boolean)
-                          .length === 0
-                      }
-                    >
-                      {isSavingForms
-                        ? "Salvando..."
-                        : `Salvar Seleção (${
-                            Object.values(selectedFormIds).filter(Boolean)
-                              .length
-                          })`}
-                    </button>
-                  </div>
-                ) : (
-                  persistedFbConnection.isConnected && (
-                    <p style={{ marginTop: "1rem", color: "#6c757d" }}>
-                      Nenhum formulário de Lead Ad encontrado para esta página.
-                    </p>
-                  )
-                )}
-              </div>
-            ) : (
-              // 2b. NÃO CONECTADO AINDA (e não em fluxo de login): Mostra botão para conectar pela primeira vez
-              <FacebookLogin
-                appId={facebookAppId || "FB_APP_ID_NOT_CONFIGURED"}
-                autoLoad={false}
-                scope="pages_show_list,pages_manage_metadata,leads_retrieval,pages_read_engagement,ads_management,pages_manage_ads"
-                onSuccess={handleFacebookResponse}
-                onFail={(error) => {
-                  console.error("Facebook Login Failed!", error);
-                  setFbError(error?.status || "Falha no login com Facebook.");
-                  setIsConnectingFb(false);
-                }}
-                render={(renderProps) => (
-                  <button
-                    onClick={() => {
-                      setIsConnectingFb(true);
-                      renderProps.onClick();
-                    }}
-                    disabled={isConnectingFb || !facebookAppId}
-                    className="button facebook-connect-button"
-                  >
-                    {isConnectingFb
-                      ? "Aguarde..."
-                      : "Conectar Conta do Facebook"}
-                  </button>
-                )}
-              />
-            )
-          ) : (
-            // 3. SE fbUserData EXISTE (usuário acabou de logar/autorizar no FB e estamos no fluxo de seleção de página ANTES de confirmar)
-            <div>
-              <p
-                style={{
-                  color: "#333",
-                  fontWeight: "500",
-                  marginBottom: "0.5rem",
-                }}
-              >
-                Logado no Facebook como: {fbUserData.name}!
-              </p>
-              {isFetchingPages ? (
-                <p>Buscando suas Páginas do Facebook...</p>
-              ) : facebookPages.length > 0 ? (
-                <div className="form-group" style={{ marginTop: "1rem" }}>
-                  <label
-                    htmlFor="facebookPageSelect"
-                    style={{
-                      fontWeight: "600",
-                      display: "block",
                       marginBottom: "0.5rem",
                     }}
                   >
-                    Selecione a Página do Facebook para conectar ao CRM:
-                  </label>
-                  <select
-                    id="facebookPageSelect"
-                    value={selectedPageId}
-                    onChange={(e) => setSelectedPageId(e.target.value)}
-                    disabled={isConnectingFb}
+                    ✓ Conectado à Página:{" "}
+                    {persistedFbConnection.pageName ||
+                      persistedFbConnection.pageId}
+                  </p>
+                  <p>
+                    <small>
+                      Para alterar a página, reconectar sua conta ou configurar
+                      formulários, use as opções abaixo.
+                    </small>
+                  </p>
+
+                  <div
                     style={{
-                      width: "100%",
-                      padding: "0.6rem",
-                      marginTop: "0.5rem",
-                      marginBottom: "1rem",
-                      borderRadius: "4px",
-                      border: "1px solid #ccc",
+                      marginTop: "1rem",
+                      display: "flex",
+                      gap: "10px",
+                      flexWrap: "wrap",
+                      marginBottom: "1.5rem",
                     }}
                   >
-                    {facebookPages.map((page) => (
-                      <option key={page.id} value={page.id}>
-                        {page.name} (ID: {page.id})
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={handleConnectSelectedPage}
-                    className="button submit-button"
-                    disabled={isConnectingFb || !selectedPageId}
-                  >
-                    {isConnectingFb
-                      ? "Confirmando..."
-                      : "Confirmar Conexão Desta Página"}
-                  </button>
+                    <FacebookLogin
+                      appId={facebookAppId || "FB_APP_ID_NOT_CONFIGURED"}
+                      autoLoad={false}
+                      scope="pages_show_list,pages_manage_metadata,leads_retrieval,pages_read_engagement,ads_management,pages_manage_ads"
+                      onSuccess={handleFacebookResponse} // Mesmo handler para iniciar fluxo
+                      onFail={(error) => {
+                        console.error("Facebook Reconnect/Change Failed!", error);
+                        setFbError(
+                          error?.status ||
+                          "Falha ao tentar reconectar com Facebook."
+                        );
+                        setIsConnectingFb(false);
+                      }}
+                      render={(renderProps) => (
+                        <button
+                          onClick={() => {
+                            setIsConnectingFb(true);
+                            renderProps.onClick();
+                          }}
+                          disabled={
+                            isConnectingFb || isDisconnectingFb || isSavingForms
+                          }
+                          className="button facebook-connect-button"
+                        >
+                          {isConnectingFb && !isFetchingPages
+                            ? "Aguarde..."
+                            : "Reconectar / Alterar Página"}
+                        </button>
+                      )}
+                    />
+                    <button
+                      onClick={handleDisconnectFacebookPage}
+                      className="button delete-button"
+                      disabled={
+                        isDisconnectingFb || isConnectingFb || isSavingForms
+                      }
+                      style={{ backgroundColor: "#dc3545" }}
+                    >
+                      {isDisconnectingFb
+                        ? "Desconectando..."
+                        : "Desconectar Página"}
+                    </button>
+                  </div>
+
+                  {/* LISTA DE FORMULÁRIOS E BOTÃO SALVAR */}
+                  {fbFormPermissionError ? (
+                    <p
+                      style={{
+                        marginTop: "1rem",
+                        color: "#FFA500",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      {fbFormPermissionError}
+                    </p>
+                  ) : isLoadingPageForms ? (
+                    <p style={{ marginTop: "1rem" }}>
+                      Carregando formulários da página...
+                    </p>
+                  ) : pageForms.length > 0 ? (
+                    <div className="form-selection-section">
+                      <h4>Vincular Formulários de Lead Ad Ativos:</h4>
+                      <ul className="forms-list-modal">
+                        {pageForms.map((form) => (
+                          <li key={form.id}>
+                            <input
+                              type="checkbox"
+                              id={`fbform-${form.id}`}
+                              checked={!!selectedFormIds[form.id]}
+                              onChange={() => handleFormSelectionChange(form.id)}
+                              disabled={isSavingForms}
+                            />
+                            <label htmlFor={`fbform-${form.id}`}>
+                              {form.name}{" "}
+                              <small>
+                                (ID: {form.id} | Status: {form.status})
+                              </small>
+                            </label>
+                          </li>
+                        ))}
+                      </ul>
+                      <button
+                        onClick={handleSaveFormSelection}
+                        className="button submit-button"
+                        style={{ marginTop: "0.5rem" }}
+                        disabled={
+                          isSavingForms ||
+                          Object.values(selectedFormIds).filter(Boolean)
+                            .length === 0
+                        }
+                      >
+                        {isSavingForms
+                          ? "Salvando..."
+                          : `Salvar Seleção (${Object.values(selectedFormIds).filter(Boolean)
+                            .length
+                          })`}
+                      </button>
+                    </div>
+                  ) : (
+                    persistedFbConnection.isConnected && (
+                      <p style={{ marginTop: "1rem", color: "#6c757d" }}>
+                        Nenhum formulário de Lead Ad encontrado para esta página.
+                      </p>
+                    )
+                  )}
                 </div>
               ) : (
-                <p style={{ marginTop: "1rem", color: "#6c757d" }}>
-                  Nenhuma página do Facebook foi encontrada para sua conta ou as
-                  permissões necessárias não foram concedidas.
+                // 2b. NÃO CONECTADO AINDA (e não em fluxo de login): Mostra botão para conectar pela primeira vez
+                <FacebookLogin
+                  appId={facebookAppId || "FB_APP_ID_NOT_CONFIGURED"}
+                  autoLoad={false}
+                  scope="pages_show_list,pages_manage_metadata,leads_retrieval,pages_read_engagement,ads_management,pages_manage_ads"
+                  onSuccess={handleFacebookResponse}
+                  onFail={(error) => {
+                    console.error("Facebook Login Failed!", error);
+                    setFbError(error?.status || "Falha no login com Facebook.");
+                    setIsConnectingFb(false);
+                  }}
+                  render={(renderProps) => (
+                    <button
+                      onClick={() => {
+                        setIsConnectingFb(true);
+                        renderProps.onClick();
+                      }}
+                      disabled={isConnectingFb || !facebookAppId}
+                      className="button facebook-connect-button"
+                    >
+                      {isConnectingFb
+                        ? "Aguarde..."
+                        : "Conectar Conta do Facebook"}
+                    </button>
+                  )}
+                />
+              )
+            ) : (
+              // 3. SE fbUserData EXISTE (usuário acabou de logar/autorizar no FB e estamos no fluxo de seleção de página ANTES de confirmar)
+              <div>
+                <p
+                  style={{
+                    color: "#333",
+                    fontWeight: "500",
+                    marginBottom: "0.5rem",
+                  }}
+                >
+                  Logado no Facebook como: {fbUserData.name}!
                 </p>
-              )}
-            </div>
-          )}
+                {isFetchingPages ? (
+                  <p>Buscando suas Páginas do Facebook...</p>
+                ) : facebookPages.length > 0 ? (
+                  <div className="form-group" style={{ marginTop: "1rem" }}>
+                    <label
+                      htmlFor="facebookPageSelect"
+                      style={{
+                        fontWeight: "600",
+                        display: "block",
+                        marginBottom: "0.5rem",
+                      }}
+                    >
+                      Selecione a Página do Facebook para conectar ao CRM:
+                    </label>
+                    <select
+                      id="facebookPageSelect"
+                      value={selectedPageId}
+                      onChange={(e) => setSelectedPageId(e.target.value)}
+                      disabled={isConnectingFb}
+                      style={{
+                        width: "100%",
+                        padding: "0.6rem",
+                        marginTop: "0.5rem",
+                        marginBottom: "1rem",
+                        borderRadius: "4px",
+                        border: "1px solid #ccc",
+                      }}
+                    >
+                      {facebookPages.map((page) => (
+                        <option key={page.id} value={page.id}>
+                          {page.name} (ID: {page.id})
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={handleConnectSelectedPage}
+                      className="button submit-button"
+                      disabled={isConnectingFb || !selectedPageId}
+                    >
+                      {isConnectingFb
+                        ? "Confirmando..."
+                        : "Confirmar Conexão Desta Página"}
+                    </button>
+                  </div>
+                ) : (
+                  <p style={{ marginTop: "1rem", color: "#6c757d" }}>
+                    Nenhuma página do Facebook foi encontrada para sua conta ou as
+                    permissões necessárias não foram concedidas.
+                  </p>
+                )}
+              </div>
+            )}
           {/* Exibe erro geral do Facebook, se houver (não o de permissão de formulário que já é tratado acima) */}
           {fbError && !fbFormPermissionError && (
             <p className="error-message" style={{ marginTop: "1rem" }}>
@@ -928,31 +966,49 @@ function IntegrationsPage() {
 
         {/* Placeholder Cards */}
         <div className="integration-card">
-                    <div className="integration-header">
-                        <img src="/path/to/whatsapp-icon.png" alt="WhatsApp Icon" className="integration-icon" />
-                        <div className="integration-info">
-                            <h3>WhatsApp (Evolution API)</h3>
-                            <p>Conecte uma instância do WhatsApp para enviar e receber mensagens.</p>
-                        </div>
+          <div className="integration-header">
+            {/* Use um ícone local ou remova a tag <img> se não tiver um */}
+            <div className="integration-info">
+              <h3>WhatsApp (Evolution API)</h3>
+              <p>Conecte e gerencie instâncias do WhatsApp para automações.</p>
+            </div>
+          </div>
+          <div className="integration-body">
+            {loadingInstances ? (
+              <p>Carregando instâncias...</p>
+            ) : evolutionInstances.length > 0 ? (
+              <ul className="instance-list">
+                {evolutionInstances.map(instance => (
+                  <li key={instance._id}>
+                    <div className="instance-info">
+                      <span className="instance-name">{instance.instanceName}</span>
+                      <span className={`instance-status status-${instance.status}`}>{instance.status}</span>
                     </div>
-                    <div className="integration-body">
-                        {/* No futuro, aqui você listaria as instâncias existentes */}
-                        <p>Nenhuma instância conectada.</p>
-                    </div>
-                    <div className="integration-footer">
-                        <form onSubmit={handleCreateInstance} className="create-instance-form">
-                            <input
-                                type="text"
-                                value={instanceName}
-                                onChange={(e) => setInstanceName(e.target.value)}
-                                placeholder="Nome da nova instância (ex: comercial)"
-                                disabled={isCreatingInstance}
-                            />
-                            <button type="submit" className="button primary-button" disabled={isCreatingInstance}>
-                                {isCreatingInstance ? 'Criando...' : 'Criar Instância'}
-                            </button>
-                        </form>
-                    </div>
+                    <button onClick={() => openQRModal(instance)} className="button small-button">
+                      Conectar / Ver QR Code
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>Nenhuma instância do WhatsApp foi criada ainda.</p>
+            )}
+          </div>
+          <div className="integration-footer">
+            <h4>Criar Nova Instância</h4>
+            <form onSubmit={handleCreateInstance} className="create-instance-form">
+              <input
+                type="text"
+                value={instanceName}
+                onChange={(e) => setInstanceName(e.target.value)}
+                placeholder="Nome da nova instância (ex: comercial)"
+                disabled={isCreatingInstance}
+              />
+              <button type="submit" className="button primary-button" disabled={isCreatingInstance}>
+                {isCreatingInstance ? 'Criando...' : 'Criar Instância'}
+              </button>
+            </form>
+          </div>
         </div>
 
         <div className="integration-card placeholder">
@@ -1038,11 +1094,10 @@ function IntegrationsPage() {
                     >
                       {isProcessingImport
                         ? "Importando..."
-                        : `Importar Selecionados (${
-                            Object.keys(selectedGoogleContacts).filter(
-                              (k) => selectedGoogleContacts[k]
-                            ).length
-                          })`}
+                        : `Importar Selecionados (${Object.keys(selectedGoogleContacts).filter(
+                          (k) => selectedGoogleContacts[k]
+                        ).length
+                        })`}
                     </button>
                     <button
                       type="button"
@@ -1060,6 +1115,19 @@ function IntegrationsPage() {
             </div>
           </div>
         )}
+
+        <QRCodeModal
+          isOpen={isQRModalOpen}
+          onClose={() => setIsQRModalOpen(false)}
+          instance={selectedInstanceForQR}
+          onConnected={() => {
+            toast.success("WhatsApp conectado com sucesso!");
+            setIsQRModalOpen(false);
+            fetchIntegrations(); // Recarrega a lista para mostrar o novo status
+          }}
+        />
+
+
       </div>
     </div>
   );

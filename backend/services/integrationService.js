@@ -9,6 +9,8 @@ const LeadService = require('./LeadService');
 const Origem = require('../models/origem'); 
 const { PhoneNumberUtil, PhoneNumberFormat: PNF } = require('google-libphonenumber');
 const phoneUtil = PhoneNumberUtil.getInstance();
+const EvolutionInstance = require('../models/EvolutionInstance');
+
 
 
 
@@ -823,6 +825,99 @@ const createEvolutionInstance = async (instanceName, companyId, creatingUserId) 
 };
 
 
+/**
+ * Busca o status de conexão de uma instância específica da Evolution API.
+ * Se a instância não estiver conectada, tenta obter o QR Code.
+ * @param {string} instanceId - O _id da instância no NOSSO banco de dados.
+ * @param {string} companyId - ID da empresa para segurança.
+ * @returns {Promise<object>} Objeto com o status e, se aplicável, o QR Code em base64.
+ */
+const getEvolutionInstanceConnectionState = async (instanceId, companyId) => {
+    console.log(`[IntegSvc Evolution] Verificando estado da instância: ${instanceId} para Company: ${companyId}`);
+
+    const { EVOLUTION_API_URL } = process.env;
+    if (!EVOLUTION_API_URL) {
+        throw new Error("A URL da Evolution API não está configurada no servidor.");
+    }
+    
+    // 1. Busca os dados da instância no nosso DB para pegar o nome e a chave de API dela.
+    const crmInstance = await EvolutionInstance.findOne({ _id: instanceId, company: companyId });
+    if (!crmInstance) {
+        throw new Error("Instância não encontrada ou não pertence a esta empresa.");
+    }
+
+    try {
+        // 2. Chama a API Externa da Evolution para pegar o estado ATUAL da instância.
+        const response = await axios.get(
+            `${EVOLUTION_API_URL}/instance/connectionState/${crmInstance.instanceName}`,
+            {
+                headers: {
+                    'apikey': crmInstance.apiKey // Usa a API Key específica da instância
+                }
+            }
+        );
+
+        const connectionState = response.data;
+
+        // 3. Se o estado for 'open' (conectado), apenas retorna o status.
+        if (connectionState.state === 'open') {
+            console.log(`[IntegSvc Evolution] Instância '${crmInstance.instanceName}' está conectada.`);
+            return {
+                status: 'CONECTADO',
+                qrcode: null,
+                instanceName: crmInstance.instanceName
+            };
+        }
+
+        // 4. Se não estiver conectada, busca o QR Code. A Evolution API retorna o QR Code em base64.
+        console.log(`[IntegSvc Evolution] Instância '${crmInstance.instanceName}' não conectada. Buscando QR Code...`);
+        const qrCodeResponse = await axios.get(
+            `${EVOLUTION_API_URL}/instance/connect/${crmInstance.instanceName}`,
+            {
+                headers: {
+                    'apikey': crmInstance.apiKey
+                }
+            }
+        );
+        
+        // O QR Code vem no campo 'base64' da resposta
+        const qrCodeBase64 = qrCodeResponse.data?.base64;
+        if (!qrCodeBase64) {
+            throw new Error("Não foi possível obter o QR Code da Evolution API.");
+        }
+
+        console.log(`[IntegSvc Evolution] QR Code para '${crmInstance.instanceName}' obtido.`);
+        return {
+            status: 'AGUARDANDO_QR_CODE',
+            qrcode: qrCodeBase64,
+            instanceName: crmInstance.instanceName
+        };
+
+    } catch (error) {
+        const errorMsg = error.response?.data?.message || error.message || "Erro desconhecido ao verificar instância.";
+        console.error(`[IntegSvc Evolution] Erro ao verificar estado da instância '${crmInstance.instanceName}':`, error.response?.data || error);
+        throw new Error(errorMsg);
+    }
+};
+
+/**
+ * Lista todas as instâncias da Evolution API salvas para uma empresa específica.
+ * @param {string} companyId - ID da empresa.
+ * @returns {Promise<Array>} Um array com as instâncias encontradas.
+ */
+const listEvolutionInstances = async (companyId) => {
+    if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+        throw new Error("ID da empresa inválido.");
+    }
+    console.log(`[IntegSvc Evolution] Listando instâncias para Company: ${companyId}`);
+    
+    const instances = await EvolutionInstance.find({ company: companyId })
+        .sort({ createdAt: -1 })
+        .lean();
+        
+    return instances;
+};
+
 
 module.exports = {
   connectFacebookPageIntegration,
@@ -833,5 +928,7 @@ module.exports = {
   processSelectedGoogleContacts,
   listFormsForFacebookPage,
   saveLinkedFacebookForms,
-  createEvolutionInstance
+  createEvolutionInstance,
+  getEvolutionInstanceConnectionState,
+  listEvolutionInstances
 };
