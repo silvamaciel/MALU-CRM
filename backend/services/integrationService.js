@@ -772,7 +772,6 @@ const createEvolutionInstance = async (instanceName, companyId, creatingUserId) 
         throw new Error("A URL e a Chave da Evolution API não estão configuradas no servidor.");
     }
 
-    // Verifica se já existe uma instância com este nome para a empresa
     const existingInstance = await EvolutionInstance.findOne({ instanceName, company: companyId });
     if (existingInstance) {
         throw new Error(`Uma instância com o nome '${instanceName}' já existe para esta empresa.`);
@@ -784,7 +783,8 @@ const createEvolutionInstance = async (instanceName, companyId, creatingUserId) 
             `${EVOLUTION_API_URL}/instance/create`,
             {
                 instanceName: instanceName,
-                qrcode: true // Pede para gerar o QR Code automaticamente
+                qrcode: true,
+                integration: "WHATSAPP-BAILEYS"
             },
             {
                 headers: {
@@ -798,7 +798,7 @@ const createEvolutionInstance = async (instanceName, companyId, creatingUserId) 
         console.log("[IntegSvc Evolution] Resposta da Evolution API:", evolutionData);
 
         if (!evolutionData.instance || !evolutionData.hash?.apikey) {
-            throw new Error("A resposta da Evolution API foi inválida ou não continha os dados necessários.");
+            throw new Error("A resposta da Evolution API foi inválida.");
         }
 
         // --- 2. Salva os dados da instância no nosso banco de dados ---
@@ -818,7 +818,8 @@ const createEvolutionInstance = async (instanceName, companyId, creatingUserId) 
         return newInstance;
 
     } catch (error) {
-        const errorMsg = error.response?.data?.message || error.message || "Erro desconhecido ao criar instância.";
+        // O erro 'Invalid integration' será capturado aqui
+        const errorMsg = error.response?.data?.response?.message?.[0] || error.response?.data?.message || error.message || "Erro desconhecido ao criar instância.";
         console.error("[IntegSvc Evolution] Erro ao criar instância na Evolution API:", error.response?.data || error);
         throw new Error(errorMsg);
     }
