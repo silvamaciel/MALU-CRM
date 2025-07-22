@@ -194,3 +194,88 @@
     font-size: 0.85em;
     margin-top: 3px;
   }
+
+
+  /* Estilos para a lista de instâncias */
+.instance-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.instance-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.instance-list li:last-child {
+    border-bottom: none;
+}
+
+.instance-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.instance-name {
+    font-weight: 600;
+    color: #333;
+}
+
+/* VVVVV ESTILOS PARA O TOGGLE SWITCH VVVVV */
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px; /* Largura do switch */
+    height: 28px; /* Altura do switch */
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 28px; /* Borda arredondada */
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px; /* Tamanho da bolinha */
+    width: 20px; /* Tamanho da bolinha */
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #28a745; /* Cor verde quando ligado */
+}
+
+input:checked + .slider:before {
+    transform: translateX(22px); /* Move a bolinha para a direita */
+}
+
+.toggle-label {
+    margin-left: 8px;
+    font-size: 0.9em;
+    color: #555;
+    vertical-align: middle;
+}
