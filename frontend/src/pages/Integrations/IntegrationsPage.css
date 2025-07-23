@@ -46,7 +46,7 @@
 .integration-header,
 .integration-body,
 .integration-footer {
-    padding: 20px;
+    padding: 1px;
     align-items: center;
 }
 
@@ -79,7 +79,6 @@
 
 .integration-card ul {
     margin-bottom: 1.5rem;
-    padding-left: 1.2rem;
     font-size: 0.9em;
     color: #495057;
 }
