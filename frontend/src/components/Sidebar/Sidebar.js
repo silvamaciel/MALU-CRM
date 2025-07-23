@@ -29,6 +29,8 @@ function Sidebar({ userData, handleLogout, closeMobileSidebar }) {
                 <ul>
                     {/* <<< Adicionado onClick={handleLinkClick} >>> */}
                     <li><NavLink to="/dashboard" onClick={handleLinkClick} className={({isActive}) => isActive ? 'active' : ''}>Dashboard</NavLink></li>
+                    <li><NavLink to="/chat" onClick={handleLinkClick} className={({isActive}) => isActive ? 'active' : ''}>Chat</NavLink></li>
+
                     <li><NavLink to="/leads" onClick={handleLinkClick} className={({isActive}) => isActive ? 'active' : ''}>Leads</NavLink></li>
                     <li><NavLink to="/empreendimentos" onClick={handleLinkClick} className={({isActive}) => isActive || location.pathname.startsWith('/empreendimentos') ? 'active' : ''}>Empreendimentos</NavLink></li>
                      <li><NavLink to="/imoveis-avulsos" onClick={handleLinkClick} className={({isActive}) => isActive || location.pathname.startsWith('/imoveis-avulsos') ? 'active' : ''}>Imóveis Avulsos</NavLink></li>

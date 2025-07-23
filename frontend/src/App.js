@@ -34,6 +34,7 @@ import PropostaContratoDetailPage from './pages/PropostaContrato/PropostaContrat
 import ImovelListPage from './pages/ImovelAvulso/ImovelListPage/ImovelListPage';
 import ImovelFormPage from './pages/ImovelAvulso/ImovelFormPage/ImovelFormPage';
 import AgendaPage from './pages/AgendaPage/AgendaPage';
+import ChatPage from './pages/Chat/ChatPage';
 
 
 
@@ -98,6 +99,7 @@ function App() {
 
                 {/* Rotas Comuns */}
                 <Route path="dashboard" element={<DashboardPage />} />
+                <Route path="/chat" element={<ChatPage />} />
                 
                 <Route path="leads" element={<LeadListPage />} />
                 <Route path="leads/novo" element={<LeadFormPage />} />
@@ -120,8 +122,10 @@ function App() {
                 <Route path="/reservas" element={<ReservaListPage />} />
 
                 <Route path="/reservas/:reservaId/proposta-contrato/novo" element={<PropostaContratoFormPage />} />
-                <Route path="/propostas-contratos/:propostaContratoId" element={<PropostaContratoDetailPage />} />                <Route path="/propostas-contratos/:propostaContratoId/editar" element={<PropostaContratoFormPage />} />
+                <Route path="/propostas-contratos/:propostaContratoId" element={<PropostaContratoDetailPage />} />                
+                <Route path="/propostas-contratos/:propostaContratoId/editar" element={<PropostaContratoFormPage />} />
                 <Route path="/agenda" element={<AgendaPage/>} />
+
 
 
                 {/* Rotas Admin (Renderizadas condicionalmente DENTRO do Outlet) */}
