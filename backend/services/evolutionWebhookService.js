@@ -123,17 +123,25 @@ const processConnectionUpdate = async (payload) => {
     
     console.log(`[WebhookSvc] Recebido connection.update para instância '${instance}'. Novo status: ${newStatus}`);
 
-    const crmInstance = await EvolutionInstance.findOne({ instanceName: instance });
-    if (!crmInstance) {
-        console.log(`[WebhookSvc] Instância '${instance}' não encontrada no CRM. Status não atualizado.`);
-        return;
-    }
+    try {
+        // Busca a instância no nosso banco de dados pelo nome que veio no webhook
+        const crmInstance = await EvolutionInstance.findOne({ instanceName: instance });
+        
+        if (!crmInstance) {
+            console.log(`[WebhookSvc] Instância '${instance}' não encontrada no CRM. Status não atualizado.`);
+            return;
+        }
 
-    crmInstance.status = newStatus;
-    await crmInstance.save();
-    
-    console.log(`[WebhookSvc] Status da instância '${instance}' atualizado para '${newStatus}' no CRM.`);
+        crmInstance.status = newStatus;
+        await crmInstance.save();
+        
+        console.log(`[WebhookSvc] Status da instância '${instance}' atualizado para '${newStatus}' no CRM com sucesso.`);
+
+    } catch (error) {
+        console.error(`[WebhookSvc] ERRO ao tentar atualizar o status da instância '${instance}':`, error);
+    }
 };
+
 
 
 module.exports = {
