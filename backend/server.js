@@ -80,6 +80,7 @@ app.use('/api/agenda', require('./routes/agendaRoutes'));
 app.use('/api/integrations', require('./routes/integrationRoutes'));
 app.use('/api/webhooks', require('./routes/webhookRoutes'));
 
+app.use('/api/chat', require('./routes/chatRoutes'));
 
 
 
