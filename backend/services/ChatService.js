@@ -22,7 +22,7 @@ const getMessages = async (conversationId, companyId) => {
     if (!conversation) {
         throw new Error("Conversa não encontrada.");
     }
-    
+
     // Zera o contador de não lidas
     if (conversation.unreadCount > 0) {
         conversation.unreadCount = 0;
@@ -45,7 +45,7 @@ const sendMessage = async (conversationId, companyId, actorUserId, messageConten
     if (!crmInstance) {
         throw new Error("Nenhuma instância do WhatsApp está conectada e pronta para enviar mensagens para esta empresa.");
     }
-    
+
     try {
         // Usa o JID completo salvo na conversa, que é o que a ferramenta de teste está usando.
         const recipientJid = conversation.channelInternalId;
@@ -62,17 +62,15 @@ const sendMessage = async (conversationId, companyId, actorUserId, messageConten
                 delay: 1200,
                 presence: "composing"
             },
-            textMessage: {
-                text: messageContent
-            }
+            text: messageContent
         };
-        
+
         const response = await axios.post(
             `${process.env.EVOLUTION_API_URL}/message/sendText/${crmInstance.instanceName}`,
             payload,
             { headers: { 'apikey': crmInstance.apiKey } }
         );
-        
+
         // --- O resto da lógica para salvar a mensagem no seu banco continua a mesma ---
         const newMessage = new Message({
             conversation: conversation._id,
