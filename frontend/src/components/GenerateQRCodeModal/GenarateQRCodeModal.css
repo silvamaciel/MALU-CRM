@@ -1,73 +1,88 @@
-.qr-modal-overlay {
-  /* Posicionamento e Camada */
-  position: fixed; /* ESSENCIAL: Fixa o modal na tela do navegador */
+/* Estilos Genéricos para Modais - pode ser um arquivo global */
+
+.modal-overlay {
+  position: fixed;
   top: 0;
   left: 0;
-  width: 100vw; /* Ocupa 100% da largura da janela */
-  height: 100vh; /* Ocupa 100% da altura da janela */
-  z-index: 1050; /* Garante que fique acima de tudo (até da sidebar) */
-
-  /* Aparência e Centralização */
-  background-color: rgba(0, 0, 0, 0.75); /* Fundo escuro semitransparente */
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
-  
-  /* Animação */
-  animation: fadeIn 0.3s ease;
+  z-index: 1050;
+  padding: 1rem;
+  animation: modal-fade-in 0.3s ease;
 }
 
-.qr-modal-content {
-  background-color: #fff;
-  padding: 25px 30px;
+.modal-content {
+  background-color: white;
+  padding: 1.5rem 2rem;
   border-radius: 8px;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  max-width: 500px;
   width: 100%;
-  max-width: 450px;
-  text-align: center;
-  animation: slideInFromTop 0.4s ease;
+  animation: modal-slide-in 0.3s ease-out;
 }
 
-.qr-modal-body {
-  padding: 20px 0;
-  min-height: 250px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.qr-modal-body p {
-  margin: 0 0 15px 0;
-  color: #555;
-  line-height: 1.5;
-}
-
-.qr-modal-body img {
-  width: 100%;
-  max-width: 280px; /* Aumenta um pouco o tamanho do QR code */
-  height: auto;
-  border: 1px solid #ddd;
-  padding: 5px;
-  border-radius: 4px;
-}
-
-.qr-modal-footer {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid #eee;
-  text-align: right;
-}
-
-/* ... (seus estilos para .qr-success, etc.) */
-
-/* Animações */
-@keyframes fadeIn {
+@keyframes modal-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-@keyframes slideInFromTop {
-  from { transform: translateY(-50px); opacity: 0; }
+@keyframes modal-slide-in {
+  from { transform: translateY(-20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  font-size: 1.4em;
+  color: #333;
+  text-align: center;
+}
+
+.modal-body {
+    /* Estilos para o corpo do modal */
+    margin-bottom: 1.5rem;
+}
+
+.modal-body.text-center {
+    text-align: center;
+}
+
+.modal-body p {
+  color: #555;
+  line-height: 1.6;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.8rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+}
+
+/* Estilos específicos para o Modal do QR Code */
+.qr-code-image {
+    width: 100%;
+    max-width: 280px;
+    height: auto;
+    border: 1px solid #ddd;
+    padding: 5px;
+    border-radius: 4px;
+    margin: 10px auto;
+}
+
+.qr-success {
+    color: #28a745;
+    font-size: 1.5em;
+    font-weight: bold;
+}
+.qr-success p {
+    font-size: 0.8em;
+    color: #28a745;
 }

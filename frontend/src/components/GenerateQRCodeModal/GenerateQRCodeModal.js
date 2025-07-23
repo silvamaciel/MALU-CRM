@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getEvolutionInstanceStatusApi } from '../../api/integrations';
 
 function GenerateQRCodeModal({ isOpen, onClose, instance, onConnected }) {
- const [qrCode, setQrCode] = useState(null);
+    const [qrCode, setQrCode] = useState(null);
     const [status, setStatus] = useState('INICIAL'); // INICIAL, CARREGANDO, QR_CODE, CONECTADO
     const [error, setError] = useState('');
 
@@ -41,10 +41,10 @@ function GenerateQRCodeModal({ isOpen, onClose, instance, onConnected }) {
     if (!isOpen) return null;
 
     return (
-        <div className="qr-modal-overlay" onClick={onClose}>
-            <div className="qr-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                 <h3>Conectar WhatsApp à Instância: {instance.instanceName}</h3>
-                <div className="qr-modal-body">
+                <div className="modal-body text-center"> {/* Adiciona classes para centralizar */}
                     {status === 'INICIAL' && (
                         <>
                             <p>Clique no botão abaixo para gerar um novo QR Code.</p>
@@ -57,12 +57,12 @@ function GenerateQRCodeModal({ isOpen, onClose, instance, onConnected }) {
                     {status === 'QR_CODE' && (
                         <>
                             <p>Escaneie o QR Code abaixo com seu celular. Ele é válido por cerca de 30 segundos.</p>
-                            {qrCode && <img src={qrCode} alt="QR Code para conectar WhatsApp" />}
-                            <button onClick={fetchQRCode} className="button outline-button" style={{marginTop: '15px'}}>Gerar Novo QR Code</button>
+                            {qrCode && <img src={qrCode} alt="QR Code para conectar WhatsApp" className="qr-code-image" />}
+                            <button onClick={fetchQRCode} className="button outline-button" style={{ marginTop: '15px' }}>Gerar Novo QR Code</button>
                         </>
                     )}
                 </div>
-                <div className="qr-modal-footer">
+                <div className="modal-actions">
                     <button className="button cancel-button" onClick={onClose}>Fechar</button>
                 </div>
             </div>
