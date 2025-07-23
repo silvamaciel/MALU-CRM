@@ -33,17 +33,13 @@ const fixBrazilianMobileNumber = (phone) => {
  * @param {object} payload - O corpo do webhook.
  */
 const processMessageUpsert = async (payload) => {
-    // 1. Extração de Dados do Webhook
     const { instance, data } = payload;
     const message = data.message;
     const key = data.key;
-    const remoteJid = key?.remoteJid; // Este é o JID do chat (a outra pessoa ou grupo)
+    const remoteJid = key?.remoteJid;
 
-    if (!instance || !message || !remoteJid || !message.conversation) {
-        return; // Ignora eventos que não são mensagens de texto
-    }
+    if (!instance || !message || !remoteJid || !message.conversation) return;
 
-    // 2. Verifica a Configuração da Instância
     const isGroupMessage = remoteJid.endsWith('@g.us');
     const crmInstance = await EvolutionInstance.findOne({ instanceName: instance });
     if (!crmInstance) return;
@@ -58,36 +54,36 @@ const processMessageUpsert = async (payload) => {
     let messageDirection;
     let senderIdentifier;
 
-    // 3. Determina a Direção da Mensagem e o Número do Lead
     if (key.fromMe) {
-        // MENSAGEM ENVIADA POR NÓS (outgoing)
         messageDirection = 'outgoing';
-        leadPhoneNumber = remoteJid.split('@')[0]; // O destinatário (remoteJid) é o lead
-        senderIdentifier = crmInstance.ownerNumber || 'CRM_USER'; // O remetente somos nós
+        leadPhoneNumber = remoteJid.split('@')[0];
+        senderIdentifier = crmInstance.ownerNumber || 'CRM_USER';
     } else {
-        // MENSAGEM RECEBIDA DE UM LEAD (incoming)
         messageDirection = 'incoming';
-        leadPhoneNumber = remoteJid.split('@')[0]; // O remetente (remoteJid) é o lead
+        leadPhoneNumber = remoteJid.split('@')[0];
         senderIdentifier = remoteJid;
     }
 
-    // 4. Formatação e Correção do Número do Lead
     leadPhoneNumber = fixBrazilianMobileNumber(leadPhoneNumber);
     const leadPhoneNumberWithPlus = `+${leadPhoneNumber}`;
 
     try {
-        // 5. Encontra o Lead (ou cria, se for uma mensagem recebida de um número novo)
         let lead = await Lead.findOne({ contato: leadPhoneNumberWithPlus, company: companyId });
 
         if (!lead) {
             if (key.fromMe) {
-                // Se a mensagem foi enviada por nós para um número que não é um lead, não fazemos nada.
                 console.log(`[WebhookSvc] Mensagem enviada para um número desconhecido (${leadPhoneNumberWithPlus}). Lead não será criado.`);
                 return;
             }
-            // Se a mensagem foi recebida de um número novo, criamos o lead.
+
             console.log(`[WebhookSvc] Nenhum lead encontrado para ${leadPhoneNumberWithPlus}. Criando um novo...`);
-            const origemDoc = await origemService.findOrCreateOrigem({ nome: 'WhatsApp' }, companyId);
+            const origemDoc = await origemService.findOrCreateOrigem(
+                {
+                    nome: 'WhatsApp',
+                    descricao: 'Lead recebido via WhatsApp (Evolution API)'
+                },
+                companyId
+            );
             const leadData = {
                 nome: data.pushName || `Contato WhatsApp ${leadPhoneNumberWithPlus}`,
                 contato: leadPhoneNumberWithPlus,
@@ -96,40 +92,37 @@ const processMessageUpsert = async (payload) => {
             lead = await LeadService.createLead(leadData, companyId, crmInstance.createdBy);
             console.log(`[WebhookSvc] Novo lead criado (ID: ${lead._id}).`);
         }
-        
-        // 6. Encontra ou Cria a Conversa
+
         const conversation = await Conversation.findOneAndUpdate(
             { lead: lead._id, channel: 'WhatsApp' },
-            { 
+            {
                 $set: {
                     company: companyId,
                     channelInternalId: remoteJid,
                     lastMessage: message.conversation,
                     lastMessageAt: new Date()
                 },
-                // Só incrementa o contador de não lidas se a mensagem for recebida
                 ...(messageDirection === 'incoming' && { $inc: { unreadCount: 1 } })
             },
             { upsert: true, new: true }
         );
 
-        // 7. Salva a Mensagem no Histórico com a Direção Correta
         const newMessage = new Message({
             conversation: conversation._id,
             company: companyId,
             channelMessageId: key.id,
-            direction: messageDirection, // <<< USA A DIREÇÃO CORRETA
+            direction: messageDirection,
             senderId: senderIdentifier,
             content: message.conversation,
         });
         await newMessage.save();
 
         console.log(`[WebhookSvc] Mensagem (direção: ${messageDirection}) salva para a Conversa ID: ${conversation._id}`);
-
     } catch (error) {
         console.error(`[WebhookSvc] Erro ao processar mensagem para ${leadPhoneNumberWithPlus}:`, error.message);
     }
 };
+
 
 /**
  * Processa o evento 'connection.update' recebido do webhook.
