@@ -218,3 +218,17 @@ export const updateInstanceSettingsApi = async (instanceId, settings) => {
     } catch (error) { console.error("Erro ao atualizar instancias da Evolution API:", error.response?.data || error.message);
         throw error.response?.data || new Error("Falha ao carregar as instâncias.");}
 };
+
+/**
+ * Solicita a exclusão de uma instância da Evolution API.
+ * @param {string} instanceId - O _id da instância no CRM.
+ */
+export const deleteEvolutionInstanceApi = async (instanceId) => {
+    try {
+        const response = await axiosInstance.delete(`/integrations/evolution/instance/${instanceId}`);
+        return response.data.data;
+    } catch (error) {
+        console.error(`Erro ao excluir instância ${instanceId}:`, error.response?.data || error.message);
+        throw error.response?.data || new Error("Falha ao excluir a instância.");
+    }
+};
