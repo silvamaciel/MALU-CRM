@@ -1,4 +1,4 @@
-/* src/pages/Chat/ChatPage.css */
+/* src/pages/ChatPage/ChatPage.css */
 .chat-page {
     display: flex;
     height: calc(100vh - 100px); /* Ajuste a altura conforme o seu layout (ex: 100vh - altura do header) */

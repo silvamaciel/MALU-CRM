@@ -37,44 +37,61 @@ const getMessages = async (conversationId, companyId) => {
  */
 const sendMessage = async (conversationId, companyId, actorUserId, messageContent) => {
     const conversation = await Conversation.findOne({ _id: conversationId, company: companyId }).populate('lead');
-    if (!conversation || !conversation.lead) {
-        throw new Error("Conversa ou Lead associado não encontrado.");
+    if (!conversation) {
+        throw new Error("Conversa não encontrada.");
     }
 
-    // Encontra uma instância do WhatsApp conectada para esta empresa
     const crmInstance = await EvolutionInstance.findOne({ company: companyId, status: 'open' });
     if (!crmInstance) {
         throw new Error("Nenhuma instância do WhatsApp está conectada e pronta para enviar mensagens para esta empresa.");
     }
-    
-    // 1. Enviar a mensagem via Evolution API
-    const response = await axios.post(
-        `${process.env.EVOLUTION_API_URL}/message/sendText/${crmInstance.instanceName}`,
-        {
-            number: conversation.lead.contato.replace('+', ''), // Número do lead sem o '+'
-            textMessage: { text: messageContent }
-        },
-        { headers: { 'apikey': crmInstance.apiKey } }
-    );
-    
-    // 2. Salvar a mensagem enviada no nosso banco de dados
-    const newMessage = new Message({
-        conversation: conversation._id,
-        company: companyId,
-        channelMessageId: response.data.key?.id,
-        direction: 'outgoing',
-        senderId: actorUserId.toString(), // ID do usuário do CRM que enviou
-        content: messageContent,
-        status: 'sent'
-    });
-    await newMessage.save();
+        
+    // Pega o JID completo da conversa (ex: 5583...@s.whatsapp.net)
+    const recipientJid = conversation.channelInternalId;
 
-    // 3. Atualizar a "última mensagem" da conversa
-    conversation.lastMessage = messageContent;
-    conversation.lastMessageAt = new Date();
-    await conversation.save();
+    // A Evolution API espera que o campo 'number' seja apenas os dígitos antes do '@'
+    const recipientNumber = recipientJid.split('@')[0];
 
-    return newMessage;
+    if (!recipientNumber) {
+        throw new Error(`Destinatário inválido na conversa: ${recipientJid}`);
+    }
+
+    try {
+        // 1. Enviar mensagem via Evolution API
+        console.log(`[ChatService] Enviando mensagem para: ${recipientNumber} na instância: ${crmInstance.instanceName}`);
+        const response = await axios.post(
+            `${process.env.EVOLUTION_API_URL}/message/sendText/${crmInstance.instanceName}`,
+            {
+                number: recipientNumber,
+                textMessage: { text: messageContent }
+            },
+            { headers: { 'apikey': crmInstance.apiKey } }
+        );
+        
+        // 2. Salvar a mensagem enviada no nosso banco de dados
+        const newMessage = new Message({
+            conversation: conversation._id,
+            company: companyId,
+            channelMessageId: response.data.key?.id,
+            direction: 'outgoing',
+            senderId: actorUserId.toString(),
+            content: messageContent,
+            status: 'sent'
+        });
+        await newMessage.save();
+
+        // 3. Atualizar a "última mensagem" da conversa
+        conversation.lastMessage = messageContent;
+        conversation.lastMessageAt = new Date();
+        await conversation.save();
+
+        return newMessage;
+
+    } catch (error) {
+        console.error("[ChatService] Erro ao enviar mensagem via Evolution API:", error.response?.data || error.message);
+        // Retorna a mensagem de erro específica da Evolution API, se disponível
+        throw new Error(error.response?.data?.message || "Falha ao enviar mensagem via Evolution API.");
+    }
 };
 
 module.exports = { listConversations, getMessages, sendMessage };
