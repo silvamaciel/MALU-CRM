@@ -58,8 +58,8 @@ const sendMessage = async (conversationId, companyId, actorUserId, messageConten
         const response = await axios.post(
             `${process.env.EVOLUTION_API_URL}/message/sendText/${crmInstance.instanceName}`,
             {
-                number: recipientJid, // <<< MUDANÇA PRINCIPAL: Usa o JID completo
-                textMessage: { text: messageContent }
+                number: recipientJid, 
+                textMessage: { message: messageContent }
             },
             { headers: { 'apikey': crmInstance.apiKey } }
         );
