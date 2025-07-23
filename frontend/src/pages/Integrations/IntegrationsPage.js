@@ -3,6 +3,7 @@ import { useGoogleLogin } from "@react-oauth/google";
 import { sendGoogleAuthCode } from "../../api/auth";
 import { toast } from "react-toastify";
 import FacebookLogin from "@greatsumini/react-facebook-login";
+import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 import axios from "axios";
 import {
   connectFacebookPage,
