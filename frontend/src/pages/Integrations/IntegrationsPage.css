@@ -1,63 +1,317 @@
-.integrations-page .page-header {
-  padding-bottom: 20px;
-  margin-bottom: 25px;
-  border-bottom: 1px solid #e9ecef;
+/* src/pages/Integrations/IntegrationsPage.css */
+.integrations-page {
+    padding: 2rem;
+    max-width: 95vw;
+    margin: 2rem auto;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
 }
 
-.integrations-page .page-header h1 {
-  margin: 0;
+.integrations-page h1 {
+    text-align: center;
+    margin-bottom: 2rem;
 }
 
-.integrations-page .page-header p {
-  margin-top: 8px;
-  margin-bottom: 0;
-  color: #6c757d;
+.integrations-page > p {
+    text-align: center;
+    color: #6c757d;
+    margin-bottom: 3rem;
+}
+
+.integrations-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
 }
 
 .integrations-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-  gap: 25px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 25px;
 }
 
+/* CARD */
 .integration-card {
-  background-color: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  display: flex;
-  flex-direction: column;
+    background-color: #fff;
+    padding: 1.5rem 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0;
 }
 
 .integration-header,
 .integration-body,
 .integration-footer {
-  padding: 20px 25px;
+    padding: 20px;
 }
 
 .integration-body {
-  flex-grow: 1;
-  border-top: 1px solid #f0f0f0;
-  border-bottom: 1px solid #f0f0f0;
+    flex-grow: 1;
+    border-top: 1px solid #f0f0f0;
+    border-bottom: 1px solid #f0f0f0;
 }
 
-.integration-footer {
-  background-color: #f8f9fa;
-  border-bottom-left-radius: 8px;
-  border-bottom-right-radius: 8px;
+.integration-footer form {
+    display: flex;
+    gap: 10px;
 }
 
-.integration-footer h4 {
-  margin-top: 0;
-  margin-bottom: 15px;
-  font-size: 1em;
+.integration-footer input {
+    flex-grow: 1;
 }
 
-.create-instance-form {
-  display: flex;
-  gap: 10px;
+.integration-card h2 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    color: #343a40;
 }
 
-.create-instance-form input {
-  flex-grow: 1;
+.integration-card p {
+    color: #495057;
+    margin-bottom: 1rem;
+    font-size: 0.95em;
+}
+
+.integration-card ul {
+    margin-bottom: 1.5rem;
+    padding-left: 1.2rem;
+    font-size: 0.9em;
+    color: #495057;
+}
+
+.integration-card .button {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.95em;
+    cursor: pointer;
+    border-radius: 5px;
+    border: none;
+}
+
+.google-connect-button {
+    background-color: #4285F4;
+    color: white;
+}
+
+.google-connect-button:hover:not(:disabled) {
+    background-color: #357ae8;
+}
+
+.facebook-connect-button {
+    background-color: #1877F2;
+    color: white;
+}
+
+.facebook-connect-button:hover:not(:disabled) {
+    background-color: #166fe5;
+}
+
+.integration-card .button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.integration-card .error-message {
+    color: #dc3545;
+    margin-top: 1rem;
+    font-size: 0.9em;
+}
+
+/* PLACEHOLDER */
+.integration-card.placeholder {
+    opacity: 0.6;
+    background-color: #f8f9fa;
+}
+
+.integration-card.placeholder button {
+    background-color: #6c757d;
+}
+
+/* CONTACTS LIST MODAL */
+.contacts-list-modal {
+    list-style: none;
+    padding: 0;
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+}
+
+.contacts-list-modal li {
+    padding: 10px 15px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.contacts-list-modal li:last-child {
+    border-bottom: none;
+}
+
+.contacts-list-modal input[type="checkbox"] {
+    margin-top: 3px;
+    flex-shrink: 0;
+}
+
+.contacts-list-modal label {
+    font-size: 0.95em;
+    cursor: pointer;
+    line-height: 1.4;
+}
+
+.contacts-list-modal label strong {
+    display: block;
+    color: #333;
+}
+
+.contacts-list-modal label small {
+    display: block;
+    color: #777;
+    font-size: 0.85em;
+    margin-top: 3px;
+}
+
+/* FORMS LIST MODAL */
+.forms-list-modal {
+    list-style: none;
+    padding: 0;
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+}
+
+.forms-list-modal li {
+    padding: 10px 15px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.forms-list-modal li:last-child {
+    border-bottom: none;
+}
+
+.forms-list-modal input[type="checkbox"] {
+    margin-top: 3px;
+    flex-shrink: 0;
+}
+
+.forms-list-modal label {
+    font-size: 0.95em;
+    cursor: pointer;
+    line-height: 1.4;
+}
+
+.forms-list-modal label strong {
+    display: block;
+    color: #333;
+}
+
+.forms-list-modal label small {
+    display: block;
+    color: #777;
+    font-size: 0.85em;
+    margin-top: 3px;
+}
+
+/* INSTANCES */
+.instance-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.instance-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.instance-list li:last-child {
+    border-bottom: none;
+}
+
+.instance-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.instance-details {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.instance-name {
+    font-weight: 600;
+    color: #333;
+}
+
+.instance-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* TOGGLE */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 28px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #28a745;
+}
+
+input:checked + .slider:before {
+    transform: translateX(22px);
+}
+
+.toggle-label {
+    margin-left: 8px;
+    font-size: 0.9em;
+    color: #555;
+    vertical-align: middle;
 }
