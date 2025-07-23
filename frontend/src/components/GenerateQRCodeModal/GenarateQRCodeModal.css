@@ -1,19 +1,19 @@
-/* src/components/GenerateQRCodeModal/GenerateQRCodeModal.css */
-
+/* Overlay: A camada escura que cobre a tela inteira */
 .qr-modal-overlay {
-    position: fixed;
+    position: fixed; /* ESSENCIAL: Faz o modal flutuar sobre a página */
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.7);
+    background-color: rgba(0, 0, 0, 0.7); /* Fundo preto semitransparente */
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1050;
-    animation: fadeIn 0.3s;
+    z-index: 1050; /* Garante que fique acima de outros elementos */
+    animation: fadeIn 0.3s; /* Efeito suave de aparição */
 }
 
+/* O conteúdo do modal (a caixa branca) */
 .qr-modal-content {
     background-color: #fff;
     padding: 25px 30px;
@@ -22,6 +22,7 @@
     width: 100%;
     max-width: 450px;
     text-align: center;
+    animation: slideIn 0.3s; /* Efeito suave de deslizar para baixo */
 }
 
 .qr-modal-content h3 {
@@ -33,7 +34,7 @@
 
 .qr-modal-body {
     padding: 20px 0;
-    min-height: 250px;
+    min-height: 250px; /* Altura mínima para não ficar estranho enquanto carrega */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -43,6 +44,7 @@
 .qr-modal-body p {
     margin: 0 0 15px 0;
     color: #555;
+    line-height: 1.5;
 }
 
 .qr-modal-body img {
@@ -71,7 +73,13 @@
     color: #28a745;
 }
 
+/* Animações (Opcional, mas melhora a UX) */
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from { transform: translateY(-30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
