@@ -1,17 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
-import { getEvolutionInstanceStatusApi } from '../../api/integrations'; // Garanta que esta API exista
-import './GenerateQRCodeModal.css'; // Use o nome do seu arquivo CSS
+import { getEvolutionInstanceStatusApi } from '../../api/integrations';
+import './GenerateQRCodeModal.css';
 
 function GenerateQRCodeModal({ isOpen, onClose, instance, onConnected }) {
     const [qrCode, setQrCode] = useState(null);
     const [status, setStatus] = useState('INICIAL'); // INICIAL, CARREGANDO, QR_CODE, CONECTADO, ERRO
     const [error, setError] = useState('');
-    
-    // Usamos useRef para guardar o ID do intervalo e poder limpá-lo corretamente
     const pollingRef = useRef(null);
 
-    // Função para parar o polling
     const stopPolling = () => {
         if (pollingRef.current) {
             clearInterval(pollingRef.current);
@@ -19,20 +16,18 @@ function GenerateQRCodeModal({ isOpen, onClose, instance, onConnected }) {
         }
     };
 
-    // Efeito para limpar o polling quando o modal for fechado
     useEffect(() => {
         return () => {
             stopPolling();
         };
     }, []);
-    
-    // Reseta o estado quando o modal é aberto
+
     useEffect(() => {
         if (isOpen) {
             setStatus('INICIAL');
             setQrCode(null);
             setError('');
-            stopPolling(); // Garante que polls anteriores sejam limpos
+            stopPolling(); // Limpa intervalos antigos
         }
     }, [isOpen]);
 
@@ -40,43 +35,46 @@ function GenerateQRCodeModal({ isOpen, onClose, instance, onConnected }) {
         if (!instance) return;
         try {
             const state = await getEvolutionInstanceStatusApi(instance._id);
-            console.log("Status da instância verificado:", state.status);
             if (state.status === 'open') {
                 setStatus('CONECTADO');
-                stopPolling(); // Para de verificar
+                stopPolling();
                 toast.success(`Instância '${instance.instanceName}' conectada com sucesso!`);
                 setTimeout(() => {
-                    if (onConnected) onConnected(); // Notifica o pai sobre o sucesso
-                }, 1500); // Espera 1.5s para o usuário ver a mensagem de sucesso
+                    if (onConnected) onConnected();
+                }, 1500);
             }
         } catch (err) {
-            // Não mostra erro no polling, apenas continua tentando
             console.error("Erro no polling de status:", err.message);
         }
     };
 
-
     const fetchQRCode = async () => {
-        if (!instance) return;
+        if (!instance || !instance._id) {
+            toast.warn('Instância inválida. Não é possível gerar QR Code.');
+            return;
+        }
+
         setStatus('CARREGANDO');
         setError('');
-        stopPolling(); // Para qualquer polling antigo antes de iniciar um novo
+        stopPolling(); // Evita múltiplos polls simultâneos
 
         try {
             const state = await getEvolutionInstanceStatusApi(instance._id);
             if (state.status === 'open') {
                 setStatus('CONECTADO');
+                toast.success(`Instância '${instance.instanceName}' já está conectada.`);
             } else if (state.status === 'connecting' || (state.status === 'close' && state.qrcode)) {
                 setStatus('QR_CODE');
                 setQrCode(state.qrcode);
-                // Inicia o polling para verificar a conexão a cada 7 segundos
-                pollingRef.current = setInterval(checkConnectionStatus, 7000); 
+                pollingRef.current = setInterval(checkConnectionStatus, 7000);
             } else {
-                throw new Error("Não foi possível gerar o QR Code. A instância pode estar em um estado inesperado.");
+                throw new Error("Instância em estado inesperado. Tente novamente.");
             }
         } catch (err) {
-            setError(err.message || 'Falha ao buscar QR Code.');
+            const errorMsg = err.message || 'Falha ao buscar QR Code.';
+            setError(errorMsg);
             setStatus('ERRO');
+            toast.error(errorMsg);
         }
     };
 
@@ -94,13 +92,25 @@ function GenerateQRCodeModal({ isOpen, onClose, instance, onConnected }) {
                         </>
                     )}
                     {status === 'CARREGANDO' && <p>Gerando QR Code...</p>}
-                    {status === 'CONECTADO' && <div className="qr-success">✅<p>Conectado com sucesso!</p></div>}
-                    {status === 'ERRO' && <p className="error-message">{error}</p>}
+                    {status === 'CONECTADO' && (
+                        <div className="qr-success">
+                            ✅<p>Conectado com sucesso!</p>
+                        </div>
+                    )}
+                    {status === 'ERRO' && (
+                        <>
+                            <p className="error-message">{error}</p>
+                            <button onClick={fetchQRCode} className="button outline-button">Tentar Novamente</button>
+                        </>
+                    )}
                     {status === 'QR_CODE' && (
                         <>
                             <p>Escaneie o QR Code abaixo com seu celular. O código será atualizado automaticamente.</p>
                             {qrCode && <img src={qrCode} alt="QR Code para conectar WhatsApp" className="qr-code-image" />}
-                            <p style={{fontSize: '0.8em', color: '#6c757d', marginTop: '15px'}}>Verificando conexão...</p>
+                            <p style={{ fontSize: '0.8em', color: '#6c757d', marginTop: '15px' }}>Verificando conexão automaticamente...</p>
+                            <button onClick={fetchQRCode} className="button outline-button" style={{ marginTop: '15px' }}>
+                                Gerar Novo QR Code
+                            </button>
                         </>
                     )}
                 </div>
@@ -111,4 +121,5 @@ function GenerateQRCodeModal({ isOpen, onClose, instance, onConnected }) {
         </div>
     );
 }
+
 export default GenerateQRCodeModal;
