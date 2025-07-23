@@ -924,6 +924,38 @@ const updateInstanceSettings = async (instanceId, companyId, settings) => {
 };
 
 
+/**
+ * Deleta uma instância da Evolution API e do banco de dados do CRM.
+ * @param {string} instanceId - O _id da instância no NOSSO banco de dados.
+ * @param {string} companyId - ID da empresa para segurança.
+ */
+const deleteEvolutionInstance = async (instanceId, companyId) => {
+    const { EVOLUTION_API_URL, EVOLUTION_API_KEY } = process.env;
+
+    const crmInstance = await EvolutionInstance.findOne({ _id: instanceId, company: companyId });
+    if (!crmInstance) {
+        throw new Error("Instância não encontrada ou não pertence a esta empresa.");
+    }
+
+    try {
+        // 1. Tenta remover a instância da Evolution API externa
+        console.log(`[IntegSvc] Deletando instância '${crmInstance.instanceName}' da Evolution API...`);
+        await axios.delete(`${EVOLUTION_API_URL}/instance/delete/${crmInstance.instanceName}`, {
+            headers: { 'apikey': EVOLUTION_API_KEY }
+        });
+        console.log(`[IntegSvc] Instância '${crmInstance.instanceName}' removida da Evolution API.`);
+    } catch (error) {
+        // Não impede a exclusão do nosso DB se a instância já não existir lá
+        console.warn(`[IntegSvc] Não foi possível remover a instância da Evolution API (pode já ter sido removida). Erro: ${error.message}`);
+    }
+
+    // 2. Remove a instância do nosso banco de dados
+    await EvolutionInstance.deleteOne({ _id: instanceId, company: companyId });
+    console.log(`[IntegSvc] Instância com ID '${instanceId}' removida do banco de dados do CRM.`);
+
+    return { message: `Instância '${crmInstance.instanceName}' foi removida com sucesso.` };
+};
+
 
 module.exports = {
   connectFacebookPageIntegration,
@@ -937,5 +969,6 @@ module.exports = {
   createEvolutionInstance,
   getEvolutionInstanceConnectionState,
   listEvolutionInstances,
-  updateInstanceSettings
+  updateInstanceSettings,
+  deleteEvolutionInstance
 };

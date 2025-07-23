@@ -31,6 +31,7 @@ router.get('/evolution/instances', protect, authorize('admin'), integrationContr
 
 router.put('/evolution/instance/:instanceId/settings', protect, authorize('admin'), integrationController.updateInstanceSettingsController);
 
+router.delete('/evolution/instance/:instanceId', protect, authorize('admin'), integrationController.deleteEvolutionInstanceController);
 
 
 

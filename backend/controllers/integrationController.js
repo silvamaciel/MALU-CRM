@@ -246,6 +246,13 @@ const updateInstanceSettingsController = asyncHandler(async (req, res, next) => 
 });
 
 
+const deleteEvolutionInstanceController = asyncHandler(async (req, res, next) => {
+    const { instanceId } = req.params;
+    const companyId = req.user.company;
+    const result = await IntegrationService.deleteEvolutionInstance(instanceId, companyId);
+    res.status(200).json({ success: true, data: result });
+});
+
 
 
 
@@ -261,5 +268,6 @@ module.exports = {
     createEvolutionInstanceController,
     getEvolutionInstanceStatusController,
     listEvolutionInstancesController,
-    updateInstanceSettingsController
+    updateInstanceSettingsController,
+    deleteEvolutionInstanceController
 };

@@ -16,8 +16,12 @@ import {
   createEvolutionInstanceApi,
   getEvolutionInstanceStatusApi,
   listEvolutionInstancesApi,
-  updateInstanceSettingsApi
+  updateInstanceSettingsApi,
+  deleteEvolutionInstanceApi
 } from "../../api/integrations";
+
+import StatusBadge from '../../components/StatusBadge/StatusBadge'; // <<< NOVO IMPORT
+
 
 import GenerateQRCodemodal from "../../components/GenerateQRCodeModal/GenerateQRCodeModal";
 
@@ -69,6 +73,10 @@ function IntegrationsPage() {
   const [isCreatingInstance, setIsCreatingInstance] = useState(false);
   const [selectedInstanceForQR, setSelectedInstanceForQR] = useState(null);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Função Principal para Carregar Dados da Página
   const fetchIntegrations = useCallback(async () => {
@@ -122,6 +130,28 @@ function IntegrationsPage() {
       toast.success(`Configuração da instância '${updated.instanceName}' atualizada.`);
     } catch (error) {
       toast.error("Falha ao atualizar configuração.");
+    }
+  };
+
+
+  const handleOpenDeleteModal = (instance) => {
+    setDeleteTarget(instance);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      await deleteEvolutionInstanceApi(deleteTarget._id);
+      toast.success(`Instância "${deleteTarget.instanceName}" excluída com sucesso!`);
+      fetchIntegrations(); // Atualiza a lista
+    } catch (err) {
+      toast.error(err.error || err.message || "Falha ao excluir instância.");
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteModalOpen(false);
+      setDeleteTarget(null);
     }
   };
 
@@ -979,31 +1009,27 @@ function IntegrationsPage() {
               <p>Conecte e gerencie instâncias do WhatsApp para automações.</p>
             </div>
           </div>
+
           <div className="integration-body">
+            <h4>Instâncias Conectadas</h4>
             {loadingInstances ? (
               <p>Carregando instâncias...</p>
             ) : evolutionInstances.length > 0 ? (
               <ul className="instance-list">
                 {evolutionInstances.map(instance => (
                   <li key={instance._id}>
-                    <div className="instance-info">
+                    <div className="instance-details">
                       <span className="instance-name">{instance.instanceName}</span>
-                      {/* Switch para ligar/desligar mensagens de grupo */}
-                      <div className="toggle-switch">
-                        <label>
-                          <input
-                            type="checkbox"
-                            checked={instance.receiveFromGroups}
-                            onChange={() => handleToggleGroups(instance._id, instance.receiveFromGroups)}
-                          />
-                          <span className="slider"></span>
-                        </label>
-                        <span className="toggle-label">Receber de Grupos</span>
-                      </div>
+                      <StatusBadge status={instance.status} />
                     </div>
-                    <button onClick={() => openQRModal(instance)} className="button small-button">
-                      Conectar / Ver QR Code
-                    </button>
+                    <div className="instance-actions">
+                      <button onClick={() => openQRModal(instance)} className="button small-button primary-button">
+                        Conectar
+                      </button>
+                      <button onClick={() => handleOpenDeleteModal(instance)} className="button small-button danger-button">
+                        Excluir
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -1011,6 +1037,7 @@ function IntegrationsPage() {
               <p className="no-data-message">Nenhuma instância do WhatsApp foi criada ainda.</p>
             )}
           </div>
+
           <div className="integration-footer">
             <h4>Criar Nova Instância</h4>
             <form onSubmit={handleCreateInstance} className="create-instance-form">
@@ -1022,24 +1049,12 @@ function IntegrationsPage() {
                 disabled={isCreatingInstance}
               />
               <button type="submit" className="button primary-button" disabled={isCreatingInstance}>
-                {isCreatingInstance ? 'Criando...' : 'Criar Instância'}
+                {isCreatingInstance ? 'Criando...' : '+ Criar'}
               </button>
             </form>
           </div>
         </div>
 
-        <div className="integration-card placeholder">
-          <h2>WhatsApp Business API</h2>
-          <p>
-            <i>(Próximas Versões)</i>
-          </p>
-        </div>
-        <div className="integration-card placeholder">
-          <h2>Twilio (SMS/Voz)</h2>
-          <p>
-            <i>(Próximas Versões)</i>
-          </p>
-        </div>
 
         {/* <<< MODAL PARA LISTAR/SELECIONAR CONTATOS GOOGLE >>> */}
         {isGoogleContactsModalOpen && (
@@ -1142,6 +1157,15 @@ function IntegrationsPage() {
             setIsQRModalOpen(false);
             fetchIntegrations(); // Recarrega a lista para mostrar o novo status
           }}
+        />
+
+        <ConfirmModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          onConfirm={handleConfirmDelete}
+          title="Confirmar Exclusão"
+          message={`Tem certeza que deseja excluir a instância "${deleteTarget?.instanceName}"? Esta ação não pode ser desfeita.`}
+          isProcessing={isDeleting}
         />
 
 
