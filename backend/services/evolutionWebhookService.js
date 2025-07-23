@@ -3,7 +3,29 @@ const EvolutionInstance = require('../models/EvolutionInstance');
 const LeadService = require('./LeadService');
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
-const { logHistory } = require('./LeadService'); // Ou o caminho correto do seu historyService
+const { logHistory } = require('./LeadService'); // Ou o caminho correto para seu historyService
+
+/**
+ * Corrige números de celular brasileiros que vêm sem o nono dígito.
+ * Ex: Converte "558312345678" para "5583912345678".
+ * @param {string} phone - O número de telefone (apenas dígitos).
+ * @returns {string} O número corrigido ou o original.
+ */
+const fixBrazilianMobileNumber = (phone) => {
+    // Verifica se começa com '55' (Brasil) e tem 12 dígitos (formato sem o '9')
+    if (phone.startsWith('55') && phone.length === 12) {
+        const ddd = phone.substring(2, 4);
+        // DDDs de celular no Brasil vão de 11 a 99.
+        if (parseInt(ddd) >= 11) {
+            // Insere o '9' após o DDD
+            const correctedPhone = phone.slice(0, 4) + '9' + phone.slice(4);
+            console.log(`[WebhookSvc] Corrigindo número de telefone: ${phone} -> ${correctedPhone}`);
+            return correctedPhone;
+        }
+    }
+    return phone; // Retorna o número original se não corresponder à regra
+};
+
 
 /**
  * Processa o evento 'messages.upsert' (nova mensagem recebida) do webhook da Evolution API.
@@ -14,7 +36,6 @@ const processMessageUpsert = async (payload) => {
     const message = data.message;
     const remoteJid = data.key?.remoteJid;
 
-    // Ignora mensagens sem conteúdo de texto, de status, etc.
     if (!instance || !message || !remoteJid || !message.conversation) {
         console.log('[WebhookSvc] Evento "messages.upsert" ignorado: dados essenciais ou texto da mensagem ausentes.');
         return;
@@ -22,32 +43,34 @@ const processMessageUpsert = async (payload) => {
 
     const isGroupMessage = remoteJid.endsWith('@g.us');
     
-    // Busca a configuração da instância no nosso banco de dados
     const crmInstance = await EvolutionInstance.findOne({ instanceName: instance });
     if (!crmInstance) {
         console.log(`[WebhookSvc] Instância '${instance}' não encontrada no CRM. Mensagem ignorada.`);
         return;
     }
 
-    // Aplica a regra de negócio para ignorar mensagens de grupo
     if (isGroupMessage && !crmInstance.receiveFromGroups) {
         console.log(`[WebhookSvc] Mensagem do grupo '${remoteJid}' ignorada para a instância '${instance}' conforme configuração.`);
         return;
     }
 
-    const senderPhone = `+${remoteJid.split('@')[0]}`;
+    let senderPhone = remoteJid.split('@')[0];
+    senderPhone = fixBrazilianMobileNumber(senderPhone); // Corrige o número se necessário
+    const senderPhoneWithPlus = `+${senderPhone}`;
     const companyId = crmInstance.company;
     
     try {
         // 1. Encontra ou Cria o Lead
-        let lead = await Lead.findOne({ contato: senderPhone, company: companyId });
+        let lead = await Lead.findOne({ contato: senderPhoneWithPlus, company: companyId });
 
         if (!lead) {
+            console.log(`[WebhookSvc] Nenhum lead encontrado para ${senderPhoneWithPlus}. Criando um novo...`);
             const leadData = {
-                nome: data.pushName || `Contato WhatsApp ${senderPhone}`,
-                contato: senderPhone,
-                origem: 'WhatsApp', // Você precisa ter uma origem "WhatsApp" ou adaptar a createLead
+                nome: data.pushName || `Contato WhatsApp ${senderPhoneWithPlus}`,
+                contato: senderPhoneWithPlus, // Envia o número já corrigido e com '+'
+                origem: 'WhatsApp', // Garanta que você tem uma Origem com este nome
             };
+            
             lead = await LeadService.createLead(leadData, companyId, crmInstance.createdBy);
             console.log(`[WebhookSvc] Novo lead criado (ID: ${lead._id}) via WhatsApp.`);
         }
@@ -79,10 +102,10 @@ const processMessageUpsert = async (payload) => {
         });
         await newMessage.save();
 
-        console.log(`[WebhookSvc] Mensagem de ${senderPhone} salva para a Conversa ID: ${conversation._id}`);
+        console.log(`[WebhookSvc] Mensagem de ${senderPhoneWithPlus} salva para a Conversa ID: ${conversation._id}`);
 
     } catch (error) {
-        console.error(`[WebhookSvc] Erro ao processar mensagem para ${senderPhone}:`, error.message);
+        console.error(`[WebhookSvc] Erro ao processar mensagem para ${senderPhoneWithPlus}:`, error.message);
     }
 };
 
