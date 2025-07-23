@@ -1149,7 +1149,9 @@ function IntegrationsPage() {
           </div>
         )}
 
-        <GenerateQRCodemodal
+      </div>
+
+      <GenerateQRCodemodal
           isOpen={isQRModalOpen}
           onClose={() => setIsQRModalOpen(false)}
           instance={selectedInstanceForQR}
@@ -1168,9 +1170,6 @@ function IntegrationsPage() {
           message={`Tem certeza que deseja excluir a instância "${deleteTarget?.instanceName}"? Esta ação não pode ser desfeita.`}
           isProcessing={isDeleting}
         />
-
-
-      </div>
     </div>
   );
 }
