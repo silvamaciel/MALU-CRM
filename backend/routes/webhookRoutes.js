@@ -2,6 +2,9 @@
 const express = require('express');
 const router = express.Router();
 const webhookController = require('../controllers/webhookController');
+const { handleWebhook } = require('../controllers/evolutionWebhookController');
+
+router.post('/evolution', handleWebhook);
 
 // Rota para Facebook verificar o endpoint (GET)
 router.get('/facebook/leads', webhookController.verifyFacebookWebhook);
