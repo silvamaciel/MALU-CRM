@@ -54,13 +54,22 @@ const sendMessage = async (conversationId, companyId, actorUserId, messageConten
         }
 
         console.log(`[ChatService] Enviando mensagem para: ${recipientJid} na instância: ${crmInstance.instanceName}`);
+
+
+        const payload = {
+            number: recipientJid,
+            options: {
+                delay: 1200,
+                presence: "composing"
+            },
+            textMessage: {
+                text: messageContent
+            }
+        };
         
         const response = await axios.post(
             `${process.env.EVOLUTION_API_URL}/message/sendText/${crmInstance.instanceName}`,
-            {
-                number: recipientJid, 
-                textMessage: { message: messageContent }
-            },
+            payload,
             { headers: { 'apikey': crmInstance.apiKey } }
         );
         
