@@ -3,7 +3,8 @@ const EvolutionInstance = require('../models/EvolutionInstance');
 const LeadService = require('./LeadService');
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
-const { logHistory } = require('./LeadService'); // Ou o caminho correto para seu historyService
+const { logHistory } = require('./LeadService');
+const origemService = require('./origemService');
 
 /**
  * Corrige números de celular brasileiros que vêm sem o nono dígito.
@@ -37,60 +38,59 @@ const processMessageUpsert = async (payload) => {
     const remoteJid = data.key?.remoteJid;
 
     if (!instance || !message || !remoteJid || !message.conversation) {
-        console.log('[WebhookSvc] Evento "messages.upsert" ignorado: dados essenciais ou texto da mensagem ausentes.');
         return;
     }
 
     const isGroupMessage = remoteJid.endsWith('@g.us');
-    
     const crmInstance = await EvolutionInstance.findOne({ instanceName: instance });
-    if (!crmInstance) {
-        console.log(`[WebhookSvc] Instância '${instance}' não encontrada no CRM. Mensagem ignorada.`);
-        return;
-    }
+    if (!crmInstance) return;
 
     if (isGroupMessage && !crmInstance.receiveFromGroups) {
-        console.log(`[WebhookSvc] Mensagem do grupo '${remoteJid}' ignorada para a instância '${instance}' conforme configuração.`);
+        console.log(`[WebhookSvc] Mensagem de grupo ignorada para a instância '${instance}'.`);
         return;
     }
 
     let senderPhone = remoteJid.split('@')[0];
-    senderPhone = fixBrazilianMobileNumber(senderPhone); // Corrige o número se necessário
+    senderPhone = fixBrazilianMobileNumber(senderPhone);
     const senderPhoneWithPlus = `+${senderPhone}`;
     const companyId = crmInstance.company;
     
     try {
-        // 1. Encontra ou Cria o Lead
         let lead = await Lead.findOne({ contato: senderPhoneWithPlus, company: companyId });
 
         if (!lead) {
             console.log(`[WebhookSvc] Nenhum lead encontrado para ${senderPhoneWithPlus}. Criando um novo...`);
+            
+            // VVVVV LÓGICA ATUALIZADA AQUI VVVVV
+            // 1. Encontra ou cria a Origem "WhatsApp" e pega o seu ID
+            const origemDoc = await origemService.findOrCreateOrigem(
+                { nome: 'WhatsApp', descricao: 'Lead recebido via WhatsApp (Evolution API)' }, 
+                companyId
+            );
+
+            // 2. Monta o leadData com o ID da origem
             const leadData = {
                 nome: data.pushName || `Contato WhatsApp ${senderPhoneWithPlus}`,
-                contato: senderPhoneWithPlus, // Envia o número já corrigido e com '+'
-                origem: 'WhatsApp', // Garanta que você tem uma Origem com este nome
+                contato: senderPhoneWithPlus,
+                origem: origemDoc._id, // <<< PASSA O ObjectId DA ORIGEM
             };
             
+            // 3. Chama a createLead, que agora recebe o ID que ela espera
             lead = await LeadService.createLead(leadData, companyId, crmInstance.createdBy);
             console.log(`[WebhookSvc] Novo lead criado (ID: ${lead._id}) via WhatsApp.`);
+            // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         }
         
-        // 2. Encontra ou Cria a Conversa
+        // --- A lógica para criar a Conversa e a Mensagem continua a mesma ---
         const conversation = await Conversation.findOneAndUpdate(
             { lead: lead._id, channel: 'WhatsApp' },
             { 
-                $set: {
-                    company: companyId,
-                    channelInternalId: remoteJid,
-                    lastMessage: message.conversation,
-                    lastMessageAt: new Date()
-                },
+                $set: { company: companyId, lastMessage: message.conversation, lastMessageAt: new Date() },
                 $inc: { unreadCount: 1 }
             },
             { upsert: true, new: true }
         );
 
-        // 3. Salva a Mensagem no banco de dados do CRM
         const newMessage = new Message({
             conversation: conversation._id,
             company: companyId,
@@ -98,7 +98,6 @@ const processMessageUpsert = async (payload) => {
             direction: 'incoming',
             senderId: remoteJid,
             content: message.conversation,
-            status: 'delivered'
         });
         await newMessage.save();
 
