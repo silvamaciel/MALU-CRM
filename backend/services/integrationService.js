@@ -832,63 +832,45 @@ const getEvolutionInstanceConnectionState = async (instanceId, companyId) => {
         throw new Error("A URL da Evolution API não está configurada no servidor.");
     }
     
-    // 1. Busca os dados da instância no nosso DB para pegar o nome e a chave de API dela.
     const crmInstance = await EvolutionInstance.findOne({ _id: instanceId, company: companyId });
     if (!crmInstance) {
         throw new Error("Instância não encontrada ou não pertence a esta empresa.");
     }
 
     try {
-        // 2. Chama a API Externa da Evolution para pegar o estado ATUAL da instância.
-        const response = await axios.get(
-            `${EVOLUTION_API_URL}/instance/connectionState/${crmInstance.instanceName}`,
-            {
-                headers: {
-                    'apikey': crmInstance.apiKey // Usa a API Key específica da instância
-                }
-            }
-        );
-
-        const connectionState = response.data;
-
-        // 3. Se o estado for 'open' (conectado), apenas retorna o status.
-        if (connectionState.state === 'open') {
-            console.log(`[IntegSvc Evolution] Instância '${crmInstance.instanceName}' está conectada.`);
-            return {
-                status: 'CONECTADO',
-                qrcode: null,
-                instanceName: crmInstance.instanceName
-            };
-        }
-
-        // 4. Se não estiver conectada, busca o QR Code. A Evolution API retorna o QR Code em base64.
-        console.log(`[IntegSvc Evolution] Instância '${crmInstance.instanceName}' não conectada. Buscando QR Code...`);
-        const qrCodeResponse = await axios.get(
-            `${EVOLUTION_API_URL}/instance/connect/${crmInstance.instanceName}`,
-            {
-                headers: {
-                    'apikey': crmInstance.apiKey
-                }
-            }
-        );
+        // --- PASSO ÚNICO: Tenta conectar e obter o QR Code diretamente (usando GET) ---
+        console.log(`[IntegSvc Evolution] Solicitando conexão e QR Code para a instância '${crmInstance.instanceName}'...`);
         
-        // O QR Code vem no campo 'base64' da resposta
-        const qrCodeBase64 = qrCodeResponse.data?.base64;
-        if (!qrCodeBase64) {
-            throw new Error("Não foi possível obter o QR Code da Evolution API.");
+        const response = await axios.get(
+            `${EVOLUTION_API_URL}/instance/connect/${crmInstance.instanceName}`,
+            { headers: { 'apikey': crmInstance.apiKey } }
+        );
+
+        const responseData = response.data;
+        console.log("[IntegSvc Evolution] Resposta da API /connect:", responseData);
+
+        // Verifica se a conexão já está aberta ('open')
+        if (responseData.instance?.state === 'open') {
+            return { status: 'CONECTADO', qrcode: null };
         }
 
-        console.log(`[IntegSvc Evolution] QR Code para '${crmInstance.instanceName}' obtido.`);
-        return {
-            status: 'AGUARDANDO_QR_CODE',
-            qrcode: qrCodeBase64,
-            instanceName: crmInstance.instanceName
-        };
+        // Verifica se a resposta contém o QR Code
+        const qrCodeBase64 = responseData.base64;
+        
+        if (qrCodeBase64) {
+            return {
+                status: 'AGUARDANDO_QR_CODE',
+                qrcode: qrCodeBase64
+            };
+        } else {
+            // Se a resposta não tem 'state: open' nem 'base64', algo está errado.
+            throw new Error("A Evolution API não retornou um estado válido ou um QR Code.");
+        }
 
     } catch (error) {
-        const errorMsg = error.response?.data?.message || error.message || "Erro desconhecido ao verificar instância.";
-        console.error(`[IntegSvc Evolution] Erro ao verificar estado da instância '${crmInstance.instanceName}':`, error.response?.data || error);
-        throw new Error(errorMsg);
+        const errorMsg = error.response?.data?.message || error.response?.data?.error || error.message;
+        console.error(`[IntegSvc Evolution] Erro detalhado ao tentar conectar a instância '${crmInstance.instanceName}':`, error.response?.data || error);
+        throw new Error(`Erro da Evolution API: ${errorMsg}`);
     }
 };
 
