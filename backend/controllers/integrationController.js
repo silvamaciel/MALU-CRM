@@ -1,6 +1,7 @@
 // controllers/integrationController.js
 const integrationService = require('../services/integrationService');
 const mongoose = require('mongoose');
+const evolutionWebhookService = require('../services/evolutionWebhookService');
 const asyncHandler = require('../middlewares/asyncHandler');
 const ErrorResponse = require('../utils/errorResponse');
 
@@ -71,7 +72,7 @@ const disconnectFacebook = async (req, res) => {
         console.error("[IntegCtrl] Erro ao desconectar página FB:", error.message);
         res.status(400).json({ error: error.message || 'Falha ao desconectar página.' });
     }
-};
+};  
 
 
 

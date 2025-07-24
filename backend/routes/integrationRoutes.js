@@ -11,7 +11,7 @@ router.post('/facebook/connect-page', protect, integrationController.connectFace
 
 router.get('/facebook/status', protect, integrationController.getFacebookStatus);
 
-router.post('/facebook/disconnect', protect, integrationController.disconnectFacebook);
+router.post('/facebook/disconnect', protect, integrationController.disconnectFacebook);  
 
 router.post('/google/sync-contacts', protect, integrationController.syncGoogleContacts);
 
