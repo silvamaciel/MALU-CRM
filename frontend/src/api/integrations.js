@@ -232,3 +232,19 @@ export const deleteEvolutionInstanceApi = async (instanceId) => {
         throw error.response?.data || new Error("Falha ao excluir a instância.");
     }
 };
+
+
+/**
+ * Busca um QR Code que foi armazenado no cache do backend.
+ * @param {string} instanceName - O nome da instância.
+ * @returns {Promise<object>} Um objeto contendo o QR Code em base64 ou nulo.
+ */
+export const getQrCodeFromApi = async (instanceName) => {
+    try {
+        const response = await axiosInstance.get(`/integrations/evolution/instance/${instanceName}/qrcode`);
+        return response.data.data; // Espera { qrcode: 'data:image/png;base64,...' } ou { qrcode: null }
+    } catch (error) {
+        console.error(`Erro ao buscar QR Code para ${instanceName}:`, error.response?.data || error.message);
+        throw error.response?.data || new Error("Falha ao buscar o QR Code do servidor.");
+    }
+};

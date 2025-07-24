@@ -6,6 +6,9 @@ const Message = require('../models/Message');
 const { logHistory } = require('./LeadService');
 const origemService = require('./origemService');
 
+const qrCodeCache = new Map();
+
+
 /**
  * Corrige números de celular brasileiros que vêm sem o nono dígito.
  * Ex: Converte "558312345678" para "5583912345678".
@@ -159,8 +162,30 @@ const processConnectionUpdate = async (payload) => {
 };
 
 
+/**
+ * Processa o evento 'qrcode.updated' e armazena o QR Code no cache temporário.
+ * @param {object} payload - O corpo do webhook.
+ */
+const processQrCodeUpdate = async (payload) => {
+    const { instance, data } = payload;
+    const qrCodeBase64 = data.qrcode?.base64;
+    
+    if (instance && qrCodeBase64) {
+        console.log(`[WebhookSvc] QR Code recebido para a instância '${instance}'. Armazenando no cache por 60 segundos.`);
+        // Armazena o QR Code associado ao nome da instância
+        qrCodeCache.set(instance, qrCodeBase64);
+        
+        // Define um timer para limpar o QR Code do cache após 60 segundos para evitar que fique obsoleto
+        setTimeout(() => {
+            qrCodeCache.delete(instance);
+            console.log(`[WebhookSvc] QR Code para '${instance}' expirou e foi removido do cache.`);
+        }, 60000); // 60 segundos
+    }
+};
+
 
 module.exports = {
     processMessageUpsert,
-    processConnectionUpdate
+    processConnectionUpdate,
+    processQrCodeUpdate
 };

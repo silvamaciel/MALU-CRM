@@ -19,10 +19,9 @@ const handleWebhook = asyncHandler(async (req, res, next) => {
             processConnectionUpdate(payload);
             break;
         
-        // Adicione outros eventos aqui no futuro, se necessário
-        // case 'outro.evento':
-        //     processarOutroEvento(payload);
-        //     break;
+        case 'qrcode.updated':
+            processQrCodeUpdate(payload);
+            break;
             
         default:
             console.log(`[WebhookCtrl] Evento '${payload.event}' recebido, mas não há um handler configurado para ele.`);
