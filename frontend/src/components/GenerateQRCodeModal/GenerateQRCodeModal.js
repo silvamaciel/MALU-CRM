@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { getEvolutionInstanceStatusApi } from '../../api/integrations';
-import './GenerateQRCodeModal.css';
+import './QRCodeModal.css';
 
 function GenerateQRCodeModal({ isOpen, onClose, instance, onConnected }) {
     const [qrCode, setQrCode] = useState(null);
