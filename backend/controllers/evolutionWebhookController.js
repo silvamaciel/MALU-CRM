@@ -1,5 +1,5 @@
 const asyncHandler = require('../middlewares/asyncHandler');
-const { processMessageUpsert, processConnectionUpdate } = require('../services/evolutionWebhookService');
+const { processMessageUpsert, processConnectionUpdate, processQrCodeUpdate } = require('../services/evolutionWebhookService');
 
 const handleWebhook = asyncHandler(async (req, res, next) => {
     const payload = req.body;
