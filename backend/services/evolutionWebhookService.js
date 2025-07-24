@@ -171,21 +171,33 @@ const processQrCodeUpdate = async (payload) => {
     const qrCodeBase64 = data.qrcode?.base64;
     
     if (instance && qrCodeBase64) {
-        console.log(`[WebhookSvc] QR Code recebido para a instância '${instance}'. Armazenando no cache por 60 segundos.`);
-        // Armazena o QR Code associado ao nome da instância
+        console.log(`[WebhookSvc] QR Code recebido para a instância '${instance}'. Armazenando no cache.`);
+        // Armazena o QR Code associado ao nome da instância por 60 segundos
         qrCodeCache.set(instance, qrCodeBase64);
-        
-        // Define um timer para limpar o QR Code do cache após 60 segundos para evitar que fique obsoleto
-        setTimeout(() => {
-            qrCodeCache.delete(instance);
-            console.log(`[WebhookSvc] QR Code para '${instance}' expirou e foi removido do cache.`);
-        }, 60000); // 60 segundos
+        setTimeout(() => qrCodeCache.delete(instance), 60000); // Limpa o cache após 1 minuto
     }
+};
+
+/**
+ * Permite que o frontend busque um QR Code que foi armazenado no cache.
+ * @param {string} instanceName - O nome da instância.
+ * @returns {Promise<object>} Um objeto com o QR Code ou nulo.
+ */
+const getQrCodeFromCache = async (instanceName) => {
+    const qrcode = qrCodeCache.get(instanceName);
+    if (qrcode) {
+        console.log(`[WebhookSvc] QR Code encontrado no cache para '${instanceName}' e entregue.`);
+        qrCodeCache.delete(instanceName); // Remove o QR Code após ser entregue para evitar reutilização
+        return { qrcode };
+    }
+    console.log(`[WebhookSvc] Nenhum QR Code no cache para '${instanceName}'. Aguardando webhook...`);
+    return { qrcode: null };
 };
 
 
 module.exports = {
     processMessageUpsert,
     processConnectionUpdate,
-    processQrCodeUpdate
+    processQrCodeUpdate,
+    getQrCodeFromCache
 };

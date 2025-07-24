@@ -255,6 +255,13 @@ const deleteEvolutionInstanceController = asyncHandler(async (req, res, next) =>
 
 
 
+const getQrCodeFromCacheController = asyncHandler(async (req, res, next) => {
+    const { instanceName } = req.params;
+    const result = await evolutionWebhookService.getQrCodeFromCache(instanceName);
+    res.status(200).json({ success: true, data: result });
+});
+
+
 
 module.exports = {
     connectFacebookPage,
@@ -269,5 +276,6 @@ module.exports = {
     getEvolutionInstanceStatusController,
     listEvolutionInstancesController,
     updateInstanceSettingsController,
-    deleteEvolutionInstanceController
+    deleteEvolutionInstanceController,
+    getQrCodeFromCacheController
 };

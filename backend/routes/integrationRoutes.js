@@ -33,6 +33,9 @@ router.put('/evolution/instance/:instanceId/settings', protect, authorize('admin
 
 router.delete('/evolution/instance/:instanceId', protect, authorize('admin'), integrationController.deleteEvolutionInstanceController);
 
+router.get('/evolution/instance/:instanceName/qrcode', protect, authorize('admin'), integrationController.getQrCodeFromCacheController);
+
+
 
 
 module.exports = router;
