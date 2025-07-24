@@ -1,94 +1,91 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
-// Garanta que você tenha estas duas funções na sua API
-import { getEvolutionInstanceStatusApi, getQrCodeFromApi } from '../../api/integrations'; 
-import './QRCodeModal.css'; // Use o nome do seu arquivo CSS
+import { getEvolutionInstanceStatusApi, getQrCodeFromApi } from '../../api/integrations';
+import './QRCodeModal.css';
 
 function GenerateQRCodeModal({ isOpen, onClose, instance, onConnected }) {
     const [qrCode, setQrCode] = useState(null);
-    const [status, setStatus] = useState('INICIAL'); // INICIAL, GERANDO, AGUARDANDO, QR_CODE, CONECTADO, ERRO
+    const [status, setStatus] = useState('INICIAL');
     const [error, setError] = useState('');
-    
-    // Usamos useRef para guardar o ID do intervalo e poder limpá-lo corretamente
-    const pollingRef = useRef(null);
 
-    // Função para parar o polling
-    const stopPolling = () => {
-        if (pollingRef.current) {
-            clearInterval(pollingRef.current);
-            pollingRef.current = null;
+    const pollingQrRef = useRef(null);
+    const pollingStatusRef = useRef(null);
+
+    const stopAllPolling = () => {
+        if (pollingQrRef.current) {
+            clearInterval(pollingQrRef.current);
+            pollingQrRef.current = null;
+        }
+        if (pollingStatusRef.current) {
+            clearInterval(pollingStatusRef.current);
+            pollingStatusRef.current = null;
         }
     };
 
-    // Efeito para limpar o polling quando o modal for fechado
-    useEffect(() => {
-        return () => {
-            stopPolling();
-        };
-    }, []);
-    
-    // Reseta o estado quando o modal é aberto
+    useEffect(() => stopAllPolling, []);
+
     useEffect(() => {
         if (isOpen) {
             setStatus('INICIAL');
             setQrCode(null);
             setError('');
-            stopPolling();
+            stopAllPolling();
         }
     }, [isOpen]);
 
-    /**
-     * Função principal chamada pelo botão "Gerar QR Code".
-     * Ela inicia o processo no backend e depois começa a verificar se o QR Code chegou.
-     */
+    const startPollingForStatusConnected = () => {
+        pollingStatusRef.current = setInterval(async () => {
+            try {
+                const response = await getEvolutionInstanceStatusApi(instance._id);
+                if (response?.status === 'connected' || response?.status === 'CONECTADO') {
+                    stopAllPolling();
+                    setStatus('CONECTADO');
+                    toast.success(`Instância '${instance.instanceName}' conectada!`);
+                    onConnected?.();
+                }
+            } catch (err) {
+                console.warn("Erro ao verificar status da instância:", err);
+            }
+        }, 5000);
+    };
+
     const fetchQRCode = async () => {
         if (!instance) return;
         setStatus('GERANDO');
         setError('');
-        stopPolling();
+        stopAllPolling();
 
         try {
-            // 1. Pede ao backend para "acordar" a instância e forçar a geração do QR Code.
-            // O backend chamará a Evolution API, que enviará o QR Code para o nosso webhook.
-            await getEvolutionInstanceStatusApi(instance._id);
+            await getEvolutionInstanceStatusApi(instance._id); // força a criação do QR
 
-            // 2. Agora que o processo foi iniciado, mudamos o status e começamos a verificar.
             setStatus('AGUARDANDO');
-            
-            // 3. Inicia o "polling": a cada 3 segundos, pergunta ao backend se o QR Code já chegou no cache.
-            pollingRef.current = setInterval(async () => {
-                console.log("Verificando se o QR Code chegou no cache do backend...");
+
+            pollingQrRef.current = setInterval(async () => {
                 try {
-                    // Chama a API que lê o QR Code do cache
                     const result = await getQrCodeFromApi(instance.instanceName);
-                    
                     if (result && result.qrcode) {
-                        // SUCESSO! O QR Code chegou.
-                        stopPolling();
+                        stopAllPolling();
                         setQrCode(result.qrcode);
                         setStatus('QR_CODE');
+                        startPollingForStatusConnected();
                     }
-                    // Se não chegou, ele continuará tentando nas próximas verificações.
-                } catch (pollError) {
-                    // Não para o polling por um erro de busca, apenas loga
-                    console.error("Erro durante o polling:", pollError);
+                } catch (err) {
+                    console.error("Erro ao buscar QR Code:", err);
                 }
-            }, 3000); // Tenta a cada 3 segundos
+            }, 3000);
 
-            // Adiciona um timeout para parar de tentar após um tempo (ex: 45 segundos)
+            // Timeout para evitar polling infinito
             setTimeout(() => {
-                if (pollingRef.current) {
-                    stopPolling();
-                    // Se ainda estiver aguardando, significa que o QR Code nunca chegou.
-                    if (status === 'AGUARDANDO') {
-                        setError("O QR Code não foi recebido a tempo. A instância pode estar com problemas ou o webhook não foi entregue. Tente novamente.");
+                if (status !== 'CONECTADO') {
+                    stopAllPolling();
+                    if (status === 'AGUARDANDO' || status === 'QR_CODE') {
+                        setError('QR Code não recebido ou conexão não confirmada. Tente novamente.');
                         setStatus('ERRO');
                     }
                 }
-            }, 45000);
-
+            }, 60000);
         } catch (err) {
-            setError(err.message || 'Falha ao iniciar a conexão.');
+            setError(err.message || 'Erro ao iniciar a conexão.');
             setStatus('ERRO');
         }
     };
@@ -102,19 +99,23 @@ function GenerateQRCodeModal({ isOpen, onClose, instance, onConnected }) {
                 <div className="modal-body text-center">
                     {status === 'INICIAL' && (
                         <>
-                            <p>Clique no botão abaixo para gerar um QR Code e conectar seu celular.</p>
+                            <p>Clique para gerar um QR Code e conectar seu celular.</p>
                             <button onClick={fetchQRCode} className="button primary-button">Gerar QR Code</button>
                         </>
                     )}
-                    {status === 'GERANDO' && <p>Iniciando conexão e solicitando QR Code...</p>}
-                    {status === 'AGUARDANDO' && <p>Aguardando o QR Code ser recebido do WhatsApp...</p>}
-                    {status === 'CONECTADO' && <div className="qr-success">✅<p>Conectado com sucesso!</p></div>}
-                    {status === 'ERRO' && <p className="error-message">{error}</p>}
+                    {status === 'GERANDO' && <p>Iniciando instância e solicitando QR Code...</p>}
+                    {status === 'AGUARDANDO' && <p>Aguardando o QR Code do backend...</p>}
                     {status === 'QR_CODE' && (
                         <>
-                            <p>Escaneie o QR Code abaixo com seu celular. Ele é válido por cerca de 30 segundos.</p>
-                            {qrCode && <img src={qrCode} alt="QR Code para conectar WhatsApp" className="qr-code-image" />}
+                            <p>Escaneie com o WhatsApp. Estamos monitorando a conexão...</p>
+                            {qrCode && <img src={qrCode} alt="QR Code" className="qr-code-image" />}
                         </>
+                    )}
+                    {status === 'CONECTADO' && (
+                        <div className="qr-success">✅<p>Conectado com sucesso!</p></div>
+                    )}
+                    {status === 'ERRO' && (
+                        <p className="error-message">{error}</p>
                     )}
                 </div>
                 <div className="modal-actions">
@@ -124,4 +125,5 @@ function GenerateQRCodeModal({ isOpen, onClose, instance, onConnected }) {
         </div>
     );
 }
+
 export default GenerateQRCodeModal;
