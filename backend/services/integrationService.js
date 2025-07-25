@@ -897,11 +897,22 @@ const listEvolutionInstances = async (companyId) => {
 };
 
 const updateInstanceSettings = async (instanceId, companyId, settings) => {
-    const { receiveFromGroups } = settings;
-    
+    const updateData = {};
+
+    // Lógica herdada: se não vier o campo, seta false
+    if (settings.receiveFromGroups === undefined) {
+        updateData.receiveFromGroups = false;
+    } else {
+        updateData.receiveFromGroups = Boolean(settings.receiveFromGroups);
+    }
+
+    if (settings.autoCreateLead !== undefined) {
+        updateData.autoCreateLead = Boolean(settings.autoCreateLead);
+    }
+
     const updatedInstance = await EvolutionInstance.findOneAndUpdate(
         { _id: instanceId, company: companyId },
-        { $set: { receiveFromGroups: Boolean(receiveFromGroups) } },
+        { $set: updateData },
         { new: true }
     );
 

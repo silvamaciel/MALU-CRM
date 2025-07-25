@@ -121,18 +121,18 @@ function IntegrationsPage() {
     setIsQRModalOpen(true);
   };
 
-  const handleToggleGroups = async (instanceId, currentValue) => {
-    try {
-      const updated = await updateInstanceSettingsApi(instanceId, { receiveFromGroups: !currentValue });
-      // Atualiza o estado local para refletir a mudança instantaneamente
-      setEvolutionInstances(prev =>
-        prev.map(inst => inst._id === instanceId ? updated : inst)
-      );
-      toast.success(`Configuração da instância '${updated.instanceName}' atualizada.`);
-    } catch (error) {
-      toast.error("Falha ao atualizar configuração.");
-    }
-  };
+  const handleSettingsChange = async (instanceId, settings) => {
+        try {
+            const updated = await updateInstanceSettingsApi(instanceId, settings);
+            // Atualiza o estado local para refletir a mudança instantaneamente
+            setEvolutionInstances(prev => 
+                prev.map(inst => inst._id === instanceId ? { ...inst, ...updated } : inst)
+            );
+            toast.success(`Configuração da instância '${updated.instanceName}' atualizada.`);
+        } catch (error) {
+            toast.error("Falha ao atualizar configuração.");
+        }
+    };
 
 
   const handleOpenDeleteModal = (instance) => {
@@ -1022,6 +1022,29 @@ function IntegrationsPage() {
                     <div className="instance-details">
                       <span className="instance-name">{instance.instanceName}</span>
                       <StatusBadge status={instance.status} />
+                      <div className="toggle-switch-container">
+                            <label className="toggle-switch">
+                                <input 
+                                    type="checkbox" 
+                                    checked={instance.receiveFromGroups} 
+                                    onChange={() => handleSettingsChange(instance._id, { receiveFromGroups: !instance.receiveFromGroups })} 
+                                />
+                                <span className="slider"></span>
+                            </label>
+                            <span className="toggle-label">Receber de Grupos</span>
+                        </div>
+                        
+                        <div className="toggle-switch-container">
+                            <label className="toggle-switch">
+                                <input 
+                                    type="checkbox" 
+                                    checked={instance.autoCreateLead} 
+                                    onChange={() => handleSettingsChange(instance._id, { autoCreateLead: !instance.autoCreateLead })} 
+                                />
+                                <span className="slider"></span>
+                            </label>
+                            <span className="toggle-label">Criar Lead Automático</span>
+                        </div>
                     </div>
                     <div className="instance-actions">
                       <button onClick={() => openQRModal(instance)} className="button small-button primary-button">

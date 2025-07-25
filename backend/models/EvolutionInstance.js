@@ -17,6 +17,10 @@ const evolutionInstanceSchema = new Schema({
         type: Boolean,
         default: false
     },
+    autoCreateLead: {
+        type: Boolean,
+        default: true
+    },
 
     apiKey: { // API Key específica desta instância, retornada pela Evolution API
         type: String,

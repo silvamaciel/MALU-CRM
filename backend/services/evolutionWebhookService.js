@@ -74,6 +74,13 @@ const processMessageUpsert = async (payload) => {
         let lead = await Lead.findOne({ contato: leadPhoneNumberWithPlus, company: companyId });
 
         if (!lead) {
+
+
+            if (!crmInstance.autoCreateLead) {
+                console.log(`[WebhookSvc] Criação automática de lead está DESATIVADA para a instância '${instance}'. Mensagem de número desconhecido será ignorada.`);
+                return; 
+            }
+
             if (key.fromMe) {
                 console.log(`[WebhookSvc] Mensagem enviada para um número desconhecido (${leadPhoneNumberWithPlus}). Lead não será criado.`);
                 return;
