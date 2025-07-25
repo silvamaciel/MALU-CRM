@@ -851,6 +851,10 @@ const getEvolutionInstanceConnectionState = async (instanceId, companyId) => {
 
         // Verifica se a conexão já está aberta ('open')
         if (responseData.instance?.state === 'open') {
+            if (crmInstance.status !== 'open') {
+                crmInstance.status = 'open';
+                await crmInstance.save();
+            }
             return { status: 'CONECTADO', qrcode: null };
         }
 
