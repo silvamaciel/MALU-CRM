@@ -41,37 +41,57 @@ const processMessageUpsert = async (payload) => {
     const message = data.message;
     const key = data.key;
     const remoteJid = key?.remoteJid;
-    const isGroupMessage = remoteJid.endsWith('@g.us');
-    const crmInstance = await EvolutionInstance.findOne({ instanceName: instance });
 
     if (!instance || !message || !remoteJid || !message.conversation) return;
 
 
 
+    const isGroupMessage = remoteJid.endsWith('@g.us');
+    const crmInstance = await EvolutionInstance.findOne({ instanceName: instance });
+    if (!crmInstance) return;
+
+
     let contactPhotoUrl = null;
     try {
+        // --- 1. Busca a foto do perfil do contato ---
         console.log(`[WebhookSvc] Buscando foto do perfil para ${remoteJid}...`);
         
-        const profilePicResponse = await axios.post(
-            `${process.env.EVOLUTION_API_URL}/chat/fetchProfilePictureUrl/${instance}`,
-            {
-                number: remoteJid
-            },
-            { 
-                headers: { 'apikey': crmInstance.apiKey } 
-            }
-        );
+        const requestUrl = `${process.env.EVOLUTION_API_URL}/chat/fetchProfilePictureUrl/${instance}`;
+        const requestBody = { number: remoteJid };
+        const requestHeaders = { headers: { 'apikey': crmInstance.apiKey } };
+
+        // VVVVV LOG DE DEPURAÇÃO ADICIONADO ANTES DA CHAMADA VVVVV
+        console.log(`[WebhookSvc DEBUG] Enviando POST para: ${requestUrl}`);
+        console.log(`[WebhookSvc DEBUG] Com Body:`, JSON.stringify(requestBody, null, 2));
+        console.log(`[WebhookSvc DEBUG] Com Headers: { apikey: "${crmInstance.apiKey.substring(0, 5)}..." }`);
+        // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        const profilePicResponse = await axios.post(requestUrl, requestBody, requestHeaders);
         
         if (profilePicResponse.data && profilePicResponse.data.profilePictureUrl) {
             contactPhotoUrl = profilePicResponse.data.profilePictureUrl;
             console.log(`[WebhookSvc] Foto do perfil encontrada para ${remoteJid}.`);
         }
     } catch (picError) {
-        console.warn(`[WebhookSvc] Não foi possível buscar a foto do perfil para ${remoteJid}. O contato pode não ter uma foto ou a instância pode não estar totalmente conectada.`);
+        // VVVVV LOG DE ERRO DETALHADO VVVVV
+        console.error(`[WebhookSvc] ERRO DETALHADO ao buscar foto do perfil:`);
+        if (picError.response) {
+            // O servidor respondeu com um status de erro (4xx, 5xx)
+            console.error("  - DADOS DO ERRO:", JSON.stringify(picError.response.data, null, 2));
+            console.error("  - STATUS DO ERRO:", picError.response.status);
+        } else if (picError.request) {
+            // A requisição foi feita mas nenhuma resposta foi recebida
+            console.error("  - ERRO DE REQUISIÇÃO: Nenhuma resposta recebida.");
+        } else {
+            // Algo aconteceu ao configurar a requisição
+            console.error('  - ERRO DE CONFIGURAÇÃO:', picError.message);
+        }
+        console.warn(`[WebhookSvc] Não foi possível buscar a foto do perfil para ${remoteJid}.`);
+        // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     }
 
 
-    if (!crmInstance) return;
+    
 
     if (isGroupMessage && !crmInstance.receiveFromGroups) {
         console.log(`[WebhookSvc] Mensagem de grupo ignorada para a instância '${instance}'.`);
