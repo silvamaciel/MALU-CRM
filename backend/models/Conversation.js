@@ -20,7 +20,8 @@ const conversationSchema = new Schema({
     lastMessage: { type: String },
     lastMessageAt: { type: Date, default: Date.now, index: true },
     unreadCount: { type: Number, default: 0 },
-    instance: { type: Schema.Types.ObjectId, ref: 'EvolutionInstance' }
+    instance: { type: Schema.Types.ObjectId, ref: 'EvolutionInstance' },
+    instanceName: { type: String, trim: true }, // <<< NOVO CAMPO
 }, { timestamps: true });
 
 // Garante que só exista uma conversa por lead/canal

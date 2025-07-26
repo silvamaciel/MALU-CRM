@@ -20,9 +20,17 @@ const listConversations = async (companyId) => {
 
     try {
         const conversations = await Conversation.find({ company: companyId })
-            .populate('lead', 'nome fotoUrl')
-            .sort({ lastMessageAt: -1 })
-            .lean();
+            .populate({ // <<< POPULATE ANINHADO
+            path: 'lead',
+            select: 'nome fotoUrl situacao', // Pede também a situação
+            populate: {
+                path: 'situacao',
+                model: 'LeadStage',
+                select: 'nome'
+            }
+        })
+        .sort({ lastMessageAt: -1 })
+        .lean();
         
         console.log(`[ChatService] Encontradas ${conversations.length} conversas.`);
         return conversations;

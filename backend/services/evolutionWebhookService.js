@@ -114,7 +114,8 @@ const processMessageUpsert = async (payload) => {
                     $set: {
                         company: companyId,
                         channelInternalId: remoteJid,
-                        leadNameSnapshot: lead.nome, // snapshot do nome do lead
+                        leadNameSnapshot: lead.nome,
+                        instanceName: instance,
                     }
                 },
                 { upsert: true, new: true }
@@ -164,13 +165,13 @@ const processConnectionUpdate = async (payload) => {
         console.log('[WebhookSvc] Evento "connection.update" ignorado: dados essenciais ausentes.');
         return;
     }
-    
+
     console.log(`[WebhookSvc] Recebido connection.update para instância '${instance}'. Novo status: ${newStatus}`);
 
     try {
         // Busca a instância no nosso banco de dados pelo nome que veio no webhook
         const crmInstance = await EvolutionInstance.findOne({ instanceName: instance });
-        
+
         if (!crmInstance) {
             console.log(`[WebhookSvc] Instância '${instance}' não encontrada no CRM. Status não atualizado.`);
             return;
@@ -178,7 +179,7 @@ const processConnectionUpdate = async (payload) => {
 
         crmInstance.status = newStatus;
         await crmInstance.save();
-        
+
         console.log(`[WebhookSvc] Status da instância '${instance}' atualizado para '${newStatus}' no CRM com sucesso.`);
 
     } catch (error) {
@@ -194,7 +195,7 @@ const processConnectionUpdate = async (payload) => {
 const processQrCodeUpdate = async (payload) => {
     const { instance, data } = payload;
     const qrCodeBase64 = data.qrcode?.base64;
-    
+
     if (instance && qrCodeBase64) {
         console.log(`[WebhookSvc] QR Code recebido para a instância '${instance}'. Armazenando no cache.`);
         // Armazena o QR Code associado ao nome da instância por 60 segundos
