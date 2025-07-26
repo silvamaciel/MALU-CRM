@@ -28,7 +28,7 @@ const unidadeSchema = new Schema(
       min: [0, "Área total não pode ser negativa."],
     },
     precoTabela: {
-      type: Double,
+      type: Number,
       min: [0, "Preço não pode ser negativo."],
     },
     statusUnidade: {
