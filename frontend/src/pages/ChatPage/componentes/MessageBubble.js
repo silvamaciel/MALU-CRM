@@ -18,11 +18,17 @@ function MessageBubble({ message }) {
         }
     };
 
+    const messageTime = new Date(message.createdAt).toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+
+
     return (
         <div className={`message-bubble-wrapper ${isOutgoing ? 'outgoing' : 'incoming'}`}>
             <div className="message-bubble">
-                {renderContent()}
-                <span className="message-timestamp">{new Date(message.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                <p className="message-content">{message.content}</p>
+                <span className="message-timestamp">{messageTime}</span>
             </div>
         </div>
     );
