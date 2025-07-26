@@ -12,7 +12,7 @@ function ConversationList({ conversations, selectedConversationId, onSelectConve
                 {loading ? <p>Carregando...</p> :
                     conversations.map(conv => (
                         <li key={conv._id} onClick={() => onSelectConversation(conv)} className={conv._id === selectedConversationId ? 'active' : ''}>
-                            <img src={conv.lead?.fotoUrl || '/default-avatar.png'} alt="avatar" className="conv-avatar" />
+                            <img src={conv.contactPhotoUrl || '/default-avatar.png'} alt="avatar" className="conv-avatar" />
                             <div className="conv-info">
                                 <span className="conv-name">{ conv.lead?.nome || conv.leadNameSnapshot || conv.tempContactName || 'Conversa'}</span>
                                 <span className="conv-preview">{conv.lastMessage}</span>

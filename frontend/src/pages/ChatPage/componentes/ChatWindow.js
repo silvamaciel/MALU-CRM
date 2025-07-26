@@ -21,7 +21,7 @@ function ChatWindow({ conversation, messages, loading, onSendMessage }) {
     return (
         <main className="chat-window">
             <header className="chat-header">
-                <img src={conversation.lead?.fotoUrl || '/default-avatar.png'} alt="avatar" className="chat-avatar" />
+                <img src={conversation.contactPhotoUrl || '/default-avatar.png'} alt="avatar" className="chat-avatar" />
                 <div className="chat-header-info">
                     <h4>{conversation.lead?.nome || conversation.leadNameSnapshot || conversation.tempContactName}</h4>
                     <span>Instância: {conversation.instanceName || 'N/A'} | Status do Lead: {conversation.lead?.situacao?.nome || 'N/A'}</span>

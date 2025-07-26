@@ -44,6 +44,24 @@ const processMessageUpsert = async (payload) => {
 
     if (!instance || !message || !remoteJid || !message.conversation) return;
 
+
+
+    const profilePicUrl = `${process.env.EVOLUTION_API_URL}/chat/fetchProfilePic/${instance}/${remoteJid}`;
+    let contactPhotoUrl = null;
+    try {
+        const crmInstanceForPic = await EvolutionInstance.findOne({ instanceName: instance }).lean();
+        if (crmInstanceForPic) {
+            const picResponse = await axios.get(profilePicUrl, { headers: { 'apikey': crmInstanceForPic.apiKey } });
+            if (picResponse.data && picResponse.data.profilePic) {
+                contactPhotoUrl = picResponse.data.profilePic;
+            }
+        }
+    } catch(picError) {
+        console.warn(`[WebhookSvc] Não foi possível buscar a foto do perfil para ${remoteJid}.`);
+    }
+
+
+
     const isGroupMessage = remoteJid.endsWith('@g.us');
     const crmInstance = await EvolutionInstance.findOne({ instanceName: instance });
     if (!crmInstance) return;
@@ -70,6 +88,7 @@ const processMessageUpsert = async (payload) => {
 
     leadPhoneNumber = fixBrazilianMobileNumber(leadPhoneNumber);
     const senderPhoneWithPlus = `+${leadPhoneNumber}`;
+
 
     try {
         let lead = await Lead.findOne({ contato: senderPhoneWithPlus, company: companyId });
@@ -116,6 +135,7 @@ const processMessageUpsert = async (payload) => {
                         channelInternalId: remoteJid,
                         leadNameSnapshot: lead.nome,
                         instanceName: instance,
+                        contactPhotoUrl: contactPhotoUrl
                     }
                 },
                 { upsert: true, new: true }
