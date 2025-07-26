@@ -23,7 +23,7 @@ function ChatWindow({ conversation, messages, loading, onSendMessage }) {
             <header className="chat-header">
                 <img src={conversation.lead?.fotoUrl || '/default-avatar.png'} alt="avatar" className="chat-avatar" />
                 <div className="chat-header-info">
-                    <h4>{conv.lead?.nome || conv.leadNameSnapshot || conv.tempContactName}</h4>
+                    <h4>{conversation.lead?.nome || conversation.leadNameSnapshot || conversation.tempContactName}</h4>
                     <span>Instância: {conversation.instanceName || 'N/A'} | Status do Lead: {conversation.lead?.situacao?.nome || 'N/A'}</span>
                 </div>
                 <div className="chat-header-actions">
