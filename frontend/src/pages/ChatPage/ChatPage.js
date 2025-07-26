@@ -73,9 +73,15 @@ function ChatPage() {
                 <ul>
                     {loadingConversations ? <p>Carregando...</p> :
                         conversations.map(conv => (
-                            <li key={conv._id} onClick={() => handleSelectConversation(conv._id)} className={conv._id === selectedConversationId ? 'active' : ''}>
+                            <li
+                                key={conv._id}
+                                onClick={() => handleSelectConversation(conv._id)}
+                                className={conv._id === selectedConversationId ? 'active' : ''}
+                            >
                                 <div className="conv-info">
-                                    <span className="conv-name">{conv.lead?.nome}</span>
+                                    <span className="conv-name">
+                                        {conv.leadNameSnapshot || conv.tempContactName || 'Conversa Desconhecida'}
+                                    </span>
                                     <span className="conv-preview">{conv.lastMessage}</span>
                                 </div>
                                 {conv.unreadCount > 0 && <span className="unread-badge">{conv.unreadCount}</span>}

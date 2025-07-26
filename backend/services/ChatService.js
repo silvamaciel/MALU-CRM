@@ -9,7 +9,6 @@ const axios = require('axios');
  */
 const listConversations = async (companyId) => {
     return Conversation.find({ company: companyId })
-        .populate('lead', 'nome') // Puxa o nome do lead para exibir na lista
         .sort({ lastMessageAt: -1 })
         .lean();
 };

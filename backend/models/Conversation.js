@@ -3,7 +3,9 @@ const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
 const conversationSchema = new Schema({
-    lead: { type: Schema.Types.ObjectId, ref: 'Lead', required: true },
+    lead: { type: Schema.Types.ObjectId, ref: 'Lead', required: false, default: null },
+    leadNameSnapshot: { type: String, trim: true },
+    tempContactName: { type: String, trim: true },
     company: { type: Schema.Types.ObjectId, ref: 'Company', required: true, index: true },
     channel: {
         type: String,

@@ -36,6 +36,7 @@ const fixBrazilianMobileNumber = (phone) => {
  * @param {object} payload - O corpo do webhook.
  */
 const processMessageUpsert = async (payload) => {
+
     const { instance, data } = payload;
     const message = data.message;
     const key = data.key;
@@ -68,54 +69,70 @@ const processMessageUpsert = async (payload) => {
     }
 
     leadPhoneNumber = fixBrazilianMobileNumber(leadPhoneNumber);
-    const leadPhoneNumberWithPlus = `+${leadPhoneNumber}`;
+    const senderPhoneWithPlus = `+${leadPhoneNumber}`;
 
     try {
-        let lead = await Lead.findOne({ contato: leadPhoneNumberWithPlus, company: companyId });
+        let lead = await Lead.findOne({ contato: senderPhoneWithPlus, company: companyId });
+        let conversation;
 
         if (!lead) {
+            if (crmInstance.autoCreateLead) {
+                console.log(`[WebhookSvc] Nenhum lead encontrado para ${senderPhoneWithPlus}. Criando um novo...`);
 
+                const origemDoc = await origemService.findOrCreateOrigem(
+                    {
+                        nome: 'WhatsApp',
+                        descricao: 'Lead recebido via WhatsApp (Evolution API)'
+                    },
+                    companyId
+                );
 
-            if (!crmInstance.autoCreateLead) {
-                console.log(`[WebhookSvc] Criação automática de lead está DESATIVADA para a instância '${instance}'. Mensagem de número desconhecido será ignorada.`);
-                return; 
+                const leadData = {
+                    nome: data.pushName || `Contato WhatsApp ${senderPhoneWithPlus}`,
+                    contato: senderPhoneWithPlus,
+                    origem: origemDoc._id,
+                };
+
+                lead = await LeadService.createLead(leadData, companyId, crmInstance.createdBy);
+                console.log(`[WebhookSvc] Novo lead criado (ID: ${lead._id}).`);
+            } else {
+                console.log(`[WebhookSvc] Criação automática de lead está DESATIVADA para a instância '${instance}'. Salvando conversa como não atribuída.`);
+
+                conversation = await Conversation.findOneAndUpdate(
+                    { company: companyId, channelInternalId: remoteJid, lead: null },
+                    { $set: { tempContactName: data.pushName || `Contato ${senderPhoneWithPlus}` } },
+                    { upsert: true, new: true }
+                );
             }
-
-            if (key.fromMe) {
-                console.log(`[WebhookSvc] Mensagem enviada para um número desconhecido (${leadPhoneNumberWithPlus}). Lead não será criado.`);
-                return;
-            }
-
-            console.log(`[WebhookSvc] Nenhum lead encontrado para ${leadPhoneNumberWithPlus}. Criando um novo...`);
-            const origemDoc = await origemService.findOrCreateOrigem(
-                {
-                    nome: 'WhatsApp',
-                    descricao: 'Lead recebido via WhatsApp (Evolution API)'
-                },
-                companyId
-            );
-            const leadData = {
-                nome: data.pushName || `Contato WhatsApp ${leadPhoneNumberWithPlus}`,
-                contato: leadPhoneNumberWithPlus,
-                origem: origemDoc._id,
-            };
-            lead = await LeadService.createLead(leadData, companyId, crmInstance.createdBy);
-            console.log(`[WebhookSvc] Novo lead criado (ID: ${lead._id}).`);
         }
 
-        const conversation = await Conversation.findOneAndUpdate(
-            { lead: lead._id, channel: 'WhatsApp' },
-            {
-                $set: {
-                    company: companyId,
-                    channelInternalId: remoteJid,
-                    lastMessage: message.conversation,
-                    lastMessageAt: new Date()
+        // Caso o lead exista ou tenha sido criado, cria ou atualiza a conversa vinculada
+        if (lead) {
+            conversation = await Conversation.findOneAndUpdate(
+                { lead: lead._id, channel: 'WhatsApp' },
+                {
+                    $set: {
+                        company: companyId,
+                        channelInternalId: remoteJid,
+                        leadNameSnapshot: lead.nome, // snapshot do nome do lead
+                    }
                 },
-                ...(messageDirection === 'incoming' && { $inc: { unreadCount: 1 } })
-            },
-            { upsert: true, new: true }
-        );
+                { upsert: true, new: true }
+            );
+        }
+
+        if (!conversation) {
+            console.error(`[WebhookSvc] Não foi possível encontrar ou criar uma conversa para ${senderPhoneWithPlus}`);
+            return;
+        }
+
+        // Atualiza a conversa com a última mensagem e contador de não lidas
+        conversation.lastMessage = message.conversation;
+        conversation.lastMessageAt = new Date();
+        if (messageDirection === 'incoming') {
+            conversation.unreadCount = (conversation.unreadCount || 0) + 1;
+        }
+        await conversation.save();
 
         const newMessage = new Message({
             conversation: conversation._id,
@@ -129,9 +146,10 @@ const processMessageUpsert = async (payload) => {
 
         console.log(`[WebhookSvc] Mensagem (direção: ${messageDirection}) salva para a Conversa ID: ${conversation._id}`);
     } catch (error) {
-        console.error(`[WebhookSvc] Erro ao processar mensagem para ${leadPhoneNumberWithPlus}:`, error.message);
+        console.error(`[WebhookSvc] Erro ao processar mensagem para ${senderPhoneWithPlus}:`, error.message);
     }
 };
+
 
 
 /**
