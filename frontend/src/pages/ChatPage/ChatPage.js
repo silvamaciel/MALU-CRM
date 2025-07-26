@@ -80,7 +80,7 @@ function ChatPage() {
                             >
                                 <div className="conv-info">
                                     <span className="conv-name">
-                                        {conv.leadNameSnapshot || conv.tempContactName || 'Conversa Desconhecida'}
+                                        {conv.lead?.nome || conv.leadNameSnapshot || conv.tempContactName || 'Conversa Desconhecida'}
                                     </span>
                                     <span className="conv-preview">{conv.lastMessage}</span>
                                 </div>
