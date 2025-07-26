@@ -8,15 +8,31 @@ const Lead = require('../models/Lead');
 /**
  * Lista todas as conversas de uma empresa, ordenadas pela última mensagem.
  */
+/**
+ * Lista todas as conversas de uma empresa, ordenadas pela última mensagem.
+ */
 const listConversations = async (companyId) => {
+    console.log(`[ChatService] Buscando conversas para a Company ID: ${companyId}`);
+    if (!companyId) {
+        console.error("[ChatService] ERRO: companyId não foi fornecido para listConversations.");
+        return []; // Retorna um array vazio se o ID da empresa não for passado
+    }
 
-    const queryConditions = { company: companyId };
+    try {
+        const conversations = await Conversation.find({ company: companyId })
+            .populate('lead', 'nome fotoUrl')
+            .sort({ lastMessageAt: -1 })
+            .lean();
+        
+        console.log(`[ChatService] Encontradas ${conversations.length} conversas.`);
+        return conversations;
 
-    return Conversation.find({ queryConditions })
-        .populate('lead', 'nome fotoUrl')
-        .sort({ lastMessageAt: -1 })
-        .lean();
+    } catch (error) {
+        console.error("[ChatService] Erro ao buscar conversas:", error);
+        throw new Error("Erro interno ao buscar conversas.");
+    }
 };
+
 
 /**
  * Busca todas as mensagens de uma conversa específica e zera o contador de não lidas.
