@@ -10,16 +10,9 @@ const Lead = require('../models/Lead');
  */
 const listConversations = async (companyId) => {
 
-    if (filters.instanceId) {
-        const instance = await EvolutionInstance.findById(filters.instanceId).lean();
-        if (instance) {
-            // Assumindo que o 'sender' no webhook é o JID da instância
-            // Esta lógica precisaria de refinamento para associar a conversa à instância
-            // Por enquanto, vamos assumir que a conversa tem um campo 'instance'
-        }
-    }
+    const queryConditions = { company: companyId };
 
-    return Conversation.find({ company: companyId })
+    return Conversation.find({ queryConditions })
         .populate('lead', 'nome fotoUrl')
         .sort({ lastMessageAt: -1 })
         .lean();
