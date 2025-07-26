@@ -149,7 +149,14 @@ const processMessageUpsert = async (payload) => {
 
                 conversation = await Conversation.findOneAndUpdate(
                     { company: companyId, channelInternalId: remoteJid, lead: null },
-                    { $set: { tempContactName: data.pushName || `Contato ${senderPhoneWithPlus}` } },
+                    { 
+                        $set: { 
+                            tempContactName: data.pushName || `Contato ${senderPhoneWithPlus}`,
+                            contactPhotoUrl: contactPhotoUrl,
+                            channelInternalId: remoteJid,
+                            instanceName: instance,
+                
+                } },
                     { upsert: true, new: true }
                 );
             }
@@ -173,7 +180,7 @@ const processMessageUpsert = async (payload) => {
         }
 
         console.log('DEBUG Conversation atualizada:', conversation);
-        
+
         if (!conversation) {
             console.error(`[WebhookSvc] Não foi possível encontrar ou criar uma conversa para ${senderPhoneWithPlus}`);
             return;
