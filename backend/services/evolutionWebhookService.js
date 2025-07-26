@@ -68,10 +68,12 @@ const processMessageUpsert = async (payload) => {
         // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         const profilePicResponse = await axios.post(requestUrl, requestBody, requestHeaders);
+
+         console.log("[WebhookSvc DEBUG] Resposta completa da API de foto de perfil:", profilePicResponse.data);
         
         if (profilePicResponse.data && profilePicResponse.data.profilePictureUrl) {
             contactPhotoUrl = profilePicResponse.data.profilePictureUrl;
-            console.log(`[WebhookSvc] Foto do perfil encontrada para ${remoteJid}.`);
+            console.log(`[WebhookSvc] Foto do perfil encontrada para ${remoteJid},`);
         }
     } catch (picError) {
         // VVVVV LOG DE ERRO DETALHADO VVVVV
