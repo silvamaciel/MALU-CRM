@@ -46,18 +46,20 @@ const processMessageUpsert = async (payload) => {
 
 
 
-    const profilePicUrl = `${process.env.EVOLUTION_API_URL}/chat/fetchProfilePic/${instance}/${remoteJid}`;
     let contactPhotoUrl = null;
     try {
-        const crmInstanceForPic = await EvolutionInstance.findOne({ instanceName: instance }).lean();
-        if (crmInstanceForPic) {
-            const picResponse = await axios.get(profilePicUrl, { headers: { 'apikey': crmInstanceForPic.apiKey } });
-            if (picResponse.data && picResponse.data.profilePic) {
-                contactPhotoUrl = picResponse.data.profilePic;
-            }
+        console.log(`[WebhookSvc] Buscando foto do perfil para ${remoteJid}...`);
+        const profilePicResponse = await axios.get(
+            `${process.env.EVOLUTION_API_URL}/chat/fetchProfilePic/${remoteJid}`,
+            { headers: { 'apikey': crmInstance.apiKey } }
+        );
+        
+        if (profilePicResponse.data && profilePicResponse.data.profilePic) {
+            contactPhotoUrl = profilePicResponse.data.profilePic;
+            console.log(`[WebhookSvc] Foto do perfil encontrada para ${remoteJid}.`);
         }
-    } catch(picError) {
-        console.warn(`[WebhookSvc] Não foi possível buscar a foto do perfil para ${remoteJid}.`);
+    } catch (picError) {
+        console.warn(`[WebhookSvc] Não foi possível buscar a foto do perfil para ${remoteJid}. O contato pode não ter uma foto.`);
     }
 
 

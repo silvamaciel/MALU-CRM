@@ -20,7 +20,7 @@ const listConversations = async (companyId) => {
 
     try {
         const conversations = await Conversation.find({ company: companyId })
-            .populate({ // <<< POPULATE ANINHADO
+            .populate({
             path: 'lead',
             select: 'nome fotoUrl situacao', // Pede também a situação
             populate: {
