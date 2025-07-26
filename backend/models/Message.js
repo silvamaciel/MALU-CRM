@@ -12,7 +12,15 @@ const messageSchema = new Schema({
         enum: ['incoming', 'outgoing'] // Mensagem recebida ou enviada
     },
     senderId: { type: String }, // Pode ser o JID do cliente ou o ID do usuário do CRM
-    content: { type: String, required: true, trim: true },
+    contentType: {
+        type: String,
+        required: true,
+        enum: ['text', 'image', 'audio', 'document'],
+        default: 'text'
+    },
+    content: { type: String, required: true, trim: true }, 
+    mediaUrl: { type: String, trim: true }, 
+    mediaMimeType: { type: String, trim: true },
     status: {
         type: String,
         enum: ['sent', 'delivered', 'read', 'failed'],

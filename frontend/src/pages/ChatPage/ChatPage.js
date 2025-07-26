@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { listConversationsApi, getMessagesApi, sendMessageApi } from '../../api/chatApi';
 import { toast } from 'react-toastify';
+import ConversationList from './components/ConversationList';
+import ChatWindow from './components/ChatWindow';
 import './ChatPage.css';
 
 function ChatPage() {

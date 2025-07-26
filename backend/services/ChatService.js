@@ -8,8 +8,18 @@ const axios = require('axios');
  * Lista todas as conversas de uma empresa, ordenadas pela última mensagem.
  */
 const listConversations = async (companyId) => {
+
+    if (filters.instanceId) {
+        const instance = await EvolutionInstance.findById(filters.instanceId).lean();
+        if (instance) {
+            // Assumindo que o 'sender' no webhook é o JID da instância
+            // Esta lógica precisaria de refinamento para associar a conversa à instância
+            // Por enquanto, vamos assumir que a conversa tem um campo 'instance'
+        }
+    }
+
     return Conversation.find({ company: companyId })
-        .populate('lead', 'nome')
+        .populate('lead', 'nome fotoUrl')
         .sort({ lastMessageAt: -1 })
         .lean();
 };
