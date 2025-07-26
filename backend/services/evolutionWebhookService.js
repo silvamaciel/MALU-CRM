@@ -5,6 +5,7 @@ const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 const { logHistory } = require('./LeadService');
 const origemService = require('./origemService');
+const axios = require('axios');
 
 const qrCodeCache = new Map();
 
@@ -91,7 +92,7 @@ const processMessageUpsert = async (payload) => {
     }
 
 
-    
+
 
     if (isGroupMessage && !crmInstance.receiveFromGroups) {
         console.log(`[WebhookSvc] Mensagem de grupo ignorada para a instância '${instance}'.`);
