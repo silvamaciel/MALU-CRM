@@ -3,6 +3,7 @@ const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 const EvolutionInstance = require('../models/EvolutionInstance');
 const axios = require('axios');
+const Lead = require('../models/Lead');
 
 /**
  * Lista todas as conversas de uma empresa, ordenadas pela última mensagem.
