@@ -172,6 +172,8 @@ const processMessageUpsert = async (payload) => {
             );
         }
 
+        console.log('DEBUG Conversation atualizada:', conversation);
+        
         if (!conversation) {
             console.error(`[WebhookSvc] Não foi possível encontrar ou criar uma conversa para ${senderPhoneWithPlus}`);
             return;
