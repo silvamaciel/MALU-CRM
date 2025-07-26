@@ -41,6 +41,8 @@ const processMessageUpsert = async (payload) => {
     const message = data.message;
     const key = data.key;
     const remoteJid = key?.remoteJid;
+    const isGroupMessage = remoteJid.endsWith('@g.us');
+    const crmInstance = await EvolutionInstance.findOne({ instanceName: instance });
 
     if (!instance || !message || !remoteJid || !message.conversation) return;
 
@@ -69,9 +71,6 @@ const processMessageUpsert = async (payload) => {
     }
 
 
-
-    const isGroupMessage = remoteJid.endsWith('@g.us');
-    const crmInstance = await EvolutionInstance.findOne({ instanceName: instance });
     if (!crmInstance) return;
 
     if (isGroupMessage && !crmInstance.receiveFromGroups) {
