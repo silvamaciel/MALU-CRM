@@ -1,7 +1,7 @@
 // src/pages/Empreendimento/EmpreendimentoDetailPage/UnidadeList.js
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { getUnidades } from '../../../api/unidadeApi'; 
+import { getUnidades } from '../../../api/unidadeApi';
 import { toast } from 'react-toastify';
 
 function UnidadeList({ empreendimentoId, empreendimentoNome }) { // Recebe o ID do empreendimento como prop
@@ -45,8 +45,8 @@ function UnidadeList({ empreendimentoId, empreendimentoNome }) { // Recebe o ID 
         <div className="unidades-list-section">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                 <h3>Unidades Cadastradas ({totalUnidades})</h3>
-                <button 
-                    onClick={() => navigate(`/empreendimentos/${empreendimentoId}/unidades/novo`)} 
+                <button
+                    onClick={() => navigate(`/empreendimentos/${empreendimentoId}/unidades/novo`)}
                     className="button primary-button"
                 >
                     Adicionar Nova Unidade
@@ -91,7 +91,25 @@ function UnidadeList({ empreendimentoId, empreendimentoNome }) { // Recebe o ID 
                     </tbody>
                 </table>
             )}
-            {/* TODO: Paginação para unidades */}
+            {totalPages > 1 && (
+                <div className="pagination">
+                    <button
+                        onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                        disabled={page === 1}
+                    >
+                        Anterior
+                    </button>
+                    <span style={{ margin: '0 10px' }}>
+                        Página {page} de {totalPages}
+                    </span>
+                    <button
+                        onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={page === totalPages}
+                    >
+                        Próximo
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
