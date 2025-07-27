@@ -12,9 +12,10 @@ import { getUsuarios } from "../../api/users";
 // Componentes
 import DiscardLeadModal from "../../components/DiscardLeadModal/DiscardLeadModal";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
-import KanbanFilters from "../../components/KanbanFilters/KanbanFilters"; 
+import KanbanFilters from "../../components/KanbanFilters/KanbanFilters";
 import LeadTagsModal from '../../components/LeadTagsModal/LeadTagsModal';
 import ImportCSVModal from '../../components/ImportCSVModal/ImportCSVModal';
+import LeadCard from '../../components/LeadCard/LeadCard';
 
 // Estilos
 import "./Kanban.css";
@@ -27,21 +28,21 @@ function LeadListPage() {
   const [leadsByStage, setLeadsByStage] = useState({});
   const [allLeadsRaw, setAllLeadsRaw] = useState([]); // "Fonte da verdade" para os leads
   const [stageIdDescartado, setStageIdDescartado] = useState(null);
-  
+
   // States para Filtros
   const [activeFilters, setActiveFilters] = useState({});
   const [origensList, setOrigensList] = useState([]);
   const [usuariosList, setUsuariosList] = useState([]);
   const [showFilters, setShowFilters] = useState(false); // Para o filtro retrátil
-  
+
   // States de UI e Modais
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isProcessingAction, setIsProcessingAction] = useState(false); // Para qualquer ação que precisa de loading
-  
+
   const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
   const [discardTargetLead, setDiscardTargetLead] = useState(null);
-  
+
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteTargetLeadForModal, setDeleteTargetLeadForModal] = useState(null);
 
@@ -61,7 +62,7 @@ function LeadListPage() {
         getOrigens(),
         getUsuarios({ ativo: true }),
       ]);
-      
+
       const fetchedStages = stagesResponse.leadStages || stagesResponse.data || stagesResponse || [];
       setLeadStages(fetchedStages);
       setOrigensList(origensResponse || []);
@@ -69,7 +70,7 @@ function LeadListPage() {
 
       const descartadoStage = fetchedStages.find(s => s.nome.toLowerCase() === "descartado");
       if (descartadoStage) setStageIdDescartado(descartadoStage._id);
-      
+
       const fetchedLeads = leadsResponse.leads || [];
       setAllLeadsRaw(fetchedLeads);
 
@@ -81,8 +82,8 @@ function LeadListPage() {
         if (stageId && grouped[stageId]) {
           grouped[stageId].push(lead);
         } else {
-            if (!grouped["sem_situacao"]) grouped["sem_situacao"] = [];
-            grouped["sem_situacao"].push(lead);
+          if (!grouped["sem_situacao"]) grouped["sem_situacao"] = [];
+          grouped["sem_situacao"].push(lead);
         }
       });
       for (const stageId in grouped) {
@@ -140,7 +141,7 @@ function LeadListPage() {
     } catch (err) { toast.error(err.message || "Falha ao reativar lead."); }
     finally { setIsProcessingAction(false); }
   }, [isProcessingAction, leadStages, forceRefresh]);
-  
+
   const handleOpenDeleteModal = useCallback((lead) => { setDeleteTargetLeadForModal(lead); setIsDeleteModalOpen(true); }, []);
   const handleCloseDeleteModal = useCallback(() => { if (!isProcessingAction) { setIsDeleteModalOpen(false); setDeleteTargetLeadForModal(null); } }, [isProcessingAction]);
   const handleConfirmDelete = useCallback(async () => {
@@ -157,12 +158,12 @@ function LeadListPage() {
 
   const handleOpenTagsModal = useCallback((lead) => { setSelectedLeadForTags(lead); setIsTagsModalOpen(true); }, []);
   const handleCloseTagsModal = useCallback(() => { setIsTagsModalOpen(false); setSelectedLeadForTags(null); }, []);
-  
+
   // Handler do Drag-and-Drop
   const onDragEnd = async (result) => {
     const { source, destination, draggableId: leadId } = result;
     if (!destination || (source.droppableId === destination.droppableId && source.index === destination.index)) return;
-    
+
     const leadToMove = allLeadsRaw.find(l => l._id === leadId);
     if (!leadToMove) return;
 
@@ -171,7 +172,7 @@ function LeadListPage() {
       handleOpenDiscardModal(leadToMove);
       return;
     }
-    
+
     // Atualização Otimista da UI
     const newStartLeads = [...(leadsByStage[source.droppableId] || [])];
     const [movedItem] = newStartLeads.splice(source.index, 1);
@@ -185,7 +186,7 @@ function LeadListPage() {
       const targetStage = leadStages.find(s => s._id === finishStageId);
       const updatedLeadFromApi = await updateLead(leadId, { situacao: finishStageId });
       toast.success(`Lead "${updatedLeadFromApi.nome}" movido para "${targetStage?.nome || ''}"!`);
-      
+
       // Atualiza o estado "mestra" localmente, sem refetch completo
       setAllLeadsRaw(prevAll => prevAll.map(l => l._id === updatedLeadFromApi._id ? updatedLeadFromApi : l));
     } catch (err) {
@@ -214,11 +215,11 @@ function LeadListPage() {
       </header>
       <div className="page-content">
         <div className={`filters-wrapper ${showFilters ? 'open' : 'closed'}`}>
-          <KanbanFilters 
-              origensList={origensList}
-              usuariosList={usuariosList}
-              onFilterChange={handleFilterChange}
-              isProcessing={isLoading}
+          <KanbanFilters
+            origensList={origensList}
+            usuariosList={usuariosList}
+            onFilterChange={handleFilterChange}
+            isProcessing={isLoading}
           />
         </div>
         <DragDropContext onDragEnd={onDragEnd}>
@@ -238,33 +239,19 @@ function LeadListPage() {
                               {...providedCard.dragHandleProps}
                               className={`lead-card ${snapshotCard.isDragging ? 'dragging' : ''}`}
                             >
-                              <div className="lead-card-header" onClick={() => navigate(`/leads/${lead._id}`)}><h4>{lead.nome}</h4></div>
-                              <div className="lead-card-body">
-                                <p className="lead-card-contato">{lead.contato || 'Sem contato'}</p>
-                                <div className="card-tags-container">
-                                  {(lead.tags || []).slice(0, 3).map(tag => (<span key={tag} className="card-tag">{tag}</span>))}
-                                  {(lead.tags?.length > 3) && <span className="card-tag more-tags">...</span>}
-                                </div>
-                              </div>
-                              <div className="lead-card-footer">
-                                <small>Atualizado: {new Date(lead.updatedAt).toLocaleDateString('pt-BR')}</small>
-                                <div className="lead-card-actions">
-                                  <button onClick={() => navigate(`/leads/${lead._id}`)} className="action-icon" title="Detalhes">🔍</button>
-                                  <button onClick={() => handleOpenTagsModal(lead)} className="action-icon" title="Gerenciar Tags">🏷️</button>
-                                  {lead.situacao?.nome?.toLowerCase() === 'descartado' ? (
-                                    <button onClick={() => handleReactivateLead(lead)} className="action-icon" disabled={isProcessingAction} title="Reativar">♻️</button>
-                                  ) : (
-                                    <button onClick={() => handleOpenDiscardModal(lead)} className="action-icon" disabled={isProcessingAction} title="Descartar">🗑️</button>
-                                  )}
-                                  <button onClick={() => handleOpenDeleteModal(lead)} className="action-icon" disabled={isProcessingAction} title="Excluir">❌</button>
-                                </div>
-                              </div>
+                              <LeadCard
+                                lead={lead}
+                                onDiscardClick={handleOpenDiscardModal}
+                                onDeleteClick={handleOpenDeleteModal}
+                                onReactivateClick={handleReactivateLead}
+                                isProcessingReactivation={isProcessingAction}
+                              />
                             </div>
                           )}
                         </Draggable>
                       ))}
                       {provided.placeholder}
-                      {(!leadsByStage[stage._id] || leadsByStage[stage._id]?.length === 0) && !isLoading &&(
+                      {(!leadsByStage[stage._id] || leadsByStage[stage._id]?.length === 0) && !isLoading && (
                         <p className="kanban-empty-column">Nenhum lead aqui.</p>
                       )}
                     </div>
@@ -275,7 +262,7 @@ function LeadListPage() {
           </div>
         </DragDropContext>
       </div>
-      
+
       {/* Modais */}
       <LeadTagsModal isOpen={isTagsModalOpen} onClose={handleCloseTagsModal} lead={selectedLeadForTags} onTagsSaved={forceRefresh} />
       <DiscardLeadModal isOpen={isDiscardModalOpen} onClose={handleCloseDiscardModal} onSubmit={handleConfirmDiscard} leadName={discardTargetLead?.lead?.nome} isProcessing={isProcessingAction} />
