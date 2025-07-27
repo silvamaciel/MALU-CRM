@@ -218,7 +218,7 @@
     border-radius: 50%;
     width: 44px;
     height: 44px;
-    padding: 0;
+    padding: 1rem;
 }
 
 .no-chat-selected {
