@@ -68,9 +68,12 @@ function LeadCard({
   return (
     <div className="lead-card-kanban">
       <div className="lead-card-header" onClick={() => navigate(`/leads/${lead._id}`)}>
-        {taskStatus && (
-          <div className={`task-alert ${taskStatus.status}`}>
-            ⏰ {taskStatus.message}
+        {lead.pendingTask && (
+          <div
+            className={`task-alert ${taskStatus.status}`}
+            title={`${lead.pendingTask.dueDate?.slice(0, 10)} - ${lead.pendingTask.title}`}
+          >
+            ⏰ {lead.pendingTask.dueDate?.slice(0, 10)} - {lead.pendingTask.title.slice(0, 25)}...
           </div>
         )}
         <h4>{lead.nome}</h4>
