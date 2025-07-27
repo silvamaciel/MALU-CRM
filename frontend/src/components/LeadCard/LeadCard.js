@@ -43,7 +43,8 @@ const getTaskStatus = (task) => {
     return { status: "due-soon", message: `Vence em ${formattedDate}` };
   }
 
-  return { status: "ok", message: `${formattedDate} - ${task.title}` };
+  // Corrigido: status 'pending' ao invés de 'ok'
+  return { status: "pending", message: `Prevista para ${formattedDate}` };
 };
 
 function LeadCard({
@@ -76,7 +77,10 @@ function LeadCard({
             ⏰ {formatDate(lead.pendingTask.dueDate)} - {lead.pendingTask.title.slice(0, 20)}...
           </div>
         )}
-        <h4>{lead.nome}</h4>
+        {/* Nome do lead separado da task */}
+        <div className="lead-name">
+          <h4>{lead.nome}</h4>
+        </div>
       </div>
 
       <div className="lead-card-body">

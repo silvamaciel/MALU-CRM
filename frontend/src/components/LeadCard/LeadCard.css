@@ -193,3 +193,9 @@
   background-color: #cce5ff;
   color: #004085;
 }
+
+.task-badge.pending {
+  background-color: #e2e3e5;
+  color: #383d41;
+  border: 1px solid #d6d8db;
+}
