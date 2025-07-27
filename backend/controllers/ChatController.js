@@ -45,8 +45,18 @@ const sendMessageController = asyncHandler(async (req, res, next) => {
     res.status(201).json({ success: true, data: newMessage });
 });
 
+const createLeadFromConversationController = asyncHandler(async (req, res, next) => {
+    const { conversationId } = req.params;
+    const companyId = req.user.company;
+    const actorUserId = req.user._id;
+
+    const newLead = await ChatService.createLeadFromConversation(conversationId, companyId, actorUserId);
+    res.status(201).json({ success: true, data: newLead });
+});
+
 module.exports = {
     listConversationsController,
     getMessagesController,
-    sendMessageController
+    sendMessageController,
+    createLeadFromConversationController
 };

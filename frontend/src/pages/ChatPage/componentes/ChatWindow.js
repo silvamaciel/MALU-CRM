@@ -28,6 +28,11 @@ function ChatWindow({ conversation, messages, loading, onSendMessage }) {
                 </div>
                 <div className="chat-header-actions">
                     {/* Ícones de Ações aqui */}
+                    {!conversation.lead && (
+                        <button onClick={() => onCreateLead(conversation._id)} className="button primary-button small-button">
+                            Criar Lead
+                        </button>
+                    )}
                 </div>
             </header>
             <div className="messages-area">

@@ -14,3 +14,8 @@ export const sendMessageApi = async (conversationId, content) => {
     const response = await axiosInstance.post(`/chat/conversations/${conversationId}/messages`, { content });
     return response.data.data;
 };
+
+export const createLeadFromConversationApi = async (conversationId) => {
+    const response = await axiosInstance.post(`/chat/conversations/${conversationId}/create-lead`);
+    return response.data.data;
+};

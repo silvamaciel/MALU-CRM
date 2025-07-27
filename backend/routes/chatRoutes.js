@@ -5,7 +5,9 @@ const { protect } = require('../middlewares/authMiddleware');
 const { 
     listConversationsController, 
     getMessagesController, 
-    sendMessageController 
+    sendMessageController,
+    createLeadFromConversationController
+
 } = require('../controllers/ChatController');
 
 // Todas as rotas de chat são protegidas, exigem login
@@ -17,5 +19,7 @@ router.get('/conversations', listConversationsController);
 // Rotas para uma conversa específica
 router.get('/conversations/:conversationId/messages', getMessagesController);
 router.post('/conversations/:conversationId/messages', sendMessageController);
+router.post('/conversations/:conversationId/create-lead', createLeadFromConversationController);
+
 
 module.exports = router;

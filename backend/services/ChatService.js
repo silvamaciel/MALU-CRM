@@ -123,4 +123,56 @@ const sendMessage = async (conversationId, companyId, actorUserId, messageConten
     }
 };
 
-module.exports = { listConversations, getMessages, sendMessage };
+
+/**
+ * Cria um Lead a partir de uma conversa não atribuída.
+ * @param {string} conversationId - O ID da conversa "órfã".
+ * @param {string} companyId - ID da empresa.
+ * @param {string} actorUserId - ID do usuário que está realizando a ação.
+ * @returns {Promise<object>} O Lead recém-criado.
+ */
+const createLeadFromConversation = async (conversationId, companyId, actorUserId) => {
+    console.log(`[ChatService] Criando Lead a partir da Conversa ID: ${conversationId}`);
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+        const conversation = await Conversation.findOne({ _id: conversationId, company: companyId, lead: null }).session(session);
+        if (!conversation) {
+            throw new Error("Conversa não encontrada, já atribuída a um lead ou não pertence a esta empresa.");
+        }
+
+        const senderPhone = `+${conversation.channelInternalId.split('@')[0]}`;
+
+        // 1. Monta os dados para o novo Lead
+        const leadData = {
+            nome: conversation.tempContactName || `Contato WhatsApp ${senderPhone}`,
+            contato: senderPhone,
+            origem: 'WhatsApp' // A origem é definida como WhatsApp
+        };
+
+        // 2. Chama o serviço de criação de Lead que já é robusto
+        const newLead = await LeadService.createLead(leadData, companyId, actorUserId, { session });
+        console.log(`[ChatService] Novo lead criado com ID: ${newLead._id}`);
+
+        // 3. Atualiza a conversa, vinculando-a ao novo lead
+        conversation.lead = newLead._id;
+        conversation.leadNameSnapshot = newLead.nome;
+        conversation.tempContactName = null; // Limpa o nome temporário
+        await conversation.save({ session });
+        console.log(`[ChatService] Conversa ${conversation._id} vinculada ao Lead ${newLead._id}`);
+        
+        await session.commitTransaction();
+        return newLead;
+
+    } catch (error) {
+        await session.abortTransaction();
+        console.error(`[ChatService] Erro ao criar lead a partir da conversa ${conversationId}:`, error);
+        throw new Error(error.message || "Erro ao criar lead a partir da conversa.");
+    } finally {
+        session.endSession();
+    }
+};
+
+
+module.exports = { listConversations, getMessages, sendMessage, createLeadFromConversation };

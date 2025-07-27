@@ -55,6 +55,26 @@ function ChatPage() {
         }
     };
 
+    const handleCreateLead = async (conversationId) => {
+        if (!conversationId) return;
+        try {
+            const newLead = await createLeadFromConversationApi(conversationId);
+            toast.success(`Lead "${newLead.nome}" criado com sucesso!`);
+            // Atualiza a conversa na lista para refletir a mudança
+            setConversations(prev => prev.map(conv => 
+                conv._id === conversationId 
+                ? { ...conv, lead: newLead._id, leadNameSnapshot: newLead.nome, tempContactName: null }
+                : conv
+            ));
+            // Atualiza a conversa selecionada, se for a atual
+            if (selectedConversation?._id === conversationId) {
+                setSelectedConversation(prev => ({ ...prev, lead: newLead._id, leadNameSnapshot: newLead.nome, tempContactName: null }));
+            }
+        } catch (error) {
+            toast.error(error.error || error.message || "Falha ao criar o lead.");
+        }
+    };
+
     return (
         <div className="admin-page chat-page">
             <ConversationList
@@ -68,6 +88,7 @@ function ChatPage() {
                 messages={messages}
                 loading={loading.messages}
                 onSendMessage={handleSendMessage}
+                onCreateLead={handleCreateLead}
             />
         </div>
     );
