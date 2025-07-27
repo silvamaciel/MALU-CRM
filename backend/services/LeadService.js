@@ -90,15 +90,12 @@ const getLeads = async (queryParams = {}, companyId) => {
         throw new Error("ID da empresa inválido ou não fornecido para buscar leads.");
     }
 
-    // Paginação
     const page = parseInt(queryParams.page, 10) || 1;
-    const limit = parseInt(queryParams.limit, 10) || 1000; // Limite alto para Kanban, ajuste se necessário
+    const limit = parseInt(queryParams.limit, 10) || 1000;
     const skip = (page - 1) * limit;
 
-    // Condições da Query
-    const queryConditions = { company: companyId };
+    const queryConditions = { company: new mongoose.Types.ObjectId(companyId) };
 
-    // Filtro unificado por Nome, Email ou CPF (busca textual)
     if (queryParams.termoBusca && queryParams.termoBusca.trim() !== '') {
         const searchTerm = queryParams.termoBusca.trim();
         const searchRegex = { $regex: searchTerm, $options: 'i' };
@@ -115,15 +112,14 @@ const getLeads = async (queryParams = {}, companyId) => {
         }
     }
 
-    // Filtros por ID
     if (queryParams.origem && mongoose.Types.ObjectId.isValid(queryParams.origem)) {
         queryConditions.origem = queryParams.origem;
     }
+
     if (queryParams.responsavel && mongoose.Types.ObjectId.isValid(queryParams.responsavel)) {
         queryConditions.responsavel = queryParams.responsavel;
     }
 
-    // Filtro por Tags
     if (queryParams.tags && queryParams.tags.trim() !== '') {
         const tagsArray = queryParams.tags
             .split(',')
@@ -134,7 +130,6 @@ const getLeads = async (queryParams = {}, companyId) => {
         }
     }
 
-    // Filtro por Intervalo de Datas (baseado em createdAt)
     if (queryParams.dataInicio || queryParams.dataFim) {
         queryConditions.createdAt = {};
         if (queryParams.dataInicio) {
@@ -148,22 +143,56 @@ const getLeads = async (queryParams = {}, companyId) => {
     console.log("[getLeads] Condições Query MongoDB:", JSON.stringify(queryConditions, null, 2));
 
     try {
-        // Execução paralela para reduzir tempo de I/O
-        const [leads, totalLeads] = await Promise.all([
-            Lead.find(queryConditions)
-                .populate('situacao', 'nome ordem')
-                .populate('origem', 'nome')
-                .populate('responsavel', 'nome perfil')
-                .sort({ updatedAt: -1 })
-                .skip(skip)
-                .limit(limit)
-                .lean(),
-            Lead.countDocuments(queryConditions)
+        const aggregationPipeline = [
+            { $match: queryConditions },
+            {
+                $lookup: {
+                    from: 'tasks',
+                    localField: '_id',
+                    foreignField: 'lead',
+                    as: 'tasks',
+                    pipeline: [
+                        { $match: { status: 'Pendente' } },
+                        { $sort: { dueDate: 1 } }
+                    ]
+                }
+            },
+            {
+                $addFields: {
+                    pendingTask: { $first: "$tasks" }
+                }
+            },
+            { $lookup: { from: 'leadstages', localField: 'situacao', foreignField: '_id', as: 'situacao' } },
+            { $lookup: { from: 'origens', localField: 'origem', foreignField: '_id', as: 'origem' } },
+            { $lookup: { from: 'users', localField: 'responsavel', foreignField: '_id', as: 'responsavel' } },
+            { $unwind: { path: "$situacao", preserveNullAndEmptyArrays: true } },
+            { $unwind: { path: "$origem", preserveNullAndEmptyArrays: true } },
+            { $unwind: { path: "$responsavel", preserveNullAndEmptyArrays: true } },
+            { $sort: { updatedAt: -1 } },
+            { $skip: skip },
+            { $limit: limit },
+            {
+                $project: {
+                    nome: 1,
+                    contato: 1,
+                    situacao: { _id: 1, nome: 1 },
+                    origem: { _id: 1, nome: 1 },
+                    responsavel: { _id: 1, nome: 1, perfil: 1 },
+                    tags: 1,
+                    updatedAt: 1,
+                    pendingTask: { _id: 1, title: 1, dueDate: 1 }
+                }
+            }
+        ];
+
+        const [totalLeads, leads] = await Promise.all([
+            Lead.countDocuments(queryConditions),
+            Lead.aggregate(aggregationPipeline)
         ]);
 
         const totalPages = Math.ceil(totalLeads / limit) || 1;
-
         return { leads, totalLeads, totalPages, currentPage: page };
+
     } catch (error) {
         console.error(`[getLeads] Erro ao buscar leads para empresa ${companyId}:`, error);
         throw new Error('Erro ao buscar os leads.');
