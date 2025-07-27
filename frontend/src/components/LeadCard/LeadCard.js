@@ -68,6 +68,10 @@ function LeadCard({
 
   return (
     <div className="lead-card-kanban">
+
+      <div className="lead-name">
+          <h4>{lead.nome}</h4>
+        </div>
       <div className="lead-card-header" onClick={() => navigate(`/leads/${lead._id}`)}>
         {lead.pendingTask && (
           <div
@@ -77,10 +81,6 @@ function LeadCard({
             ⏰ {formatDate(lead.pendingTask.dueDate)} - {lead.pendingTask.title.slice(0, 20)}...
           </div>
         )}
-        {/* Nome do lead separado da task */}
-        <div className="lead-name">
-          <h4>{lead.nome}</h4>
-        </div>
       </div>
 
       <div className="lead-card-body">
