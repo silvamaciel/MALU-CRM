@@ -7,6 +7,29 @@ const Lead = require('../models/Lead');
 const LeadService = require('./LeadService'); // <<< A CORREÇÃO ESTÁ AQUI
 
 
+
+/**
+ * Corrige números de celular brasileiros que vêm sem o nono dígito.
+ * Ex: Converte "558312345678" para "5583912345678".
+ * @param {string} phone - O número de telefone (apenas dígitos).
+ * @returns {string} O número corrigido ou o original.
+ */
+const fixBrazilianMobileNumber = (phone) => {
+    // Verifica se começa com '55' (Brasil) e tem 12 dígitos (formato sem o '9')
+    if (phone.startsWith('55') && phone.length === 12) {
+        const ddd = phone.substring(2, 4);
+        // DDDs de celular no Brasil vão de 11 a 99.
+        if (parseInt(ddd) >= 11) {
+            // Insere o '9' após o DDD
+            const correctedPhone = phone.slice(0, 4) + '9' + phone.slice(4);
+            console.log(`[WebhookSvc] Corrigindo número de telefone: ${phone} -> ${correctedPhone}`);
+            return correctedPhone;
+        }
+    }
+    return phone; // Retorna o número original se não corresponder à regra
+};
+
+
 /**
  * Lista todas as conversas de uma empresa, ordenadas pela última mensagem.
  */
@@ -149,7 +172,7 @@ const createLeadFromConversation = async (conversationId, companyId, actorUserId
         // 1. Monta os dados para o novo Lead
         const leadData = {
             nome: conversation.tempContactName || `Contato WhatsApp ${senderPhone}`,
-            contato: senderPhone,
+            contato: fixBrazilianMobileNumber(senderPhone),
             origem: 'WhatsApp' // A origem é definida como WhatsApp
         };
 
