@@ -150,6 +150,7 @@
 .message-bubble-wrapper {
     display: flex;
     margin-bottom: 10px;
+    max-width: 75%;
 }
 
 .message-bubble-wrapper.incoming {
