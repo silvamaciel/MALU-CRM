@@ -60,6 +60,9 @@ function LeadCard({
   const handleReactivate = () => !isProcessingReactivation && onReactivateClick?.(lead._id);
   const handleDelete = () => onDeleteClick?.(lead._id, lead.nome);
 
+
+  console.log("TASK DEBUG:", lead.pendingTask);
+
   return (
     <div className="lead-card-kanban">
       <div className="lead-card-header" onClick={() => navigate(`/leads/${lead._id}`)}>
