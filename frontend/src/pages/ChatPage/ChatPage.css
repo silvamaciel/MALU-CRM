@@ -232,13 +232,13 @@
 }
 
 
-message-bubble-wrapper.incoming .message-bubble {
-    background-color: #ffffff; /* Fundo branco */
+.message-bubble-wrapper.incoming .message-bubble {
+    background-color: #ffffff;
     color: #212529;
     border-bottom-left-radius: 4px;
 }
 
-/* Estilo para mensagens ENVIADAS (por você) */
+
 .message-bubble-wrapper.outgoing .message-bubble {
     background-color: #dcf8c6; /* Verde claro do WhatsApp */
     color: #212529;
