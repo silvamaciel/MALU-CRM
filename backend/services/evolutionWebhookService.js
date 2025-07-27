@@ -310,5 +310,6 @@ module.exports = {
     processMessageUpsert,
     processConnectionUpdate,
     processQrCodeUpdate,
-    getQrCodeFromCache
+    getQrCodeFromCache,
+    fixBrazilianMobileNumber
 };
