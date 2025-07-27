@@ -1,9 +1,9 @@
 // src/components/LeadCard/LeadCard.js
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import "./LeadCard.css";
 
-// Formatador de data
+// Formata a data para exibição
 const formatDate = (dateString) => {
   if (!dateString) return "N/A";
   try {
@@ -20,17 +20,18 @@ const formatDate = (dateString) => {
   }
 };
 
-// Avaliador de status da tarefa
+// Retorna o status da tarefa pendente
 const getTaskStatus = (task) => {
   if (!task || !task.dueDate) return null;
 
-  const now = new Date();
-  const due = new Date(task.dueDate);
-  now.setHours(0, 0, 0, 0);
-  due.setHours(0, 0, 0, 0);
+  const agora = new Date();
+  const dueDate = new Date(task.dueDate);
 
-  const diffDays = Math.ceil((due - now) / (1000 * 60 * 60 * 24));
-  const formattedDate = due.toLocaleDateString("pt-BR");
+  agora.setHours(0, 0, 0, 0);
+  dueDate.setHours(0, 0, 0, 0);
+
+  const diffDays = Math.ceil((dueDate - agora) / (1000 * 60 * 60 * 24));
+  const formattedDate = dueDate.toLocaleDateString("pt-BR");
 
   if (diffDays < 0) return { status: "overdue", message: `Tarefa atrasada desde ${formattedDate}` };
   if (diffDays <= 2) return { status: "due-soon", message: `Tarefa vence em ${formattedDate}` };
@@ -60,44 +61,39 @@ function LeadCard({
   const handleDelete = () => onDeleteClick?.(lead._id, lead.nome);
 
   return (
-    <div className="lead-card">
+    <div className="lead-card-kanban">
       <div className="lead-card-header" onClick={() => navigate(`/leads/${lead._id}`)}>
-        <h3>{lead.nome || "Lead sem nome"}</h3>
-        {taskStatus && (taskStatus.status === 'overdue' || taskStatus.status === 'due-soon') && (
+        {taskStatus && (taskStatus.status === "overdue" || taskStatus.status === "due-soon") && (
           <div className={`task-alert ${taskStatus.status}`} title={taskStatus.message}>
-            <i className="fas fa-clock" />
+            ⏰
           </div>
         )}
+        <h4>{lead.nome}</h4>
       </div>
 
-      <p><strong>Email:</strong> {lead.email || "N/A"}</p>
-      <p><strong>Contato:</strong> {lead.contato || "N/A"}</p>
-      {lead.cpf && <p><strong>CPF:</strong> {lead.cpf}</p>}
+      <div className="lead-card-body">
+        <p className="lead-card-contato">{lead.contato}</p>
+        <p><strong>Origem:</strong> {origemNome}</p>
+        <p><strong>Responsável:</strong> {responsavelNome}</p>
+        <p><strong>Criado em:</strong> {criadoEm}</p>
+        <div className="card-tags-container">
+          {(lead.tags || []).slice(0, 3).map((tag) => (
+            <span key={tag} className="card-tag">{tag}</span>
+          ))}
+        </div>
+      </div>
 
-      <p>
-        <strong>Situação:</strong>{" "}
-        <span className={`situacao situacao-${situacaoNome.toLowerCase().replace(/\s+/g, "-")}`}>
-          {situacaoNome}
-        </span>
-      </p>
-      <p><strong>Origem:</strong> {origemNome}</p>
-      <p><strong>Responsável:</strong> {responsavelNome}</p>
-
-      {isCurrentlyDiscarded && lead.motivoDescarte && (
-        <p className="discard-reason">
-          <strong>Motivo Descarte:</strong> {lead.motivoDescarte?.nome}
-        </p>
-      )}
-
-      <p className="datas">Criado em: {criadoEm} | Atualizado em: {atualizadoEm}</p>
+      <div className="lead-card-footer">
+        <div className="footer-left">
+          <small>Atualizado: {atualizadoEm}</small>
+        </div>
+      </div>
 
       <div className="lead-card-actions">
         <Link to={`/leads/${lead._id}`} className="action-button details-button">Detalhes</Link>
 
         {!isCurrentlyDiscarded && (
-          <Link to={`/leads/${lead._id}/editar`} className="action-button edit-button">
-            Editar
-          </Link>
+          <Link to={`/leads/${lead._id}/editar`} className="action-button edit-button">Editar</Link>
         )}
 
         {isCurrentlyDiscarded ? (
