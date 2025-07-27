@@ -43,7 +43,7 @@ const getTaskStatus = (task) => {
     return { status: "due-soon", message: `Vence em ${formattedDate}` };
   }
 
-  return { status: "ok", message: `Próxima tarefa: ${task.title} (${formattedDate})` };
+  return { status: "ok", message: `${formattedDate} - ${task.title}` };
 };
 
 function LeadCard({
@@ -69,7 +69,9 @@ function LeadCard({
     <div className="lead-card-kanban">
       <div className="lead-card-header" onClick={() => navigate(`/leads/${lead._id}`)}>
         {taskStatus && (
-          <div className={`task-alert ${taskStatus.status}`} title={taskStatus.message}>⏰</div>
+          <div className={`task-alert ${taskStatus.status}`}>
+            ⏰ {taskStatus.message}
+          </div>
         )}
         <h4>{lead.nome}</h4>
       </div>
