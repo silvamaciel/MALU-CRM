@@ -26,16 +26,25 @@ const getTaskStatus = (task) => {
 
   const agora = new Date();
   const dueDate = new Date(task.dueDate);
-
   agora.setHours(0, 0, 0, 0);
   dueDate.setHours(0, 0, 0, 0);
 
   const diffDays = Math.ceil((dueDate - agora) / (1000 * 60 * 60 * 24));
   const formattedDate = dueDate.toLocaleDateString("pt-BR");
 
-  if (diffDays < 0) return { status: "overdue", message: `Tarefa atrasada desde ${formattedDate}` };
-  if (diffDays <= 2) return { status: "due-soon", message: `Tarefa vence em ${formattedDate}` };
-  return { status: "ok", message: `Próxima tarefa: ${task.title}` };
+  if (task.status === "Concluída") {
+    return { status: "completed", message: `Tarefa concluída (${formattedDate})` };
+  }
+
+  if (diffDays < 0) {
+    return { status: "overdue", message: `Tarefa atrasada desde ${formattedDate}` };
+  }
+
+  if (diffDays <= 2) {
+    return { status: "due-soon", message: `Tarefa vence em ${formattedDate}` };
+  }
+
+  return { status: "ok", message: `Próxima tarefa: ${task.title} (${formattedDate})` };
 };
 
 function LeadCard({
@@ -66,7 +75,7 @@ function LeadCard({
   return (
     <div className="lead-card-kanban">
       <div className="lead-card-header" onClick={() => navigate(`/leads/${lead._id}`)}>
-        {taskStatus && (taskStatus.status === "overdue" || taskStatus.status === "due-soon") && (
+        {taskStatus && (
           <div className={`task-alert ${taskStatus.status}`} title={taskStatus.message}>
             ⏰
           </div>
