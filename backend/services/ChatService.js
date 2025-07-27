@@ -4,30 +4,9 @@ const Message = require('../models/Message');
 const EvolutionInstance = require('../models/EvolutionInstance');
 const axios = require('axios');
 const Lead = require('../models/Lead');
-const LeadService = require('./LeadService'); // <<< A CORREÇÃO ESTÁ AQUI
+const LeadService = require('./LeadService');
+const { fixBrazilianMobileNumber } = require('./evolutionWebhookService');
 
-
-
-/**
- * Corrige números de celular brasileiros que vêm sem o nono dígito.
- * Ex: Converte "558312345678" para "5583912345678".
- * @param {string} phone - O número de telefone (apenas dígitos).
- * @returns {string} O número corrigido ou o original.
- */
-const fixBrazilianMobileNumber = (phone) => {
-    // Verifica se começa com '55' (Brasil) e tem 12 dígitos (formato sem o '9')
-    if (phone.startsWith('55') && phone.length === 12) {
-        const ddd = phone.substring(2, 4);
-        // DDDs de celular no Brasil vão de 11 a 99.
-        if (parseInt(ddd) >= 11) {
-            // Insere o '9' após o DDD
-            const correctedPhone = phone.slice(0, 4) + '9' + phone.slice(4);
-            console.log(`[WebhookSvc] Corrigindo número de telefone: ${phone} -> ${correctedPhone}`);
-            return correctedPhone;
-        }
-    }
-    return phone; // Retorna o número original se não corresponder à regra
-};
 
 
 /**
@@ -167,25 +146,28 @@ const createLeadFromConversation = async (conversationId, companyId, actorUserId
             throw new Error("Conversa não encontrada, já atribuída a um lead ou não pertence a esta empresa.");
         }
 
-        const senderPhone = `+${conversation.channelInternalId.split('@')[0]}`;
+        // 1. Pega o número "cru" (apenas dígitos)
+        let senderPhoneRaw = conversation.channelInternalId.split('@')[0];
+        
+        // 2. Aplica a mesma função de correção que usamos no webhook
+        senderPhoneRaw = fixBrazilianMobileNumber(senderPhoneRaw);
 
-        // 1. Monta os dados para o novo Lead
+        // 3. Monta os dados para o novo Lead com o número corrigido
         const leadData = {
-            nome: conversation.tempContactName || `Contato WhatsApp ${senderPhone}`,
-            contato: fixBrazilianMobileNumber(senderPhone),
-            origem: 'WhatsApp' // A origem é definida como WhatsApp
+            nome: conversation.tempContactName || `Contato WhatsApp ${senderPhoneRaw}`,
+            contato: senderPhoneRaw, // Passa o número corrigido e sem o '+'
+            origem: 'WhatsApp'
         };
 
-        // 2. Chama o serviço de criação de Lead que já é robusto
+        // 4. Chama o serviço de criação de Lead, que agora recebe um número válido para formatar
         const newLead = await LeadService.createLead(leadData, companyId, actorUserId, { session });
         console.log(`[ChatService] Novo lead criado com ID: ${newLead._id}`);
 
-        // 3. Atualiza a conversa, vinculando-a ao novo lead
+        // 5. Atualiza a conversa, vinculando-a ao novo lead
         conversation.lead = newLead._id;
         conversation.leadNameSnapshot = newLead.nome;
-        conversation.tempContactName = null; // Limpa o nome temporário
+        conversation.tempContactName = null;
         await conversation.save({ session });
-        console.log(`[ChatService] Conversa ${conversation._id} vinculada ao Lead ${newLead._id}`);
         
         await session.commitTransaction();
         return newLead;
@@ -198,6 +180,7 @@ const createLeadFromConversation = async (conversationId, companyId, actorUserId
         session.endSession();
     }
 };
+
 
 
 module.exports = { listConversations, getMessages, sendMessage, createLeadFromConversation };
