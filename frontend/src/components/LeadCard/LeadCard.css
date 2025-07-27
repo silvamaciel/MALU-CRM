@@ -141,22 +141,7 @@
 }
 
 /* ALERTA DE TAREFA PENDENTE */
-.task-alert {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  font-size: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.3rem;
-  border-radius: 50%;
-  background-color: #e9ecef;
-  color: #495057;
-  cursor: help;
-  transition: all 0.2s ease;
-  z-index: 2;
-}
+
 
 .task-alert.overdue {
   background-color: #dc3545;
@@ -175,4 +160,45 @@
 /* GARANTE POSICIONAMENTO RELATIVO NO HEADER */
 .lead-card-header {
   position: relative;
+}
+
+
+
+.task-alert {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem;
+  border-radius: 50%;
+  cursor: help;
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+/* Vermelho – atrasado */
+.task-alert.overdue {
+  background-color: #dc3545;
+  color: #fff;
+}
+
+/* Amarelo – vencendo */
+.task-alert.due-soon {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+/* Cinza – futuro */
+.task-alert.ok {
+  background-color: #ced4da;
+  color: #343a40;
+}
+
+/* Verde – concluída */
+.task-alert.completed {
+  background-color: #28a745;
+  color: #fff;
 }
