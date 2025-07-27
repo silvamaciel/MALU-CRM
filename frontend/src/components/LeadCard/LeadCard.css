@@ -1,4 +1,4 @@
-.lead-card {
+.lead-card-kanban {
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
@@ -11,109 +11,133 @@
   border: 1px solid #e0e0e0;
 }
 
-.lead-card:hover {
+.lead-card-kanban:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
+.lead-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
 .lead-card-header h4 {
-  margin: 0 0 4px 0;
+  margin: 0;
   font-size: 1rem;
   font-weight: bold;
-}
-
-.lead-card-contato {
-  font-size: 0.95rem;
-  margin-bottom: 8px;
-  color: #333;
-}
-
-.lead-card-infos {
-  font-size: 0.85rem;
-  color: #666;
-  line-height: 1.4;
-  margin-bottom: 8px;
-}
-
-.lead-card-infos strong {
-  color: #000;
+  flex: 1;
 }
 
 .task-alert {
-  padding: 8px 10px;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  margin-bottom: 10px;
-  font-weight: bold;
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 8px;
 }
 
-.task-alert.amarelo {
-  background-color: #fff3cd;
-  color: #856404;
-  border: 1px solid #ffeeba;
-}
-
-.task-alert.vermelho {
+.task-alert.overdue {
   background-color: #f8d7da;
   color: #721c24;
   border: 1px solid #f5c6cb;
 }
 
-.task-alert.verde {
+.task-alert.due-soon {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+}
+
+.task-alert.completed {
   background-color: #d4edda;
   color: #155724;
   border: 1px solid #c3e6cb;
 }
 
+.task-alert.ok {
+  background-color: #e2e3e5;
+  color: #383d41;
+  border: 1px solid #d6d8db;
+}
+
+.lead-card-body {
+  margin-top: 10px;
+}
+
+.lead-card-contato {
+  font-size: 0.95rem;
+  margin-bottom: 6px;
+  color: #333;
+}
+
+.card-tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.card-tag {
+  background-color: #f1f1f1;
+  color: #555;
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 20px;
+}
+
+.card-tag.more-tags {
+  background-color: #e0e0e0;
+  font-weight: bold;
+}
+
 .lead-card-footer {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  font-size: 0.8rem;
+  flex-direction: column;
   margin-top: 12px;
+  font-size: 0.8rem;
   color: #888;
 }
 
 .lead-card-actions {
   display: flex;
+  justify-content: flex-start;
+  align-items: center;
   gap: 6px;
   margin-top: 8px;
+  flex-wrap: wrap;
 }
 
 .lead-card-actions button {
-  padding: 5px 10px;
+  padding: 4px 8px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.75rem;
+  font-size: 1rem;
+  background: transparent;
+  transition: transform 0.2s ease;
 }
 
-.lead-card-actions button.action-icon {
-  background: none;
-  font-size: 1.1rem;
-  padding: 0;
+.lead-card-actions button:hover {
+  transform: scale(1.15);
 }
 
-button.action-icon:hover {
-  transform: scale(1.1);
+.action-icon[title="Detalhes"] {
+  color: #007bff;
 }
 
-button[title="Detalhes"] {
-  background-color: #007bff;
-  color: #fff;
+.action-icon[title="Gerenciar Tags"] {
+  color: #ffc107;
 }
 
-button[title="Editar"] {
-  background-color: #ffc107;
-  color: #000;
+.action-icon[title="Descartar"] {
+  color: #ff9800;
 }
 
-button[title="Descartar"] {
-  background-color: #f0f0f0;
-  color: #000;
+.action-icon[title="Reativar"] {
+  color: #28a745;
 }
 
-button[title="Excluir"] {
-  background-color: #dc3545;
-  color: #fff;
+.action-icon[title="Excluir"] {
+  color: #dc3545;
 }

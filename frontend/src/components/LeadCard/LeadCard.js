@@ -1,9 +1,9 @@
 // src/components/LeadCard/LeadCard.js
 import React from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "./LeadCard.css";
 
-// Formata a data para exibição
+// Formata a data
 const formatDate = (dateString) => {
   if (!dateString) return "N/A";
   try {
@@ -14,13 +14,12 @@ const formatDate = (dateString) => {
       hour: "2-digit",
       minute: "2-digit",
     });
-  } catch (e) {
-    console.error("Erro ao formatar data:", dateString, e);
+  } catch {
     return "Data inválida";
   }
 };
 
-// Retorna o status da tarefa pendente
+// Status da tarefa
 const getTaskStatus = (task) => {
   if (!task || !task.dueDate) return null;
 
@@ -37,11 +36,11 @@ const getTaskStatus = (task) => {
   }
 
   if (diffDays < 0) {
-    return { status: "overdue", message: `Tarefa atrasada desde ${formattedDate}` };
+    return { status: "overdue", message: `Atrasada desde ${formattedDate}` };
   }
 
   if (diffDays <= 2) {
-    return { status: "due-soon", message: `Tarefa vence em ${formattedDate}` };
+    return { status: "due-soon", message: `Vence em ${formattedDate}` };
   }
 
   return { status: "ok", message: `Próxima tarefa: ${task.title} (${formattedDate})` };
@@ -51,8 +50,9 @@ function LeadCard({
   lead,
   onDiscardClick,
   onReactivateClick,
-  isProcessingReactivation,
   onDeleteClick,
+  onTagsClick,
+  isProcessingReactivation = false,
 }) {
   const navigate = useNavigate();
   if (!lead) return null;
@@ -62,69 +62,49 @@ function LeadCard({
   const responsavelNome = lead.responsavel?.nome || "N/A";
   const criadoEm = formatDate(lead.createdAt);
   const atualizadoEm = formatDate(lead.updatedAt);
-  const isCurrentlyDiscarded = situacaoNome === "Descartado";
+  const isDescartado = situacaoNome.toLowerCase() === "descartado";
   const taskStatus = getTaskStatus(lead.pendingTask);
-
-  const handleDiscard = () => onDiscardClick?.(lead._id, lead.nome);
-  const handleReactivate = () => !isProcessingReactivation && onReactivateClick?.(lead._id);
-  const handleDelete = () => onDeleteClick?.(lead._id, lead.nome);
-
-
-  console.log("TASK DEBUG:", lead.pendingTask);
 
   return (
     <div className="lead-card-kanban">
       <div className="lead-card-header" onClick={() => navigate(`/leads/${lead._id}`)}>
         {taskStatus && (
-          <div className={`task-alert ${taskStatus.status}`} title={taskStatus.message}>
-            ⏰
-          </div>
+          <div className={`task-alert ${taskStatus.status}`} title={taskStatus.message}>⏰</div>
         )}
         <h4>{lead.nome}</h4>
       </div>
 
       <div className="lead-card-body">
-        <p className="lead-card-contato">{lead.contato}</p>
+        <p className="lead-card-contato">{lead.contato || "Sem contato"}</p>
         <p><strong>Origem:</strong> {origemNome}</p>
         <p><strong>Responsável:</strong> {responsavelNome}</p>
         <p><strong>Criado em:</strong> {criadoEm}</p>
-        <div className="card-tags-container">
-          {(lead.tags || []).slice(0, 3).map((tag) => (
-            <span key={tag} className="card-tag">{tag}</span>
-          ))}
-        </div>
+
+        {lead.tags?.length > 0 && (
+          <div className="card-tags-container">
+            {lead.tags.slice(0, 3).map((tag) => (
+              <span key={tag} className="card-tag">{tag}</span>
+            ))}
+            {lead.tags.length > 3 && (
+              <span className="card-tag more-tags">+{lead.tags.length - 3}</span>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="lead-card-footer">
-        <div className="footer-left">
-          <small>Atualizado: {atualizadoEm}</small>
+        <small>Atualizado: {atualizadoEm}</small>
+        <div className="lead-card-actions">
+          <button onClick={() => navigate(`/leads/${lead._id}`)} className="action-icon" title="Detalhes">🔍</button>
+          <button onClick={() => onTagsClick?.(lead)} className="action-icon" title="Gerenciar Tags">🏷️</button>
+
+          {isDescartado ? (
+            <button onClick={() => onReactivateClick?.(lead)} className="action-icon" disabled={isProcessingReactivation} title="Reativar">♻️</button>
+          ) : (
+            <button onClick={() => onDiscardClick?.(lead)} className="action-icon" disabled={isProcessingReactivation} title="Descartar">🗑️</button>
+          )}
+          <button onClick={() => onDeleteClick?.(lead)} className="action-icon" disabled={isProcessingReactivation} title="Excluir">❌</button>
         </div>
-      </div>
-
-      <div className="lead-card-actions">
-        <Link to={`/leads/${lead._id}`} className="action-button details-button">Detalhes</Link>
-
-        {!isCurrentlyDiscarded && (
-          <Link to={`/leads/${lead._id}/editar`} className="action-button edit-button">Editar</Link>
-        )}
-
-        {isCurrentlyDiscarded ? (
-          <button
-            onClick={handleReactivate}
-            className="action-button reactivate-button"
-            disabled={isProcessingReactivation}
-          >
-            {isProcessingReactivation ? "Reativando..." : "Reativar"}
-          </button>
-        ) : (
-          <button onClick={handleDiscard} className="action-button discard-button">
-            Descartar
-          </button>
-        )}
-
-        <button onClick={handleDelete} className="action-button delete-button">
-          Excluir
-        </button>
       </div>
     </div>
   );
