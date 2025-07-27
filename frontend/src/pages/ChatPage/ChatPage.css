@@ -155,12 +155,10 @@
 
 .message-bubble-wrapper.incoming {
     justify-content: flex-start; /* Alinha à esquerda */
-    align-self: flex-start;
 }
 
 .message-bubble-wrapper.outgoing {
     justify-content: flex-end; /* Alinha à direita */
-    align-self: flex-end;
 }
 
 .message-bubble {
