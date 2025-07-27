@@ -179,3 +179,39 @@
   background-color: #dc3545;
   color: white;
 }
+
+.task-alert {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem;
+  border-radius: 50%;
+  background-color: #e9ecef;
+  color: #495057;
+  cursor: help; /* Mostra que tem tooltip */
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.task-alert.overdue {
+  background-color: #dc3545;
+  color: #fff;
+}
+
+.task-alert.due-soon {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.task-alert i {
+  pointer-events: none;
+}
+
+/* Garante que o header do card tenha posição relativa para o ícone se posicionar */
+.lead-card-header {
+  position: relative;
+}
