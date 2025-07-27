@@ -155,10 +155,12 @@
 
 .message-bubble-wrapper.incoming {
     justify-content: flex-start; /* Alinha à esquerda */
+    align-self: flex-start;
 }
 
 .message-bubble-wrapper.outgoing {
     justify-content: flex-end; /* Alinha à direita */
+    align-self: flex-end;
 }
 
 .message-bubble {
@@ -244,36 +246,4 @@
 }
 .message-bubble-wrapper.outgoing .message-bubble .message-timestamp {
     color: #557549;
-}
-
-
-.message-image {
-    max-width: 100%;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-.message-caption {
-    margin-top: 8px;
-    font-size: 0.9em;
-    color: #333;
-}
-
-.message-audio {
-    width: 100%;
-    min-width: 250px;
-}
-
-.message-document {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px;
-    background-color: rgba(0,0,0,0.05);
-    border-radius: 8px;
-    text-decoration: none;
-    color: #333;
-}
-.message-document:hover {
-    background-color: rgba(0,0,0,0.1);
 }
