@@ -155,10 +155,12 @@
 
 .message-bubble-wrapper.incoming {
     justify-content: flex-start; /* Alinha à esquerda */
+    align-self: flex-start;
 }
 
 .message-bubble-wrapper.outgoing {
     justify-content: flex-end; /* Alinha à direita */
+    align-self: flex-end;
 }
 
 .message-bubble {
@@ -230,14 +232,15 @@
 }
 
 
-.message-bubble-wrapper.incoming .message-bubble {
-    background-color: #ffffff;
+message-bubble-wrapper.incoming .message-bubble {
+    background-color: #ffffff; /* Fundo branco */
     color: #212529;
     border-bottom-left-radius: 4px;
 }
 
+/* Estilo para mensagens ENVIADAS (por você) */
 .message-bubble-wrapper.outgoing .message-bubble {
-    background-color: #dcf8c6; 
+    background-color: #dcf8c6; /* Verde claro do WhatsApp */
     color: #212529;
     border-bottom-right-radius: 4px;
 }
