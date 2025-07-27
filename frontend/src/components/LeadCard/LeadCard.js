@@ -78,8 +78,10 @@ function LeadCard({
   const criadoEm = formatDate(lead.createdAt);
   const atualizadoEm = formatDate(lead.updatedAt);
   const isDescartado = situacaoNome.toLowerCase() === "descartado";
-  const taskList = getTaskStatusList(lead.tasks); 
-  const nextTask = taskList.length > 0 ? taskList[0] : null;
+
+  // ✅ Agora sim, lead está definido
+  const taskList = getTaskStatusList(lead.tasks);
+  const nextTask = taskList.find(t => t.status !== "completed");
 
 
   return (
