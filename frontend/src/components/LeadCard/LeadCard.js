@@ -21,32 +21,46 @@ const formatDate = (dateString) => {
 };
 
 // Status da tarefa
-const getTaskStatus = (task) => {
-  if (!task || !task.dueDate) return null;
+const getTaskStatusList = (tasks = []) => {
+  if (!Array.isArray(tasks) || tasks.length === 0) return [];
 
-  const agora = new Date();
-  const dueDate = new Date(task.dueDate);
-  agora.setHours(0, 0, 0, 0);
-  dueDate.setHours(0, 0, 0, 0);
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
 
-  const diffDays = Math.ceil((dueDate - agora) / (1000 * 60 * 60 * 24));
-  const formattedDate = dueDate.toLocaleDateString("pt-BR");
+  return tasks
+    .map((task) => {
+      const dueDate = new Date(task.dueDate);
+      dueDate.setHours(0, 0, 0, 0);
+      const diffDays = Math.ceil((dueDate - hoje) / (1000 * 60 * 60 * 24));
+      const formattedDate = dueDate.toLocaleDateString("pt-BR");
 
-  if (task.status === "Concluída") {
-    return { status: "completed", message: `Tarefa concluída (${formattedDate})` };
-  }
+      let status = "pending";
+      let message = `Prevista para ${formattedDate}`;
 
-  if (diffDays < 0) {
-    return { status: "overdue", message: `Atrasada desde ${formattedDate}` };
-  }
+      if (task.status === "Concluída") {
+        status = "completed";
+        message = `Concluída (${formattedDate})`;
+      } else if (diffDays < 0) {
+        status = "overdue";
+        message = `Atrasada desde ${formattedDate}`;
+      } else if (diffDays <= 2) {
+        status = "due-soon";
+        message = `Vence em ${formattedDate}`;
+      }
 
-  if (diffDays <= 2) {
-    return { status: "due-soon", message: `Vence em ${formattedDate}` };
-  }
-
-  // Corrigido: status 'pending' ao invés de 'ok'
-  return { status: "pending", message: `Prevista para ${formattedDate}` };
+      return {
+        status,
+        message,
+        dueDate,
+        title: task.title,
+      };
+    })
+    .sort((a, b) => a.dueDate - b.dueDate); // Mais próxima primeiro
 };
+
+const taskList = getTaskStatusList(lead.tasks); // Assume array lead.tasks
+const nextTask = taskList.find(t => t.status !== "completed");
+
 
 function LeadCard({
   lead,
@@ -65,21 +79,21 @@ function LeadCard({
   const criadoEm = formatDate(lead.createdAt);
   const atualizadoEm = formatDate(lead.updatedAt);
   const isDescartado = situacaoNome.toLowerCase() === "descartado";
-  const taskStatus = getTaskStatus(lead.pendingTask);
+
 
   return (
     <div className="lead-card-kanban">
 
       <div className="lead-name">
-          <h4>{lead.nome}</h4>
-        </div>
+        <h4>{lead.nome}</h4>
+      </div>
       <div className="lead-card-header" onClick={() => navigate(`/leads/${lead._id}`)}>
-        {lead.pendingTask && (
+        {nextTask && (
           <div
-            className={`task-badge ${taskStatus.status}`}
-            title={`${formatDate(lead.pendingTask.dueDate)} - ${lead.pendingTask.title}`}
+            className={`task-badge ${nextTask.status}`}
+            title={taskList.map(t => `${t.message} - ${t.title}`).join('\n')}
           >
-            ⏰ {formatDate(lead.pendingTask.dueDate)} - {lead.pendingTask.title.slice(0, 20)}...
+            ⏰ {formatDate(nextTask.dueDate)} - {nextTask.title.slice(0, 20)}...
           </div>
         )}
       </div>
