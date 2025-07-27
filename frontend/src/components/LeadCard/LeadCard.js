@@ -86,8 +86,6 @@ function LeadCard({
       <div className="lead-card-body">
         <p className="lead-card-contato">{lead.contato || "Sem contato"}</p>
         <p><strong>Responsável:</strong> {responsavelNome}</p>
-        <p><strong>Criado em:</strong> {criadoEm}</p>
-
         {lead.tags?.length > 0 && (
           <div className="card-tags-container">
             {lead.tags.slice(0, 3).map((tag) => (
