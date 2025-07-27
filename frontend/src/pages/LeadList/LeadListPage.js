@@ -245,7 +245,8 @@ function LeadListPage() {
                                 onDeleteClick={handleOpenDeleteModal}
                                 onReactivateClick={handleReactivateLead}
                                 isProcessingReactivation={isProcessingAction}
-                              />
+                                onTagsClick={handleOpenTagsModal}                             
+                               />
                             </div>
                           )}
                         </Draggable>
