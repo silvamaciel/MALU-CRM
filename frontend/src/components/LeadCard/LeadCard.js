@@ -21,8 +21,17 @@ const formatDate = (dateString) => {
 };
 
 // Status da tarefa
+const getNextPendingTaskInfo = (tasks = []) => {
+  const pendentes = tasks.filter(t => t.status !== "Concluída" && t.dueDate);
+  const ordenadas = [...pendentes].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+  return {
+    nextTask: ordenadas[0] || null,
+    remainingCount: pendentes.length > 1 ? pendentes.length - 1 : 0,
+  };
+};
 const getTaskStatus = (task) => {
-  if (!task || !task.dueDate) return null;
+  if (!task?.dueDate) return null;
 
   const agora = new Date();
   const dueDate = new Date(task.dueDate);
@@ -32,10 +41,6 @@ const getTaskStatus = (task) => {
   const diffDays = Math.ceil((dueDate - agora) / (1000 * 60 * 60 * 24));
   const formattedDate = dueDate.toLocaleDateString("pt-BR");
 
-  if (task.status === "Concluída") {
-    return { status: "completed", message: `Tarefa concluída (${formattedDate})` };
-  }
-
   if (diffDays < 0) {
     return { status: "overdue", message: `Atrasada desde ${formattedDate}` };
   }
@@ -44,7 +49,6 @@ const getTaskStatus = (task) => {
     return { status: "due-soon", message: `Vence em ${formattedDate}` };
   }
 
-  // Corrigido: status 'pending' ao invés de 'ok'
   return { status: "pending", message: `Prevista para ${formattedDate}` };
 };
 
@@ -59,27 +63,29 @@ function LeadCard({
   const navigate = useNavigate();
   if (!lead) return null;
 
+  const { nextTask, remainingCount } = getNextPendingTaskInfo(lead.tasks || []);
+  const taskStatus = nextTask ? getTaskStatus(nextTask) : null;
+
   const situacaoNome = lead.situacao?.nome || "N/A";
   const origemNome = lead.origem?.nome || "N/A";
   const responsavelNome = lead.responsavel?.nome || "N/A";
   const criadoEm = formatDate(lead.createdAt);
   const atualizadoEm = formatDate(lead.updatedAt);
   const isDescartado = situacaoNome.toLowerCase() === "descartado";
-  const taskStatus = getTaskStatus(lead.pendingTask);
 
   return (
     <div className="lead-card-kanban">
 
       <div className="lead-name">
-          <h4>{lead.nome}</h4>
-        </div>
+        <h4>{lead.nome}</h4>
+      </div>
       <div className="lead-card-header" onClick={() => navigate(`/leads/${lead._id}`)}>
-        {lead.pendingTask && (
-          <div
-            className={`task-badge ${taskStatus.status}`}
-            title={`${formatDate(lead.pendingTask.dueDate)} - ${lead.pendingTask.title}`}
-          >
-            ⏰ {formatDate(lead.pendingTask.dueDate)} - {lead.pendingTask.title.slice(0, 20)}...
+        {nextTask && (
+          <div className={`task-badge ${taskStatus.status}`} title={`${formatDate(nextTask.dueDate)} - ${nextTask.title}`}>
+            ⏰ {formatDate(nextTask.dueDate)} - {nextTask.title.slice(0, 20)}...
+            {remainingCount > 0 && (
+              <span className="extra-tasks"> +{remainingCount} tarefa(s)</span>
+            )}
           </div>
         )}
       </div>

@@ -150,16 +150,9 @@ const getLeads = async (queryParams = {}, companyId) => {
                     from: 'tasks',
                     localField: '_id',
                     foreignField: 'lead',
-                    as: 'tasks',
-                    pipeline: [
-                        { $match: { status: 'Pendente' } },
-                        { $sort: { dueDate: 1 } }
-                    ]
-                }
-            },
-            {
-                $addFields: {
-                    pendingTask: { $first: "$tasks" }
+                    as: 'tasks'
+                    // (opcional) você pode ordenar por dueDate se quiser facilitar o frontend
+                    // pipeline: [{ $sort: { dueDate: 1 } }]
                 }
             },
             { $lookup: { from: 'leadstages', localField: 'situacao', foreignField: '_id', as: 'situacao' } },
@@ -180,7 +173,18 @@ const getLeads = async (queryParams = {}, companyId) => {
                     responsavel: { _id: 1, nome: 1, perfil: 1 },
                     tags: 1,
                     updatedAt: 1,
-                    pendingTask: { _id: 1, title: 1, dueDate: 1 }
+                    tasks: {
+                        $map: {
+                            input: "$tasks",
+                            as: "task",
+                            in: {
+                                _id: "$$task._id",
+                                title: "$$task.title",
+                                dueDate: "$$task.dueDate",
+                                status: "$$task.status"
+                            }
+                        }
+                    }
                 }
             }
         ];
@@ -198,6 +202,7 @@ const getLeads = async (queryParams = {}, companyId) => {
         throw new Error('Erro ao buscar os leads.');
     }
 };
+
 
 const getLeadById = async (id, companyId) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
