@@ -82,6 +82,9 @@ app.use('/api/webhooks', require('./routes/webhookRoutes'));
 
 app.use('/api/chat', require('./routes/chatRoutes'));
 
+app.use('/api/tasks', require('./routes/taskRoutes')); 
+
+
 
 
 
