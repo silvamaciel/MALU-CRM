@@ -1,185 +1,146 @@
-/* src/components/LeadCard/LeadCard.css */
-.lead-card {
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    background-color: #ffffff;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-    transition: box-shadow 0.2s ease-in-out;
-  }
-  
-  .lead-card:hover {
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  }
-  
-  .lead-card.error {
-      border-color: #f5c6cb;
-      background-color: #f8d7da;
-      color: #721c24;
-  }
-  
-  .lead-card h3 {
-    margin-top: 0;
-    margin-bottom: 0.5rem;
-    color: #333;
-    font-size: 1.2em;
-  }
-  
-  .lead-card p {
-    margin: 0.3rem 0;
-    font-size: 0.9em;
-    color: #555;
-    line-height: 1.4;
-  }
-  
-  .lead-card strong {
-    color: #333;
-  }
-  
-  /* Estilização básica da situação */
-  .lead-card .situacao {
-      display: inline-block;
-      padding: 0.2em 0.6em;
-      font-size: 0.8em;
-      font-weight: bold;
-      border-radius: 4px;
-      color: white;
-      background-color: #6c757d; /* Cor padrão */
-      text-transform: capitalize;
-  }
-  
-  /* Cores específicas por situação (ajuste os nomes/cores conforme necessário) */
-  .lead-card .situacao-em-atendimento { background-color: #007bff; }
-  .lead-card .situacao-visita-agendada { background-color: #ffc107; color: #333; }
-  .lead-card .situacao-proposta-enviada { background-color: #17a2b8; }
-  .lead-card .situacao-negociacao { background-color: #fd7e14; }
-  .lead-card .situacao-fechado { background-color: #28a745; }
-  .lead-card .situacao-descartado { background-color: #dc3545; }
-  
-  
-  .lead-card .datas {
-      font-size: 0.8em;
-      color: #888;
-      margin-top: 0.75rem;
-      border-top: 1px solid #eee;
-      padding-top: 0.5rem;
-  }
-  
-  .lead-card-actions {
-    margin-top: 1rem;
-    display: flex;
-    gap: 0.5rem; /* Espaçamento entre botões */
-  }
-  
-  .lead-card-actions button {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.8em;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: #f8f9fa;
-    color: #333;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-  }
-  
-  .lead-card-actions button:hover:not(:disabled) {
-    background-color: #e2e6ea;
-    border-color: #adb5bd;
-  }
-  
-  .lead-card-actions button:disabled {
-      cursor: not-allowed;
-      opacity: 0.6;
-  }
-  
-  .lead-card-actions button.descartar {
-      border-color: #dc3545;
-      color: #dc3545;
-  }
-  .lead-card-actions button.descartar:hover:not(:disabled) {
-      background-color: #dc3545;
-      color: white;
-  }
-
-  lead-card-actions {
-    margin-top: 1rem;
-    display: flex;
-    gap: 0.5rem; /* Espaçamento entre botões */
-  }
-  
-  /* Estilo base para os botões/links de ação */
-  .action-button {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.8em;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: #f8f9fa;
-    color: #333;
-    cursor: pointer;
-    transition: background-color 0.2s ease, border-color 0.2s ease;
-    text-decoration: none; /* Remove sublinhado do Link */
-    display: inline-block; /* Para aplicar padding corretamente */
-    text-align: center;
-  }
-  
-  .action-button:hover:not(:disabled) {
-    background-color: #e2e6ea;
-    border-color: #adb5bd;
-    color: #333; /* Mantem cor do texto no hover */
-    text-decoration: none; /* Garante que não haja sublinhado no hover */
-  }
-  
-  .action-button:disabled {
-      cursor: not-allowed;
-      opacity: 0.6;
-  }
-  
-  /* Cores específicas (ajuste conforme necessário) */
-  .details-button { border-color: #007bff; color: #007bff; }
-  .details-button:hover { background-color: #007bff; color: white; }
-  
-  .edit-button { border-color: #ffc107; color: #ffc107; }
-  .edit-button:hover:not(:disabled) { background-color: #ffc107; color: #212529; }
-  
-  .discard-button { border-color: #dc3545; color: #dc3545; }
-  .discard-button:hover:not(:disabled) { background-color: #dc3545; color: white; }
-  
-
-  .action-button.reactivate-button {
-    background-color: #28a745; /* Verde */
-    border-color: #28a745;
-    color: white;
-}
-.action-button.reactivate-button:hover:not(:disabled) {
-    background-color: #218838;
-    border-color: #1e7e34;
-}
-.action-button.reactivate-button:disabled {
-    opacity: 0.65;
-    cursor: not-allowed;
+/* CARD BASE */
+.lead-card,
+.lead-card-kanban {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background-color: #ffffff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s ease-in-out;
+  position: relative;
 }
 
-/* Adicione para o motivo do descarte no card, se quiser */
-.discard-reason {
-    font-size: 0.85em;
-    color: #6c757d; /* Cinza */
-    font-style: italic;
-    margin-top: 0.5rem;
+.lead-card:hover,
+.lead-card-kanban:hover {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.lead-card.error {
+  border-color: #f5c6cb;
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.lead-card h3,
+.lead-card-kanban h4 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  color: #333;
+  font-size: 1.2em;
+}
+
+.lead-card p,
+.lead-card-kanban p {
+  margin: 0.3rem 0;
+  font-size: 0.9em;
+  color: #555;
+  line-height: 1.4;
+}
+
+.lead-card strong,
+.lead-card-kanban strong {
+  color: #333;
+}
+
+.lead-card .situacao {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  font-size: 0.8em;
+  font-weight: bold;
+  border-radius: 4px;
+  color: white;
+  background-color: #6c757d;
+  text-transform: capitalize;
 }
 
 
-.action-button.delete-button {
+.lead-card .datas {
+  font-size: 0.8em;
+  color: #888;
+  margin-top: 0.75rem;
+  border-top: 1px solid #eee;
+  padding-top: 0.5rem;
+}
+
+/* AÇÕES */
+.lead-card-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.lead-card-actions button,
+.action-button {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8em;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+
+.action-button:hover:not(:disabled),
+.lead-card-actions button:hover:not(:disabled) {
+  background-color: #e2e6ea;
+  border-color: #adb5bd;
+}
+
+.action-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* ESTILOS DOS BOTÕES */
+.details-button { border-color: #007bff; color: #007bff; }
+.details-button:hover { background-color: #007bff; color: white; }
+
+.edit-button { border-color: #ffc107; color: #ffc107; }
+.edit-button:hover:not(:disabled) { background-color: #ffc107; color: #212529; }
+
+.discard-button { border-color: #dc3545; color: #dc3545; }
+.discard-button:hover:not(:disabled) { background-color: #dc3545; color: white; }
+
+.reactivate-button {
+  background-color: #28a745;
+  border-color: #28a745;
+  color: white;
+}
+.reactivate-button:hover:not(:disabled) {
+  background-color: #218838;
+  border-color: #1e7e34;
+}
+.reactivate-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.delete-button {
   background-color: transparent;
-  border-color: #dc3545; /* Vermelho */
+  border-color: #dc3545;
   color: #dc3545;
-  margin-left: auto; /* Opcional: Empurra para a direita */
+  margin-left: auto;
 }
-.action-button.delete-button:hover:not(:disabled) {
+.delete-button:hover:not(:disabled) {
   background-color: #dc3545;
   color: white;
 }
 
+/* MOTIVO DE DESCARTE */
+.discard-reason {
+  font-size: 0.85em;
+  color: #6c757d;
+  font-style: italic;
+  margin-top: 0.5rem;
+}
+
+/* ALERTA DE TAREFA PENDENTE */
 .task-alert {
   position: absolute;
   top: 0.75rem;
@@ -192,7 +153,7 @@
   border-radius: 50%;
   background-color: #e9ecef;
   color: #495057;
-  cursor: help; /* Mostra que tem tooltip */
+  cursor: help;
   transition: all 0.2s ease;
   z-index: 2;
 }
@@ -211,7 +172,7 @@
   pointer-events: none;
 }
 
-/* Garante que o header do card tenha posição relativa para o ícone se posicionar */
+/* GARANTE POSICIONAMENTO RELATIVO NO HEADER */
 .lead-card-header {
   position: relative;
 }
