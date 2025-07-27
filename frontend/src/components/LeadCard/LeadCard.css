@@ -156,3 +156,40 @@
 .action-icon[title="Excluir"] {
   color: #dc3545;
 }
+
+
+.task-badge {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  margin-bottom: 6px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: default;
+  background-color: #f1f1f1;
+  color: #333;
+}
+
+.task-badge.ok {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.task-badge.due-soon {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.task-badge.overdue {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.task-badge.completed {
+  background-color: #cce5ff;
+  color: #004085;
+}

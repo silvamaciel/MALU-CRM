@@ -70,10 +70,10 @@ function LeadCard({
       <div className="lead-card-header" onClick={() => navigate(`/leads/${lead._id}`)}>
         {lead.pendingTask && (
           <div
-            className={`task-alert ${taskStatus.status}`}
-            title={`${lead.pendingTask.dueDate?.slice(0, 10)} - ${lead.pendingTask.title}`}
+            className={`task-badge ${taskStatus.status}`}
+            title={`${formatDate(lead.pendingTask.dueDate)} - ${lead.pendingTask.title}`}
           >
-            ⏰ {lead.pendingTask.dueDate?.slice(0, 10)} - {lead.pendingTask.title.slice(0, 25)}...
+            ⏰ {formatDate(lead.pendingTask.dueDate)} - {lead.pendingTask.title.slice(0, 20)}...
           </div>
         )}
         <h4>{lead.nome}</h4>
