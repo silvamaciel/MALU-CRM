@@ -1,204 +1,119 @@
-/* CARD BASE */
-.lead-card,
-.lead-card-kanban {
-  border: 1px solid #e0e0e0;
+.lead-card {
+  background-color: #fff;
   border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  background-color: #ffffff;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-  transition: box-shadow 0.2s ease-in-out;
-  position: relative;
-}
-
-.lead-card:hover,
-.lead-card-kanban:hover {
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-.lead-card.error {
-  border-color: #f5c6cb;
-  background-color: #f8d7da;
-  color: #721c24;
-}
-
-.lead-card h3,
-.lead-card-kanban h4 {
-  margin-top: 0;
-  margin-bottom: 0.5rem;
-  color: #333;
-  font-size: 1.2em;
-}
-
-.lead-card p,
-.lead-card-kanban p {
-  margin: 0.3rem 0;
-  font-size: 0.9em;
-  color: #555;
-  line-height: 1.4;
-}
-
-.lead-card strong,
-.lead-card-kanban strong {
-  color: #333;
-}
-
-.lead-card .situacao {
-  display: inline-block;
-  padding: 0.2em 0.6em;
-  font-size: 0.8em;
-  font-weight: bold;
-  border-radius: 4px;
-  color: white;
-  background-color: #6c757d;
-  text-transform: capitalize;
-}
-
-
-.lead-card .datas {
-  font-size: 0.8em;
-  color: #888;
-  margin-top: 0.75rem;
-  border-top: 1px solid #eee;
-  padding-top: 0.5rem;
-}
-
-/* AÇÕES */
-.lead-card-actions {
-  margin-top: 1rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  margin-bottom: 12px;
   display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: box-shadow 0.2s ease;
+  border: 1px solid #e0e0e0;
 }
 
-.lead-card-actions button,
-.action-button {
-  padding: 0.4rem 0.8rem;
-  font-size: 0.8em;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background-color: #f8f9fa;
+.lead-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.lead-card-header h4 {
+  margin: 0 0 4px 0;
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.lead-card-contato {
+  font-size: 0.95rem;
+  margin-bottom: 8px;
   color: #333;
-  cursor: pointer;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
-  text-decoration: none;
-  display: inline-block;
-  text-align: center;
 }
 
-.action-button:hover:not(:disabled),
-.lead-card-actions button:hover:not(:disabled) {
-  background-color: #e2e6ea;
-  border-color: #adb5bd;
+.lead-card-infos {
+  font-size: 0.85rem;
+  color: #666;
+  line-height: 1.4;
+  margin-bottom: 8px;
 }
 
-.action-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
+.lead-card-infos strong {
+  color: #000;
 }
-
-/* ESTILOS DOS BOTÕES */
-.details-button { border-color: #007bff; color: #007bff; }
-.details-button:hover { background-color: #007bff; color: white; }
-
-.edit-button { border-color: #ffc107; color: #ffc107; }
-.edit-button:hover:not(:disabled) { background-color: #ffc107; color: #212529; }
-
-.discard-button { border-color: #dc3545; color: #dc3545; }
-.discard-button:hover:not(:disabled) { background-color: #dc3545; color: white; }
-
-.reactivate-button {
-  background-color: #28a745;
-  border-color: #28a745;
-  color: white;
-}
-.reactivate-button:hover:not(:disabled) {
-  background-color: #218838;
-  border-color: #1e7e34;
-}
-.reactivate-button:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-.delete-button {
-  background-color: transparent;
-  border-color: #dc3545;
-  color: #dc3545;
-  margin-left: auto;
-}
-.delete-button:hover:not(:disabled) {
-  background-color: #dc3545;
-  color: white;
-}
-
-/* MOTIVO DE DESCARTE */
-.discard-reason {
-  font-size: 0.85em;
-  color: #6c757d;
-  font-style: italic;
-  margin-top: 0.5rem;
-}
-
-/* ALERTA DE TAREFA PENDENTE */
-
-
-.task-alert.overdue {
-  background-color: #dc3545;
-  color: #fff;
-}
-
-.task-alert.due-soon {
-  background-color: #ffc107;
-  color: #212529;
-}
-
-.task-alert i {
-  pointer-events: none;
-}
-
-/* GARANTE POSICIONAMENTO RELATIVO NO HEADER */
-.lead-card-header {
-  position: relative;
-}
-
-
 
 .task-alert {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  font-size: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.3rem;
-  border-radius: 50%;
-  cursor: help;
-  transition: all 0.2s ease;
-  z-index: 2;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  margin-bottom: 10px;
+  font-weight: bold;
 }
 
-/* Vermelho – atrasado */
-.task-alert.overdue {
-  background-color: #dc3545;
+.task-alert.amarelo {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+}
+
+.task-alert.vermelho {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.task-alert.verde {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.lead-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  margin-top: 12px;
+  color: #888;
+}
+
+.lead-card-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.lead-card-actions button {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.lead-card-actions button.action-icon {
+  background: none;
+  font-size: 1.1rem;
+  padding: 0;
+}
+
+button.action-icon:hover {
+  transform: scale(1.1);
+}
+
+button[title="Detalhes"] {
+  background-color: #007bff;
   color: #fff;
 }
 
-/* Amarelo – vencendo */
-.task-alert.due-soon {
+button[title="Editar"] {
   background-color: #ffc107;
-  color: #212529;
+  color: #000;
 }
 
-/* Cinza – futuro */
-.task-alert.ok {
-  background-color: #ced4da;
-  color: #343a40;
+button[title="Descartar"] {
+  background-color: #f0f0f0;
+  color: #000;
 }
 
-/* Verde – concluída */
-.task-alert.completed {
-  background-color: #28a745;
+button[title="Excluir"] {
+  background-color: #dc3545;
   color: #fff;
 }
