@@ -1,6 +1,6 @@
 // src/pages/Chat/ChatPage.js
 import React, { useState, useEffect, useCallback } from 'react';
-import { listConversationsApi, getMessagesApi, sendMessageApi } from '../../api/chatApi';
+import { listConversationsApi, getMessagesApi, sendMessageApi, createLeadFromConversationApi } from '../../api/chatApi';
 import ConversationList from './componentes/ConversationList';
 import ChatWindow from './componentes/ChatWindow';
 import './ChatPage.css';

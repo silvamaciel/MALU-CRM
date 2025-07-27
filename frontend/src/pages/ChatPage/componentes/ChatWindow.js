@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import MessageBubble from './MessageBubble'; // Criaremos este a seguir
 
-function ChatWindow({ conversation, messages, loading, onSendMessage }) {
+function ChatWindow({ conversation, messages, loading, onSendMessage, onCreateLead  }) {
     const [newMessage, setNewMessage] = useState('');
     const messagesEndRef = useRef(null);
     useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
