@@ -153,12 +153,17 @@ const createLeadFromConversation = async (conversationId, companyId, actorUserId
         senderPhoneRaw = fixBrazilianMobileNumber(senderPhoneRaw);
 
         // 3. Monta os dados para o novo Lead com o número corrigido
+        const origemDoc = await origemService.findOrCreateOrigem(
+            { nome: 'WhatsApp', descricao: 'Lead criado a partir de uma conversa no chat.' }, 
+            companyId
+        );
+
+        // 2. Monta os dados para o novo Lead com o ID da origem
         const leadData = {
             nome: conversation.tempContactName || `Contato WhatsApp ${senderPhoneRaw}`,
-            contato: senderPhoneRaw, // Passa o número corrigido e sem o '+'
-            origem: 'WhatsApp'
+            contato: senderPhoneRaw,
+            origem: origemDoc._id
         };
-
         // 4. Chama o serviço de criação de Lead, que agora recebe um número válido para formatar
         const newLead = await LeadService.createLead(leadData, companyId, actorUserId, { session });
         console.log(`[ChatService] Novo lead criado com ID: ${newLead._id}`);
