@@ -79,7 +79,7 @@ function LeadCard({
   const atualizadoEm = formatDate(lead.updatedAt);
   const isDescartado = situacaoNome.toLowerCase() === "descartado";
   const taskList = getTaskStatusList(lead.tasks); 
-  const nextTask = taskList.find(t => t.status !== "completed");
+  const nextTask = taskList.length > 0 ? taskList[0] : null;
 
 
   return (
