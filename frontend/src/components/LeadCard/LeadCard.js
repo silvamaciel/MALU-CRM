@@ -85,7 +85,6 @@ function LeadCard({
 
       <div className="lead-card-body">
         <p className="lead-card-contato">{lead.contato || "Sem contato"}</p>
-        <p><strong>Origem:</strong> {origemNome}</p>
         <p><strong>Responsável:</strong> {responsavelNome}</p>
         <p><strong>Criado em:</strong> {criadoEm}</p>
 
