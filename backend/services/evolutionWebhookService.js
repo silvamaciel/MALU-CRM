@@ -59,27 +59,27 @@ const processMessageUpsert = async (payload) => {
     let mediaMimeType = null;
     let lastMessagePreview = 'Nova mensagem';
 
-    if (messagePayload.conversation) {
+    if (message.conversation) {
         contentType = 'text';
-        content = messagePayload.conversation;
+        content = message.conversation;
         lastMessagePreview = content.length > 30 ? content.substring(0, 30) + '...' : content;
-    } else if (messagePayload.imageMessage) {
+    } else if (message.imageMessage) {
         contentType = 'image';
-        mediaUrl = messagePayload.imageMessage.url;
-        mediaMimeType = messagePayload.imageMessage.mimetype;
-        content = messagePayload.imageMessage.caption || 'Imagem'; // Usa a legenda ou um texto padrão
+        mediaUrl = message.imageMessage.url;
+        mediaMimeType = message.imageMessage.mimetype;
+        content = message.imageMessage.caption || 'Imagem'; // Usa a legenda ou um texto padrão
         lastMessagePreview = '📷 Imagem';
-    } else if (messagePayload.audioMessage) {
+    } else if (message.audioMessage) {
         contentType = 'audio';
-        mediaUrl = messagePayload.audioMessage.url;
-        mediaMimeType = messagePayload.audioMessage.mimetype;
+        mediaUrl = message.audioMessage.url;
+        mediaMimeType = message.audioMessage.mimetype;
         content = 'Áudio';
         lastMessagePreview = '🎤 Áudio';
-    } else if (messagePayload.documentMessage) {
+    } else if (message.documentMessage) {
         contentType = 'document';
-        mediaUrl = messagePayload.documentMessage.url;
-        mediaMimeType = messagePayload.documentMessage.mimetype;
-        content = messagePayload.documentMessage.fileName || 'Documento';
+        mediaUrl = message.documentMessage.url;
+        mediaMimeType = message.documentMessage.mimetype;
+        content = message.documentMessage.fileName || 'Documento';
         lastMessagePreview = '📄 Documento';
     } else {
         console.log('[WebhookSvc] Tipo de mensagem não suportado recebido. Ignorando.');
