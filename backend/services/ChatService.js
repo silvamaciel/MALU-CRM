@@ -3,7 +3,7 @@ const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 const EvolutionInstance = require('../models/EvolutionInstance');
 const axios = require('axios');
-const Lead = require('../models/Lead');
+const LeadService = require('../models/Lead');
 
 /**
  * Lista todas as conversas de uma empresa, ordenadas pela última mensagem.
@@ -152,7 +152,7 @@ const createLeadFromConversation = async (conversationId, companyId, actorUserId
         };
 
         // 2. Chama o serviço de criação de Lead que já é robusto
-        const newLead = await Lead.createLead(leadData, companyId, actorUserId, { session });
+        const newLead = await LeadService.createLead(leadData, companyId, actorUserId, { session });
         console.log(`[ChatService] Novo lead criado com ID: ${newLead._id}`);
 
         // 3. Atualiza a conversa, vinculando-a ao novo lead
