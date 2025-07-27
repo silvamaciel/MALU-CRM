@@ -7,13 +7,14 @@ import "./LeadCard.css";
 const formatDate = (dateString) => {
   if (!dateString) return "N/A";
   try {
-    return new Date(dateString).toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    const date = new Date(dateString);
+    const dia = String(date.getUTCDate()).padStart(2, "0");
+    const mes = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const ano = date.getUTCFullYear();
+    const hora = String(date.getUTCHours()).padStart(2, "0");
+    const minuto = String(date.getUTCMinutes()).padStart(2, "0");
+
+    return `${dia}/${mes}/${ano}, ${hora}:${minuto}`;
   } catch {
     return "Data inválida";
   }
