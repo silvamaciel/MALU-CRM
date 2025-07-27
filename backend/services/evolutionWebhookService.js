@@ -52,6 +52,41 @@ const processMessageUpsert = async (payload) => {
     if (!crmInstance) return;
 
 
+
+    let contentType = 'text';
+    let content = '';
+    let mediaUrl = null;
+    let mediaMimeType = null;
+    let lastMessagePreview = 'Nova mensagem';
+
+    if (messagePayload.conversation) {
+        contentType = 'text';
+        content = messagePayload.conversation;
+        lastMessagePreview = content.length > 30 ? content.substring(0, 30) + '...' : content;
+    } else if (messagePayload.imageMessage) {
+        contentType = 'image';
+        mediaUrl = messagePayload.imageMessage.url;
+        mediaMimeType = messagePayload.imageMessage.mimetype;
+        content = messagePayload.imageMessage.caption || 'Imagem'; // Usa a legenda ou um texto padrão
+        lastMessagePreview = '📷 Imagem';
+    } else if (messagePayload.audioMessage) {
+        contentType = 'audio';
+        mediaUrl = messagePayload.audioMessage.url;
+        mediaMimeType = messagePayload.audioMessage.mimetype;
+        content = 'Áudio';
+        lastMessagePreview = '🎤 Áudio';
+    } else if (messagePayload.documentMessage) {
+        contentType = 'document';
+        mediaUrl = messagePayload.documentMessage.url;
+        mediaMimeType = messagePayload.documentMessage.mimetype;
+        content = messagePayload.documentMessage.fileName || 'Documento';
+        lastMessagePreview = '📄 Documento';
+    } else {
+        console.log('[WebhookSvc] Tipo de mensagem não suportado recebido. Ignorando.');
+        return;
+    }
+
+
     let contactPhotoUrl = null;
     try {
         // --- 1. Busca a foto do perfil do contato ---
@@ -61,39 +96,24 @@ const processMessageUpsert = async (payload) => {
         const requestBody = { number: remoteJid };
         const requestHeaders = { headers: { 'apikey': crmInstance.apiKey } };
 
-        // VVVVV LOG DE DEPURAÇÃO ADICIONADO ANTES DA CHAMADA VVVVV
-        console.log(`[WebhookSvc DEBUG] Enviando POST para: ${requestUrl}`);
-        console.log(`[WebhookSvc DEBUG] Com Body:`, JSON.stringify(requestBody, null, 2));
-        console.log(`[WebhookSvc DEBUG] Com Headers: { apikey: "${crmInstance.apiKey.substring(0, 5)}..." }`);
-        // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
         const profilePicResponse = await axios.post(requestUrl, requestBody, requestHeaders);
 
-         console.log("[WebhookSvc DEBUG] Resposta completa da API de foto de perfil:", profilePicResponse.data);
-        
         if (profilePicResponse.data && profilePicResponse.data.profilePictureUrl) {
             contactPhotoUrl = profilePicResponse.data.profilePictureUrl;
             console.log(`[WebhookSvc] Foto do perfil encontrada para ${remoteJid},`);
         }
     } catch (picError) {
-        // VVVVV LOG DE ERRO DETALHADO VVVVV
         console.error(`[WebhookSvc] ERRO DETALHADO ao buscar foto do perfil:`);
         if (picError.response) {
-            // O servidor respondeu com um status de erro (4xx, 5xx)
             console.error("  - DADOS DO ERRO:", JSON.stringify(picError.response.data, null, 2));
             console.error("  - STATUS DO ERRO:", picError.response.status);
         } else if (picError.request) {
-            // A requisição foi feita mas nenhuma resposta foi recebida
             console.error("  - ERRO DE REQUISIÇÃO: Nenhuma resposta recebida.");
         } else {
-            // Algo aconteceu ao configurar a requisição
             console.error('  - ERRO DE CONFIGURAÇÃO:', picError.message);
         }
         console.warn(`[WebhookSvc] Não foi possível buscar a foto do perfil para ${remoteJid}.`);
-        // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     }
-
-
 
 
     if (isGroupMessage && !crmInstance.receiveFromGroups) {
@@ -155,6 +175,7 @@ const processMessageUpsert = async (payload) => {
                             contactPhotoUrl: contactPhotoUrl,
                             channelInternalId: remoteJid,
                             instanceName: instance,
+                            lastMessage: lastMessagePreview
                 
                 } },
                     { upsert: true, new: true }
@@ -172,7 +193,8 @@ const processMessageUpsert = async (payload) => {
                         channelInternalId: remoteJid,
                         leadNameSnapshot: lead.nome,
                         instanceName: instance,
-                        contactPhotoUrl: contactPhotoUrl
+                        contactPhotoUrl: contactPhotoUrl,
+                        lastMessage: lastMessagePreview
                     }
                 },
                 { upsert: true, new: true }
@@ -201,6 +223,10 @@ const processMessageUpsert = async (payload) => {
             direction: messageDirection,
             senderId: senderIdentifier,
             content: message.conversation,
+            lastMessage: lastMessagePreview,
+            contentType, 
+            mediaUrl,
+            mediaMimeType
         });
         await newMessage.save();
 

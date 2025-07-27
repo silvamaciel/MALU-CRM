@@ -15,7 +15,7 @@ const messageSchema = new Schema({
     contentType: {
         type: String,
         required: true,
-        enum: ['text', 'image', 'audio', 'document'],
+        enum: ['text', 'image', 'audio', 'document', 'other'],
         default: 'text'
     },
     content: { type: String, required: true, trim: true }, 
