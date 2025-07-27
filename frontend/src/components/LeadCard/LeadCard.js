@@ -58,8 +58,7 @@ const getTaskStatusList = (tasks = []) => {
     .sort((a, b) => a.dueDate - b.dueDate); // Mais próxima primeiro
 };
 
-const taskList = getTaskStatusList(lead.tasks); // Assume array lead.tasks
-const nextTask = taskList.find(t => t.status !== "completed");
+
 
 
 function LeadCard({
@@ -79,6 +78,8 @@ function LeadCard({
   const criadoEm = formatDate(lead.createdAt);
   const atualizadoEm = formatDate(lead.updatedAt);
   const isDescartado = situacaoNome.toLowerCase() === "descartado";
+  const taskList = getTaskStatusList(lead.tasks); 
+  const nextTask = taskList.find(t => t.status !== "completed");
 
 
   return (
