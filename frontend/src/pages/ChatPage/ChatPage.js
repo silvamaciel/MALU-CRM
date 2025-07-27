@@ -1,5 +1,6 @@
 // src/pages/Chat/ChatPage.js
 import React, { useState, useEffect, useCallback } from 'react';
+import { toast } from 'react-toastify';
 import { listConversationsApi, getMessagesApi, sendMessageApi, createLeadFromConversationApi } from '../../api/chatApi';
 import ConversationList from './componentes/ConversationList';
 import ChatWindow from './componentes/ChatWindow';
