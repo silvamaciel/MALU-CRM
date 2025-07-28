@@ -85,6 +85,7 @@ function LeadCard({
             className={`task-badge ${taskStatus.status}`}
             title={lead.tasks
               ?.filter(t => t.status !== 'Concluída')
+              .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
               .map(t => `${formatDate(t.dueDate)} - ${t.title}`)
               .join('\n')}
           >
