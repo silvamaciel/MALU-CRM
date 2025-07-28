@@ -172,7 +172,7 @@ function LeadListPage() {
       handleOpenDiscardModal(leadToMove);
       return;
     }
-
+ 
     // Atualização Otimista da UI
     const newStartLeads = [...(leadsByStage[source.droppableId] || [])];
     const [movedItem] = newStartLeads.splice(source.index, 1);
