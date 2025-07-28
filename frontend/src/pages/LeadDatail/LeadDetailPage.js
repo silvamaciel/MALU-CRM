@@ -17,6 +17,7 @@ import DiscardLeadModal from "../../components/DiscardLeadModal/DiscardLeadModal
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 import ReservaFormModal from "./ReservaFormModal";
 import LeadTagsManager from '../../components/LeadTagsManager/LeadTagsManager';
+import LeadTasks from '../../components/LeadTasks/LeadTasks';
 
 
 import "./LeadDetailPage.css";
