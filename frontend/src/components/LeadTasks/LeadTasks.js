@@ -4,10 +4,14 @@ import { getTasksApi, createTaskApi, updateTaskApi, deleteTaskApi } from '../../
 import { getUsuarios } from '../../api/users'; // Para o dropdown de responsáveis
 import './LeadTasks.css';
 
-function LeadTasks({ leadId, currentUserId }) {
+function LeadTasks({ leadId }) {
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showCreateForm, setShowCreateForm] = useState(false);
+
+
+    const storedUser = JSON.parse(localStorage.getItem("userData"));
+    const currentUserId = storedUser?._id;
     const [newTask, setNewTask] = useState({ title: '', dueDate: '', assignedTo: currentUserId });
     const [users, setUsers] = useState([]);
 
