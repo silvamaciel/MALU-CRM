@@ -2,13 +2,16 @@
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-  padding: 16px;
+  padding: 12px 16px;
   margin-bottom: 12px;
   display: flex;
-  flex-direction: column;
+  flex-direction: row; /* DEIXA LARGO */
+  align-items: center;  /* CENTRALIZA VERTICAL */
   justify-content: space-between;
-  transition: box-shadow 0.2s ease;
   border: 1px solid #e0e0e0;
+  transition: box-shadow 0.2s ease;
+  min-height: 72px;
+  gap: 16px;
 }
 
 .lead-card-kanban:hover {
@@ -17,16 +20,17 @@
 
 .lead-card-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
 }
 
 .lead-card-header h4 {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: bold;
   flex: 1;
+  line-height: 1.2;
 }
 
 .task-alert {
@@ -77,11 +81,14 @@
 }
 
 .lead-card-body {
-  margin-top: 10px;
+ display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
 }
 
 .lead-card-contato {
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   margin-bottom: 6px;
   color: #333;
 }
@@ -109,9 +116,11 @@
 .lead-card-footer {
   display: flex;
   flex-direction: column;
-  margin-top: 12px;
-  font-size: 0.8rem;
+  margin-top: 5px;
+  font-size: 0.75rem;
   color: #888;
+  justify-content: center;
+  flex: 1;
 }
 
 .lead-card-actions {
