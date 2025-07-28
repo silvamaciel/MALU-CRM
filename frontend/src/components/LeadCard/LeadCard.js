@@ -81,7 +81,13 @@ function LeadCard({
       </div>
       <div className="lead-card-header" onClick={() => navigate(`/leads/${lead._id}`)}>
         {nextTask && (
-          <div className={`task-badge ${taskStatus.status}`} title={`${formatDate(nextTask.dueDate)} - ${nextTask.title}`}>
+          <div
+            className={`task-badge ${taskStatus.status}`}
+            title={lead.tasks
+              ?.filter(t => t.status !== 'Concluída')
+              .map(t => `${formatDate(t.dueDate)} - ${t.title}`)
+              .join('\n')}
+          >
             ⏰ {formatDate(nextTask.dueDate)} - {nextTask.title.slice(0, 20)}...
             {remainingCount > 0 && (
               <span className="extra-tasks"> +{remainingCount} tarefa(s)</span>
