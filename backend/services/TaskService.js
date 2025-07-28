@@ -7,8 +7,9 @@ const mongoose = require('mongoose');
  */
 const createTask = async (taskData, companyId, userId) => {
     const { title, dueDate, lead, assignedTo } = taskData;
-    if (!title || !dueDate || !lead || !assignedTo) {
-        throw new Error('Título, data de vencimento, lead e responsável são obrigatórios.');
+
+    if (!title || !dueDate || !lead) {
+        throw new Error('Título, data de vencimento e lead são obrigatórios.');
     }
 
     // Valida se o Lead pertence à empresa
@@ -17,13 +18,16 @@ const createTask = async (taskData, companyId, userId) => {
         throw new Error("Lead não encontrado ou não pertence a esta empresa.");
     }
 
+    // FORÇA assignedTo ser o userId autenticado (ignorando o que vem do frontend)
     const task = new Task({
         ...taskData,
+        assignedTo: userId,
         company: companyId,
         createdBy: userId
     });
-    
+
     await task.save();
+
     return task.populate([
         { path: 'lead', select: 'nome' },
         { path: 'assignedTo', select: 'nome' }
