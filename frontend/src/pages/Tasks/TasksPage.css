@@ -1,0 +1,52 @@
+.tasks-page .tasks-filters {
+    display: flex;
+    gap: 10px;
+}
+.tasks-list-container {
+    margin-top: 20px;
+}
+.task-item-full {
+    display: flex;
+    align-items: flex-start;
+    padding: 15px;
+    background-color: #fff;
+    border-left: 4px solid #007bff; /* Azul para Pendente por padrão */
+    border-radius: 4px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.task-item-full.status-concluída {
+    border-left-color: #28a745; /* Verde para Concluída */
+}
+.task-item-full.status-concluída .task-title {
+    text-decoration: line-through;
+    color: #6c757d;
+}
+.task-content {
+    margin-left: 15px;
+}
+.task-title {
+    font-weight: 600;
+    margin: 0 0 5px 0;
+}
+.task-description {
+    margin: 0 0 10px 0;
+    font-size: 0.9em;
+    color: #495057;
+}
+.task-metadata-full {
+    display: flex;
+    gap: 20px;
+    font-size: 0.8em;
+    color: #8898aa;
+}
+.task-metadata-full strong {
+    color: #495057;
+}
+.task-metadata-full a {
+    color: #007bff;
+    text-decoration: none;
+}
+.task-metadata-full a:hover {
+    text-decoration: underline;
+}

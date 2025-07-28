@@ -36,6 +36,7 @@ import ImovelFormPage from './pages/ImovelAvulso/ImovelFormPage/ImovelFormPage';
 import AgendaPage from './pages/AgendaPage/AgendaPage';
 import ChatPage from './pages/ChatPage/ChatPage';
 
+import TasksPage from './pages/Tasks/TasksPage';
 
 
 
@@ -125,6 +126,7 @@ function App() {
                 <Route path="/propostas-contratos/:propostaContratoId" element={<PropostaContratoDetailPage />} />                
                 <Route path="/propostas-contratos/:propostaContratoId/editar" element={<PropostaContratoFormPage />} />
                 <Route path="/agenda" element={<AgendaPage/>} />
+                <Route path="/tasks" element={<TasksPage />} />
 
 
 

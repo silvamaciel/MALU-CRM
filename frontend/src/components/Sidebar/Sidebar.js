@@ -32,8 +32,10 @@ function Sidebar({ userData, handleLogout, closeMobileSidebar }) {
                     <li><NavLink to="/chat" onClick={handleLinkClick} className={({isActive}) => isActive ? 'active' : ''}>Chat</NavLink></li>
 
                     <li><NavLink to="/leads" onClick={handleLinkClick} className={({isActive}) => isActive ? 'active' : ''}>Leads</NavLink></li>
+                    <li><NavLink to="/tasks" onClick={handleLinkClick} className={({isActive}) => isActive || location.pathname.startsWith('/Tasks') ? 'active' : ''}>Tarefas</NavLink></li>
+
                     <li><NavLink to="/empreendimentos" onClick={handleLinkClick} className={({isActive}) => isActive || location.pathname.startsWith('/empreendimentos') ? 'active' : ''}>Empreendimentos</NavLink></li>
-                     <li><NavLink to="/imoveis-avulsos" onClick={handleLinkClick} className={({isActive}) => isActive || location.pathname.startsWith('/imoveis-avulsos') ? 'active' : ''}>Imóveis Avulsos</NavLink></li>
+                    <li><NavLink to="/imoveis-avulsos" onClick={handleLinkClick} className={({isActive}) => isActive || location.pathname.startsWith('/imoveis-avulsos') ? 'active' : ''}>Imóveis Avulsos</NavLink></li>
                     <li><NavLink to="/reservas" onClick={handleLinkClick} className={({isActive}) => isActive || location.pathname.startsWith('/reservas') ? 'active' : ''}>Reservas</NavLink></li>
                     {/* <li><NavLink to="/agenda" onClick={handleLinkClick} className={({isActive}) => isActive || location.pathname.startsWith('/agenda') ? 'active' : ''}>Agenda</NavLink></li> */}
 
