@@ -12,7 +12,7 @@ function LeadTasks({ leadId }) {
 
     const storedUser = JSON.parse(localStorage.getItem("userData"));
     const currentUserId = storedUser?._id;
-    const [newTask, setNewTask] = useState({ title: '', dueDate: '', assignedTo: currentUserId });
+    const [newTask, setNewTask] = useState({ title: '', dueDate: ''});
     const [users, setUsers] = useState([]);
 
     const fetchTasks = useCallback(async () => {
@@ -85,12 +85,6 @@ function LeadTasks({ leadId }) {
                         value={newTask.dueDate} 
                         onChange={(e) => setNewTask({...newTask, dueDate: e.target.value})}
                     />
-                    <select
-                        value={newTask.assignedTo}
-                        onChange={(e) => setNewTask({...newTask, assignedTo: e.target.value})}
-                    >
-                        {users.map(user => <option key={user._id} value={user._id}>{user.nome}</option>)}
-                    </select>
                     <button type="submit" className="button primary-button small-button">Salvar</button>
                 </form>
             )}
