@@ -8,7 +8,7 @@ function LeadTasks({ leadId, currentUserId }) {
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showCreateForm, setShowCreateForm] = useState(false);
-    const [newTask, setNewTask] = useState({ title: '', dueDate: '' });
+    const [newTask, setNewTask] = useState({ title: '', dueDate: '', assignedTo: currentUserId });
     const [users, setUsers] = useState([]);
 
     const fetchTasks = useCallback(async () => {
