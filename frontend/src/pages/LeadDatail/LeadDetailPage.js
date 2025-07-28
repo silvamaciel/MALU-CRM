@@ -17,7 +17,6 @@ import DiscardLeadModal from "../../components/DiscardLeadModal/DiscardLeadModal
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 import ReservaFormModal from "./ReservaFormModal";
 import LeadTagsManager from '../../components/LeadTagsManager/LeadTagsManager';
-import LeadTasks from '../../components/LeadTasks/LeadTasks';
 
 
 import "./LeadDetailPage.css";
@@ -244,7 +243,7 @@ function LeadDetailPage() {
     }
   };
 
-  
+
 
   // --- Fim Handlers ---
 
@@ -335,7 +334,7 @@ function LeadDetailPage() {
         <p className="error-message reactivation-error">{reactivateError}</p>
       )}
 
-    
+
       {/* Layout com Grid para Detalhes e Histórico */}
       <div className="detail-layout-grid">
         {/* Coluna 1: Detalhes do Lead */}
@@ -463,11 +462,11 @@ function LeadDetailPage() {
             </ul>
           )}
           <div className="detail-item-section"> {/* Use uma classe para estilizar a seção se quiser */}
-              <LeadTagsManager
-                 leadId={leadDetails._id}
-                 currentTags={leadDetails.tags}
-                 onTagsUpdated={forceRefresh} // Atualiza a página inteira após salvar
-              />
+            <LeadTagsManager
+              leadId={leadDetails._id}
+              currentTags={leadDetails.tags}
+              onTagsUpdated={forceRefresh} // Atualiza a página inteira após salvar
+            />
           </div>
         </div>
 
@@ -479,7 +478,12 @@ function LeadDetailPage() {
           </p>
         </div>
 
-        
+        <div className="lead-conversations-column">
+          <h2>Tarefas</h2>
+          <LeadTasks leadId={leadDetails._id} />
+        </div>
+
+
       </div>
 
       {/* Modais */}
@@ -496,9 +500,8 @@ function LeadDetailPage() {
         onClose={handleCloseDeleteModal}
         onConfirm={handleConfirmDelete}
         title="Confirmar Exclusão"
-        message={`Excluir permanentemente o lead "${
-          deleteTargetLead?.nome || ""
-        }"? Ação irreversível.`}
+        message={`Excluir permanentemente o lead "${deleteTargetLead?.nome || ""
+          }"? Ação irreversível.`}
         confirmText="Sim, Excluir"
         cancelText="Cancelar"
         confirmButtonClass="confirm-button-delete"
@@ -506,17 +509,17 @@ function LeadDetailPage() {
         errorMessage={deleteError}
       />
 
-     
+
 
       {/* MODAL DE RESERVA REAL */}
-        {isReservaModalOpen && leadDetails && (
-            <ReservaFormModal
-                leadId={leadDetails._id}
-                leadNome={leadDetails.nome}
-                companyId={leadDetails.company?._id || leadDetails.company} // Passa o companyId do lead
-                onClose={handleCloseReservaModal} // Passa a função para fechar e atualizar
-            />
-        )}
+      {isReservaModalOpen && leadDetails && (
+        <ReservaFormModal
+          leadId={leadDetails._id}
+          leadNome={leadDetails.nome}
+          companyId={leadDetails.company?._id || leadDetails.company} // Passa o companyId do lead
+          onClose={handleCloseReservaModal} // Passa a função para fechar e atualizar
+        />
+      )}
     </div> // Fim .lead-detail-page
   );
 } // <<< FIM DO COMPONENTE
