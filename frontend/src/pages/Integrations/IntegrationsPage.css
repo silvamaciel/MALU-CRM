@@ -307,7 +307,16 @@
 /* NOVA INSTÂNCIA */
 .create-instance-form {
   display: flex;
-  gap: 10px;
+  flex-direction: column;
+  gap: 7px;
+  width: 100%;
+}
+
+@media (min-width: 500px) {
+  .create-instance-form {
+    flex-direction: row;
+    align-items: center;
+  }
 }
 
 .create-instance-form input {
