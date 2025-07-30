@@ -303,3 +303,42 @@
   cursor: pointer;
   display: block;
 }
+
+
+@media (max-width: 768px) {
+  .chat-page {
+    flex-direction: column;
+  }
+
+  .conversations-list {
+    display: none;
+  }
+
+  .chat-window {
+    display: none;
+  }
+
+  .chat-page.view-list .conversations-list {
+    display: flex;
+  }
+
+  .chat-page.view-chat .chat-window {
+    display: flex;
+  }
+}
+
+
+.back-button {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .back-button {
+    display: block;
+  }
+}

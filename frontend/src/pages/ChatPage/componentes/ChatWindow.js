@@ -22,7 +22,7 @@ function ChatWindow({ conversation, messages, loading, onSendMessage, onCreateLe
         <main className="chat-window">
             <header className="chat-header">
                 {typeof onBack === 'function' && (
-                    <button className="chat-back-button" onClick={onBack}>
+                    <button onClick={onBack} className="back-button">
                         ← Voltar
                     </button>
                 )}

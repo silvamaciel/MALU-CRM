@@ -82,11 +82,14 @@ function ChatPage() {
     const isMobile = window.innerWidth <= 768;
 
     return (
-        <div className={`admin-page chat-page ${isMobile ? 'mobile ' + view + '-view' : ''}`}>
+        <div className={`admin-page chat-page view-${view}`}>
             <ConversationList
                 conversations={conversations}
                 selectedConversationId={selectedConversation?._id}
-                onSelectConversation={handleSelectConversation}
+                onSelectConversation={async (c) => {
+                    setView('chat');
+                    await handleSelectConversation(c);
+                }}
                 loading={loading.conversations}
             />
             <ChatWindow
