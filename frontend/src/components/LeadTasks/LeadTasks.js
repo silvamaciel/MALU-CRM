@@ -1,31 +1,32 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { getTasksApi, createTaskApi, updateTaskApi, deleteTaskApi } from '../../api/taskApi';
-import { getUsuarios } from '../../api/users'; // Para o dropdown de responsáveis
+import ConfirmModal from '../ConfirmModal/ConfirmModal'; // Verifique se o caminho está correto
 import './LeadTasks.css';
 
-function LeadTasks({ leadId }) {
+function LeadTasks({ leadId }) { // A prop 'currentUserId' não é mais necessária
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showCreateForm, setShowCreateForm] = useState(false);
-
-
-    const storedUser = JSON.parse(localStorage.getItem("userData"));
-    const currentUserId = storedUser?._id;
-    const [newTask, setNewTask] = useState({ title: '', dueDate: ''});
-    const [users, setUsers] = useState([]);
+    
+    // O estado para a nova tarefa é mais simples, sem 'assignedTo'
+    const [newTask, setNewTask] = useState({ title: '', dueDate: '', description: '' });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    // States para o modal de exclusão
+    const [deleteTarget, setDeleteTarget] = useState(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
     const fetchTasks = useCallback(async () => {
+        if (!leadId) return;
         setLoading(true);
         try {
-            const [tasksData, usersData] = await Promise.all([
-                getTasksApi({ lead: leadId }),
-                getUsuarios({ ativo: true })
-            ]);
+            // A busca agora é mais simples, não precisa mais buscar os utilizadores
+            const tasksData = await getTasksApi({ lead: leadId });
             setTasks(tasksData || []);
-            setUsers(usersData.users || usersData.data || []);
         } catch (error) {
-            toast.error("Erro ao carregar tarefas.");
+            toast.error("Erro ao carregar tarefas do lead.");
+            console.error("Erro ao carregar tarefas:", error);
         } finally {
             setLoading(false);
         }
@@ -42,7 +43,7 @@ function LeadTasks({ leadId }) {
             setTasks(prevTasks => prevTasks.map(t => t._id === task._id ? updatedTask : t));
             toast.success(`Tarefa "${task.title}" marcada como ${newStatus.toLowerCase()}!`);
         } catch (error) {
-            toast.error("Erro ao atualizar status da tarefa.");
+            toast.error("Erro ao atualizar o status da tarefa.");
         }
     };
 
@@ -52,14 +53,39 @@ function LeadTasks({ leadId }) {
             toast.warn("Título e data de vencimento são obrigatórios.");
             return;
         }
+        setIsSubmitting(true);
         try {
+            // O payload não envia 'assignedTo'. O backend cuidará disso automaticamente usando o token.
             await createTaskApi({ ...newTask, lead: leadId });
             toast.success("Nova tarefa criada com sucesso!");
-            setNewTask({ title: '', dueDate: '', assignedTo: currentUserId });
+            setNewTask({ title: '', dueDate: '', description: '' }); // Limpa o formulário
             setShowCreateForm(false);
-            fetchTasks(); // Recarrega a lista
+            fetchTasks(); // Recarrega a lista de tarefas
         } catch (error) {
             toast.error(error.message || "Falha ao criar tarefa.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleOpenDeleteModal = (task) => {
+        setDeleteTarget(task);
+        setIsDeleteModalOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!deleteTarget) return;
+        setIsSubmitting(true);
+        try {
+            await deleteTaskApi(deleteTarget._id);
+            toast.success("Tarefa excluída com sucesso!");
+            fetchTasks(); // Recarrega a lista
+        } catch (error) {
+            toast.error("Falha ao excluir tarefa.");
+        } finally {
+            setIsSubmitting(false);
+            setIsDeleteModalOpen(false);
+            setDeleteTarget(null);
         }
     };
     
@@ -79,13 +105,18 @@ function LeadTasks({ leadId }) {
                         placeholder="Título da tarefa" 
                         value={newTask.title} 
                         onChange={(e) => setNewTask({...newTask, title: e.target.value})} 
+                        disabled={isSubmitting}
                     />
                     <input 
                         type="datetime-local" 
                         value={newTask.dueDate} 
                         onChange={(e) => setNewTask({...newTask, dueDate: e.target.value})}
+                        disabled={isSubmitting}
                     />
-                    <button type="submit" className="button primary-button small-button">Salvar</button>
+                    {/* O dropdown de responsável foi removido para simplificar */}
+                    <button type="submit" className="button primary-button small-button" disabled={isSubmitting}>
+                        {isSubmitting ? 'Salvando...' : 'Salvar'}
+                    </button>
                 </form>
             )}
 
@@ -98,6 +129,7 @@ function LeadTasks({ leadId }) {
                                     type="checkbox" 
                                     checked={task.status === 'Concluída'} 
                                     onChange={() => handleToggleStatus(task)}
+                                    title={`Marcar como ${task.status === 'Pendente' ? 'Concluída' : 'Pendente'}`}
                                 />
                             </div>
                             <div className="task-details">
@@ -108,10 +140,25 @@ function LeadTasks({ leadId }) {
                                     <strong>{task.assignedTo?.nome || 'N/A'}</strong>
                                 </span>
                             </div>
+                            <div className="task-actions">
+                                <button onClick={() => handleOpenDeleteModal(task)} className="button-link delete-link-task" title="Excluir Tarefa">
+                                    &times;
+                                </button>
+                            </div>
                         </div>
                     )) : <p className="no-tasks-message">Nenhuma tarefa para este lead.</p>
                 )}
             </div>
+            
+            <ConfirmModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={handleConfirmDelete}
+                title="Confirmar Exclusão"
+                message={`Tem certeza que deseja excluir a tarefa "${deleteTarget?.title}"?`}
+                isProcessing={isSubmitting}
+                confirmButtonClass="confirm-button-delete"
+            />
         </div>
     );
 }
