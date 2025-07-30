@@ -17,7 +17,7 @@ import ReservaFormModal from "./ReservaFormModal";
 import LeadHeaderActions from "./components/LeadHeaderActions";
 import LeadInfo from "./components/LeadInfo";
 import LeadHistory from "./components/LeadHistory";
-import LeadTasks from "../../components/LeadTasks/LeadTasks";
+import TaskList from '../../components/TaskList/TaskList';
 
 import "./LeadDetailPage.css";
 import { toast } from "react-toastify";
@@ -208,7 +208,7 @@ function LeadDetailPage() {
         />
         <div className="lead-conversations-column">
           <h2>Tarefas</h2>
-          <LeadTasks leadId={leadDetails._id} />
+          <TaskList filters={{ lead: id }} />
         </div>
       </div>
 
