@@ -20,25 +20,47 @@ const listConversations = async (companyId) => {
     console.log(`[ChatService] Buscando conversas para a Company ID: ${companyId}`);
     if (!companyId) {
         console.error("[ChatService] ERRO: companyId não foi fornecido para listConversations.");
-        return []; // Retorna um array vazio se o ID da empresa não for passado
+        return [];
     }
 
     try {
-        const conversations = await Conversation.find({ company: companyId })
+        const rawConversations = await Conversation.find({ company: companyId })
             .populate({
-            path: 'lead',
-            select: 'nome fotoUrl situacao', // Pede também a situação
-            populate: {
-                path: 'situacao',
-                model: 'LeadStage',
-                select: 'nome'
-            }
-        })
-        .sort({ lastMessageAt: -1 })
-        .lean();
-        
-        console.log(`[ChatService] Encontradas ${conversations.length} conversas.`);
-        return conversations;
+                path: 'lead',
+                select: 'nome fotoUrl situacao',
+                populate: {
+                    path: 'situacao',
+                    model: 'LeadStage',
+                    select: 'nome'
+                }
+            })
+            .sort({ lastMessageAt: -1 })
+            .lean();
+
+        const enrichedConversations = await Promise.all(
+            rawConversations.map(async (conv) => {
+                const lastMsg = await Message.findOne({ conversation: conv._id })
+                    .sort({ createdAt: -1 })
+                    .select('direction content')
+                    .lean();
+
+                const unreadCount = await Message.countDocuments({
+                    conversation: conv._id,
+                    read: false,
+                    direction: 'incoming'
+                });
+
+                return {
+                    ...conv,
+                    lastMessage: lastMsg?.content || '',
+                    lastMessageDirection: lastMsg?.direction || null,
+                    unreadCount
+                };
+            })
+        );
+
+        console.log(`[ChatService] Encontradas ${enrichedConversations.length} conversas.`);
+        return enrichedConversations;
 
     } catch (error) {
         console.error("[ChatService] Erro ao buscar conversas:", error);

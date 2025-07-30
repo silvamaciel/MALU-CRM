@@ -14,10 +14,12 @@ function ConversationList({ conversations, selectedConversationId, onSelectConve
                         <li key={conv._id} onClick={() => onSelectConversation(conv)} className={conv._id === selectedConversationId ? 'active' : ''}>
                             <img src={conv.contactPhotoUrl || '/default-avatar.png'} alt="avatar" className="conv-avatar" />
                             <div className="conv-info">
-                                <span className="conv-name">{ conv.lead?.nome || conv.leadNameSnapshot || conv.tempContactName || 'Conversa'}</span>
+                                <span className="conv-name">{conv.lead?.nome || conv.leadNameSnapshot || conv.tempContactName || 'Conversa'}</span>
                                 <span className="conv-preview">{conv.lastMessage}</span>
                             </div>
-                            {conv.unreadCount > 0 && <span className="unread-badge">{conv.unreadCount}</span>}
+                            {conv.unreadCount > 0 && conv.lastMessageDirection === 'incoming' && (
+                                <span className="unread-badge">{conv.unreadCount}</span>
+                            )}
                         </li>
                     ))
                 }
