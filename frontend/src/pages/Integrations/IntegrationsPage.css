@@ -51,9 +51,20 @@
 }
 
 .integration-body {
-    flex-grow: 1;
-    border-top: 1px solid #f0f0f0;
-    border-bottom: 1px solid #f0f0f0;
+  flex-grow: 1;
+  border-top: 1px solid #f0f0f0;
+  border-bottom: 1px solid #f0f0f0;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.integration-body::-webkit-scrollbar {
+  width: 6px;
+}
+.integration-body::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
 }
 
 .integration-footer form {
