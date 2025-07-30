@@ -81,6 +81,39 @@ function ChatPage() {
 
     const isMobile = window.innerWidth <= 768;
 
+    useEffect(() => {
+        if (!selectedConversation?._id) return;
+
+        const interval = setInterval(async () => {
+            try {
+                const data = await getMessagesApi(selectedConversation._id);
+
+                if (!Array.isArray(data)) return;
+
+                const lastCurrent = messages[messages.length - 1];
+                const lastNew = data[data.length - 1];
+
+                if (!lastCurrent || !lastNew) {
+                    // Se não tem mensagens atuais ou novas, atualiza direto
+                    setMessages(data);
+                    return;
+                }
+
+                const currentId = lastCurrent._id?.toString();
+                const newId = lastNew._id?.toString();
+
+                if (currentId !== newId) {
+                    setMessages(data);
+                }
+            } catch (error) {
+                console.error("Erro no polling inteligente:", error);
+            }
+        }, 8000);
+
+        return () => clearInterval(interval);
+    }, [selectedConversation, messages]);
+
+
     return (
         <div className={`admin-page chat-page view-${view}`}>
             <ConversationList
