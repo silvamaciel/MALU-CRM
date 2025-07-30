@@ -45,13 +45,13 @@ function TasksPage() {
         <div className="admin-page tasks-page">
             <header className="page-header">
                 <h1>Minhas Tarefas</h1>
+            </header>
+            <div className="page-content">
                 <div className="kpi-container-tasks">
                     <KPICard title="A Vencer" value={kpis.aVencer} className="kpi-due" />
                     <KPICard title="Vencidas" value={kpis.vencidas} className="kpi-overdue" />
                     <KPICard title="Concluídas" value={kpis.concluidas} className="kpi-done" />
                 </div>
-            </header>
-            <div className="page-content">
 
                 <div className="tasks-filters">
                     <button onClick={() => setFilter('Pendente')} className={`button ${filter === 'Pendente' ? 'primary-button' : 'outline-button'}`}>Pendentes</button>
