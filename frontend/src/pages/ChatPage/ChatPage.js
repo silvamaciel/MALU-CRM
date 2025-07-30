@@ -108,7 +108,7 @@ function ChatPage() {
             } catch (error) {
                 console.error("Erro no polling inteligente:", error);
             }
-        }, 8000);
+        }, 5000);
 
         return () => clearInterval(interval);
     }, [selectedConversation, messages]);
