@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { getTasksApi, updateTaskApi, deleteTaskApi } from '../../api/taskApi';
-import ConfirmModal from '../../components/ConfirmModal/ConfirmModal'; // Verifique se o caminho está correto
+import ConfirmModal from '../../components/ConfirmModal/ConfirmModal'
+import EditTaskModal from '../../components/EditTaskModal/EditTaskModal';
 import './TasksPage.css';
 
 // Componente reutilizável para os Cards de KPI
@@ -28,6 +29,12 @@ function TasksPage() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
+
+    // novo stats modal edicao 
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [taskToEdit, setTaskToEdit] = useState(null);
+
+
 
     // Função para buscar dados do backend
     const fetchTasks = useCallback(async () => {
@@ -62,6 +69,24 @@ function TasksPage() {
     useEffect(() => {
         setCurrentPage(1);
     }, [filter]);
+
+
+    // handlers para modal de edicao
+
+     const handleOpenEditModal = (task) => {
+        setTaskToEdit(task);
+        setIsEditModalOpen(true);
+    };
+
+    const handleCloseEditModal = () => {
+        setIsEditModalOpen(false);
+        setTaskToEdit(null);
+    };
+
+    const handleEditSuccess = () => {
+        handleCloseEditModal();
+        fetchTasks();
+    };
 
     const handleToggleStatus = async (task) => {
         try {
@@ -135,7 +160,7 @@ function TasksPage() {
                                     </div>
                                 </div>
                                 <div className="task-actions">
-                                    <button onClick={() => toast.info('Funcionalidade de edição a ser implementada.')} className="button-link edit-link-task">Editar</button>
+                                    <button onClick={() => handleOpenEditModal(task)} className="button-link edit-link-task">Editar</button>
                                     <button onClick={() => handleOpenDeleteModal(task)} className="button-link delete-link-task">Excluir</button>
                                 </div>
                             </div>
@@ -164,6 +189,13 @@ function TasksPage() {
                 message={`Tem certeza que deseja excluir a tarefa "${deleteTarget?.title}"?`}
                 isProcessing={isProcessing}
                 confirmButtonClass="confirm-button-delete"
+            />
+
+            <EditTaskModal
+                isOpen={isEditModalOpen}
+                onClose={handleCloseEditModal}
+                onSaveSuccess={handleEditSuccess}
+                task={taskToEdit}
             />
         </div>
     );
