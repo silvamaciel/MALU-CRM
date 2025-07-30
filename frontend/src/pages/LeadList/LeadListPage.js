@@ -178,7 +178,7 @@ function LeadListPage() {
   const [specialStagesWithModal, setSpecialStagesWithModal] = useState([]);
 
   useEffect(() => {
-    const especiais = ["em reserva", "em proposta", "venda realizada"];
+    const especiais = ["em reserva", "Proposta Emitida", "Em Proposta", "venda realizada"];
     const ids = leadStages
       .filter(s => especiais.includes(s.nome.toLowerCase()))
       .map(s => s._id);
