@@ -1,112 +1,72 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { getTasksApi, updateTaskApi, deleteTaskApi } from '../../api/taskApi';
-import ConfirmModal from '../ConfirmModal/ConfirmModal';
-import './TaskList.css';
+import { getTasksApi } from '../../api/taskApi';
+import TaskList from '../../components/TaskList/TaskList'; // <<< IMPORTA O COMPONENTE REUTILIZÁVEL
+import './TasksPage.css';
 
-function TaskList({ filters, onTaskUpdate }) {
-    const [tasks, setTasks] = useState([]);
-    const [loading, setLoading] = useState(true);
-    
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [deleteTarget, setDeleteTarget] = useState(null);
-    const [isProcessing, setIsProcessing] = useState(false);
+const KPICard = ({ title, value, className }) => (
+    <div className={`kpi-card-task ${className}`}>
+        <span className="kpi-value">{value}</span>
+        <span className="kpi-label">{title}</span>
+    </div>
+);
 
-    const fetchTasks = useCallback(async () => {
-        setLoading(true);
+function TasksPage() {
+    const [kpis, setKpis] = useState({ concluidas: 0, vencidas: 0, aVencer: 0 });
+    const [loadingKpis, setLoadingKpis] = useState(true);
+    const [filter, setFilter] = useState('Pendente');
+    const [refreshKey, setRefreshKey] = useState(0); // Para forçar a atualização dos KPIs
+
+    // Esta função agora busca apenas os KPIs. A lista de tarefas será buscada pelo TaskList.
+    const fetchKpis = useCallback(async () => {
+        setLoadingKpis(true);
         try {
-            // A API é chamada com os filtros recebidos via props
-            const data = await getTasksApi(filters);
-            setTasks(data.tasks || []);
+            // O backend já filtra pelo utilizador logado. A API retorna os KPIs de qualquer forma.
+            const data = await getTasksApi();
+            setKpis(data.kpis || { concluidas: 0, vencidas: 0, aVencer: 0 });
         } catch (error) {
-            toast.error("Erro ao carregar a lista de tarefas.");
-            console.error("Erro em fetchTasks:", error);
+            toast.error("Erro ao carregar KPIs de tarefas.");
         } finally {
-            setLoading(false);
+            setLoadingKpis(false);
         }
-    }, [filters]);
+    }, []);
 
     useEffect(() => {
-        fetchTasks();
-    }, [fetchTasks]);
+        fetchKpis();
+    }, [fetchKpis, refreshKey]);
 
-    const handleToggleStatus = async (task) => {
-        try {
-            const newStatus = task.status === 'Pendente' ? 'Concluída' : 'Pendente';
-            await updateTaskApi(task._id, { status: newStatus });
-            toast.success(`Tarefa marcada como ${newStatus.toLowerCase()}!`);
-            fetchTasks(); // Recarrega a lista
-            if (onTaskUpdate) onTaskUpdate(); // Notifica o componente pai para atualizar os KPIs
-        } catch (error) {
-            toast.error("Erro ao atualizar status da tarefa.");
-        }
+    // O objeto de filtros que será passado para o componente TaskList
+    // O backend já adiciona o 'assignedTo' automaticamente, não precisamos enviar
+    const taskFilters = {
+        status: filter,
     };
-
-    const handleOpenDeleteModal = (task) => {
-        setDeleteTarget(task);
-        setIsDeleteModalOpen(true);
-    };
-
-    const handleConfirmDelete = async () => {
-        if (!deleteTarget) return;
-        setIsProcessing(true);
-        try {
-            await deleteTaskApi(deleteTarget._id);
-            toast.success("Tarefa excluída com sucesso!");
-            fetchTasks(); // Recarrega a lista
-            if (onTaskUpdate) onTaskUpdate();
-        } catch (error) {
-            toast.error("Falha ao excluir tarefa.");
-        } finally {
-            setIsProcessing(false);
-            setIsDeleteModalOpen(false);
-            setDeleteTarget(null);
-        }
-    };
-
-    if (loading) {
-        return <p>Carregando tarefas...</p>;
-    }
 
     return (
-        <div className="tasks-list-component">
-            {tasks.length > 0 ? tasks.map(task => (
-                <div key={task._id} className={`task-item-full status-${task.status.toLowerCase()}`}>
-                    <div className="task-status-toggle">
-                        <input 
-                            type="checkbox" 
-                            checked={task.status === 'Concluída'} 
-                            onChange={() => handleToggleStatus(task)}
-                            title={`Marcar como ${task.status === 'Pendente' ? 'Concluída' : 'Pendente'}`}
-                        />
-                    </div>
-                    <div className="task-content">
-                        <p className="task-title">{task.title}</p>
-                        {task.description && <p className="task-description">{task.description}</p>}
-                        <div className="task-metadata-full">
-                            <span>Vence em: <strong>{new Date(task.dueDate).toLocaleString('pt-BR')}</strong></span>
-                            {task.lead && <span>Lead: <Link to={`/leads/${task.lead._id}`}>{task.lead.nome}</Link></span>}
-                            <span>Para: <strong>{task.assignedTo?.nome || 'N/A'}</strong></span>
-                        </div>
-                    </div>
-                    <div className="task-actions">
-                        <button onClick={() => toast.info('Funcionalidade de edição a ser implementada.')} className="button-link edit-link-task">Editar</button>
-                        <button onClick={() => handleOpenDeleteModal(task)} className="button-link delete-link-task">Excluir</button>
-                    </div>
+        <div className="admin-page tasks-page">
+            <header className="page-header">
+                <h1>Minhas Tarefas</h1>
+                <div className="tasks-filters">
+                    <button onClick={() => setFilter('Pendente')} className={`button ${filter === 'Pendente' ? 'primary-button' : 'outline-button'}`}>Pendentes</button>
+                    <button onClick={() => setFilter('Concluída')} className={`button ${filter === 'Concluída' ? 'primary-button' : 'outline-button'}`}>Concluídas</button>
                 </div>
-            )) : <p className="no-tasks-message">Nenhuma tarefa encontrada para este filtro.</p>}
-            
-            <ConfirmModal
-                isOpen={isDeleteModalOpen}
-                onClose={() => setIsDeleteModalOpen(false)}
-                onConfirm={handleConfirmDelete}
-                title="Confirmar Exclusão"
-                message={`Tem certeza que deseja excluir a tarefa "${deleteTarget?.title}"?`}
-                isProcessing={isProcessing}
-                confirmButtonClass="confirm-button-delete"
-            />
+            </header>
+            <div className="page-content">
+                <div className="kpi-container-tasks">
+                    <KPICard title="A Vencer" value={kpis.aVencer} className="kpi-due" />
+                    <KPICard title="Vencidas" value={kpis.vencidas} className="kpi-overdue" />
+                    <KPICard title="Concluídas" value={kpis.concluidas} className="kpi-done" />
+                </div>
+
+                <div className="tasks-list-container">
+                    {/* Renderiza o novo componente reutilizável, passando os filtros.
+                      A prop onTaskUpdate garante que, quando uma tarefa é atualizada
+                      dentro do TaskList, os KPIs nesta página também são recarregados.
+                    */}
+                    <TaskList filters={taskFilters} onTaskUpdate={() => setRefreshKey(prev => prev + 1)} />
+                </div>
+            </div>
         </div>
     );
 }
-export default TaskList;
+
+export default TasksPage;

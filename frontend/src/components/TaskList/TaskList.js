@@ -16,6 +16,7 @@ function TaskList({ filters, onTaskUpdate }) {
     const fetchTasks = useCallback(async () => {
         setLoading(true);
         try {
+            // A API é chamada com os filtros recebidos via props
             const data = await getTasksApi(filters);
             setTasks(data.tasks || []);
         } catch (error) {
@@ -94,7 +95,7 @@ function TaskList({ filters, onTaskUpdate }) {
                         <button onClick={() => handleOpenDeleteModal(task)} className="button-link delete-link-task">Excluir</button>
                     </div>
                 </div>
-            )) : <p className="no-tasks-message">Nenhuma tarefa encontrada.</p>}
+            )) : <p className="no-tasks-message">Nenhuma tarefa encontrada para este filtro.</p>}
             
             <ConfirmModal
                 isOpen={isDeleteModalOpen}
