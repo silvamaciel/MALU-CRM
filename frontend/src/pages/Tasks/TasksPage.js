@@ -45,7 +45,6 @@ function TasksPage() {
                 page: currentPage,
                 limit: 10 // Define 10 tarefas por página
             };
-            // O backend já filtra pelo utilizador logado através do token
             const data = await getTasksApi(params);
             
             setTasks(data.tasks || []);
