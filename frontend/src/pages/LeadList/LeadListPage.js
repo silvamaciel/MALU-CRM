@@ -16,6 +16,7 @@ import KanbanFilters from "../../components/KanbanFilters/KanbanFilters";
 import LeadTagsModal from '../../components/LeadTagsModal/LeadTagsModal';
 import ImportCSVModal from '../../components/ImportCSVModal/ImportCSVModal';
 import LeadCard from '../../components/LeadCard/LeadCard';
+import ReservaFormModal from '../LeadDatail/ReservaFormModal'
 
 // Estilos
 import "./Kanban.css";
@@ -51,6 +52,16 @@ function LeadListPage() {
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
+
+  // States para Reserv Modal 
+
+
+  const [isReservaModalOpen, setIsReservaModalOpen] = useState(false);
+  const [reservaTargetLead, setReservaTargetLead] = useState(null);
+  const [reservaTargetStageId, setReservaTargetStageId] = useState(null);
+
+
+
   // Função para buscar TODOS os dados da página
   const fetchData = useCallback(async (filters = {}) => {
     setIsLoading(true);
@@ -70,6 +81,9 @@ function LeadListPage() {
 
       const descartadoStage = fetchedStages.find(s => s.nome.toLowerCase() === "descartado");
       if (descartadoStage) setStageIdDescartado(descartadoStage._id);
+
+
+
 
       const fetchedLeads = leadsResponse.leads || [];
       setAllLeadsRaw(fetchedLeads);
@@ -113,6 +127,7 @@ function LeadListPage() {
   const toggleFiltersVisibility = () => {
     setShowFilters(prev => !prev);
   };
+
 
   // Handlers para os Modais (Descarte, Delete, Tags)
   const handleOpenDiscardModal = useCallback((lead) => { setDiscardTargetLead({ lead }); setIsDiscardModalOpen(true); }, []);
@@ -159,6 +174,44 @@ function LeadListPage() {
   const handleOpenTagsModal = useCallback((lead) => { setSelectedLeadForTags(lead); setIsTagsModalOpen(true); }, []);
   const handleCloseTagsModal = useCallback(() => { setIsTagsModalOpen(false); setSelectedLeadForTags(null); }, []);
 
+
+  const [specialStagesWithModal, setSpecialStagesWithModal] = useState([]);
+
+  useEffect(() => {
+    const especiais = ["em reserva", "em proposta", "venda realizada"];
+    const ids = leadStages
+      .filter(s => especiais.includes(s.nome.toLowerCase()))
+      .map(s => s._id);
+    setSpecialStagesWithModal(ids);
+  }, [leadStages]);
+
+  const handleCloseReservaModal = async (wasConfirmed) => {
+    if (!wasConfirmed) {
+      setIsReservaModalOpen(false);
+      setReservaTargetLead(null);
+      setReservaTargetStageId(null);
+      return;
+    }
+
+    // Agora sim atualiza o status no backend
+    setIsProcessingAction(true);
+    try {
+      await updateLead(reservaTargetLead._id, {
+        situacao: reservaTargetStageId
+      });
+      toast.success(`Lead "${reservaTargetLead.nome}" movido com sucesso!`);
+      forceRefresh();
+    } catch (err) {
+      toast.error(err.message || "Erro ao atualizar lead após reserva.");
+    } finally {
+      setIsProcessingAction(false);
+      setIsReservaModalOpen(false);
+      setReservaTargetLead(null);
+      setReservaTargetStageId(null);
+    }
+  };
+
+
   // Handler do Drag-and-Drop
   const onDragEnd = async (result) => {
     const { source, destination, draggableId: leadId } = result;
@@ -168,11 +221,19 @@ function LeadListPage() {
     if (!leadToMove) return;
 
     const finishStageId = destination.droppableId;
+
     if (finishStageId === stageIdDescartado) {
       handleOpenDiscardModal(leadToMove);
       return;
     }
- 
+
+    if (specialStagesWithModal.includes(finishStageId)) {
+      setReservaTargetLead(leadToMove);
+      setReservaTargetStageId(finishStageId);
+      setIsReservaModalOpen(true);
+      return;
+    }
+
     // Atualização Otimista da UI
     const newStartLeads = [...(leadsByStage[source.droppableId] || [])];
     const [movedItem] = newStartLeads.splice(source.index, 1);
@@ -245,8 +306,8 @@ function LeadListPage() {
                                 onDeleteClick={handleOpenDeleteModal}
                                 onReactivateClick={handleReactivateLead}
                                 isProcessingReactivation={isProcessingAction}
-                                onTagsClick={handleOpenTagsModal}                             
-                               />
+                                onTagsClick={handleOpenTagsModal}
+                              />
                             </div>
                           )}
                         </Draggable>
@@ -269,6 +330,14 @@ function LeadListPage() {
       <DiscardLeadModal isOpen={isDiscardModalOpen} onClose={handleCloseDiscardModal} onSubmit={handleConfirmDiscard} leadName={discardTargetLead?.lead?.nome} isProcessing={isProcessingAction} />
       <ConfirmModal isOpen={isDeleteModalOpen} onClose={handleCloseDeleteModal} onConfirm={handleConfirmDelete} title="Confirmar Exclusão" message={`Excluir permanentemente o lead "${deleteTargetLeadForModal?.nome || ''}"?`} isProcessing={isProcessingAction} />
       <ImportCSVModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} onImportSuccess={forceRefresh} />
+      {isReservaModalOpen && reservaTargetLead && (
+        <ReservaFormModal
+          leadId={reservaTargetLead._id}
+          leadNome={reservaTargetLead.nome}
+          companyId={reservaTargetLead.company?._id || reservaTargetLead.company}
+          onClose={handleCloseReservaModal}
+        />
+      )}
     </div>
   );
 }
