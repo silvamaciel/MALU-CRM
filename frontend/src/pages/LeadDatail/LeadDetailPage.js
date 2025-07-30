@@ -208,9 +208,12 @@ function LeadDetailPage() {
           onTagsUpdated={forceRefresh}
         />
         <div className="lead-conversations-column">
-          <h2>Tarefas</h2>
-          <TaskList filters={{ lead: id }} />
         </div>
+
+        <div className="tasks-section">
+                    <h2>Tarefas</h2>
+                    <TaskList filters={{ lead: id }} />
+                </div>
       </div>
 
       <DiscardLeadModal
