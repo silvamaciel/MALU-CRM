@@ -20,6 +20,7 @@ import LeadHistory from "./components/LeadHistory";
 import TaskList from '../../components/TaskList/TaskList';
 
 import "./LeadDetailPage.css";
+import "../../components/TaskList/styleTaskList.css"
 import { toast } from "react-toastify";
 
 function LeadDetailPage() {

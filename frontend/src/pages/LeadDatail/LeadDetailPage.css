@@ -336,7 +336,6 @@
 
 .detail-item.comentario {
     grid-column: 1 / -1;
-    /* Faz comentário ocupar toda a largura no grid */
 }
 
 
