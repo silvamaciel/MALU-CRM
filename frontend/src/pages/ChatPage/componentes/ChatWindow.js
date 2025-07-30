@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import MessageBubble from './MessageBubble'; // Criaremos este a seguir
 
-function ChatWindow({ conversation, messages, loading, onSendMessage, onCreateLead  }) {
+function ChatWindow({ conversation, messages, loading, onSendMessage, onCreateLead }) {
     const [newMessage, setNewMessage] = useState('');
     const messagesEndRef = useRef(null);
     useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
@@ -17,10 +17,15 @@ function ChatWindow({ conversation, messages, loading, onSendMessage, onCreateLe
     if (!conversation) {
         return <main className="chat-window no-chat-selected"><p>Selecione uma conversa para começar</p></main>;
     }
-    
+
     return (
         <main className="chat-window">
             <header className="chat-header">
+                {typeof onBack === 'function' && (
+                    <button className="chat-back-button" onClick={onBack}>
+                        ← Voltar
+                    </button>
+                )}
                 <img src={conversation.contactPhotoUrl || '/default-avatar.png'} alt="avatar" className="chat-avatar" />
                 <div className="chat-header-info">
                     <h4>{conversation.lead?.nome || conversation.leadNameSnapshot || conversation.tempContactName}</h4>

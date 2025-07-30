@@ -278,3 +278,28 @@
 .message-document:hover {
     background-color: rgba(0,0,0,0.1);
 }
+
+
+.chat-page.mobile .conversations-list {
+  display: none;
+}
+.chat-page.mobile.list-view .conversations-list {
+  display: flex;
+}
+.chat-page.mobile.chat-view .chat-window {
+  display: flex;
+}
+.chat-page.mobile.list-view .chat-window {
+  display: none;
+}
+
+/* Botão de voltar no topo do chat */
+.chat-back-button {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  margin: 10px;
+  color: #007bff;
+  cursor: pointer;
+  display: block;
+}

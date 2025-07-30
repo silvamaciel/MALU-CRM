@@ -12,6 +12,8 @@ function ChatPage() {
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState({ conversations: true, messages: false });
 
+    const [view, setView] = useState('list');
+
     const fetchConversations = useCallback(async () => {
         setLoading(prev => ({ ...prev, conversations: true }));
         try {
@@ -30,6 +32,7 @@ function ChatPage() {
 
     const handleSelectConversation = async (conversation) => {
         setSelectedConversation(conversation);
+        setView('chat');
         setLoading(prev => ({ ...prev, messages: true }));
         try {
             const data = await getMessagesApi(conversation._id);
@@ -62,10 +65,10 @@ function ChatPage() {
             const newLead = await createLeadFromConversationApi(conversationId);
             toast.success(`Lead "${newLead.nome}" criado com sucesso!`);
             // Atualiza a conversa na lista para refletir a mudança
-            setConversations(prev => prev.map(conv => 
-                conv._id === conversationId 
-                ? { ...conv, lead: newLead._id, leadNameSnapshot: newLead.nome, tempContactName: null }
-                : conv
+            setConversations(prev => prev.map(conv =>
+                conv._id === conversationId
+                    ? { ...conv, lead: newLead._id, leadNameSnapshot: newLead.nome, tempContactName: null }
+                    : conv
             ));
             // Atualiza a conversa selecionada, se for a atual
             if (selectedConversation?._id === conversationId) {
@@ -76,8 +79,10 @@ function ChatPage() {
         }
     };
 
+    const isMobile = window.innerWidth <= 768;
+
     return (
-        <div className="admin-page chat-page">
+        <div className={`admin-page chat-page ${isMobile ? 'mobile ' + view + '-view' : ''}`}>
             <ConversationList
                 conversations={conversations}
                 selectedConversationId={selectedConversation?._id}
@@ -90,6 +95,7 @@ function ChatPage() {
                 loading={loading.messages}
                 onSendMessage={handleSendMessage}
                 onCreateLead={handleCreateLead}
+                onBack={() => setView('list')}
             />
         </div>
     );
