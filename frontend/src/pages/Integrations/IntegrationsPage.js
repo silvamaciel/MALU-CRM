@@ -1011,6 +1011,22 @@ function IntegrationsPage() {
             </div>
           </div>
 
+           <div className="integration-footer">
+            <h4>Criar Nova Instância</h4>
+            <form onSubmit={handleCreateInstance} className="create-instance-form">
+              <input
+                type="text"
+                value={instanceName}
+                onChange={(e) => setInstanceName(e.target.value)}
+                placeholder="Nome da nova instância (ex: comercial)"
+                disabled={isCreatingInstance}
+              />
+              <button type="submit" className="button primary-button" disabled={isCreatingInstance}>
+                {isCreatingInstance ? 'Criando...' : '+ Criar'}
+              </button>
+            </form>
+          </div>
+
           <div className="integration-body">
             <h4>Instâncias Conectadas</h4>
             {loadingInstances ? (
@@ -1060,22 +1076,6 @@ function IntegrationsPage() {
             ) : (
               <p className="no-data-message">Nenhuma instância do WhatsApp foi criada ainda.</p>
             )}
-          </div>
-
-          <div className="integration-footer">
-            <h4>Criar Nova Instância</h4>
-            <form onSubmit={handleCreateInstance} className="create-instance-form">
-              <input
-                type="text"
-                value={instanceName}
-                onChange={(e) => setInstanceName(e.target.value)}
-                placeholder="Nome da nova instância (ex: comercial)"
-                disabled={isCreatingInstance}
-              />
-              <button type="submit" className="button primary-button" disabled={isCreatingInstance}>
-                {isCreatingInstance ? 'Criando...' : '+ Criar'}
-              </button>
-            </form>
           </div>
         </div>
 

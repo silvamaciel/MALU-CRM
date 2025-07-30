@@ -291,3 +291,33 @@
   border-radius: 6px;
   white-space: nowrap;
 }
+
+
+/* NOVA INSTÂNCIA */
+.create-instance-form {
+  display: flex;
+  gap: 10px;
+}
+
+.create-instance-form input {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 0.9rem;
+}
+
+/* INSTÂNCIAS COM SCROLL */
+.instance-section {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.instance-section::-webkit-scrollbar {
+  width: 6px;
+}
+.instance-section::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
