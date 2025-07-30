@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { getTasksApi, updateTaskApi, deleteTaskApi } from '../../api/taskApi';
 import ConfirmModal from '../ConfirmModal/ConfirmModal';
+import './styleTaskList.css'
+
 
 function TaskList({ filters, onTaskUpdate }) {
     const [tasks, setTasks] = useState([]);
