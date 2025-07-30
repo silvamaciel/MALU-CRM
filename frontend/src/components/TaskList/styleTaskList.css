@@ -188,20 +188,3 @@
 .create-task-form-page .task-form-meta select {
     flex: 1 1 180px; /* Permite quebrar a linha em telas menores */
 }
-
-
-.task-item-full {
-    display: flex;
-    align-items: flex-start;
-    padding: 15px;
-    background-color: #fff;
-    border-left: 4px solid #007bff;
-    border-radius: 4px;
-    margin-bottom: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-.no-tasks-message {
-    text-align: center;
-    color: #8898aa;
-    padding: 20px;
-}
