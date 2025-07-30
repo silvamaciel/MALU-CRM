@@ -40,44 +40,44 @@ const createTask = async (taskData, companyId, userId) => {
 const getTasks = async (companyId, filters) => {
     console.log(`[TaskService] Buscando tarefas para Company: ${companyId} com filtros:`, filters);
 
-    // Condições base para a busca
+    // --- Lógica de Paginação ---
+    const page = parseInt(filters.page, 10) || 1;
+    const limit = parseInt(filters.limit, 10) || 20; // Define um limite padrão
+    const skip = (page - 1) * limit;
+
+    // Remove os parâmetros de paginação dos filtros de query
+    delete filters.page;
+    delete filters.limit;
+    
+    // Condições de busca principais
     const matchConditions = { company: new mongoose.Types.ObjectId(companyId) };
-    if (filters.status) {
-        matchConditions.status = filters.status;
-    }
-    if (filters.assignedTo) {
-        matchConditions.assignedTo = new mongoose.Types.ObjectId(filters.assignedTo);
-    }
-    if (filters.lead) {
-        matchConditions.lead = new mongoose.Types.ObjectId(filters.lead);
-    }
+    if (filters.status) matchConditions.status = filters.status;
+    if (filters.assignedTo) matchConditions.assignedTo = new mongoose.Types.ObjectId(filters.assignedTo);
 
     const hoje = new Date();
 
     try {
-        // Usamos $facet para realizar múltiplas agregações em uma única consulta
         const results = await Task.aggregate([
             {
                 $facet: {
-                    // Pipeline 1: Busca a lista de tarefas filtradas
+                    // Pipeline 1: Busca a lista de tarefas filtradas e paginadas
                     'tasksList': [
                         { $match: matchConditions },
                         { $sort: { dueDate: 1 } },
+                        { $skip: skip },
+                        { $limit: limit },
                         { $lookup: { from: 'leads', localField: 'lead', foreignField: '_id', as: 'lead' } },
                         { $lookup: { from: 'users', localField: 'assignedTo', foreignField: '_id', as: 'assignedTo' } },
                         { $unwind: { path: "$lead", preserveNullAndEmptyArrays: true } },
                         { $unwind: { path: "$assignedTo", preserveNullAndEmptyArrays: true } },
                         { $project: {
-                            // ... selecione os campos que o frontend precisa
                             title: 1, description: 1, status: 1, dueDate: 1,
                             'lead._id': 1, 'lead.nome': 1,
                             'assignedTo._id': 1, 'assignedTo.nome': 1,
-                            createdAt: 1
                         }}
                     ],
-                    // Pipeline 2: Calcula os KPIs
+                    // Pipeline 2: Calcula os KPIs para o utilizador logado
                     'kpis': [
-                        // Considera apenas as tarefas do utilizador logado para os KPIs
                         { $match: { company: new mongoose.Types.ObjectId(companyId), assignedTo: new mongoose.Types.ObjectId(filters.assignedTo) } },
                         {
                             $group: {
@@ -93,6 +93,11 @@ const getTasks = async (companyId, filters) => {
                                 }
                             }
                         }
+                    ],
+                    // Pipeline 3: Conta o total de documentos para a paginação
+                    'totalCount': [
+                        { $match: matchConditions },
+                        { $count: 'count' }
                     ]
                 }
             }
@@ -100,10 +105,12 @@ const getTasks = async (companyId, filters) => {
 
         const tasks = results[0].tasksList;
         const kpis = results[0].kpis[0] || { concluidas: 0, vencidas: 0, aVencer: 0 };
+        const totalTasks = results[0].totalCount[0]?.count || 0;
+        const totalPages = Math.ceil(totalTasks / limit) || 1;
 
-        console.log(`[TaskService] Encontradas ${tasks.length} tarefas e KPIs calculados.`);
+        console.log(`[TaskService] Encontradas ${tasks.length} de ${totalTasks} tarefas.`);
         
-        return { tasks, kpis };
+        return { tasks, kpis, totalTasks, totalPages, currentPage: page };
 
     } catch (error) {
         console.error("[TaskService] Erro ao buscar tarefas com agregação:", error);
