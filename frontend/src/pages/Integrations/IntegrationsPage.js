@@ -122,17 +122,17 @@ function IntegrationsPage() {
   };
 
   const handleSettingsChange = async (instanceId, settings) => {
-        try {
-            const updated = await updateInstanceSettingsApi(instanceId, settings);
-            // Atualiza o estado local para refletir a mudança instantaneamente
-            setEvolutionInstances(prev => 
-                prev.map(inst => inst._id === instanceId ? { ...inst, ...updated } : inst)
-            );
-            toast.success(`Configuração da instância '${updated.instanceName}' atualizada.`);
-        } catch (error) {
-            toast.error("Falha ao atualizar configuração.");
-        }
-    };
+    try {
+      const updated = await updateInstanceSettingsApi(instanceId, settings);
+      // Atualiza o estado local para refletir a mudança instantaneamente
+      setEvolutionInstances(prev =>
+        prev.map(inst => inst._id === instanceId ? { ...inst, ...updated } : inst)
+      );
+      toast.success(`Configuração da instância '${updated.instanceName}' atualizada.`);
+    } catch (error) {
+      toast.error("Falha ao atualizar configuração.");
+    }
+  };
 
 
   const handleOpenDeleteModal = (instance) => {
@@ -1011,7 +1011,7 @@ function IntegrationsPage() {
             </div>
           </div>
 
-           <div className="integration-footer">
+          <div className="integration-footer">
             <h4>Criar Nova Instância</h4>
             <form onSubmit={handleCreateInstance} className="create-instance-form">
               <input
@@ -1029,53 +1029,56 @@ function IntegrationsPage() {
 
           <div className="integration-body">
             <h4>Instâncias Conectadas</h4>
-            {loadingInstances ? (
-              <p>Carregando instâncias...</p>
-            ) : evolutionInstances.length > 0 ? (
-              <ul className="instance-list">
-                {evolutionInstances.map(instance => (
-                  <li key={instance._id}>
-                    <div className="instance-details">
-                      <span className="instance-name">{instance.instanceName}</span>
-                      <StatusBadge status={instance.status} />
-                      <div className="toggle-switch-container">
-                            <label className="toggle-switch">
-                                <input 
-                                    type="checkbox" 
-                                    checked={instance.receiveFromGroups} 
-                                    onChange={() => handleSettingsChange(instance._id, { receiveFromGroups: !instance.receiveFromGroups })} 
-                                />
-                                <span className="slider"></span>
-                            </label>
-                            <span className="toggle-label">Receber de Grupos</span>
-                        </div>
-                        
+            <div className="instance-scroll-wrapper">
+              {loadingInstances ? (
+                <p>Carregando instâncias...</p>
+              ) : evolutionInstances.length > 0 ? (
+                <ul className="instance-list">
+                  {evolutionInstances.map(instance => (
+                    <li key={instance._id}>
+                      <div className="instance-details">
+                        <span className="instance-name">{instance.instanceName}</span>
+                        <StatusBadge status={instance.status} />
                         <div className="toggle-switch-container">
-                            <label className="toggle-switch">
-                                <input 
-                                    type="checkbox" 
-                                    checked={instance.autoCreateLead} 
-                                    onChange={() => handleSettingsChange(instance._id, { autoCreateLead: !instance.autoCreateLead })} 
-                                />
-                                <span className="slider"></span>
-                            </label>
-                            <span className="toggle-label">Criar Lead Automático</span>
+                          <label className="toggle-switch">
+                            <input
+                              type="checkbox"
+                              checked={instance.receiveFromGroups}
+                              onChange={() => handleSettingsChange(instance._id, { receiveFromGroups: !instance.receiveFromGroups })}
+                            />
+                            <span className="slider"></span>
+                          </label>
+                          <span className="toggle-label">Receber de Grupos</span>
                         </div>
-                    </div>
-                    <div className="instance-actions">
-                      <button onClick={() => openQRModal(instance)} className="button small-button primary-button">
-                        Conectar
-                      </button>
-                      <button onClick={() => handleOpenDeleteModal(instance)} className="button small-button danger-button">
-                        Excluir
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="no-data-message">Nenhuma instância do WhatsApp foi criada ainda.</p>
-            )}
+
+                        <div className="toggle-switch-container">
+                          <label className="toggle-switch">
+                            <input
+                              type="checkbox"
+                              checked={instance.autoCreateLead}
+                              onChange={() => handleSettingsChange(instance._id, { autoCreateLead: !instance.autoCreateLead })}
+                            />
+                            <span className="slider"></span>
+                          </label>
+                          <span className="toggle-label">Criar Lead Automático</span>
+                        </div>
+                      </div>
+                      <div className="instance-actions">
+                        <button onClick={() => openQRModal(instance)} className="button small-button primary-button">
+                          Conectar
+                        </button>
+                        <button onClick={() => handleOpenDeleteModal(instance)} className="button small-button danger-button">
+                          Excluir
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="no-data-message">Nenhuma instância do WhatsApp foi criada ainda.</p>
+              )}
+
+            </div>
           </div>
         </div>
 
@@ -1175,24 +1178,24 @@ function IntegrationsPage() {
       </div>
 
       <GenerateQRCodemodal
-          isOpen={isQRModalOpen}
-          onClose={() => setIsQRModalOpen(false)}
-          instance={selectedInstanceForQR}
-          onConnected={() => {
-            toast.success("WhatsApp conectado com sucesso!");
-            setIsQRModalOpen(false);
-            fetchIntegrations(); // Recarrega a lista para mostrar o novo status
-          }}
-        />
+        isOpen={isQRModalOpen}
+        onClose={() => setIsQRModalOpen(false)}
+        instance={selectedInstanceForQR}
+        onConnected={() => {
+          toast.success("WhatsApp conectado com sucesso!");
+          setIsQRModalOpen(false);
+          fetchIntegrations(); // Recarrega a lista para mostrar o novo status
+        }}
+      />
 
-        <ConfirmModal
-          isOpen={isDeleteModalOpen}
-          onClose={() => setIsDeleteModalOpen(false)}
-          onConfirm={handleConfirmDelete}
-          title="Confirmar Exclusão"
-          message={`Tem certeza que deseja excluir a instância "${deleteTarget?.instanceName}"? Esta ação não pode ser desfeita.`}
-          isProcessing={isDeleting}
-        />
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Confirmar Exclusão"
+        message={`Tem certeza que deseja excluir a instância "${deleteTarget?.instanceName}"? Esta ação não pode ser desfeita.`}
+        isProcessing={isDeleting}
+      />
     </div>
   );
 }

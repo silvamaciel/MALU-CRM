@@ -341,3 +341,34 @@
   background-color: rgba(0, 0, 0, 0.1);
   border-radius: 3px;
 }
+
+.integration-card {
+  box-sizing: border-box;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.integration-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 500px; /* limite visível */
+  overflow: hidden;   /* controla a rolagem interna */
+  position: relative;
+}
+
+/* SCROLL INTERNO da lista */
+.instance-scroll-wrapper {
+  overflow-y: auto;
+  padding-right: 6px;
+  flex-grow: 1;
+}
+
+.instance-scroll-wrapper::-webkit-scrollbar {
+  width: 6px;
+}
+
+.instance-scroll-wrapper::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
