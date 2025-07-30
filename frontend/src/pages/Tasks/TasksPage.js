@@ -45,23 +45,20 @@ function TasksPage() {
         <div className="admin-page tasks-page">
             <header className="page-header">
                 <h1>Minhas Tarefas</h1>
-                <div className="tasks-filters">
-                    <button onClick={() => setFilter('Pendente')} className={`button ${filter === 'Pendente' ? 'primary-button' : 'outline-button'}`}>Pendentes</button>
-                    <button onClick={() => setFilter('Concluída')} className={`button ${filter === 'Concluída' ? 'primary-button' : 'outline-button'}`}>Concluídas</button>
-                </div>
-            </header>
-            <div className="page-content">
                 <div className="kpi-container-tasks">
                     <KPICard title="A Vencer" value={kpis.aVencer} className="kpi-due" />
                     <KPICard title="Vencidas" value={kpis.vencidas} className="kpi-overdue" />
                     <KPICard title="Concluídas" value={kpis.concluidas} className="kpi-done" />
                 </div>
+            </header>
+            <div className="page-content">
+
+                <div className="tasks-filters">
+                    <button onClick={() => setFilter('Pendente')} className={`button ${filter === 'Pendente' ? 'primary-button' : 'outline-button'}`}>Pendentes</button>
+                    <button onClick={() => setFilter('Concluída')} className={`button ${filter === 'Concluída' ? 'primary-button' : 'outline-button'}`}>Concluídas</button>
+                </div>
 
                 <div className="tasks-list-container">
-                    {/* Renderiza o novo componente reutilizável, passando os filtros.
-                      A prop onTaskUpdate garante que, quando uma tarefa é atualizada
-                      dentro do TaskList, os KPIs nesta página também são recarregados.
-                    */}
                     <TaskList filters={taskFilters} onTaskUpdate={() => setRefreshKey(prev => prev + 1)} />
                 </div>
             </div>
