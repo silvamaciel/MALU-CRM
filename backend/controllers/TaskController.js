@@ -3,6 +3,8 @@ const TaskService = require('../services/TaskService');
 
 const getAllTasks = asyncHandler(async (req, res, next) => {
     const filters = req.query; // Permite filtros como ?status=Pendente ou ?lead=LEAD_ID
+    
+    filters.assignedTo = req.user._id; 
     const tasks = await TaskService.getTasks(req.user.company, filters);
     res.status(200).json({ success: true, count: tasks.length, data: tasks });
 });
