@@ -4,13 +4,16 @@ import { toast } from 'react-toastify';
 import { getTasksApi, updateTaskApi, deleteTaskApi } from '../../api/taskApi';
 import ConfirmModal from '../ConfirmModal/ConfirmModal';
 import EditTaskModal from '../EditTaskModal/EditTaskModal';
+import CreateTaskModal from '../CreateTaskModal/CreateTaskModal';
+
+
 import './styleTaskList.css'
 
 
 function TaskList({ filters, onTaskUpdate }) {
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
-    
+
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -53,6 +56,13 @@ function TaskList({ filters, onTaskUpdate }) {
         fetchTasks(); // Recarrega a lista de tarefas após a edição
     };
 
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const handleOpenCreateModal = () => setIsCreateModalOpen(true);
+    const handleCreateSuccess = () => {
+        setIsCreateModalOpen(false);
+        fetchTasks();
+        if (onTaskUpdate) onTaskUpdate();
+    };
 
 
     const handleToggleStatus = async (task) => {
@@ -95,33 +105,60 @@ function TaskList({ filters, onTaskUpdate }) {
     }
 
     return (
-        <div className="tasks-list-component">
-            {tasks.length > 0 ? tasks.map(task => (
-                <div key={task._id} className={`task-item-full status-${task.status.toLowerCase()}`}>
-                    <div className="task-status-toggle">
-                        <input 
-                            type="checkbox" 
-                            checked={task.status === 'Concluída'} 
-                            onChange={() => handleToggleStatus(task)}
-                            title={`Marcar como ${task.status === 'Pendente' ? 'Concluída' : 'Pendente'}`}
-                        />
-                    </div>
-                    <div className="task-content">
-                        <p className="task-title">{task.title}</p>
-                        {task.description && <p className="task-description">{task.description}</p>}
-                        <div className="task-metadata-full">
-                            <span>Vence em: <strong>{new Date(task.dueDate).toLocaleString('pt-BR')}</strong></span>
-                            {task.lead && <span>Lead: <Link to={`/leads/${task.lead._id}`}>{task.lead.nome}</Link></span>}
-                            <span>Para: <strong>{task.assignedTo?.nome || 'N/A'}</strong></span>
+        <>
+            <button
+                onClick={handleOpenCreateModal}
+                className="button-link create-link-task"
+            >
+                + Nova Tarefa
+            </button>
+
+            <div className="tasks-list-component">
+                {tasks.length > 0 ? (
+                    tasks.map(task => (
+                        <div key={task._id} className={`task-item-full status-${task.status.toLowerCase()}`}>
+                            <div className="task-status-toggle">
+                                <input
+                                    type="checkbox"
+                                    checked={task.status === 'Concluída'}
+                                    onChange={() => handleToggleStatus(task)}
+                                    title={`Marcar como ${task.status === 'Pendente' ? 'Concluída' : 'Pendente'}`}
+                                />
+                            </div>
+                            <div className="task-content">
+                                <p className="task-title">{task.title}</p>
+                                {task.description && <p className="task-description">{task.description}</p>}
+                                <div className="task-metadata-full">
+                                    <span>Vence em: <strong>{new Date(task.dueDate).toLocaleString('pt-BR')}</strong></span>
+                                    {task.lead && (
+                                        <span>
+                                            Lead: <Link to={`/leads/${task.lead._id}`}>{task.lead.nome}</Link>
+                                        </span>
+                                    )}
+                                    <span>Para: <strong>{task.assignedTo?.nome || 'N/A'}</strong></span>
+                                </div>
+                            </div>
+                            <div className="task-actions">
+                                <button onClick={() => handleOpenEditModal(task)} className="button-link edit-link-task">
+                                    Editar
+                                </button>
+                                <button onClick={() => handleOpenDeleteModal(task)} className="button-link delete-link-task">
+                                    Excluir
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                    <div className="task-actions">
-                        <button onClick={() => handleOpenEditModal(task)} className="button-link edit-link-task">Editar</button>
-                        <button onClick={() => handleOpenDeleteModal(task)} className="button-link delete-link-task">Excluir</button>
-                    </div>
-                </div>
-            )) : <p className="no-tasks-message">Nenhuma tarefa encontrada para este filtro.</p>}
-            
+                    ))
+                ) : (
+                    <p className="no-tasks-message">Nenhuma tarefa encontrada para este filtro.</p>
+                )}
+            </div>
+
+            <CreateTaskModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                onSaveSuccess={handleCreateSuccess}
+            />
+
             <ConfirmModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
@@ -138,7 +175,7 @@ function TaskList({ filters, onTaskUpdate }) {
                 onSaveSuccess={handleEditSuccess}
                 task={taskToEdit}
             />
-        </div>
+        </>
+
     );
 }
-export default TaskList;
