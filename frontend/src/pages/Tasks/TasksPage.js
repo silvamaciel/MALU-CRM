@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { getTasksApi } from '../../api/taskApi';
-import TaskList from '../../components/TaskList/TaskList'; // <<< IMPORTA O COMPONENTE REUTILIZÁVEL
+import TaskList from '../../components/TaskList/TaskList';
 import './TasksPage.css';
 
 const KPICard = ({ title, value, className }) => (
