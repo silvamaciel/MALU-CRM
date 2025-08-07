@@ -188,3 +188,24 @@
 .create-task-form-page .task-form-meta select {
     flex: 1 1 180px; /* Permite quebrar a linha em telas menores */
 }
+
+.tasks-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.task-scope {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.task-scope-select {
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+}

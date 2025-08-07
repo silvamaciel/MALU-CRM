@@ -21,26 +21,35 @@ function TaskList({ filters, onTaskUpdate, currentLeadId = null }) {
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
+  // Novo: escopo do owner (todas/minhas), com persistência
+  const [ownerScope, setOwnerScope] = useState(() => localStorage.getItem('taskScope') || 'all');
+  useEffect(() => {
+    localStorage.setItem('taskScope', ownerScope);
+  }, [ownerScope]);
+
   const fetchTasks = useCallback(async () => {
     setLoading(true);
     try {
-       const effectiveFilters = currentLeadId
-        ? { ...(filters || {}), lead: currentLeadId }
-        : (filters || {});
+      const effectiveFilters = {
+        ...(filters || {}),
+        ...(currentLeadId ? { lead: currentLeadId } : {}),
+        ...(ownerScope === 'mine' ? { mine: '1' } : {}),
+      };
 
       const data = await getTasksApi(effectiveFilters);
       const raw = data.tasks || [];
       const scoped = currentLeadId
         ? raw.filter(t => (t.lead?._id || t.lead) === currentLeadId)
         : raw;
+
       setTasks(scoped);
     } catch (error) {
-      toast.error("Erro ao carregar a lista de tarefas.");
-      console.error("Erro em fetchTasks:", error);
+      toast.error('Erro ao carregar a lista de tarefas.');
+      console.error('Erro em fetchTasks:', error);
     } finally {
       setLoading(false);
     }
-  }, [filters, currentLeadId]);
+  }, [filters, currentLeadId, ownerScope]);
 
   useEffect(() => {
     fetchTasks();
@@ -76,7 +85,7 @@ function TaskList({ filters, onTaskUpdate, currentLeadId = null }) {
       fetchTasks();
       if (onTaskUpdate) onTaskUpdate();
     } catch {
-      toast.error("Erro ao atualizar status da tarefa.");
+      toast.error('Erro ao atualizar status da tarefa.');
     }
   };
 
@@ -89,11 +98,11 @@ function TaskList({ filters, onTaskUpdate, currentLeadId = null }) {
     setIsProcessing(true);
     try {
       await deleteTaskApi(deleteTarget._id);
-      toast.success("Tarefa excluída com sucesso!");
+      toast.success('Tarefa excluída com sucesso!');
       fetchTasks();
       if (onTaskUpdate) onTaskUpdate();
     } catch {
-      toast.error("Falha ao excluir tarefa.");
+      toast.error('Falha ao excluir tarefa.');
     } finally {
       setIsProcessing(false);
       setIsDeleteModalOpen(false);
@@ -101,18 +110,31 @@ function TaskList({ filters, onTaskUpdate, currentLeadId = null }) {
     }
   };
 
-  if (loading) {
-    return <p>Carregando tarefas...</p>;
-  }
+  if (loading) return <p>Carregando tarefas...</p>;
 
   return (
     <>
-      <button
-        onClick={handleOpenCreateModal}
-        className="button-link create-link-task"
-      >
-        + Nova Tarefa
-      </button>
+      <div className="tasks-toolbar">
+        <button
+          onClick={handleOpenCreateModal}
+          className="button-link create-link-task"
+        >
+          + Nova Tarefa
+        </button>
+
+        <div className="task-scope">
+          <label htmlFor="task-scope-select">Exibir:</label>
+          <select
+            id="task-scope-select"
+            value={ownerScope}
+            onChange={(e) => setOwnerScope(e.target.value)}
+            className="task-scope-select"
+          >
+            <option value="all">Todas</option>
+            <option value="mine">Minhas</option>
+          </select>
+        </div>
+      </div>
 
       <div className="tasks-list-component">
         {tasks.length > 0 ? (
@@ -126,29 +148,19 @@ function TaskList({ filters, onTaskUpdate, currentLeadId = null }) {
                   type="checkbox"
                   checked={task.status === 'Concluída'}
                   onChange={() => handleToggleStatus(task)}
-                  title={`Marcar como ${
-                    task.status === 'Pendente' ? 'Concluída' : 'Pendente'
-                  }`}
+                  title={`Marcar como ${task.status === 'Pendente' ? 'Concluída' : 'Pendente'}`}
                 />
               </div>
               <div className="task-content">
                 <p className="task-title">{task.title}</p>
-                {task.description && (
-                  <p className="task-description">{task.description}</p>
-                )}
+                {task.description && <p className="task-description">{task.description}</p>}
                 <div className="task-metadata-full">
                   <span>
-                    Vence em:{' '}
-                    <strong>
-                      {new Date(task.dueDate).toLocaleString('pt-BR')}
-                    </strong>
+                    Vence em: <strong>{new Date(task.dueDate).toLocaleString('pt-BR')}</strong>
                   </span>
                   {task.lead && (
                     <span>
-                      Lead:{' '}
-                      <Link to={`/leads/${task.lead._id}`}>
-                        {task.lead.nome}
-                      </Link>
+                      Lead: <Link to={`/leads/${task.lead._id}`}>{task.lead.nome}</Link>
                     </span>
                   )}
                   <span>
@@ -157,25 +169,13 @@ function TaskList({ filters, onTaskUpdate, currentLeadId = null }) {
                 </div>
               </div>
               <div className="task-actions">
-                <button
-                  onClick={() => handleOpenEditModal(task)}
-                  className="button-link edit-link-task"
-                >
-                  Editar
-                </button>
-                <button
-                  onClick={() => handleOpenDeleteModal(task)}
-                  className="button-link delete-link-task"
-                >
-                  Excluir
-                </button>
+                <button onClick={() => handleOpenEditModal(task)} className="button-link edit-link-task">Editar</button>
+                <button onClick={() => handleOpenDeleteModal(task)} className="button-link delete-link-task">Excluir</button>
               </div>
             </div>
           ))
         ) : (
-          <p className="no-tasks-message">
-            Nenhuma tarefa encontrada para este filtro.
-          </p>
+          <p className="no-tasks-message">Nenhuma tarefa encontrada para este filtro.</p>
         )}
       </div>
 
