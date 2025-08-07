@@ -131,16 +131,6 @@ const CreateTaskModal = ({
                         )}
                     </label>
 
-                    <label>
-                        Responsável
-                        <input
-                            type="text"
-                            value={assignedTo}
-                            onChange={e => setAssignedTo(e.target.value)}
-                            placeholder="Nome do responsável"
-                        />
-                    </label>
-
                     <div className="modal-actions">
                         <button
                             type="button"
