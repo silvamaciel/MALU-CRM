@@ -2,11 +2,20 @@ const asyncHandler = require('../middlewares/asyncHandler');
 const TaskService = require('../services/TaskService');
 
 const getAllTasks = asyncHandler(async (req, res, next) => {
-    const filters = req.query; // Permite filtros como ?status=Pendente ou ?lead=LEAD_ID
+    const { mine, ...query } = req.query;
+    const filters = { ...query };
+
+    if (mine === '1' && !filters.assignedTo) {
+        filters.assignedTo = req.user._id;
+    }
     
-    filters.assignedTo = req.user._id; 
-    const tasks = await TaskService.getTasks(req.user.company, filters);
-    res.status(200).json({ success: true, count: tasks.length, data: tasks });
+    const result = await TaskService.getTasks(req.user.company, filters);
+
+    res.status(200).json({
+        success: true,
+        count: result.totalTasks,
+        data: result
+    });
 });
 
 const createTask = asyncHandler(async (req, res, next) => {

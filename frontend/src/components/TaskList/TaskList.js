@@ -24,15 +24,23 @@ function TaskList({ filters, onTaskUpdate, currentLeadId = null }) {
   const fetchTasks = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getTasksApi(filters);
-      setTasks(data.tasks || []);
+       const effectiveFilters = currentLeadId
+        ? { ...(filters || {}), lead: currentLeadId }
+        : (filters || {});
+
+      const data = await getTasksApi(effectiveFilters);
+      const raw = data.tasks || [];
+      const scoped = currentLeadId
+        ? raw.filter(t => (t.lead?._id || t.lead) === currentLeadId)
+        : raw;
+      setTasks(scoped);
     } catch (error) {
       toast.error("Erro ao carregar a lista de tarefas.");
       console.error("Erro em fetchTasks:", error);
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, currentLeadId]);
 
   useEffect(() => {
     fetchTasks();

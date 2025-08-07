@@ -37,86 +37,94 @@ const createTask = async (taskData, companyId, userId) => {
 /**
  * Busca tarefas com filtros e retorna um resumo com KPIs.
  */
-const getTasks = async (companyId, filters) => {
-    console.log(`[TaskService] Buscando tarefas para Company: ${companyId} com filtros:`, filters);
+const getTasks = async (companyId, filters = {}) => {
+  console.log(`[TaskService] Buscando tarefas para Company: ${companyId} com filtros:`, filters);
 
-    // --- Lógica de Paginação ---
-    const page = parseInt(filters.page, 10) || 1;
-    const limit = parseInt(filters.limit, 10) || 20; // Define um limite padrão
-    const skip = (page - 1) * limit;
+  // Desestrutura sem mutar o objeto original
+  const {
+    page: _page = 1,
+    limit: _limit = 20,
+    status,
+    assignedTo,
+    lead, // <<--- novo filtro
+    ...rest // se surgir algo extra
+  } = filters;
 
-    // Remove os parâmetros de paginação dos filtros de query
-    delete filters.page;
-    delete filters.limit;
-    
-    // Condições de busca principais
-    const matchConditions = { company: new mongoose.Types.ObjectId(companyId) };
-    if (filters.status) matchConditions.status = filters.status;
-    if (filters.assignedTo) matchConditions.assignedTo = new mongoose.Types.ObjectId(filters.assignedTo);
+  const page = parseInt(_page, 10) || 1;
+  const limit = parseInt(_limit, 10) || 20;
+  const skip = (page - 1) * limit;
 
-    const hoje = new Date();
+  // Condições base
+  const matchConditions = { company: new mongoose.Types.ObjectId(companyId) };
+  if (status) matchConditions.status = status;
+  if (assignedTo && mongoose.Types.ObjectId.isValid(assignedTo)) {
+    matchConditions.assignedTo = new mongoose.Types.ObjectId(assignedTo);
+  }
+  // 🔥 Filtro por lead
+  if (lead && mongoose.Types.ObjectId.isValid(lead)) {
+    matchConditions.lead = new mongoose.Types.ObjectId(lead);
+  }
 
-    try {
-        const results = await Task.aggregate([
+  const hoje = new Date();
+
+  // Match para KPIs (opcionalmente restrito ao assignedTo se vier)
+  const kpiMatch = { ...matchConditions };
+  // (se quiser KPIs sempre por usuário logado, mantenha assignedTo; senão remova essa linha)
+
+  try {
+    const results = await Task.aggregate([
+      {
+        $facet: {
+          tasksList: [
+            { $match: matchConditions },
+            { $sort: { dueDate: 1 } },
+            { $skip: skip },
+            { $limit: limit },
+            { $lookup: { from: 'leads', localField: 'lead', foreignField: '_id', as: 'lead' } },
+            { $lookup: { from: 'users', localField: 'assignedTo', foreignField: '_id', as: 'assignedTo' } },
+            { $unwind: { path: "$lead", preserveNullAndEmptyArrays: true } },
+            { $unwind: { path: "$assignedTo", preserveNullAndEmptyArrays: true } },
             {
-                $facet: {
-                    // Pipeline 1: Busca a lista de tarefas filtradas e paginadas
-                    'tasksList': [
-                        { $match: matchConditions },
-                        { $sort: { dueDate: 1 } },
-                        { $skip: skip },
-                        { $limit: limit },
-                        { $lookup: { from: 'leads', localField: 'lead', foreignField: '_id', as: 'lead' } },
-                        { $lookup: { from: 'users', localField: 'assignedTo', foreignField: '_id', as: 'assignedTo' } },
-                        { $unwind: { path: "$lead", preserveNullAndEmptyArrays: true } },
-                        { $unwind: { path: "$assignedTo", preserveNullAndEmptyArrays: true } },
-                        { $project: {
-                            title: 1, description: 1, status: 1, dueDate: 1,
-                            'lead._id': 1, 'lead.nome': 1,
-                            'assignedTo._id': 1, 'assignedTo.nome': 1,
-                        }}
-                    ],
-                    // Pipeline 2: Calcula os KPIs para o utilizador logado
-                    'kpis': [
-                        { $match: { company: new mongoose.Types.ObjectId(companyId), assignedTo: new mongoose.Types.ObjectId(filters.assignedTo) } },
-                        {
-                            $group: {
-                                _id: null,
-                                concluidas: {
-                                    $sum: { $cond: [{ $eq: ['$status', 'Concluída'] }, 1, 0] }
-                                },
-                                vencidas: {
-                                    $sum: { $cond: [{ $and: [ { $eq: ['$status', 'Pendente'] }, { $lt: ['$dueDate', hoje] } ] }, 1, 0] }
-                                },
-                                aVencer: {
-                                    $sum: { $cond: [{ $and: [ { $eq: ['$status', 'Pendente'] }, { $gte: ['$dueDate', hoje] } ] }, 1, 0] }
-                                }
-                            }
-                        }
-                    ],
-                    // Pipeline 3: Conta o total de documentos para a paginação
-                    'totalCount': [
-                        { $match: matchConditions },
-                        { $count: 'count' }
-                    ]
-                }
+              $project: {
+                title: 1, description: 1, status: 1, dueDate: 1,
+                'lead._id': 1, 'lead.nome': 1,
+                'assignedTo._id': 1, 'assignedTo.nome': 1,
+              }
             }
-        ]);
+          ],
+          kpis: [
+            { $match: kpiMatch },
+            {
+              $group: {
+                _id: null,
+                concluidas: { $sum: { $cond: [{ $eq: ['$status', 'Concluída'] }, 1, 0] } },
+                vencidas:   { $sum: { $cond: [{ $and: [{ $eq: ['$status', 'Pendente'] }, { $lt: ['$dueDate', hoje] }] }, 1, 0] } },
+                aVencer:    { $sum: { $cond: [{ $and: [{ $eq: ['$status', 'Pendente'] }, { $gte: ['$dueDate', hoje] }] }, 1, 0] } },
+              }
+            }
+          ],
+          totalCount: [
+            { $match: matchConditions },
+            { $count: 'count' }
+          ]
+        }
+      }
+    ]);
 
-        const tasks = results[0].tasksList;
-        const kpis = results[0].kpis[0] || { concluidas: 0, vencidas: 0, aVencer: 0 };
-        const totalTasks = results[0].totalCount[0]?.count || 0;
-        const totalPages = Math.ceil(totalTasks / limit) || 1;
+    const tasks = results[0].tasksList;
+    const kpis = results[0].kpis[0] || { concluidas: 0, vencidas: 0, aVencer: 0 };
+    const totalTasks = results[0].totalCount[0]?.count || 0;
+    const totalPages = Math.ceil(totalTasks / limit) || 1;
 
-        console.log(`[TaskService] Encontradas ${tasks.length} de ${totalTasks} tarefas.`);
-        
-        return { tasks, kpis, totalTasks, totalPages, currentPage: page };
+    console.log(`[TaskService] Encontradas ${tasks.length} de ${totalTasks} tarefas.`);
+    return { tasks, kpis, totalTasks, totalPages, currentPage: page };
 
-    } catch (error) {
-        console.error("[TaskService] Erro ao buscar tarefas com agregação:", error);
-        throw new Error("Erro ao buscar tarefas.");
-    }
+  } catch (error) {
+    console.error("[TaskService] Erro ao buscar tarefas com agregação:", error);
+    throw new Error("Erro ao buscar tarefas.");
+  }
 };
+
 
 /**
  * Atualiza uma tarefa (ex: marcar como concluída).
