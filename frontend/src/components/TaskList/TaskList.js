@@ -8,7 +8,7 @@ import EditTaskModal from '../EditTaskModal/EditTaskModal';
 import CreateTaskModal from '../CreateTaskModal/CreateTaskModal';
 import './styleTaskList.css';
 
-function TaskList({ filters, onTaskUpdate }) {
+function TaskList({ filters, onTaskUpdate, currentLeadId = null }) {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -175,6 +175,7 @@ function TaskList({ filters, onTaskUpdate }) {
         isOpen={isCreateModalOpen}
         onClose={handleCloseCreateModal}
         onSaveSuccess={handleCreateSuccess}
+        currentLeadId={currentLeadId}
       />
 
       <ConfirmModal

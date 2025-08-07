@@ -211,9 +211,12 @@ function LeadDetailPage() {
         </div>
 
         <div className="tasks-section">
-                    <h2>Tarefas</h2>
-                    <TaskList filters={{ lead: id }} />
-                </div>
+          <h2>Tarefas</h2>
+          <TaskList
+            filters={{ lead: id }}
+            currentLeadId={id}
+          />
+        </div>
       </div>
 
       <DiscardLeadModal
