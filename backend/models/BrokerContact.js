@@ -1,6 +1,7 @@
 // models/BrokerContact.js
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
+const { v4: uuidv4 } = require('uuid');
 
 const brokerContactSchema = new Schema({
     nome: {
@@ -48,11 +49,17 @@ const brokerContactSchema = new Schema({
     ativo: { 
         type: Boolean,
         default: true
-    }
+    },
+
+    publicSubmissionToken: {
+        type: String,
+        default: () => uuidv4(),
+        unique: true,
+        index: true
+    },
 }, { timestamps: true });
 
  brokerContactSchema.index({ company: 1, creci: 1 }, { unique: true, sparse: true });
- brokerContactSchema.index({ company: 1, email: 1 }, { unique: true, sparse: true });
 
 
 const BrokerContact = mongoose.model('BrokerContact', brokerContactSchema);
