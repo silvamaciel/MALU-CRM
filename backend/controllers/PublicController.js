@@ -2,8 +2,8 @@ const asyncHandler = require('../middlewares/asyncHandler');
 const PublicService = require('../services/PublicService');
 
 const checkBrokerController = asyncHandler(async (req, res, next) => {
-    const { identifier } = req.body;
-    const result = await PublicService.checkBroker(identifier);
+    const { identifier, companyId } = req.body;
+    const result = await PublicService.checkBroker(identifier, companyId);
     res.status(200).json({ success: true, data: result });
 });
 
