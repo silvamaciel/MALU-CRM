@@ -44,16 +44,16 @@ const checkBroker = async (identifier, companyId) => {
 /**
  * Submete um novo lead a partir do portal público.
  */
-const submitPublicLead = async (brokerToken, leadData) => {
+const submitPublicLead = async (brokerId, leadData) => {
 
      if (!brokerId || !mongoose.Types.ObjectId.isValid(brokerId)) {
         throw new Error("ID do parceiro é inválido.");
     }
 
-    if (!brokerToken) throw new Error("Token do parceiro é inválido.");
+    if (!brokerId) throw new Error("Token do parceiro é inválido.");
 
     // 1. Encontra o corretor parceiro pelo token público
-    const broker = await BrokerContact.findOne({ publicSubmissionToken: brokerToken });
+    const broker = await BrokerContact.findOne({ publicSubmissionToken: brokerId });
     if (!broker) throw new Error("Parceiro não encontrado ou token inválido.");
 
     // 2. Prepara os dados do lead para a criação
