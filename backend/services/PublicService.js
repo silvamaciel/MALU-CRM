@@ -6,30 +6,39 @@ const Company = require('../models/Company');
 
 
 /**
- * Verifica se um corretor parceiro já existe com base no CPF ou CRECI.
+ * Verifica se um corretor parceiro já existe PARA UMA EMPRESA ESPECÍFICA.
  */
-const checkBroker = async (identifier) => {
-    if (!identifier) throw new Error("CPF ou CRECI é obrigatório para verificação.");
+const checkBroker = async (identifier, companyId) => {
+    if (!identifier) throw new Error("CPF ou CRECI é obrigatório.");
+    if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+        throw new Error("ID da empresa inválido.");
+    }
 
-    const cleanedIdentifier = String(identifier).replace(/\D/g, ""); // Remove caracteres não numéricos
+    const cleanedIdentifier = String(identifier).replace(/\D/g, "");
+    console.log(`[PublicSvc] Verificando parceiro '${cleanedIdentifier}' para a Empresa: ${companyId}`);
 
-    console.log(`[PublicSvc] Verificando parceiro com identificador: ${cleanedIdentifier}`);
-
-    // Procura por CPF (se for um CPF válido) ou por CRECI
-    const query = cpfValidator.isValid(cleanedIdentifier)
-        ? { cpfCnpj: cleanedIdentifier }
-        : { creci: cleanedIdentifier };
+    const query = { 
+        company: companyId, // <<< ADICIONA O FILTRO DE EMPRESA
+        $or: [
+            { cpfCnpj: cleanedIdentifier },
+            { creci: cleanedIdentifier }
+        ]
+    };
+    
+    // Remove a verificação por CPF se não for um CPF válido para não dar erro com CRECI
+    if (!cpfValidator.isValid(cleanedIdentifier)) {
+        query.$or.shift(); // Remove a condição do cpfCnpj
+    }
 
     const broker = await BrokerContact.findOne(query).select('nome email publicSubmissionToken');
 
     if (broker) {
-        console.log(`[PublicSvc] Parceiro encontrado: ${broker.nome}`);
         return { exists: true, broker };
     } else {
-        console.log(`[PublicSvc] Nenhum parceiro encontrado.`);
         return { exists: false, broker: null };
     }
 };
+
 
 /**
  * Submete um novo lead a partir do portal público.
