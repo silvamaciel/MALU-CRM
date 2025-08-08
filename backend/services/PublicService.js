@@ -4,6 +4,7 @@ const LeadService = require('./LeadService'); // Reutilizaremos o createLead
 const { cpf: cpfValidator } = require('cpf-cnpj-validator'); // Para validar CPF
 const Company = require('../models/Company');
 
+
 /**
  * Verifica se um corretor parceiro já existe com base no CPF ou CRECI.
  */
