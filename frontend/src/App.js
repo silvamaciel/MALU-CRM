@@ -87,6 +87,10 @@ function App() {
               }
           />
 
+        <Route path="/parceiros/submeter-lead" element={<PublicPortalPage />} />
+
+
+
           {/* --- Rotas Protegidas QUE USAM o MainLayout --- */}
           <Route
               path="/" // Rota pai para o layout
@@ -105,7 +109,7 @@ function App() {
                 <Route path="dashboard" element={<DashboardPage />} />
                 <Route path="/chat" element={<ChatPage />} />
 
-                 <Route path="/parceiros/submeter-lead" element={<PublicPortalPage />} />
+        
                 
                 <Route path="leads" element={<LeadListPage />} />
                 <Route path="leads/novo" element={<LeadFormPage />} />
