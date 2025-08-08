@@ -12,17 +12,26 @@ function LeadSubmitStep({ broker }) {
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-        try {
-            await submitPublicLeadApi(broker.publicSubmissionToken, formData);
-            setSubmissionSuccess(true);
-        } catch (error) {
-            toast.error(error.error || "Falha ao enviar o lead.");
-        } finally {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+        console.log("A submeter lead para o broker:", broker);
+        console.log("A usar o token de submissão:", broker?.publicSubmissionToken);
+
+        if (!broker || !broker.publicSubmissionToken) {
+            toast.error("Erro: Token do parceiro não encontrado. Por favor, verifique a sua identidade novamente.");
             setIsSubmitting(false);
+            return;
         }
-    };
+
+        await submitPublicLeadApi(broker.publicSubmissionToken, formData);
+        setSubmissionSuccess(true);
+    } catch (error) {
+        toast.error(error.error || "Falha ao enviar o lead.");
+    } finally {
+        setIsSubmitting(false);
+    }
+};
     
     if (submissionSuccess) {
         return (
