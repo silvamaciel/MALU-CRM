@@ -8,16 +8,17 @@ const checkBrokerController = asyncHandler(async (req, res, next) => {
 });
 
 const submitLeadController = asyncHandler(async (req, res, next) => {
-    const { brokerToken } = req.params;
+    const { brokerId } = req.params; 
     const leadData = req.body;
-    const newLead = await PublicService.submitPublicLead(brokerToken, leadData);
-    res.status(201).json({ success: true, message: "Lead submetido com sucesso e aguardando aprovação." });
+    const newLead = await PublicService.submitPublicLead(brokerId, leadData);
+    res.status(201).json({ success: true, message: "Lead submetido com sucesso." });
 });
+
 
 const registerBrokerController = asyncHandler(async (req, res, next) => {
     const { companyId } = req.params;
     const brokerData = req.body;
-    const newBroker = await PublicService.registerBroker(companyToken, brokerData);
+    const newBroker = await PublicService.registerBroker(companyId, brokerData);
     res.status(201).json({ success: true, data: newBroker });
 });
 

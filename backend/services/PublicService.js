@@ -31,7 +31,7 @@ const checkBroker = async (identifier, companyId) => {
         query.$or.shift(); // Remove a condição do cpfCnpj
     }
 
-    const broker = await BrokerContact.findOne(query).select('nome email publicSubmissionToken');
+    const broker = await BrokerContact.findOne(query).select('nome email publicSubmissionToken _id');
 
     if (broker) {
         return { exists: true, broker };
@@ -45,6 +45,11 @@ const checkBroker = async (identifier, companyId) => {
  * Submete um novo lead a partir do portal público.
  */
 const submitPublicLead = async (brokerToken, leadData) => {
+
+     if (!brokerId || !mongoose.Types.ObjectId.isValid(brokerId)) {
+        throw new Error("ID do parceiro é inválido.");
+    }
+
     if (!brokerToken) throw new Error("Token do parceiro é inválido.");
 
     // 1. Encontra o corretor parceiro pelo token público
