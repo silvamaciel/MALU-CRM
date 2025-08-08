@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import { checkBrokerApi } from '../../../../api/publicApi';
 
-function BrokerCheckStep({ onBrokerFound, onBrokerNotFound }) {
+function BrokerCheckStep({ companyId, onBrokerFound, onBrokerNotFound }) {
     const [identifier, setIdentifier] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 

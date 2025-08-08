@@ -7,7 +7,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://chatbotmmalu-malu
  * Verifica se um corretor parceiro existe com base no CPF ou CRECI.
  * @param {string} identifier - O CPF ou CRECI a ser verificado.
  */
-export const checkBrokerApi = async (identifier) => {
+export const checkBrokerApi = async (identifier, companyId) => {
     try {
          const response = await axios.post(`${API_BASE_URL}/public/broker/check`, { identifier, companyId });
         return response.data.data; // Retorna { exists: true/false, broker: {...} }
