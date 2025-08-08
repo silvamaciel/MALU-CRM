@@ -38,6 +38,8 @@ import ChatPage from './pages/ChatPage/ChatPage';
 
 import TasksPage from './pages/Tasks/TasksPage';
 
+import PublicLeadSubmissionPage from './pages/Public/LeadSubmissionPage/LeadSubmissionPage';
+
 
 
 
