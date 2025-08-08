@@ -37,9 +37,10 @@ export const registerBrokerApi = async (companyId, brokerData) => {
  * @param {string} brokerToken - O token de submissão do corretor.
  * @param {object} leadData - Os dados do lead.
  */
-export const submitPublicLeadApi = async (brokerToken, leadData) => {
+export const submitPublicLeadApi = async (brokerId, leadData) => {
     try {
-        const response = await axios.post(`${API_BASE_URL}/public/submit-lead/${brokerToken}`, leadData);
+        // Constrói a URL com o ID do corretor
+        const response = await axios.post(`${API_BASE_URL}/public/submit-lead/${brokerId}`, leadData);
         return response.data;
     } catch (error) {
         console.error("Erro ao submeter lead:", error.response?.data || error.message);
