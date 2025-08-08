@@ -38,7 +38,8 @@ import ChatPage from './pages/ChatPage/ChatPage';
 
 import TasksPage from './pages/Tasks/TasksPage';
 
-import PublicLeadSubmissionPage from './pages/Public/LeadSubmissionPage/LeadSubmissionPage';
+
+import PublicPortalPage from './pages/Public/PublicPortalPage/PublicPortalPage';
 
 
 
@@ -104,7 +105,7 @@ function App() {
                 <Route path="dashboard" element={<DashboardPage />} />
                 <Route path="/chat" element={<ChatPage />} />
 
-                <Route path="/parceiros/submeter-lead" element={<PublicLeadSubmissionPage />} />
+                 <Route path="/parceiros/submeter-lead" element={<PublicPortalPage />} />
                 
                 <Route path="leads" element={<LeadListPage />} />
                 <Route path="leads/novo" element={<LeadFormPage />} />
