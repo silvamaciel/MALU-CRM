@@ -48,14 +48,19 @@ const submitPublicLead = async (brokerToken, leadData) => {
     if (!brokerToken) {
         throw new Error("Token do parceiro é inválido ou não foi fornecido.");
     }
+    console.log(`[PublicSvc DEBUG] A procurar corretor com o token: "${brokerToken}"`);
 
     // 1. Encontra o corretor parceiro pelo TOKEN PÚBLICO
-    const broker = await BrokerContact.findOne({ publicSubmissionToken: brokerToken });
+    const broker = await BrokerContact.findOne({ publicSubmissionToken: String(brokerToken).trim() });
+    
     if (!broker) {
+        console.error(`[PublicSvc DEBUG] Nenhum corretor encontrado para o token fornecido.`);
         throw new Error("Parceiro não encontrado ou token inválido.");
     }
 
-    // 2. O resto da lógica para preparar e criar o lead está correta
+    console.log(`[PublicSvc] Corretor encontrado para submissão: ${broker.nome} (ID: ${broker._id})`);
+
+    // 2. O resto da lógica para preparar e criar o lead
     const dataForCreation = {
         ...leadData,
         company: broker.company,
@@ -63,8 +68,6 @@ const submitPublicLead = async (brokerToken, leadData) => {
         approvalStatus: 'Pendente'
     };
     
-    console.log(`[PublicSvc] A receber lead de '${broker.nome}'. A aguardar aprovação.`);
-
     const newLead = await LeadService.createLead(dataForCreation, broker.company, null);
     
     return newLead;
