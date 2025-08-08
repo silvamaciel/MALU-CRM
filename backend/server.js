@@ -85,6 +85,9 @@ app.use('/api/chat', require('./routes/chatRoutes'));
 app.use('/api/tasks', require('./routes/taskRoutes')); 
 
 
+app.use('/api/public', require('./routes/publicRoutes'));
+
+
 
 
 
