@@ -4,9 +4,38 @@ import axios from 'axios';
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://chatbotmmalu-malucrm.scyzx2.easypanel.host/api';
 
 /**
- * Submete um novo lead a partir do formulário público de um parceiro.
- * @param {string} brokerToken - O token único do corretor.
- * @param {object} leadData - Os dados do lead (nome, email, contato).
+ * Verifica se um corretor parceiro existe com base no CPF ou CRECI.
+ * @param {string} identifier - O CPF ou CRECI a ser verificado.
+ */
+export const checkBrokerApi = async (identifier) => {
+    try {
+        const response = await axios.post(`${API_BASE_URL}/public/broker/check`, { identifier });
+        return response.data.data; // Retorna { exists: true/false, broker: {...} }
+    } catch (error) {
+        console.error("Erro ao verificar parceiro:", error.response?.data || error.message);
+        throw error.response?.data || new Error("Falha ao verificar o parceiro.");
+    }
+};
+
+/**
+ * Regista um novo corretor parceiro.
+ * @param {string} companyToken - O token público da empresa.
+ * @param {object} brokerData - Os dados do corretor (nome, email, cpfCnpj, etc.).
+ */
+export const registerBrokerApi = async (companyToken, brokerData) => {
+    try {
+        const response = await axios.post(`${API_BASE_URL}/public/broker/register/${companyToken}`, brokerData);
+        return response.data.data;
+    } catch (error) {
+        console.error("Erro ao registar parceiro:", error.response?.data || error.message);
+        throw error.response?.data || new Error("Falha ao registar o parceiro.");
+    }
+};
+
+/**
+ * Submete um novo lead a partir do formulário público.
+ * @param {string} brokerToken - O token de submissão do corretor.
+ * @param {object} leadData - Os dados do lead.
  */
 export const submitPublicLeadApi = async (brokerToken, leadData) => {
     try {
@@ -14,7 +43,6 @@ export const submitPublicLeadApi = async (brokerToken, leadData) => {
         return response.data;
     } catch (error) {
         console.error("Erro ao submeter lead:", error.response?.data || error.message);
-        // Lança o erro para que o componente possa tratá-lo
         throw error.response?.data || new Error("Falha ao submeter o lead.");
     }
 };

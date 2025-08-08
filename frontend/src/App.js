@@ -101,6 +101,8 @@ function App() {
                 {/* Rotas Comuns */}
                 <Route path="dashboard" element={<DashboardPage />} />
                 <Route path="/chat" element={<ChatPage />} />
+
+                <Route path="/parceiros/submeter-lead" element={<PublicLeadSubmissionPage />} />
                 
                 <Route path="leads" element={<LeadListPage />} />
                 <Route path="leads/novo" element={<LeadFormPage />} />
