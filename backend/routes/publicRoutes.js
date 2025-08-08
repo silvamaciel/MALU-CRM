@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const PublicController = require('../controllers/PublicController');
+const PublicController = require('../controllers/PublicLeadController');
 
 
 // Rota para o parceiro se identificar
