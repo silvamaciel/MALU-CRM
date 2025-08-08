@@ -58,24 +58,37 @@ const submitPublicLead = async (brokerToken, leadData) => {
 };
 
 
+
 /**
- * Regista um novo corretor parceiro a partir do portal público.
+ * Regista um novo corretor parceiro a partir do portal público,
+ * associando-o a uma empresa específica pelo seu ID.
+ * @param {string} companyId - O ObjectId da empresa parceira.
+ * @param {object} brokerData - Os dados do corretor a ser registado (nome, email, etc.).
+ * @returns {Promise<object>} Os dados essenciais do corretor recém-criado.
  */
-const registerBroker = async (companyToken, brokerData) => {
+const registerBroker = async (companyId, brokerData) => {
     const { nome, email, contato, cpfCnpj, creci } = brokerData;
 
-    if (!nome || !contato) throw new Error("Nome e Contato são obrigatórios.");
-    if (!companyToken) throw new Error("Token da empresa é inválido.");
+    // --- 1. Validação dos Dados de Entrada ---
+    if (!nome || !contato) {
+        throw new Error("Nome e Contato são obrigatórios para o registo.");
+    }
+    if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+        throw new Error("ID da empresa é inválido ou não foi fornecido.");
+    }
 
-    // 1. Encontra a empresa pelo token público
-    const company = await Company.findOne({ publicBrokerToken: companyToken });
-    if (!company) throw new Error("Empresa parceira não encontrada.");
+    // --- 2. Encontrar a Empresa Parceira ---
+    const company = await Company.findById(companyId);
+    if (!company) {
+        throw new Error("Empresa parceira não encontrada. O link de registo pode estar incorreto.");
+    }
 
-    // 2. Valida e limpa os dados
+    // --- 3. Limpeza e Validação dos Identificadores ---
     const cleanedCpfCnpj = cpfCnpj ? String(cpfCnpj).replace(/\D/g, "") : null;
     const cleanedCreci = creci ? String(creci).trim() : null;
 
-    // 3. Verifica se já existe um corretor com estes dados para esta empresa
+    // --- 4. Verificação de Duplicados ---
+    // Verifica se já existe um corretor com o mesmo CPF/CNPJ ou CRECI *para esta empresa*.
     const query = { company: company._id, $or: [] };
     if (cleanedCpfCnpj) query.$or.push({ cpfCnpj: cleanedCpfCnpj });
     if (cleanedCreci) query.$or.push({ creci: cleanedCreci });
@@ -87,21 +100,22 @@ const registerBroker = async (companyToken, brokerData) => {
         }
     }
 
-    // 4. Cria o novo BrokerContact
+    // --- 5. Criação do Novo BrokerContact ---
     const newBroker = new BrokerContact({
         nome,
         email,
         contato,
         cpfCnpj: cleanedCpfCnpj,
         creci: cleanedCreci,
-        company: company._id,
+        company: company._id, // Associa o novo corretor à empresa encontrada
         ativo: true // Novos parceiros são ativos por padrão
     });
 
     await newBroker.save();
-    console.log(`[PublicSvc] Novo parceiro '${nome}' registado para a empresa '${company.nome}'`);
+    console.log(`[PublicSvc] Novo parceiro '${nome}' registado com sucesso para a empresa '${company.nome}'`);
     
-    // Retorna os dados necessários para o frontend continuar o fluxo
+    // --- 6. Retorno dos Dados para o Frontend ---
+    // Retorna os dados essenciais para o frontend poder continuar o fluxo (submeter o lead)
     return {
         _id: newBroker._id,
         nome: newBroker.nome,

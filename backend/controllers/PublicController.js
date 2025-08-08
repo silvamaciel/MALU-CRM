@@ -15,7 +15,7 @@ const submitLeadController = asyncHandler(async (req, res, next) => {
 });
 
 const registerBrokerController = asyncHandler(async (req, res, next) => {
-    const { companyToken } = req.params;
+    const { companyId } = req.params;
     const brokerData = req.body;
     const newBroker = await PublicService.registerBroker(companyToken, brokerData);
     res.status(201).json({ success: true, data: newBroker });
