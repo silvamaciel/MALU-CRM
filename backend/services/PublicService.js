@@ -2,6 +2,7 @@ const BrokerContact = require('../models/BrokerContact');
 const Lead = require('../models/Lead');
 const LeadService = require('./LeadService'); // Reutilizaremos o createLead
 const { cpf: cpfValidator } = require('cpf-cnpj-validator'); // Para validar CPF
+const mongoose = require('mongoose');
 const Company = require('../models/Company');
 
 
