@@ -1,0 +1,47 @@
+/* src/pages/Public/LeadSubmissionPage/LeadSubmissionPage.css */
+.public-submission-page {
+    background-color: #f4f7f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+.submission-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 500px;
+    overflow: hidden;
+}
+.submission-header {
+    background-color: #007bff;
+    color: white;
+    padding: 25px 30px;
+    text-align: center;
+}
+.submission-header h2 { margin: 0; }
+.submission-header p { margin: 5px 0 0 0; opacity: 0.9; }
+
+.submission-form {
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.submission-success {
+    padding: 40px 30px;
+    text-align: center;
+}
+.submission-success h3 {
+    color: #28a745;
+    font-size: 1.8em;
+}
+/* ... (estilos para .form-group, input, button, etc.) ... */
+.submit-button-public {
+    padding: 12px 20px;
+    font-size: 1em;
+    width: 100%;
+    background-color: #28a745; /* Verde para submissão */
+}

@@ -59,7 +59,9 @@ const brokerContactSchema = new Schema({
     },
 }, { timestamps: true });
 
- brokerContactSchema.index({ company: 1, creci: 1 }, { unique: true, sparse: true });
+brokerContactSchema.index({ company: 1, cpf: 1 }, { unique: true, partialFilterExpression: { cpf: { $type: "string" } } });
+brokerContactSchema.index({ company: 1, creci: 1 }, { unique: true, partialFilterExpression: { creci: { $type: "string" } } });
+
 
 
 const BrokerContact = mongoose.model('BrokerContact', brokerContactSchema);

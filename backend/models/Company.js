@@ -2,6 +2,7 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 const { cnpj } = require("cpf-cnpj-validator");
+const { v4: uuidv4 } = require('uuid');
 
 const companySchema = new Schema(
   {
@@ -47,11 +48,18 @@ const companySchema = new Schema(
       ref: 'User',
       required: false
   },
+  publicBrokerToken: {
+        type: String,
+        default: () => uuidv4(),
+        unique: true,
+        index: true
+    },
     
     facebookWebhookSubscriptionId: {
       type: String,
     },
   },
+  
   {
     timestamps: true,
   }

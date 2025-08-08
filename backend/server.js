@@ -91,7 +91,6 @@ app.use('/api/public', require('./routes/publicRoutes'));
 
 
 
-
 const PORT = process.env.PORT || 5000;
 
 app.get('/', (req, res) => {
