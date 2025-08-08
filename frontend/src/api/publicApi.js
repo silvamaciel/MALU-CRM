@@ -19,12 +19,12 @@ export const checkBrokerApi = async (identifier) => {
 
 /**
  * Regista um novo corretor parceiro.
- * @param {string} companyToken - O token público da empresa.
+ * @param {string} companyId - O ID da empresa.
  * @param {object} brokerData - Os dados do corretor (nome, email, cpfCnpj, etc.).
  */
-export const registerBrokerApi = async (companyToken, brokerData) => {
+export const registerBrokerApi = async (companyId, brokerData) => {
     try {
-        const response = await axios.post(`${API_BASE_URL}/public/broker/register/${companyToken}`, brokerData);
+        const response = await axios.post(`${API_BASE_URL}/public/broker/register/${companyId}`, brokerData);
         return response.data.data;
     } catch (error) {
         console.error("Erro ao registar parceiro:", error.response?.data || error.message);
