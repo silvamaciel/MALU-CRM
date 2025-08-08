@@ -14,7 +14,7 @@ function BrokerCheckStep({ onBrokerFound, onBrokerNotFound }) {
         }
         setIsLoading(true);
         try {
-            const result = await checkBrokerApi(identifier);
+            const result = await checkBrokerApi(identifier, companyId);
             if (result.exists) {
                 toast.success(`Bem-vindo(a) de volta, ${result.broker.nome}!`);
                 onBrokerFound(result.broker);

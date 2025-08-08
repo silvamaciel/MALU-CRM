@@ -9,7 +9,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://chatbotmmalu-malu
  */
 export const checkBrokerApi = async (identifier) => {
     try {
-        const response = await axios.post(`${API_BASE_URL}/public/broker/check`, { identifier });
+         const response = await axios.post(`${API_BASE_URL}/public/broker/check`, { identifier, companyId });
         return response.data.data; // Retorna { exists: true/false, broker: {...} }
     } catch (error) {
         console.error("Erro ao verificar parceiro:", error.response?.data || error.message);
