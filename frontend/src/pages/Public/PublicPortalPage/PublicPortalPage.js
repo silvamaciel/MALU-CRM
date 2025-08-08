@@ -42,7 +42,7 @@ function PublicPortalPage() {
     const renderStep = () => {
         switch (currentStep) {
             case 'check_broker':
-                return <BrokerCheckStep onBrokerFound={handleBrokerFound} onBrokerNotFound={handleBrokerNotFound} />;
+               return <BrokerCheckStep companyId={companyId} onBrokerFound={handleBrokerFound} onBrokerNotFound={handleBrokerNotFound} />;
             case 'register_broker':
                 return <BrokerRegisterStep companyToken={companyId} initialIdentifier={identifierForRegister} onBrokerRegistered={handleBrokerRegistered} />;
             case 'submit_lead':
