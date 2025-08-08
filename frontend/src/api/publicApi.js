@@ -9,7 +9,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://chatbotmmalu-malu
  */
 export const checkBrokerApi = async (identifier, companyId) => {
     try {
-         const response = await axios.post(`${API_BASE_URL}/public/broker/check`, { identifier, companyId });
+        const response = await axios.post(`${API_BASE_URL}/public/broker/check`, { identifier, companyId });
         return response.data.data; // Retorna { exists: true/false, broker: {...} }
     } catch (error) {
         console.error("Erro ao verificar parceiro:", error.response?.data || error.message);
@@ -37,10 +37,9 @@ export const registerBrokerApi = async (companyId, brokerData) => {
  * @param {string} brokerToken - O token de submissão do corretor.
  * @param {object} leadData - Os dados do lead.
  */
-export const submitPublicLeadApi = async (brokerId, leadData) => {
+export const submitPublicLeadApi = async (brokerToken, leadData) => {
     try {
-        // Constrói a URL com o ID do corretor
-        const response = await axios.post(`${API_BASE_URL}/public/submit-lead/${brokerId}`, leadData);
+        const response = await axios.post(`${API_BASE_URL}/public/submit-lead/${brokerToken}`, leadData);
         return response.data;
     } catch (error) {
         console.error("Erro ao submeter lead:", error.response?.data || error.message);

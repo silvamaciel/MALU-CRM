@@ -44,29 +44,27 @@ const checkBroker = async (identifier, companyId) => {
 /**
  * Submete um novo lead a partir do portal público.
  */
-const submitPublicLead = async (brokerId, leadData) => {
-
-     if (!brokerId || !mongoose.Types.ObjectId.isValid(brokerId)) {
-        throw new Error("ID do parceiro é inválido.");
+const submitPublicLead = async (brokerToken, leadData) => {
+    if (!brokerToken) {
+        throw new Error("Token do parceiro é inválido ou não foi fornecido.");
     }
 
-    if (!brokerId) throw new Error("Token do parceiro é inválido.");
+    // 1. Encontra o corretor parceiro pelo TOKEN PÚBLICO
+    const broker = await BrokerContact.findOne({ publicSubmissionToken: brokerToken });
+    if (!broker) {
+        throw new Error("Parceiro não encontrado ou token inválido.");
+    }
 
-    // 1. Encontra o corretor parceiro pelo token público
-    const broker = await BrokerContact.findOne({ publicSubmissionToken: brokerId });
-    if (!broker) throw new Error("Parceiro não encontrado ou token inválido.");
-
-    // 2. Prepara os dados do lead para a criação
+    // 2. O resto da lógica para preparar e criar o lead está correta
     const dataForCreation = {
         ...leadData,
         company: broker.company,
-        submittedByBroker: broker._id, // Associa o lead ao corretor
-        approvalStatus: 'Pendente' // Define o status como pendente de aprovação
+        submittedByBroker: broker._id,
+        approvalStatus: 'Pendente'
     };
     
-    console.log(`[PublicSvc] Recebido lead de '${broker.nome}'. Aguardando aprovação.`);
+    console.log(`[PublicSvc] A receber lead de '${broker.nome}'. A aguardar aprovação.`);
 
-    // 3. Reutiliza a sua função createLead, que já tem todas as validações
     const newLead = await LeadService.createLead(dataForCreation, broker.company, null);
     
     return newLead;
