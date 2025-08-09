@@ -6,7 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import BrokerCheckStep from './componentes/BrokerCheckStep';
 import BrokerRegisterStep from './componentes/BrokerRegisterStep';
 
-import LeadFormModal from '../../components/LeadFormModal/LeadFormModal';
+import LeadFormModal from '../../../components/LeadFormModal/LeadFormModal';
 import { ensureOrigemApi } from '../../../api/origens';
 
 import './PublicPortalPage.css';
