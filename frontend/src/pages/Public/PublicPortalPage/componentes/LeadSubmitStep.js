@@ -1,38 +1,38 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import { submitPublicLeadApi } from '../../../../api/publicApi';
+import LeadFormModal from '../../../../components/LeadFormModal/LeadFormModal';
 
 function LeadSubmitStep({ broker }) {
     const [formData, setFormData] = useState({ nome: '', email: '', contato: '', comentario: '' });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submissionSuccess, setSubmissionSuccess] = useState(false);
 
+    // modal state
+    const [openLeadModal, setOpenLeadModal] = useState(false);
+
     const handleChange = (e) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     };
 
     const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    try {
-        console.log("A submeter lead para o broker:", broker);
-        console.log("A usar o token de submissão:", broker?.publicSubmissionToken);
-
-        if (!broker || !broker.publicSubmissionToken) {
-            toast.error("Erro: Token do parceiro não encontrado. Por favor, verifique a sua identidade novamente.");
+        e.preventDefault();
+        setIsSubmitting(true);
+        try {
+            if (!broker || !broker.publicSubmissionToken) {
+                toast.error("Erro: Token do parceiro não encontrado. Refaça a verificação.");
+                setIsSubmitting(false);
+                return;
+            }
+            await submitPublicLeadApi(broker.publicSubmissionToken, formData);
+            setSubmissionSuccess(true);
+        } catch (error) {
+            toast.error(error.error || "Falha ao enviar o lead.");
+        } finally {
             setIsSubmitting(false);
-            return;
         }
+    };
 
-        await submitPublicLeadApi(broker.publicSubmissionToken, formData);
-        setSubmissionSuccess(true);
-    } catch (error) {
-        toast.error(error.error || "Falha ao enviar o lead.");
-    } finally {
-        setIsSubmitting(false);
-    }
-};
-    
     if (submissionSuccess) {
         return (
             <div className="submission-success">
@@ -43,15 +43,63 @@ function LeadSubmitStep({ broker }) {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="submission-form">
-            <div className="form-group"><label>Nome do Cliente *</label><input type="text" name="nome" value={formData.nome} onChange={handleChange} required /></div>
-            <div className="form-group"><label>Email</label><input type="email" name="email" value={formData.email} onChange={handleChange} /></div>
-            <div className="form-group"><label>Telefone / WhatsApp *</label><input type="tel" name="contato" value={formData.contato} onChange={handleChange} required /></div>
-            <div className="form-group"><label>Observações</label><textarea name="comentario" value={formData.comentario} onChange={handleChange} rows="3"></textarea></div>
-            <button type="submit" className="button submit-button-public" disabled={isSubmitting}>
-                {isSubmitting ? 'A enviar...' : 'Enviar Indicação'}
-            </button>
-        </form>
+        <>
+            <form onSubmit={handleSubmit} className="submission-form">
+                <div className="form-group">
+                    <label>Nome do Cliente *</label>
+                    <input type="text" name="nome" value={formData.nome} onChange={handleChange} required />
+                </div>
+                <div className="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" value={formData.email} onChange={handleChange} />
+                </div>
+                <div className="form-group">
+                    <label>Telefone / WhatsApp *</label>
+                    <input type="tel" name="contato" value={formData.contato} onChange={handleChange} required />
+                </div>
+                <div className="form-group">
+                    <label>Observações</label>
+                    <textarea name="comentario" value={formData.comentario} onChange={handleChange} rows="3" />
+                </div>
+
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                    <button type="submit" className="button submit-button-public" disabled={isSubmitting}>
+                        {isSubmitting ? 'A enviar...' : 'Enviar Indicação'}
+                    </button>
+
+                    {/* Ação alternativa: cadastro direto no CRM via modal */}
+                    <button
+                        type="button"
+                        className="button"
+                        onClick={() => setOpenLeadModal(true)}
+                        disabled={isSubmitting}
+                    >
+                        Cadastrar no CRM
+                    </button>
+                </div>
+
+                {/* dica visual opcional */}
+                {/* <small>Ou cadastre internamente no CRM para já direcionar estágio, origem e responsável.</small> */}
+            </form>
+
+            {/* Modal plugado com prefill */}
+            <LeadFormModal
+                isOpen={openLeadModal}
+                onClose={() => setOpenLeadModal(false)}
+                prefill={{
+                    nome: formData.nome || '',
+                    contato: formData.contato || '',
+                    email: formData.email || '',
+                    comentario: formData.comentario || '',
+                }}
+                hideFields={['responsavel']} // oculta o que não precisa
+                onSaved={() => {
+                    setOpenLeadModal(false);
+                    toast.success('Lead criado no CRM.');
+                }}
+            />
+
+        </>
     );
 }
 

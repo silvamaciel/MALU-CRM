@@ -1,0 +1,33 @@
+/* src/components/LeadFormModal/LeadFormModal.css */
+.lfm-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,.4);
+  display: flex; align-items: center; justify-content: center; z-index: 9999;
+}
+.lfm-modal {
+  width: min(920px, 92vw); max-height: 90vh; overflow: auto;
+  background: #fff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.2);
+  padding: 16px 18px 8px;
+}
+.lfm-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.lfm-close { font-size: 22px; border: 0; background: transparent; cursor: pointer; }
+.lfm-loading, .lfm-error { padding: 24px; text-align: center; }
+.lfm-error-text { color: #d32f2f; }
+.lfm-form { margin-top: 8px; }
+.lfm-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+}
+.lfm-field { display: flex; flex-direction: column; gap: 6px; }
+.lfm-field input, .lfm-field select, .lfm-field textarea, .lfm-phone {
+  width: 100%; padding: 10px; border: 1px solid #e0e0e0; border-radius: 8px;
+}
+.lfm-field textarea { min-height: 90px; resize: vertical; }
+.lfm-col-2 { grid-column: span 2; }
+.lfm-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 12px; }
+.lfm-btn { padding: 10px 16px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; }
+.lfm-btn.primary { background: #1f6feb; color: #fff; }
+.lfm-btn.ghost { background: #fff; border-color: #cfd8dc; color: #37474f; }
+.lfm-footer-links { display:flex; gap:12px; margin: 8px 0 4px; }
+@media (max-width: 640px) {
+  .lfm-grid { grid-template-columns: 1fr; }
+  .lfm-col-2 { grid-column: span 1; }
+}
