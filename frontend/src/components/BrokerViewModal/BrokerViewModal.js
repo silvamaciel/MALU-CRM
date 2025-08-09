@@ -1,6 +1,6 @@
 // src/components/BrokerViewModal/BrokerViewModal.jsx
 import React from 'react';
-import './BrokerFormModal.css';
+import './BrokerViewModal';
 
 export default function BrokerViewModal({ isOpen, data, onClose }) {
   if (!isOpen || !data) return null;
