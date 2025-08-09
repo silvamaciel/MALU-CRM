@@ -1,0 +1,7 @@
+/* src/components/BrokerFormModal/BrokerFormModal.css */
+.form-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:999;}
+.form-modal-content{background:#fff;padding:24px;border-radius:8px;max-width:640px;width:100%;}
+.form-group{margin-bottom:12px;display:flex;flex-direction:column;gap:6px;}
+.form-group-checkbox{flex-direction:row;align-items:center;gap:8px;}
+.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
+.modal-error{color:#b00020;}
