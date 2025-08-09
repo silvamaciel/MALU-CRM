@@ -11,10 +11,14 @@ function BrokerRegisterStep({ companyToken, initialIdentifier, onBrokerRegistere
   const [openForm, setOpenForm] = useState(true);
   const [processing, setProcessing] = useState(false);
 
+  // FIX: estados faltantes
+  const [openView, setOpenView] = useState(false);
+  const [registeredData, setRegisteredData] = useState(null);
+
   const initialData = useMemo(() => {
     const isCpfCnpj = /^\d{11}$|^\d{14}$/.test(initialIdentifier || '');
     return {
-      _id: undefined,     
+      _id: undefined,
       nome: '',
       email: '',
       contato: '',
@@ -25,7 +29,6 @@ function BrokerRegisterStep({ companyToken, initialIdentifier, onBrokerRegistere
   }, [initialIdentifier]);
 
   const handleSubmit = async (payload /*, meta */) => {
-
     setProcessing(true);
     try {
       const toSend = { ativo: true, ...payload };
@@ -33,7 +36,11 @@ function BrokerRegisterStep({ companyToken, initialIdentifier, onBrokerRegistere
       const registeredBroker = await registerBrokerApi(companyToken, toSend);
       toast.success('Parceiro registado com sucesso!');
       onBrokerRegistered?.(registeredBroker);
+
+      // Pós-sucesso: fecha form e abre visualização
+      setRegisteredData(registeredBroker);
       setOpenForm(false);
+      setOpenView(true);
     } catch (error) {
       toast.error(error?.error || 'Falha ao registar. Verifique os dados.');
     } finally {
@@ -46,8 +53,8 @@ function BrokerRegisterStep({ companyToken, initialIdentifier, onBrokerRegistere
       <BrokerFormModal
         isOpen={openForm}
         onClose={() => { if (!processing) setOpenForm(false); }}
-        initialData={initialData}              
-        onSubmit={handleSubmit}         
+        initialData={initialData}
+        onSubmit={handleSubmit}
         isProcessing={processing}
         title="Registo de Novo Parceiro"
       />
@@ -67,12 +74,11 @@ function BrokerRegisterStep({ companyToken, initialIdentifier, onBrokerRegistere
         </div>
       )}
 
-      {
       <BrokerViewModal
         isOpen={openView}
         data={registeredData}
         onClose={() => setOpenView(false)}
-      /> }
+      />
     </>
   );
 }
