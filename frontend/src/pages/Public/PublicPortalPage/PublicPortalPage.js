@@ -7,7 +7,7 @@ import BrokerCheckStep from './componentes/BrokerCheckStep';
 import BrokerRegisterStep from './componentes/BrokerRegisterStep';
 
 import LeadFormModal from '../../components/LeadFormModal/LeadFormModal';
-import { ensureOrigemApi } from '../../api/origens';
+import { ensureOrigemApi } from '../../../api/origens';
 
 import './PublicPortalPage.css';
 
