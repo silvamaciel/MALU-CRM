@@ -33,7 +33,7 @@ function PublicPortalPage() {
   const handleBrokerFound = async (brokerData) => {
     setVerifiedBroker(brokerData);
     try {
-      const origem = await ensureOrigemApi('Canal de parceria');
+      const origem = await ensureOrigemApi('Canal de parceria', companyId);
       setOrigemParceriaId(origem?._id || null);
       setOpenLeadModal(true);
       setCurrentStep('check_broker'); // mantém a tela “quieta”

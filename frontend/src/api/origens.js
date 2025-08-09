@@ -67,7 +67,7 @@ export const deleteOrigem = async (id) => { // <<< Função que estava faltando
     }
 };
 
-export const ensureOrigemApi = async (nome, descricao) => {
-  const { data } = await axiosInstance.post(`${API_URL}/ensure`, { nome, descricao });
+export const ensureOrigemApi = async (nome, companyId, descricao) => {
+  const { data } = await axiosInstance.post('/origens/ensure', { nome, companyId, descricao });
   return data?.data;
 };
