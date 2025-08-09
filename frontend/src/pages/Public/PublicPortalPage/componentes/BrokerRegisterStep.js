@@ -4,8 +4,8 @@ import { toast } from 'react-toastify';
 import { registerBrokerApi } from '../../../../api/publicApi';
 
 // IMPORTA O MODAL REUTILIZÁVEL
-import BrokerFormModal from '../../../components/BrokerFormModal/BrokerFormModal';
-import BrokerViewModal from '../../../components/BrokerViewModal/BrokerViewModal';
+import BrokerFormModal from '../../../../components/BrokerFormModal/BrokerFormModal';
+import BrokerViewModal from '../../../../components/BrokerViewModal/BrokerViewModal';
 
 function BrokerRegisterStep({ companyToken, initialIdentifier, onBrokerRegistered }) {
   const [openForm, setOpenForm] = useState(true);
