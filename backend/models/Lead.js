@@ -109,6 +109,12 @@ const leadSchema = new Schema(
       ref: 'BrokerContact',
       default: null
     },
+
+    corretorResponsavel: {
+      type: Schema.Types.ObjectId,
+      ref: "BrokerContact",
+      default: null
+    },
     approvalStatus: {
       type: String,
       enum: ['Aprovado', 'Pendente', 'Rejeitado'],

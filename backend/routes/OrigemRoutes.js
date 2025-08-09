@@ -12,4 +12,6 @@ router.put('/:id', protect, authorize('admin'), origemController.updateOrigem);
 
 router.delete('/:id', protect, authorize('admin'), origemController.deleteOrigem);
 
+router.post('/ensure', origemController.ensureOrigem);
+
 module.exports = router;

@@ -8,11 +8,25 @@ function LeadSubmitStep({ broker }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submissionSuccess, setSubmissionSuccess] = useState(false);
 
+
+
+
     // modal state
     const [openLeadModal, setOpenLeadModal] = useState(false);
+    const [origemParceriaId, setOrigemParceriaId] = useState(null);
 
     const handleChange = (e) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    };
+
+    const openCrmModal = async () => {
+        try {
+            const origem = await ensureOrigemApi('Canal de parceria'); // será criada se não existir
+            setOrigemParceriaId(origem?._id || null);
+            setOpenLeadModal(true);
+        } catch (e) {
+            toast.error('Falha ao garantir a origem "Canal de parceria".');
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -83,6 +97,10 @@ function LeadSubmitStep({ broker }) {
             </form>
 
             {/* Modal plugado com prefill */}
+            <button type="button" className="button" onClick={openCrmModal}>
+                Cadastrar no CRM
+            </button>
+
             <LeadFormModal
                 isOpen={openLeadModal}
                 onClose={() => setOpenLeadModal(false)}
@@ -91,8 +109,12 @@ function LeadSubmitStep({ broker }) {
                     contato: formData.contato || '',
                     email: formData.email || '',
                     comentario: formData.comentario || '',
+                    origem: origemParceriaId,                 // fixado
+                    corretorResponsavel: broker?._id || null, // novo campo
                 }}
-                hideFields={['responsavel']} // oculta o que não precisa
+                hideFields={[
+                    'origem', 'responsavel', 'cpf', 'nascimento', 'endereco', 'corretorResponsavel'
+                ]}
                 onSaved={() => {
                     setOpenLeadModal(false);
                     toast.success('Lead criado no CRM.');

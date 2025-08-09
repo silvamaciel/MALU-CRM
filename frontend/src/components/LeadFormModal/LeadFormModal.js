@@ -1,4 +1,3 @@
-// src/components/LeadFormModal/LeadFormModal.jsx
 import React, { useEffect, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
@@ -25,6 +24,7 @@ const initialState = {
   origem: "",
   responsavel: "",
   comentario: "",
+  corretorResponsavel: "", // novo campo (vai só no payload)
 };
 
 function LeadFormModal({
@@ -34,6 +34,7 @@ function LeadFormModal({
   onSaved,
   prefill,
   hideFields = [],
+  corretorInfo, // { id, nome } opcional – exibe read-only
 }) {
   const isEditMode = Boolean(leadId);
   const isHidden = (f) => hideFields.includes(f);
@@ -50,6 +51,7 @@ function LeadFormModal({
   const [isProcessing, setIsProcessing] = useState(false);
   const [optionsError, setOptionsError] = useState(null);
 
+  // Reset + prefill (create only)
   useEffect(() => {
     if (!isOpen) return;
     setFormData(initialState);
@@ -61,6 +63,7 @@ function LeadFormModal({
     }
   }, [isOpen, isEditMode, prefill]);
 
+  // ESC close
   useEffect(() => {
     if (!isOpen) return;
     const onEsc = (e) => e.key === "Escape" && !isProcessing && onClose?.();
@@ -68,7 +71,7 @@ function LeadFormModal({
     return () => window.removeEventListener("keydown", onEsc);
   }, [isOpen, isProcessing, onClose]);
 
-  // Carrega apenas o que será exibido
+  // Carregar opções (apenas o que será exibido)
   useEffect(() => {
     if (!isOpen) return;
     (async () => {
@@ -76,13 +79,9 @@ function LeadFormModal({
       setOptionsError(null);
       try {
         const jobs = [];
-        if (!isHidden("situacao")) jobs.push(getLeadStages());
-        else jobs.push(Promise.resolve([]));
-        if (!isHidden("origem")) jobs.push(getOrigens());
-        else jobs.push(Promise.resolve([]));
-        if (!isHidden("responsavel")) jobs.push(getUsuarios());
-        else jobs.push(Promise.resolve([]));
-
+        jobs.push(!isHidden("situacao") ? getLeadStages() : Promise.resolve([]));
+        jobs.push(!isHidden("origem") ? getOrigens() : Promise.resolve([]));
+        jobs.push(!isHidden("responsavel") ? getUsuarios() : Promise.resolve([]));
         const [situacoesData, origensData, usuariosData] = await Promise.all(jobs);
         setSituacoesList(Array.isArray(situacoesData) ? situacoesData : []);
         setOrigensList(Array.isArray(origensData) ? origensData : []);
@@ -95,11 +94,11 @@ function LeadFormModal({
         setLoadingOptions(false);
       }
     })();
-  }, [isOpen, hideFields]); // recalcula se mudar visibilidade
+  }, [isOpen, hideFields]);
 
+  // Carregar dados (edição)
   useEffect(() => {
-    if (!isOpen) return;
-    if (!isEditMode || !leadId) return;
+    if (!isOpen || !isEditMode || !leadId) return;
     (async () => {
       setIsLoadingData(true);
       try {
@@ -116,6 +115,7 @@ function LeadFormModal({
           origem: data.origem?._id || "",
           responsavel: data.responsavel?._id || "",
           comentario: data.comentario || "",
+          corretorResponsavel: data.corretorResponsavel?._id || "", // se existir
         };
         setFormData((prev) => ({ ...prev, ...formDataToSet }));
         setInitialData(formDataToSet);
@@ -140,7 +140,7 @@ function LeadFormModal({
     if (e.target.classList.contains("lfm-backdrop") && !isProcessing) onClose?.();
   };
 
-  const sanitizeByHiddenFields = (obj) => {
+  const stripHiddenFields = (obj) => {
     const clone = { ...obj };
     hideFields.forEach((f) => delete clone[f]);
     return clone;
@@ -152,6 +152,7 @@ function LeadFormModal({
       if (isProcessing) return;
       setIsProcessing(true);
 
+      // Min validações
       if (!formData.nome || !formData.contato) {
         toast.warn("Nome e Contato são obrigatórios.");
         setIsProcessing(false);
@@ -177,7 +178,7 @@ function LeadFormModal({
           }
           const changed = {};
           Object.keys(formData).forEach((k) => {
-            if (isHidden(k)) return; // não diffa campo oculto
+            if (isHidden(k)) return; // ignora campo oculto no diff
             const curr = formData[k] ?? "";
             const init = initialData[k] ?? "";
             if (curr !== init) changed[k] = curr === "" ? null : curr;
@@ -187,11 +188,11 @@ function LeadFormModal({
             setIsProcessing(false);
             return;
           }
-          const payload = sanitizeByHiddenFields(changed);
+          const payload = stripHiddenFields(changed);
           await updateLead(leadId, payload);
           toast.success("Lead atualizado!");
         } else {
-          const payload = sanitizeByHiddenFields({ ...formData });
+          const payload = stripHiddenFields({ ...formData });
           Object.keys(payload).forEach((k) => {
             if (!["nome", "contato"].includes(k) && (payload[k] === "" || payload[k] === null)) {
               delete payload[k];
@@ -233,7 +234,6 @@ function LeadFormModal({
         </div>
 
         {(loadingOptions || isLoadingData) && <div className="lfm-loading"><p>Carregando…</p></div>}
-
         {optionsError && !loadingOptions && <div className="lfm-error"><p>{optionsError}</p></div>}
 
         {!loadingOptions && !isLoadingData && !optionsError && (
@@ -297,6 +297,17 @@ function LeadFormModal({
                 <div className="lfm-field lfm-col-2">
                   <label htmlFor="lfm-comentario">Comentário</label>
                   <textarea id="lfm-comentario" name="comentario" value={formData.comentario} onChange={handleChange} />
+                </div>
+              )}
+
+              {/* READ-ONLY: Corretor Responsável (quando vier) */}
+              {corretorInfo?.id && (
+                <div className="lfm-field lfm-col-2">
+                  <label>Corretor Responsável</label>
+                  <div className="lfm-readonly">
+                    <span>{corretorInfo.nome}</span>
+                    <small>ID: {corretorInfo.id}</small>
+                  </div>
                 </div>
               )}
 

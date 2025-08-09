@@ -73,7 +73,22 @@ const deleteOrigem = async (req, res) => {
     }
 };
 
+const ensureOrigem = async (req, res, next) => {
+  try {
+    const { nome, descricao } = req.body;
+    const companyId = req.user?.company; // ajuste se vier por body
+    if (!nome) return res.status(400).json({ error: 'nome é obrigatório' });
+    if (!companyId) return res.status(400).json({ error: 'companyId ausente' });
+
+    const origem = await origemService.findOrCreateOrigem({ nome, descricao }, companyId);
+    return res.json({ success: true, data: origem });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
+    ensureOrigem,
     getOrigens, 
     createOrigem,
     updateOrigem,

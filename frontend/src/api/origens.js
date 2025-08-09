@@ -66,3 +66,8 @@ export const deleteOrigem = async (id) => { // <<< Função que estava faltando
         throw error.response?.data || new Error("Falha ao excluir origem.");
     }
 };
+
+export const ensureOrigemApi = async (nome, descricao) => {
+  const { data } = await axiosInstance.post(`${API_URL}/ensure`, { nome, descricao });
+  return data?.data;
+};
