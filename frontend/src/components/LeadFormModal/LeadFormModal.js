@@ -34,8 +34,10 @@ function LeadFormModal({
   onSaved,
   prefill,
   hideFields = [],
-  corretorInfo, // { id, nome } opcional – exibe read-only
+  corretorInfo, // { id, nome }
+  createApi
 }) {
+  const createFn = createApi
   const isEditMode = Boolean(leadId);
   const isHidden = (f) => hideFields.includes(f);
 
@@ -199,7 +201,7 @@ function LeadFormModal({
             }
           });
           if (payload.cpf && payload.cpf.replace(/\D/g, "") === "") delete payload.cpf;
-          await createLead(payload);
+          await createFn(payload);
           toast.success("Lead cadastrado!");
           setFormData(initialState);
         }
