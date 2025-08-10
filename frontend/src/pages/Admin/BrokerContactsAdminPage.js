@@ -458,7 +458,7 @@ export default function BrokerContactsAdminPage() {
           Solicitações de Leads
         </button>
         <button className={`button ${tab === 'brokers' ? 'primary' : ''}`} onClick={() => setTab('brokers')}>
-          Corretores
+          Lista de Corretores
         </button>
       </div>
 
