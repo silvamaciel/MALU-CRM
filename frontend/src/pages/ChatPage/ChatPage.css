@@ -359,3 +359,57 @@
     display: inline-block;
   }
 }
+
+
+
+/* Hardening para scroll funcionar em flex layouts */
+.chat-page, .conversations-list, .chat-window, .messages-area { min-height: 0; min-width: 0; }
+
+.chat-page{
+  height:auto;                  /* evita cortar em devices com barra dinâmica */
+  min-height: calc(100vh - 120px);
+}
+
+/* Cabeçalho fixo da lista p/ estilo WhatsApp */
+.conversations-header{
+  position: sticky;
+  top: 0;
+  background: #f8f9fa;
+  z-index: 1;
+}
+
+/* Lista precisa ter espaço pra scroll total */
+.conversations-list{ overflow: hidden; }
+.conversations-list ul{
+  overflow-y: auto;
+  height: 100%;
+}
+
+/* Indicadores de carregamento */
+.load-more-hint,
+.load-older-hint{
+  text-align:center;
+  font-size:.85rem;
+  color:#6c757d;
+  padding:8px 0;
+}
+
+/* Bolhas mais “WhatsApp” */
+.message-bubble{
+  border-radius: 16px;
+  padding: 8px 12px;
+}
+.message-bubble-wrapper{ max-width: 80%; }
+@media (max-width: 480px){
+  .message-bubble-wrapper{ max-width: 88%; }
+}
+
+/* Mobile: alternância lista/chat */
+@media (max-width: 768px){
+  .chat-page{ flex-direction: column; }
+  .conversations-list{ display: none; }
+  .chat-window{ display: none; }
+
+  .chat-page.view-list .conversations-list{ display:flex; flex-direction:column; height: calc(100vh - 120px); }
+  .chat-page.view-chat .chat-window{ display:flex; flex-direction:column; height: calc(100vh - 120px); }
+}
