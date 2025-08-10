@@ -116,9 +116,9 @@ function PublicPortalPage() {
             : undefined
         }
         hideFields={[
-          'origem',      // fixado via prefill
-          'responsavel', // fluxo público não usa user interno
-          // corretorResponsavel não precisa esconder: é read-only via bloco, e vai no payload pelo prefill
+          'origem',     
+          'responsavel',
+          'situacao'
         ]}
         onSaved={() => {
           setOpenLeadModal(false);
