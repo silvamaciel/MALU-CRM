@@ -120,11 +120,6 @@ function LoginPage({ onLoginSuccess }) {
         </div>
 
          {/* Botão Login Teste */}
-         <div className="demo-login-container">
-            <button type="button" onClick={handleDemoLogin} className="button demo-button" disabled={isLoading}>
-               Entrar como Teste
-            </button>
-         </div>
 
         {/* Mensagem de Erro/Loading */}
         {error && <p className="error-message">{error}</p>}
