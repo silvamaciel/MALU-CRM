@@ -7,7 +7,6 @@ import BrokerCheckStep from './componentes/BrokerCheckStep';
 import BrokerRegisterStep from './componentes/BrokerRegisterStep';
 
 import LeadFormModal from '../../../components/LeadFormModal/LeadFormModal';
-import { ensureOrigemApi } from '../../../api/origens';
 
 import './PublicPortalPage.css';
 
@@ -20,7 +19,6 @@ function PublicPortalPage() {
   const [identifierForRegister, setIdentifierForRegister] = useState('');
 
   const [openLeadModal, setOpenLeadModal] = useState(false);
-  const [origemParceriaId, setOrigemParceriaId] = useState(null);
 
   if (!companyId) {
     return (
@@ -30,16 +28,10 @@ function PublicPortalPage() {
     );
   }
 
-  const handleBrokerFound = async (brokerData) => {
+  const handleBrokerFound = (brokerData) => {
     setVerifiedBroker(brokerData);
-    try {
-      const origem = await ensureOrigemApi('Canal de parceria', companyId);
-      setOrigemParceriaId(origem?._id || null);
-      setOpenLeadModal(true);
-      setCurrentStep('check_broker'); // mantém a tela “quieta”
-    } catch {
-      toast.error('Falha ao garantir a origem "Canal de parceria".');
-    }
+    setOpenLeadModal(true);           // abre modal direto
+    setCurrentStep('check_broker');   // mantém tela estável
   };
 
   const handleBrokerNotFound = (identifier) => {
@@ -48,16 +40,10 @@ function PublicPortalPage() {
     toast.info("Não encontramos o seu registo. Complete seus dados para continuar.");
   };
 
-  const handleBrokerRegistered = async (brokerData) => {
+  const handleBrokerRegistered = (brokerData) => {
     setVerifiedBroker(brokerData);
-    try {
-      const origem = await ensureOrigemApi('Canal de parceria');
-      setOrigemParceriaId(origem?._id || null);
-      setOpenLeadModal(true);
-      setCurrentStep('check_broker');
-    } catch {
-      toast.error('Falha ao garantir a origem "Canal de parceria".');
-    }
+    setOpenLeadModal(true);           // abre modal após cadastro
+    setCurrentStep('check_broker');
   };
 
   const renderStep = () => {
@@ -107,7 +93,7 @@ function PublicPortalPage() {
         isOpen={openLeadModal}
         onClose={() => setOpenLeadModal(false)}
         prefill={{
-          origem: origemParceriaId,
+          // origem: backend seta como "Canal de parceria" no createLead quando ausente
           corretorResponsavel: verifiedBroker?._id || null,
         }}
         corretorInfo={
@@ -116,9 +102,9 @@ function PublicPortalPage() {
             : undefined
         }
         hideFields={[
-          'origem',     
-          'responsavel',
-          'situacao'
+          'origem',      // escondido; backend define
+          'responsavel', // não usado no portal
+          'situacao',    // evita GET leadStages (401 sem token interno)
         ]}
         onSaved={() => {
           setOpenLeadModal(false);
