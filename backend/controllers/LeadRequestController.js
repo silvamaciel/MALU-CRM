@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const LeadRequest = require('../models/LeadRequest');
 const Lead = require('../models/Lead');
+const LeadStage = require('../models/LeadStage');
 const { findOrCreateOrigem } = require('../services/origemService');
 
 exports.createPublic = async (req, res, next) => {
@@ -15,11 +16,11 @@ exports.createPublic = async (req, res, next) => {
 
     const doc = await LeadRequest.create({
       company,
-       nome, contato, email, comentario,
+      nome, contato, email, comentario,
       corretorResponsavel,
       submittedByBroker: corretorResponsavel,
-       status: 'Pendente',
-     });
+      status: 'Pendente',
+    });
     res.status(201).json({ success: true, data: doc });
   } catch (err) { next(err); }
 };
@@ -55,6 +56,14 @@ exports.approve = async (req, res, next) => {
     // origem default "Canal de parceria"
     const origem = await findOrCreateOrigem({ nome: 'Canal de parceria' }, companyId);
 
+    const firstStage = await LeadStage
+      .findOne({ company: companyId })
+      .sort({ ordem: 1, createdAt: 1 })
+      .select('_id');
+    if (!firstStage) {
+      return res.status(400).json({ error: 'Nenhuma etapa (LeadStage) cadastrada para a empresa.' });
+    }
+
     // mapeamento mínimo → ajuste conforme seu Lead
     const payload = {
       company: companyId,
@@ -66,8 +75,8 @@ exports.approve = async (req, res, next) => {
       corretorResponsavel: doc.corretorResponsavel,
       submittedByBroker: doc.submittedByBroker,
       // defaults internos
-      situacao: process.env.LEAD_STAGE_INBOX_ID, // ou busque do DB
-      responsavel: req.user?._id, // opcional: quem aprovou
+      situacao: firstStage._id,
+      responsavel: req.user?._id,
     };
 
     const lead = await Lead.create(payload);
