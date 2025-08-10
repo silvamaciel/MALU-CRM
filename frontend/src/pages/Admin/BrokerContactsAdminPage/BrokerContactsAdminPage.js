@@ -23,7 +23,7 @@ import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 
 // CSS compartilhado
-import './AdminPages.css';
+import './BrokerContactsAdminPage.css';
 
 // ---------------------------------------------
 // Helpers & Constantes
