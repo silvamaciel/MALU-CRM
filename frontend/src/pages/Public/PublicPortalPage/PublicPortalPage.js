@@ -104,13 +104,12 @@ function PublicPortalPage() {
                 }
                 hideFields={['situacao', 'origem', 'responsavel']}
                 createApi={(payload) => {
-                    if (!verifiedBroker?.publicSubmissionToken) {
-                        return Promise.reject(new Error('Token público do parceiro ausente.'));
-                    }
-                    return submitLeadRequestPublicApi(
-                        verifiedBroker.publicSubmissionToken,
-                        { ...payload, company: companyId } 
-                    );
+                    if (!verifiedBroker?._id) return Promise.reject(new Error('Corretor ausente.'));
+                    return submitLeadRequestPublicApi({
+                        ...payload,
+                        company: companyId,
+                        corretorResponsavel: verifiedBroker._id,
+                    });
                 }}
                 onSaved={() => {
                     setOpenLeadModal(false);

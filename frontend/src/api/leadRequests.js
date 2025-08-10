@@ -1,11 +1,7 @@
 import axiosInstance from './axiosInstance';
 
-export const submitLeadRequestPublicApi = async (publicToken, payload) => {
-  const { data } = await axiosInstance.post(
-    '/public/lead-requests',
-    payload,
-    { headers: { Authorization: `Bearer ${publicToken}` } }
-  );
+export const submitLeadRequestPublicApi = async (payload) => {
+  const { data } = await axiosInstance.post('/public/lead-requests', payload);
   return data?.data;
 };
 

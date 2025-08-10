@@ -6,20 +6,20 @@ const { findOrCreateOrigem } = require('../services/origemService');
 exports.createPublic = async (req, res, next) => {
   try {
     // token do corretor → req.user.type === 'broker'
-    const brokerId = req.user?._id;
-    const companyId = req.user?.company || req.body.company;
-    if (!brokerId || !companyId) return res.status(401).json({ error: 'token inválido' });
-
-    const { nome, contato, email, comentario, corretorResponsavel } = req.body;
+    const { company, corretorResponsavel, nome, contato, email, comentario } = req.body;
+    if (!company) return res.status(400).json({ error: 'company é obrigatório' });
+    if (!corretorResponsavel) return res.status(400).json({ error: 'corretorResponsavel é obrigatório' });
     if (!nome || !contato) return res.status(400).json({ error: 'nome e contato são obrigatórios' });
 
+
+
     const doc = await LeadRequest.create({
-      company: companyId,
-      nome, contato, email, comentario,
-      corretorResponsavel: corretorResponsavel || brokerId,
-      submittedByBroker: brokerId,
-      status: 'Pendente',
-    });
+      company,
+       nome, contato, email, comentario,
+      corretorResponsavel,
+      submittedByBroker: corretorResponsavel,
+       status: 'Pendente',
+     });
     res.status(201).json({ success: true, data: doc });
   } catch (err) { next(err); }
 };
