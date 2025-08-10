@@ -35,3 +35,46 @@ main {
     /* Garante que o main ocupe espaço */
     display: block;
 }
+
+:root{
+  --bg:#f6f8fb; --card:#fff; --ink:#0f172a; --muted:#64748b; --brand:#2563eb; --border:#e5e7eb;
+  --r:8px; --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-6:24px;
+  --fs-12: clamp(12px, .9vw, 12px);
+  --fs-14: clamp(13px, 1vw, 14px);
+  --fs-16: clamp(14px, 1.2vw, 16px);
+  --fs-20: clamp(16px, 1.6vw, 20px);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);overflow-x:hidden}
+.container{max-width:1200px;margin:0 auto;padding:0 var(--space-4)}
+.grid{display:grid;gap:var(--space-4)}
+/* 4 col → 2 col → 1 col */
+.grid-kpis{grid-template-columns:repeat(4,1fr)}
+@media (max-width:1024px){.grid-kpis{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:600px){.grid-kpis{grid-template-columns:1fr}}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;
+      padding:var(--space-4);box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.card--kpi{display:flex;align-items:center;justify-content:space-between;min-height:84px}
+.card-title{font-size:var(--fs-14);color:var(--muted);margin:0 0 var(--space-2)}
+.card-value{font-weight:700;font-size:var(--fs-20)}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:clamp(6px,.8vw,10px) clamp(10px,1.4vw,16px);
+  font-size:var(--fs-14);border-radius:8px;border:1px solid var(--border);background:#fff;
+}
+.btn--primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn--ghost{background:#fff;color:var(--ink)}
+.btn--sm{padding:6px 10px}
+
+.toolbar{display:flex;flex-wrap:wrap;gap:8px}
+.toolbar .btn{flex:0 0 auto}
+
+.chart-wrap{width:100%;min-height:260px}
+.chart-wrap canvas, .chart-wrap svg{width:100% !important;height:auto !important}
+
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tab{padding:6px 12px;border:1px solid var(--border);border-radius:999px;font-size:var(--fs-12);background:#fff}
+.tab.is-active{background:var(--brand);color:#fff;border-color:var(--brand)}
