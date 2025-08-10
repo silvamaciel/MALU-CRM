@@ -8,17 +8,17 @@ import {
   createBrokerContact,
   updateBrokerContact,
   deleteBrokerContact
-} from '../../api/brokerContacts';
+} from '../../../api/brokerContacts';
 
 // APIs novas (Solicitações)
 import {
   getLeadRequests,
   approveLeadRequest,
   rejectLeadRequest
-} from '../../api/leadRequests';
+} from '../../../api/leadRequests';
 
 // UI
-import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
+import ConfirmModal from '../../../components/ConfirmModal/ConfirmModal';
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 
