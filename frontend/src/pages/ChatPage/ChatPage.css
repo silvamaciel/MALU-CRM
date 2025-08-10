@@ -29,7 +29,7 @@ html, body { height:100%; }
 .admin-page.chat-page{
   flex:1 1 auto;                  /* ocupa o restante do main-content */
   min-height:0;
-  height:auto;                    /* evita somar com header */
+  height:50vh;                /* evita somar com header */
   display:flex;
   background-color:var(--bg);
   border-radius:8px;
