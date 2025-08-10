@@ -79,7 +79,7 @@ ensureOrigem = async (req, res, next) => {
     const companyId = req.user?.company || companyIdBody; // <- pega do token ou do body
     if (!nome) return res.status(400).json({ error: 'nome é obrigatório' });
     if (!companyId) return res.status(400).json({ error: 'companyId ausente' });
-    const origem = await findOrCreateOrigem({ nome, descricao }, companyId);
+    const origem = await origemService.findOrCreateOrigem({ nome, descricao }, companyId);
     res.json({ success: true, data: origem });
   } catch (err) { next(err); }
 };
