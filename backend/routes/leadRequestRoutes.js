@@ -4,7 +4,7 @@ const ctrl = require('../controllers/LeadRequestController');
 const { protect, authorize } = require('../middlewares/authMiddleware');
 
 // público (corretor)
-router.post('/public/lead-requests', protect, ctrl.createPublic);
+router.post('/public/lead-requests', ctrl.createPublic);
 
 // admin
 router.get('/lead-requests', protect, authorize('admin'), ctrl.listAdmin);

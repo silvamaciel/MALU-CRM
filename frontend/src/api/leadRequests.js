@@ -1,13 +1,11 @@
 import axiosInstance from './axiosInstance';
 
 export const submitLeadRequestPublicApi = async (publicToken, payload) => {
-  // chamada com header próprio (token do corretor)
-  const client = axiosInstance.create();
-  client.interceptors.request.use((cfg) => {
-    cfg.headers.Authorization = `Bearer ${publicToken}`;
-    return cfg;
-  });
-  const { data } = await client.post('/public/lead-requests', payload);
+  const { data } = await axiosInstance.post(
+    '/public/lead-requests',
+    payload,
+    { headers: { Authorization: `Bearer ${publicToken}` } }
+  );
   return data?.data;
 };
 
@@ -25,3 +23,5 @@ export const rejectLeadRequest = async (id, reason) => {
   const { data } = await axiosInstance.post(`/lead-requests/${id}/reject`, { reason });
   return data?.data;
 };
+
+

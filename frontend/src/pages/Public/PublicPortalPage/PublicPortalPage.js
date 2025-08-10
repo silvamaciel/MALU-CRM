@@ -107,7 +107,10 @@ function PublicPortalPage() {
                     if (!verifiedBroker?.publicSubmissionToken) {
                         return Promise.reject(new Error('Token público do parceiro ausente.'));
                     }
-                    return submitLeadRequestPublicApi(verifiedBroker.publicSubmissionToken, payload);
+                    return submitLeadRequestPublicApi(
+                        verifiedBroker.publicSubmissionToken,
+                        { ...payload, company: companyId } 
+                    );
                 }}
                 onSaved={() => {
                     setOpenLeadModal(false);
