@@ -1,415 +1,186 @@
-/* src/pages/Chat/ChatPage.css */
-
-.chat-page {
-    display: flex;
-    /* Usa a altura total disponível do .main-layout-content. 'calc' subtrai a altura do seu header principal se necessário. */
-    height: calc(100vh - 120px); 
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    overflow: hidden; /* Impede que o scroll vaze para fora do componente */
+/* ====== Tokens ====== */
+:root{
+  /* ajuste se o header topo do app tiver outra altura real */
+  --app-header-h: 72px;
+  --border:#e9ecef; --ink:#212529; --muted:#6c757d; --bg:#fff; --panel:#f8f9fa;
+  --brand:#007bff; --ok:#28a745; --bubble-in:#ffffff; --bubble-out:#dcf8c6;
 }
 
-/* --- Coluna da Esquerda: Lista de Conversas --- */
-.conversations-list {
-    width: 340px;
-    border-right: 1px solid #e9ecef;
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-    background-color: #f8f9fa;
+/* ====== Contêiner raiz do chat ====== */
+.admin-page.chat-page{
+  display:flex;
+  height: calc(100vh - var(--app-header-h));
+  min-height: calc(100vh - var(--app-header-h));
+  background-color: var(--bg);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.08);
+  overflow:hidden; /* sem scroll fora das colunas */
 }
 
-.conversations-list header {
-    padding: 1rem;
-    border-bottom: 1px solid #e9ecef;
-    flex-shrink: 0;
-}
-.conversations-list h3 {
-    margin: 0;
-    font-size: 1.25rem;
+/* Hardening: permite scroll interno em layouts flex */
+.admin-page.chat-page,
+.conversations-list,
+.chat-window,
+.messages-area { min-height:0; min-width:0; }
+
+/* ====== Coluna Esquerda: Lista de Conversas ====== */
+.conversations-list{
+  width:340px;                      /* ajuste: 320/360 conforme preferir */
+  border-right:1px solid var(--border);
+  display:flex; flex-direction:column;
+  flex-shrink:0;
+  background-color: var(--panel);
+  height:100%;
+  overflow:hidden;                  /* scroll fica no UL */
 }
 
-.conversations-list ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    overflow-y: auto; /* Adiciona scroll apenas à lista, se necessário */
-    flex-grow: 1;
+.conversations-list header{
+  padding:12px 16px;
+  border-bottom:1px solid var(--border);
+  background:var(--panel);
+  position:sticky; top:0; z-index:1;
 }
+.conversations-list h3{ margin:0; font-size:1.1rem; color:var(--ink); }
 
-.conversations-list li {
-    display: flex;
-    align-items: center;
-    padding: 12px 15px;
-    border-bottom: 1px solid #e9ecef;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    position: relative;
-}
-.conversations-list li:hover {
-    background-color: #e9ecef;
-}
-.conversations-list li.active {
-    background-color: #007bff;
-    color: white;
-}
-.conversations-list li.active .conv-name {
-    color: white;
-}
-.conversations-list li.active .conv-preview {
-    color: #f0f0f0;
-}
-
-.conv-avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    margin-right: 12px;
-    object-fit: cover;
-    background-color: #ddd;
-}
-
-.conv-info {
-    overflow: hidden; /* Garante que o texto não vaze */
-}
-.conv-name {
-    font-weight: 600;
-    display: block;
-    margin-bottom: 4px;
-    color: #343a40;
-}
-.conv-preview {
-    font-size: 0.9em;
-    color: #6c757d;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis; /* Adiciona "..." se o texto for muito longo */
-    display: block;
-    max-width: 220px;
-}
-
-.unread-badge {
-    position: absolute;
-    top: 50%;
-    right: 15px;
-    transform: translateY(-50%);
-    background-color: #28a745; /* Verde */
-    color: white;
-    font-size: 0.75em;
-    font-weight: bold;
-    padding: 4px 8px;
-    border-radius: 12px;
-}
-
-/* --- Painel Central: Janela de Chat --- */
-.chat-window {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  background-color: #e5ddd5;
-  height: 100%; /* antes não tinha */
-  max-height: 100vh; /* impede de ultrapassar a tela */
-}
-
-.chat-header {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    padding: 10px 15px;
-    border-bottom: 1px solid #e0e0e0;
-    flex-shrink: 0;
-    background-color: #f0f2f5;
-}
-.chat-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
-    background-color: #ccc;
-}
-.chat-header-info h4 {
-    margin: 0;
-    font-size: 1.1em;
-}
-.chat-header-info span {
-    font-size: 0.8em;
-    color: #6c757d;
-}
-.chat-header-actions {
-    margin-left: auto; /* Empurra os ícones para a direita */
-}
-
-.messages-area {
-  flex-grow: 1;
-  overflow-y: auto;
-  padding: 16px;
-  background-color: #e5ddd5;
-  display: flex;
-  flex-direction: column;
-  max-height: calc(100vh - 150px);
-  font-size: 0.95rem;       
-  line-height: 1.2;         
-  word-break: break-word;   
-  overflow-x: hidden; 
-}
-
-.message-text {
-  word-break: break-word;
-  font-size: inherit;
-  line-height: inherit;
-}
-
-
-
-.message-bubble-wrapper {
-    display: flex;
-    margin-bottom: 10px;
-    max-width: 75%;
-}
-
-.message-bubble-wrapper.incoming {
-    justify-content: flex-start; /* Alinha à esquerda */
-    align-self: flex-start;
-}
-
-.message-bubble-wrapper.outgoing {
-    justify-content: flex-end; /* Alinha à direita */
-    align-self: flex-end;
-}
-
-.message-bubble {
-    padding: 4px 08px;
-    border-radius: 12px;
-    line-height: 1.2;
-    box-shadow: 0 1px 1px rgba(0,0,0,0.05);
-}
-
-
-.message-bubble p {
-    margin: 0;
-}
-.message-timestamp {
-    display: block;
-    font-size: 0.75em;
-    margin-top: 5px;
-    text-align: right;
-    opacity: 0.7;
-}
-.message-bubble.incoming {
-    background-color: #ffffff;
-    color: #212529;
-    border-bottom-left-radius: 4px;
-}
-.message-bubble.outgoing {
-    background-color: #dcf8c6; /* Verde claro do WhatsApp */
-    color: #212529;
-    border-bottom-right-radius: 4px;
-}
-.message-bubble.outgoing .message-timestamp {
-    color: #557549;
-}
-
-.message-input-area {
-    display: flex;
-    align-items: center;
-    padding: 10px 15px;
-    border-top: 1px solid #e0e0e0;
-    background-color: #f0f2f5;
-    flex-shrink: 0;
-}
-.message-input-area input {
-    flex-grow: 1;
-    border: 1px solid #ccc;
-    padding: 12px 18px;
-    border-radius: 22px;
-    margin: 0 10px;
-    font-size: 1em;
-}
-.message-input-area button {
-    /* Reutilize sua classe .button .primary-button ou adicione estilos específicos */
-    border-radius: 50%;
-    width: 44px;
-    height: 44px;
-    padding: 0;
-}
-
-.no-chat-selected {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    color: #6c757d;
-    font-size: 1.2em;
-    background-color: #f8f9fa;
-}
-
-
-.message-bubble-wrapper.incoming .message-bubble {
-    background-color: #ffffff; /* Fundo branco */
-    color: #212529;
-    border-bottom-left-radius: 4px;
-}
-
-/* Estilo para mensagens ENVIADAS (por você) */
-.message-bubble-wrapper.outgoing .message-bubble {
-    background-color: #dcf8c6; /* Verde claro do WhatsApp */
-    color: #212529;
-    border-bottom-right-radius: 4px;
-}
-.message-bubble-wrapper.outgoing .message-bubble .message-timestamp {
-    color: #557549;
-}
-
-
-
-.message-image {
-    max-width: 100%;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-.message-caption {
-    margin-top: 8px;
-    font-size: 0.9em;
-    color: #333;
-}
-
-.message-audio {
-    width: 100%;
-    min-width: 250px;
-}
-
-.message-document {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px;
-    background-color: rgba(0,0,0,0.05);
-    border-radius: 8px;
-    text-decoration: none;
-    color: #333;
-}
-.message-document:hover {
-    background-color: rgba(0,0,0,0.1);
-}
-
-
-.chat-page.mobile .conversations-list {
-  display: none;
-}
-.chat-page.mobile.list-view .conversations-list {
-  display: flex;
-}
-.chat-page.mobile.chat-view .chat-window {
-  display: flex;
-}
-.chat-page.mobile.list-view .chat-window {
-  display: none;
-}
-
-/* Botão de voltar no topo do chat */
-.chat-back-button {
-  background: none;
-  border: none;
-  font-size: 1rem;
-  margin: 10px;
-  color: #007bff;
-  cursor: pointer;
-  display: block;
-}
-
-
-@media (max-width: 768px) {
-  .chat-page {
-    flex-direction: column;
-  }
-
-  .conversations-list {
-    display: none;
-  }
-
-  .chat-window {
-    display: none;
-  }
-
-  .chat-page.view-list .conversations-list {
-    display: flex;
-  }
-
-  .chat-page.view-chat .chat-window {
-    display: flex;
-  }
-}
-
-
-.back-button {
-  display: none;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-
-@media (max-width: 768px) {
-  .back-button {
-    display: inline-block;
-  }
-}
-
-
-
-/* Hardening para scroll funcionar em flex layouts */
-.chat-page, .conversations-list, .chat-window, .messages-area { min-height: 0; min-width: 0; }
-
-.chat-page{
-  height:auto;                  /* evita cortar em devices com barra dinâmica */
-  min-height: calc(100vh - 120px);
-}
-
-/* Cabeçalho fixo da lista p/ estilo WhatsApp */
-.conversations-header{
-  position: sticky;
-  top: 0;
-  background: #f8f9fa;
-  z-index: 1;
-}
-
-/* Lista precisa ter espaço pra scroll total */
-.conversations-list{ overflow: hidden; }
 .conversations-list ul{
-  overflow-y: auto;
-  height: 100%;
+  list-style:none; margin:0; padding:0;
+  flex:1 1 auto; height:100%;
+  overflow-y:auto; -webkit-overflow-scrolling:touch;
 }
 
-/* Indicadores de carregamento */
-.load-more-hint,
+.conversations-list li{
+  display:flex; align-items:center; gap:12px;
+  padding:12px 15px;
+  border-bottom:1px solid var(--border);
+  cursor:pointer; transition: background-color .2s;
+  position:relative; background:#fff;
+}
+.conversations-list li:hover{ background-color:#f2f4f7; }
+.conversations-list li.active{ background-color: var(--brand); color:#fff; }
+.conversations-list li.active .conv-name{ color:#fff; }
+.conversations-list li.active .conv-preview{ color:#f0f0f0; }
+
+.conv-avatar{
+  width:48px;height:48px;border-radius:50%;
+  object-fit:cover;background:#ddd; flex:0 0 auto;
+}
+.conv-info{ overflow:hidden; }
+.conv-name{
+  font-weight:600; display:block; margin:0 0 4px; color:#343a40;
+}
+.conv-preview{
+  font-size:.9em; color:var(--muted);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block;
+  max-width:220px;
+}
+.unread-badge{
+  position:absolute; top:50%; right:15px; transform:translateY(-50%);
+  background:var(--ok); color:#fff; font-size:.75em; font-weight:700;
+  padding:4px 8px; border-radius:12px;
+}
+
+/* ====== Coluna Direita: Janela do Chat ====== */
+.chat-window{
+  flex:1 1 auto; display:flex; flex-direction:column;
+  background-color:#e5ddd5; height:100%;
+}
+
+.chat-header{
+  display:flex; align-items:center; gap:15px;
+  padding:10px 15px; border-bottom:1px solid #e0e0e0;
+  background:#f0f2f5; flex:0 0 auto;
+}
+.chat-avatar{ width:40px;height:40px;border-radius:50%;object-fit:cover;background:#ccc; }
+.chat-header-info h4{ margin:0; font-size:1.1em; color:#111; }
+.chat-header-info span{ font-size:.8em; color:var(--muted); }
+.chat-header-actions{ margin-left:auto; }
+
+/* Botão voltar (mobile) */
+.back-button{
+  display:none; background:var(--brand); color:#fff; border:none;
+  padding:6px 12px; border-radius:6px; font-size:.9rem; cursor:pointer;
+}
+
+/* Área de mensagens (scroll central) */
+.messages-area{
+  flex:1 1 auto; overflow-y:auto; -webkit-overflow-scrolling:touch;
+  padding:16px; background:#e5ddd5;
+  display:flex; flex-direction:column; gap:10px;
+  font-size:.95rem; line-height:1.25; word-break:break-word; overflow-x:hidden;
+}
+
+/* Dica de carregar histórico */
 .load-older-hint{
-  text-align:center;
-  font-size:.85rem;
-  color:#6c757d;
-  padding:8px 0;
+  text-align:center; font-size:.85rem; color:var(--muted); padding:6px 0;
 }
 
-/* Bolhas mais “WhatsApp” */
+/* Bolhas */
+.message-bubble-wrapper{ display:flex; max-width:80%; }
+@media (max-width:480px){ .message-bubble-wrapper{ max-width:88%; } }
+
+.message-bubble-wrapper.incoming{ justify-content:flex-start; align-self:flex-start; }
+.message-bubble-wrapper.outgoing{ justify-content:flex-end; align-self:flex-end; }
+
 .message-bubble{
-  border-radius: 16px;
-  padding: 8px 12px;
+  background:#fff; color:#212529;
+  border-radius:16px; padding:8px 12px;
+  box-shadow:0 1px 1px rgba(0,0,0,.05);
 }
-.message-bubble-wrapper{ max-width: 80%; }
-@media (max-width: 480px){
-  .message-bubble-wrapper{ max-width: 88%; }
+.message-bubble p{ margin:0; }
+.message-timestamp{
+  display:block; font-size:.75em; margin-top:5px; text-align:right; opacity:.7;
 }
 
-/* Mobile: alternância lista/chat */
-@media (max-width: 768px){
-  .chat-page{ flex-direction: column; }
-  .conversations-list{ display: none; }
-  .chat-window{ display: none; }
-
-  .chat-page.view-list .conversations-list{ display:flex; flex-direction:column; height: calc(100vh - 120px); }
-  .chat-page.view-chat .chat-window{ display:flex; flex-direction:column; height: calc(100vh - 120px); }
+/* Cores WhatsApp-like */
+.message-bubble-wrapper.incoming .message-bubble{
+  background: var(--bubble-in); border-bottom-left-radius:4px;
 }
+.message-bubble-wrapper.outgoing .message-bubble{
+  background: var(--bubble-out); border-bottom-right-radius:4px;
+}
+.message-bubble-wrapper.outgoing .message-bubble .message-timestamp{ color:#557549; }
+
+/* Tipos de conteúdo */
+.message-image{ max-width:100%; border-radius:8px; cursor:pointer; }
+.message-caption{ margin-top:8px; font-size:.9em; color:#333; }
+.message-audio{ width:100%; min-width:250px; }
+.message-document{
+  display:flex; align-items:center; gap:10px; padding:10px;
+  background:rgba(0,0,0,.05); border-radius:8px; text-decoration:none; color:#333;
+}
+.message-document:hover{ background:rgba(0,0,0,.1); }
+
+/* Input de mensagem */
+.message-input-area{
+  display:flex; align-items:center; gap:10px;
+  padding:10px 15px; border-top:1px solid #e0e0e0; background:#f0f2f5; flex:0 0 auto;
+}
+.message-input-area input{
+  flex:1 1 auto; border:1px solid #ccc; padding:12px 18px;
+  border-radius:22px; font-size:1em; background:#fff;
+}
+.message-input-area button{
+  border-radius:50%; width:44px; height:44px; padding:0; cursor:pointer;
+}
+
+/* Estado sem conversa selecionada */
+.no-chat-selected{
+  display:flex; align-items:center; justify-content:center;
+  height:100%; color:var(--muted); font-size:1.2em; background:#f8f9fa;
+}
+
+/* ====== Mobile: alternância lista/chat com alturas iguais ====== */
+@media (max-width:768px){
+  .admin-page.chat-page{ flex-direction:column; }
+
+  .conversations-list{ display:none; }
+  .chat-window{ display:none; }
+
+  .chat-page.view-list .conversations-list{ display:flex; height:100%; }
+  .chat-page.view-chat .chat-window{ display:flex; height:100%; }
+
+  .back-button{ display:inline-block; }
+}
+
+/* ====== Extras ====== */
+.load-more-hint{ text-align:center; font-size:.85rem; color:var(--muted); padding:8px 0; }
