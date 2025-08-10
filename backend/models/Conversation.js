@@ -27,6 +27,7 @@ const conversationSchema = new Schema({
 
 // Garante que só exista uma conversa por lead/canal
 conversationSchema.index({ lead: 1, channel: 1 }, { unique: true });
+conversationSchema.index({ company: 1, lastMessageAt: -1, _id: -1 });
 
 const Conversation = mongoose.model('Conversation', conversationSchema);
 module.exports = Conversation;

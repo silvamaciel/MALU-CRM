@@ -21,12 +21,16 @@ const messageSchema = new Schema({
     content: { type: String, required: true, trim: true }, 
     mediaUrl: { type: String, trim: true }, 
     mediaMimeType: { type: String, trim: true },
+    read: { type: Boolean, default: false, index: true },
     status: {
         type: String,
         enum: ['sent', 'delivered', 'read', 'failed'],
         default: 'sent'
     }
 }, { timestamps: true });
+
+messageSchema.index({ conversation: 1, createdAt: -1 });
+
 
 const Message = mongoose.model('Message', messageSchema);
 module.exports = Message;

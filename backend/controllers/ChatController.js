@@ -8,10 +8,11 @@ const ErrorResponse = require('../utils/errorResponse');
  * @route   GET /api/chat/conversations
  * @access  Privado
  */
-const listConversationsController = asyncHandler(async (req, res, next) => {
-    const companyId = req.user.company;
-    const conversations = await ChatService.listConversations(companyId);
-    res.status(200).json({ success: true, data: conversations });
+const listConversationsController = asyncHandler(async (req, res) => {
+  const companyId = req.user.company;
+  const { limit, cursor } = req.query;
+  const result = await ChatService.listConversations(companyId, { limit, cursor });
+  res.status(200).json({ success: true, ...result });
 });
 
 /**
@@ -19,11 +20,12 @@ const listConversationsController = asyncHandler(async (req, res, next) => {
  * @route   GET /api/chat/conversations/:conversationId/messages
  * @access  Privado
  */
-const getMessagesController = asyncHandler(async (req, res, next) => {
-    const { conversationId } = req.params;
-    const companyId = req.user.company;
-    const messages = await ChatService.getMessages(conversationId, companyId);
-    res.status(200).json({ success: true, data: messages });
+const getMessagesController = asyncHandler(async (req, res) => {
+  const { conversationId } = req.params;
+  const companyId = req.user.company;
+  const { limit, before, after } = req.query;
+  const result = await ChatService.getMessages(conversationId, companyId, { limit, before, after });
+  res.status(200).json({ success: true, ...result });
 });
 
 /**

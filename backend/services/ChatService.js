@@ -10,81 +10,142 @@ const origemService = require('./origemService');
 
 
 
+// ---------- Helpers de cursor ----------
+const encodeCursor = (doc) =>
+  Buffer.from(`${new Date(doc.lastMessageAt).getTime()}|${doc._id.toString()}`).toString('base64');
+
+const decodeCursor = (cursor) => {
+  try {
+    const [ts, id] = Buffer.from(cursor, 'base64').toString('utf8').split('|');
+    return { ts: new Date(Number(ts)), id: new mongoose.Types.ObjectId(id) };
+  } catch {
+    return null;
+  }
+};
+
+// Coerção flex: aceita ISO, epoch ou messageId
+const coerceToDate = async (val) => {
+  if (!val) return null;
+  if (/^[a-f0-9]{24}$/i.test(val)) {
+    const m = await Message.findById(val).select('createdAt').lean();
+    return m?.createdAt || null;
+  }
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? null : d;
+};
+
+
+
 /**
- * Lista todas as conversas de uma empresa, ordenadas pela última mensagem.
+ * Lista conversas com cursor pagination + lastMessage e unreadCount embarcados.
+ * GET /conversations?limit=30&cursor=<base64>
  */
-/**
- * Lista todas as conversas de uma empresa, ordenadas pela última mensagem.
- */
-const listConversations = async (companyId) => {
-    console.log(`[ChatService] Buscando conversas para a Company ID: ${companyId}`);
-    if (!companyId) {
-        console.error("[ChatService] ERRO: companyId não foi fornecido para listConversations.");
-        return [];
+const listConversations = async (companyId, { limit = 30, cursor = null } = {}) => {
+    if (!companyId) return { items: [], nextCursor: null };
+
+    // Filtro base
+    const match = { company: new mongoose.Types.ObjectId(companyId) };
+    // Cursor composto (lastMessageAt desc, _id desc)
+    if (cursor) {
+        const c = decodeCursor(cursor);
+        if (c?.ts && c?.id) {
+            match.$or = [
+                { lastMessageAt: { $lt: c.ts } },
+                { lastMessageAt: c.ts, _id: { $lt: c.id } }
+            ];
+        }
     }
 
-    try {
-        const rawConversations = await Conversation.find({ company: companyId })
-            .populate({
-                path: 'lead',
-                select: 'nome fotoUrl situacao',
-                populate: {
-                    path: 'situacao',
-                    model: 'LeadStage',
-                    select: 'nome'
-                }
-            })
-            .sort({ lastMessageAt: -1 })
-            .lean();
+    // Pipeline agregada para matar N+1
+    const pipeline = [
+        { $match: match },
+        { $sort: { lastMessageAt: -1, _id: -1 } },
+        { $limit: Number(limit) + 1 },
 
-        const enrichedConversations = await Promise.all(
-            rawConversations.map(async (conv) => {
-                const lastMsg = await Message.findOne({ conversation: conv._id })
-                    .sort({ createdAt: -1 })
-                    .select('direction content')
-                    .lean();
+        // last message
+        {
+          $lookup: {
+            from: 'messages',
+            let: { convId: '$_id' },
+            pipeline: [
+              { $match: { $expr: { $eq: ['$conversation', '$$convId'] } } },
+              { $sort: { createdAt: -1 } },
+              { $limit: 1 },
+              { $project: { direction: 1, content: 1 } }
+            ],
+            as: 'lastMsg'
+          }
+        },
+        {
+          $addFields: {
+            lastMessage: { $ifNull: [{ $arrayElemAt: ['$lastMsg.content', 0] }, '' ] },
+            lastMessageDirection: { $arrayElemAt: ['$lastMsg.direction', 0] }
+          }
+        },
+        {
+          $project: {
+            lastMsg: 0
+          }
+        }
+    ];
 
-                const unreadCount = await Message.countDocuments({
-                    conversation: conv._id,
-                    read: false,
-                    direction: 'incoming'
-                });
+    const docs = await Conversation.aggregate(pipeline).exec();
 
-                return {
-                    ...conv,
-                    lastMessage: lastMsg?.content || '',
-                    lastMessageDirection: lastMsg?.direction || null,
-                    unreadCount
-                };
-            })
-        );
+    const hasExtra = docs.length > limit;
+    const items = hasExtra ? docs.slice(0, limit) : docs;
+    const nextCursor = hasExtra ? encodeCursor(docs[limit - 1]) : null;
 
-        console.log(`[ChatService] Encontradas ${enrichedConversations.length} conversas.`);
-        return enrichedConversations;
-
-    } catch (error) {
-        console.error("[ChatService] Erro ao buscar conversas:", error);
-        throw new Error("Erro interno ao buscar conversas.");
-    }
+    // Nota: unreadCount confiável vem da Conversation (você já reseta na leitura)
+    return { items, nextCursor };
 };
 
 
 /**
- * Busca todas as mensagens de uma conversa específica e zera o contador de não lidas.
+ * Mensagens com paginação:
+ * - Sem params: retorna o *último* bloco (limit) em ordem cronológica ASC.
+ * - before: carrega mais antigas (infinite reverso).
+ * - after: carrega apenas novas (polling).
+ * GET /messages?limit=30&before=<iso|id>&after=<iso|id>
  */
-const getMessages = async (conversationId, companyId) => {
-    const conversation = await Conversation.findOne({ _id: conversationId, company: companyId });
-    if (!conversation) {
-        throw new Error("Conversa não encontrada.");
+const getMessages = async (conversationId, companyId, { limit = 30, before, after } = {}) => {
+    const conv = await Conversation.findOne({ _id: conversationId, company: companyId }).lean();
+    if (!conv) throw new Error('Conversa não encontrada.');
+
+    // Zera contador centralizado na Conversation (modelo atual)
+    if (conv.unreadCount > 0) {
+        await Conversation.updateOne({ _id: conv._id }, { $set: { unreadCount: 0 } });
     }
 
-    // Zera o contador de não lidas
-    if (conversation.unreadCount > 0) {
-        conversation.unreadCount = 0;
-        await conversation.save();
+    const query = { conversation: conversationId };
+    let sort = { createdAt: -1 }; // default p/ pegar últimas
+    let needReverse = true;
+
+    const beforeDate = await coerceToDate(before);
+    const afterDate = await coerceToDate(after);
+
+    if (afterDate) {
+        // polling de novas
+        query.createdAt = { $gt: afterDate };
+        sort = { createdAt: 1 };
+        needReverse = false;
+    } else if (beforeDate) {
+        // paginação de mais antigas
+        query.createdAt = { $lt: beforeDate };
+        sort = { createdAt: -1 };
+        needReverse = true;
     }
 
-    return Message.find({ conversation: conversationId }).sort({ createdAt: 1 }).lean();
+    const rows = await Message.find(query)
+        .sort(sort)
+        .limit(Number(limit))
+        .lean();
+
+    const items = needReverse ? rows.reverse() : rows;
+
+    // Cursor para próxima página de "antigas"
+    const nextBefore = items.length ? items[0].createdAt : null;
+
+    return { items, nextBefore };
 };
 
 /**
