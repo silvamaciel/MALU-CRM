@@ -201,7 +201,7 @@ function BrokersSection() {
                 <th>CRECI</th>
                 <th>Imobiliária/Autônomo</th>
                 <th>Status</th>
-                <th style={{textAlign:'right'}}>Ações</th>
+                <th style={{ textAlign: 'right' }}>Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -213,10 +213,12 @@ function BrokersSection() {
                   <td>{b.creci || '-'}</td>
                   <td>{b.nomeImobiliaria || 'Autônomo'}</td>
                   <td>{b.ativo ? 'Ativo' : 'Inativo'}</td>
-                  <td style={{display:'flex', gap:8, justifyContent:'flex-end'}}>
-                    <button onClick={() => handleOpenViewModal(b)} className="button view-button-table">Ver</button>
-                    <button onClick={() => handleOpenEditModal(b)} className="button edit-button-table">Editar</button>
-                    <button onClick={() => handleOpenDeleteConfirm(b)} className="button delete-button-table">Excluir</button>
+                  <td className="actions">
+                    <div className="actions-cell">
+                      <button onClick={() => handleOpenViewModal(b)} className="button view-button-table">Ver</button>
+                      <button onClick={() => handleOpenEditModal(b)} className="button edit-button-table">Editar</button>
+                      <button onClick={() => handleOpenDeleteConfirm(b)} className="button delete-button-table">Excluir</button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -380,7 +382,7 @@ function RequestsSection() {
       <div className="section-header">
         <h2>Solicitações de Leads</h2>
         <div className="section-actions">
-          <select value={filterStatus} onChange={(e)=>setFilterStatus(e.target.value)} className="select">
+          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="select">
             <option value="Pendente">Pendente</option>
             <option value="Aprovado">Aprovado</option>
             <option value="Rejeitado">Rejeitado</option>
@@ -405,7 +407,7 @@ function RequestsSection() {
                 <th>Corretor Responsável</th>
                 <th>Status</th>
                 <th>Criado em</th>
-                <th style={{textAlign:'right'}}>Ações</th>
+                <th style={{ textAlign: 'right' }}>Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -418,11 +420,11 @@ function RequestsSection() {
                   <td>{r.corretorResponsavel?.nome || '-'}</td>
                   <td><StatusTag value={r.status} /></td>
                   <td>{new Date(r.createdAt).toLocaleString('pt-BR')}</td>
-                  <td style={{display:'flex', gap:8, justifyContent:'flex-end'}}>
+                  <td style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                     {r.status === 'Pendente' ? (
                       <>
-                        <button className="button" onClick={()=>handleApprove(r)} disabled={isActioning}>Aprovar</button>
-                        <button className="button delete-button-table" onClick={()=>handleReject(r)} disabled={isActioning}>Rejeitar</button>
+                        <button className="button" onClick={() => handleApprove(r)} disabled={isActioning}>Aprovar</button>
+                        <button className="button delete-button-table" onClick={() => handleReject(r)} disabled={isActioning}>Rejeitar</button>
                       </>
                     ) : (
                       <em>-</em>
@@ -451,11 +453,11 @@ export default function BrokerContactsAdminPage() {
     <div className="admin-page broker-admin-page">
       <h1>Portal do Corretor • Admin</h1>
 
-      <div className="admin-tabs" style={{display:'flex', gap:8, marginBottom:12}}>
-        <button className={`button ${tab==='requests' ? 'primary' : ''}`} onClick={()=>setTab('requests')}>
+      <div className="admin-tabs" style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+        <button className={`button ${tab === 'requests' ? 'primary' : ''}`} onClick={() => setTab('requests')}>
           Solicitações de Leads
         </button>
-        <button className={`button ${tab==='brokers' ? 'primary' : ''}`} onClick={()=>setTab('brokers')}>
+        <button className={`button ${tab === 'brokers' ? 'primary' : ''}`} onClick={() => setTab('brokers')}>
           Corretores
         </button>
       </div>
