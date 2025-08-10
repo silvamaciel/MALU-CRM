@@ -7,7 +7,15 @@ const { findOrCreateOrigem } = require('../services/origemService');
 exports.createPublic = async (req, res, next) => {
   try {
     // token do corretor → req.user.type === 'broker'
-    const { company, corretorResponsavel, nome, contato, email, comentario } = req.body;
+
+    const {
+      company, corretorResponsavel,
+      nome, contato, email, comentario,
+      nascimento, endereco, cpf, rg, nacionalidade, estadoCivil, profissao,
+      coadquirentes, tags
+    } = req.body;
+
+
     if (!company) return res.status(400).json({ error: 'company é obrigatório' });
     if (!corretorResponsavel) return res.status(400).json({ error: 'corretorResponsavel é obrigatório' });
     if (!nome || !contato) return res.status(400).json({ error: 'nome e contato são obrigatórios' });
@@ -17,6 +25,9 @@ exports.createPublic = async (req, res, next) => {
     const doc = await LeadRequest.create({
       company,
       nome, contato, email, comentario,
+      nascimento, endereco, cpf, rg, nacionalidade, estadoCivil, profissao,
+      coadquirentes: Array.isArray(coadquirentes) ? coadquirentes : [],
+      tags: Array.isArray(tags) ? tags : [],
       corretorResponsavel,
       submittedByBroker: corretorResponsavel,
       status: 'Pendente',
@@ -71,6 +82,15 @@ exports.approve = async (req, res, next) => {
       contato: doc.contato,
       email: doc.email,
       comentario: doc.comentario,
+      nascimento: doc.nascimento || undefined,
+      endereco: doc.endereco || undefined,
+      cpf: doc.cpf || undefined,
+      rg: doc.rg || undefined,
+      nacionalidade: doc.nacionalidade || undefined,
+      estadoCivil: doc.estadoCivil || undefined,
+      profissao: doc.profissao || undefined,
+      coadquirentes: Array.isArray(doc.coadquirentes) ? doc.coadquirentes : [],
+      tags: Array.isArray(doc.tags) ? doc.tags : [],
       origem: origem?._id,
       corretorResponsavel: doc.corretorResponsavel,
       submittedByBroker: doc.submittedByBroker,
