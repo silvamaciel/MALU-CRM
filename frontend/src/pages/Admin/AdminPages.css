@@ -44,6 +44,7 @@
     margin-top: 1.5rem;
     border: 1px solid #e9ecef; /* Borda sutil em volta da tabela */
     border-radius: 6px;
+    overflow-x: auto;
 }
 
 /* Estilos da Tabela */
