@@ -142,3 +142,13 @@
         transform: scale(1);
     }
 }
+
+.success-panel {
+  background: #e8f7ee;
+  border: 1px solid #b6e2c2;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 12px 0 4px;
+  text-align: center;
+}
+.success-panel .actions { margin-top: 8px; }

@@ -23,6 +23,7 @@ function PublicPortalPage() {
     const [identifierForRegister, setIdentifierForRegister] = useState('');
 
     const [openLeadModal, setOpenLeadModal] = useState(false);
+    const [justSubmitted, setJustSubmitted] = useState(false);
 
     if (!companyId) {
         return (
@@ -89,6 +90,20 @@ function PublicPortalPage() {
                             </p>
                         </div>
                     )}
+
+                    {verifiedBroker && justSubmitted && (
+                        <div className="success-panel">
+                            <p>Solicitação enviada para aprovação.</p>
+                            <div className="actions">
+                                <button
+                                    className="button submit-button-public"
+                                    onClick={() => { setJustSubmitted(false); setOpenLeadModal(true); }}
+                                >
+                                    Cadastrar outro lead
+                                </button>
+                            </div>
+                        </div>
+                    )}
                     {renderStep()}
                 </div>
             </div>
@@ -113,6 +128,7 @@ function PublicPortalPage() {
                 }}
                 onSaved={() => {
                     setOpenLeadModal(false);
+                    setJustSubmitted(true);
                     toast.success('Solicitação enviada para aprovação.');
                 }}
             />
