@@ -180,7 +180,7 @@ function BrokersSection() {
   return (
     <section>
       <div className="section-header">
-        <h2>Agenda de Corretores</h2>
+        <h2>Canal de Parceiros</h2>
         <div className="section-actions">
           <button onClick={fetchBrokers} className="button">Atualizar</button>
           <button onClick={handleOpenAddModal} className="button add-button">+ Adicionar Corretor</button>
@@ -451,7 +451,7 @@ export default function BrokerContactsAdminPage() {
 
   return (
     <div className="admin-page broker-admin-page">
-      <h1>Portal do Corretor • Admin</h1>
+      <h1>Canal de Parceiros</h1>
 
       <div className="admin-tabs" style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
         <button className={`button ${tab === 'requests' ? 'primary' : ''}`} onClick={() => setTab('requests')}>
