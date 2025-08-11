@@ -17,7 +17,7 @@ const DEMO_PASSWORD = 'senhaSuperSecretaParaTeste';
 
 function LoginPage({ onLoginSuccess }) {
   const [error, setError] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
