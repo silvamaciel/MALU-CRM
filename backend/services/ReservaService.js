@@ -145,13 +145,48 @@ const createReserva = async (reservaData, leadId, imovelId, tipoImovel, companyI
  * @param {object} queryParams - Parâmetros da query (filtros e paginação).
  */
 const getReservasByCompany = async (companyId, queryParams = {}) => {
-  console.log(`[ReservaService] Buscando reservas para Company: ${companyId}, Query Params:`, queryParams);
-
   const page = parseInt(queryParams.page, 10) || 1;
   const limit = parseInt(queryParams.limit, 10) || 10;
   const skip = (page - 1) * limit;
 
   const queryConditions = { company: companyId };
+
+  // ---- Filtros ----
+  // status: aceita múltiplos, separados por vírgula, case-insensitive
+  if (queryParams.status) {
+    const list = String(queryParams.status)
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
+    if (list.length) {
+      queryConditions.statusReserva = {
+        $in: list.map(s => new RegExp(`^${s}$`, 'i'))
+      };
+    }
+  }
+
+  // tipoImovel: 'Unidade' | 'ImovelAvulso'
+  if (queryParams.tipoImovel) {
+    queryConditions.tipoImovel = queryParams.tipoImovel;
+  }
+
+  // período (dataReserva)
+  const { from, to } = queryParams;
+  if (from || to) {
+    const d = {};
+    if (from) {
+      const start = new Date(from);
+      start.setHours(0,0,0,0);
+      d.$gte = start;
+    }
+    if (to) {
+      const end = new Date(to);
+      end.setHours(23,59,59,999);
+      d.$lte = end;
+    }
+    queryConditions.dataReserva = d;
+  }
+  // ------------------
 
   try {
     const [totalReservas, reservas] = await Promise.all([
@@ -161,11 +196,7 @@ const getReservasByCompany = async (companyId, queryParams = {}) => {
         .populate('createdBy', 'nome')
         .populate({
           path: 'imovel',
-          populate: {
-            path: 'empreendimento',
-            select: 'nome',
-            strictPopulate: false // <- evita erro com ImovelAvulso
-          }
+          populate: { path: 'empreendimento', select: 'nome', strictPopulate: false }
         })
         .sort({ createdAt: -1 })
         .skip(skip)
@@ -173,7 +204,6 @@ const getReservasByCompany = async (companyId, queryParams = {}) => {
         .lean()
     ]);
 
-    // Fallback: injeta empreendimento virtual como "Avulso" se for ImovelAvulso
     reservas.forEach(res => {
       if (res.tipoImovel === 'ImovelAvulso') {
         res.empreendimento = { nome: 'Avulso' };
@@ -185,20 +215,13 @@ const getReservasByCompany = async (companyId, queryParams = {}) => {
     });
 
     const totalPages = Math.ceil(totalReservas / limit) || 1;
-    console.log(`[ReservaService] ${totalReservas} reservas encontradas para Company: ${companyId}`);
-
-    return {
-      reservas,
-      total: totalReservas,
-      totalPages,
-      currentPage: page
-    };
-
+    return { reservas, total: totalReservas, totalPages, currentPage: page };
   } catch (error) {
     console.error("[ReservaService] Erro ao buscar reservas:", error);
     throw new Error("Erro ao buscar reservas.");
   }
 };
+
 
 
 /**
