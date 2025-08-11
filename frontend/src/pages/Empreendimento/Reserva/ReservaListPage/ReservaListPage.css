@@ -1,132 +1,101 @@
-/* Container */
-.reserva-list-page .page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
-}
+/* ====== ReservaListPage.css ====== */
 
-/* Tabela responsiva */
-.table-responsive {
-  overflow-x: auto;               /* scroll horizontal quando precisar */
+/* wrapper responsivo: força scroll horizontal quando precisar */
+.table-responsive{
+  width: 100%;
+  overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   border-radius: 10px;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, .06);
   background: #fff;
+  box-shadow: 0 6px 18px rgba(15,23,42,.06);
   border: 1px solid #e9edf3;
 }
 
-/* Tabela base */
-.data-table {
+/* mantém a tabela larga o suficiente p/ não “amassar” colunas */
+.data-table{
   width: 100%;
-  min-width: 1000px;             /* garante scroll em telas pequenas */
+  min-width: 1100px; /* ajuste se quiser */
   border-collapse: separate;
   border-spacing: 0;
 }
 
-.data-table thead th {
+.data-table thead th{
   text-align: left;
   font-weight: 700;
-  padding: 12px 14px;
   font-size: .92rem;
   color: #0f172a;
-  background: #fbfcfe;
+  background: #f8fafc;
+  padding: 12px 14px;
   border-bottom: 1px solid #e9edf3;
-  position: sticky;
-  top: 0;                         /* cabeçalho “fixo” dentro do scroll */
-  z-index: 1;
+  white-space: nowrap;
 }
 
-.data-table tbody td {
+.data-table tbody td{
   padding: 12px 14px;
   border-bottom: 1px solid #eef2f7;
-  font-size: .95rem;
-  color: #0f172a;
+  color: #1f2937;
+  vertical-align: middle;
+  white-space: nowrap;
 }
 
-.data-table tbody tr:nth-child(even) td {
-  background: #fafbfd;
+.data-table tbody tr:nth-child(even){
+  background: #fcfdff;
 }
 
-/* Ações */
-.th-acoes { width: 320px; }
-.actions-cell {
+/* ações */
+.actions-cell{
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
 }
 
-/* Botões utilitários (seguem a sua paleta base) */
-.button {
-  border: 0;
-  border-radius: 10px;
-  padding: 10px 14px;
+/* botão danger “Excluir” (se quiser reforçar) */
+.button.danger{
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
 }
-.small-button { padding: 8px 12px; font-size: .9rem; }
-.primary-button { background: #2563eb; color: #fff; }
-.primary-button:hover { filter: brightness(.97); }
-.danger-button { background: #ef4444; color: #fff; }
-.danger-button:hover { filter: brightness(.96); }
-.button:disabled { opacity: .6; cursor: not-allowed; }
+.button.danger:hover{ filter: brightness(.95); }
 
-.button-link.view-link {
+/* link “Visualizar Proposta” com cara de link/btn */
+.button-link.view-link{
   color: #2563eb;
+  font-weight: 700;
   text-decoration: none;
-  font-weight: 700;
 }
-.button-link.view-link:hover { text-decoration: underline; }
+.button-link.view-link:hover{ text-decoration: underline; }
 
-/* Badges de status */
-.status-badge {
-  display: inline-block;
-  padding: 6px 10px;
+/* ===== Badges de Status (sólidas, alta legibilidade) ===== */
+.status-badge{
+  display: inline-flex;
+  align-items: center;
   border-radius: 999px;
-  font-size: .82rem;
-  font-weight: 700;
-  line-height: 1;
-  border: 1px solid transparent;
+  padding: 4px 10px;
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .3px;
+  color: #fff;
+  text-transform: uppercase;
+  box-shadow: 0 1px 0 rgba(0,0,0,.05);
 }
 
-/* mapeamentos (ajuste conforme seus status reais) */
-.status-ativa {
-  background: #ecfdf5;
-  color: #065f46;
-  border-color: #a7f3d0;
-}
-.status-distratada {
-  background: #fef2f2;
-  color: #7f1d1d;
-  border-color: #fecaca;
-}
-.status-convertidaemproposta {
-  background: #eff6ff;
-  color: #1e40af;
-  border-color: #bfdbfe;
-}
-.status-convertidaemvenda {
-  background: #eef2ff;
-  color: #3730a3;
-  border-color: #c7d2fe;
-}
-.status-vencida,
-.status-expirada {
-  background: #fffbeb;
-  color: #92400e;
-  border-color: #fde68a;
-}
+.status-ativa{               background:#16a34a; } /* verde */
+.status-distratada{          background:#ef4444; } /* vermelho */
+.status-expirada{            background:#475569; } /* cinza escuro */
+.status-cancelada{           background:#334155; } /* cinza + escuro */
+.status-convertidaemproposta{background:#2563eb; } /* azul */
+.status-convertidaemvenda{   background:#7c3aed; } /* roxo */
 
-/* fallback (qualquer outro status) */
-[class*="status-"]:not(.status-ativa):not(.status-distratada):not(.status-convertidaemproposta):not(.status-convertidaemvenda):not(.status-vencida):not(.status-expirada) {
-  background: #f1f5f9;
-  color: #334155;
-  border-color: #e2e8f0;
-}
+/* caso algum backend mande algo fora do padrão, uma cor default */
+.status-unknown{ background:#64748b; }
 
-/* responsivo */
-@media (max-width: 768px) {
-  .th-acoes { width: 420px; } /* dá mais espaço quando colapsar */
+/* mobile refinamentos */
+@media (max-width: 768px){
+  .data-table thead th,
+  .data-table tbody td{ padding: 10px 12px; }
+  .actions-cell{ gap: 8px; }
 }
