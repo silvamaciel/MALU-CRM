@@ -44,6 +44,6 @@ export const getReservaByIdApi = async (reservaId) => {
 };
 
 export const deleteReservaApi = async (id) => {
-  const { data } = await axiosInstance.delete(`/reservas/${id}`);
+  const { data } = await axiosInstance.delete(`${API_URL}/${id}`);
   return data;
 };
