@@ -1,158 +1,181 @@
-/* ====== ReservaListPage.css ====== */
+:root{
+  --app-header-h: 72px;            /* ajuste se seu header tiver outra altura */
+  --bg:#f6f8fb;
+  --card:#fff;
+  --ink:#0f172a;
+  --muted:#64748b;
+  --border:#e9edf3;
+  --shadow:0 6px 18px rgba(15,23,42,.06);
 
-/* wrapper responsivo: força scroll horizontal quando precisar */
-.table-responsive{
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  border-radius: 10px;
-  background: #fff;
-  box-shadow: 0 6px 18px rgba(15,23,42,.06);
-  border: 1px solid #e9edf3;
+  --brand:#2563eb;
+  --danger:#ef4444;
+  --ok:#16a34a;
+  --warn:#f59e0b;
 }
 
-/* mantém a tabela larga o suficiente p/ não “amassar” colunas */
-.data-table{
-  width: 100%;
-  min-width: 1100px; /* ajuste se quiser */
-  border-collapse: separate;
-  border-spacing: 0;
+/* Layout full height: paginação não some */
+.reserva-list-page{
+  display:flex;
+  flex-direction:column;
+  min-height: calc(100vh - var(--app-header-h));
+  background:var(--bg);
+  padding:16px;
 }
 
-.data-table thead th{
-  text-align: left;
-  font-weight: 700;
-  font-size: .92rem;
-  color: #0f172a;
-  background: #f8fafc;
-  padding: 12px 14px;
-  border-bottom: 1px solid #e9edf3;
-  white-space: nowrap;
+.page-header{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:10px;
+}
+.page-header h1{
+  margin:0;
+  font-size:1.4rem;
+  color:var(--ink);
 }
 
-.data-table tbody td{
-  padding: 12px 14px;
-  border-bottom: 1px solid #eef2f7;
-  color: #1f2937;
-  vertical-align: middle;
-  white-space: nowrap;
+/* seletor de itens por página */
+.list-toolbar{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.limit-label{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.limit-label select{
+  border:1px solid #e5e7eb;
+  border-radius:8px;
+  padding:6px 10px;
+  background:#fff;
 }
 
-.data-table tbody tr:nth-child(even){
-  background: #fcfdff;
+/* Filtros */
+.filter-bar{
+  margin: 6px 0 14px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px 16px;
+  align-items:center;
 }
-
-/* ações */
-.actions-cell{
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* botão danger “Excluir” (se quiser reforçar) */
-.button.danger{
-  background: #ef4444;
-  color: #fff;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.button.danger:hover{ filter: brightness(.95); }
-
-/* link “Visualizar Proposta” com cara de link/btn */
-.button-link.view-link{
-  color: #2563eb;
-  font-weight: 700;
-  text-decoration: none;
-}
-.button-link.view-link:hover{ text-decoration: underline; }
-
-/* ===== Badges de Status (sólidas, alta legibilidade) ===== */
-.status-badge{
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-size: .78rem;
-  font-weight: 800;
-  letter-spacing: .3px;
-  color: #fff;
-  text-transform: uppercase;
-  box-shadow: 0 1px 0 rgba(0,0,0,.05);
-}
-
-.status-ativa{               background:#16a34a; } /* verde */
-.status-distratada{          background:#ef4444; } /* vermelho */
-.status-expirada{            background:#475569; } /* cinza escuro */
-.status-cancelada{           background:#334155; } /* cinza + escuro */
-.status-convertidaemproposta{background:#2563eb; } /* azul */
-.status-convertidaemvenda{   background:#7c3aed; } /* roxo */
-
-/* caso algum backend mande algo fora do padrão, uma cor default */
-.status-unknown{ background:#64748b; }
-
-/* mobile refinamentos */
-@media (max-width: 768px){
-  .data-table thead th,
-  .data-table tbody td{ padding: 10px 12px; }
-  .actions-cell{ gap: 8px; }
-}
-
-/* ===== Paginação ===== */
-.pagination{
+.filter-group{
   display:flex;
   align-items:center;
   gap:8px;
-  justify-content:center;
-  margin-top:16px;
   flex-wrap:wrap;
 }
-
-.pg-btn{
-  background:#fff;
-  border:1px solid #e5e7eb;
-  padding:8px 10px;
-  border-radius:10px;
+.filter-label{
   font-weight:700;
-  color:#0f172a;
-  cursor:pointer;
-}
-.pg-btn:hover{ filter:brightness(.98); }
-.pg-btn:disabled{
-  opacity:.5; cursor:not-allowed;
-}
-
-.pg-btn.num.active{
-  background:#2563eb;
-  color:#fff;
-  border-color:#2563eb;
-  box-shadow:0 6px 14px rgba(37,99,235,.18);
-}
-
-.pg-info{
-  margin-left:6px;
-  color:#475569;
-  font-size:.9rem;
-}
-
-/* seletor de limite */
-.list-toolbar{
-  margin-left:auto;
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
-.limit-label{
-  font-weight:600;
   color:#334155;
 }
-.limit-label select{
-  margin-left:8px;
+.chip{
   padding:6px 10px;
   border:1px solid #e5e7eb;
+  border-radius:999px;
+  background:#fff;
+  cursor:pointer;
+  font-weight:600;
+}
+.chip.active{
+  background:var(--brand);
+  color:#fff;
+  border-color:var(--brand);
+  box-shadow:0 6px 14px rgba(37,99,235,.18);
+}
+.filter-group select,
+.filter-group input[type="date"]{
+  border:1px solid #e5e7eb;
   border-radius:8px;
+  padding:6px 10px;
   background:#fff;
 }
+.filter-group .tilde{ color:#94a3b8; }
+.filter-actions .button.ghost{
+  background:#fff;
+  border:1px solid #e5e7eb;
+  color:#0f172a;
+  border-radius:10px;
+  padding:8px 12px;
+}
 
+/* Área com tabela e paginação sticky */
+.page-content{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  min-height:0; /* permite scroll interno */
+}
+
+.loading-block,
+.empty-block{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  box-shadow:var(--shadow);
+  padding:20px;
+}
+
+/* wrapper permite a tabela crescer e rolar, mantendo a paginação visível */
+.table-wrap{
+  flex:1;
+  min-height:0;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+}
+
+.table-responsive{
+  width:100%;
+  height:100%;
+  overflow:auto;        /* vertical + horizontal */
+  -webkit-overflow-scrolling:touch;
+}
+
+/* Tabela */
+.data-table{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  min-width: 980px; /* força scroll horizontal em telas muito estreitas */
+}
+.data-table thead th{
+  position:sticky; top:0;
+  background:#fbfcfe;
+  z-index:1;
+  text-align:left;
+  padding:12px 14px;
+  border-bottom:1px solid var(--border);
+  color:#334155;
+  font-weight:700;
+}
+.data-table tbody td{
+  padding:12px 14px;
+  border-bottom:1px solid var(--border);
+  color:#0f172a;
+}
+.actions-cell{
+  white-space:nowrap;
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+}
+
+/* Botões */
+.button{
+  border:none;
+  border-radius:10px;
+  padding:8px 12px;
+  cursor:pointer;
+}
+.small-button{ padding:6px 10px; font-size:.92rem; }
+.primary-button{ background:var(--brand); color:#fff; }
+.primary-button:hover{ filter:brightness(.97); }
+.danger-button{ background:var(--danger); color:#fff; }
+.danger-button:hover{ filter:brightness(
