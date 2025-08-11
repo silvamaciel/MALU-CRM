@@ -1,4 +1,4 @@
-// src/api/reservaApi.js
+/ src/api/reservaApi.js
 import axiosInstance from "./axiosInstance";
 
 const API_URL = '/reservas'; // Base URL para endpoints de reserva
@@ -41,4 +41,9 @@ export const getReservaByIdApi = async (reservaId) => {
         console.error(`Erro ao buscar reserva ${reservaId}:`, error.response?.data || error.message);
         throw error.response?.data || new Error("Falha ao buscar a reserva.");
     }
+};
+
+export const deleteReservaApi = async (id) => {
+  const { data } = await axiosInstance.delete(`/reservas/${id}`);
+  return data;
 };

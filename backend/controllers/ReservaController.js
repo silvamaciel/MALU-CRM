@@ -79,8 +79,28 @@ const getReservaByIdController = asyncHandler(async (req, res, next) => {
     res.status(200).json({ success: true, data: reserva });
 });
 
+
+/**
+ * @desc    Excluir uma reserva (reverte vínculos)
+ * @route   DELETE /api/reservas/:id
+ * @access  Privado
+ */
+const deleteReservaController = asyncHandler(async (req, res, next) => {
+  const companyId = req.user.company;
+  const userId = req.user._id;
+  const { id } = req.params;
+
+  const result = await ReservaService.deleteReserva(id, companyId, userId);
+  if (!result?.ok) {
+    return next(new ErrorResponse('Falha ao excluir a reserva.', 400));
+  }
+  return res.status(200).json({ success: true });
+});
+
+
 module.exports = {
     createReservaController,
     getReservasController,
-    getReservaByIdController
+    getReservaByIdController,
+    deleteReservaController
 };
