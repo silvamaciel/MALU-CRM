@@ -91,11 +91,13 @@ const deleteReservaController = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
 
   const result = await ReservaService.deleteReserva(id, companyId, userId);
-  if (!result?.ok) {
-    return next(new ErrorResponse('Falha ao excluir a reserva.', 400));
-  }
-  return res.status(200).json({ success: true });
+  return res.status(200).json({
+    success: true,
+    message: 'Reserva excluída com sucesso.',
+    data: result,
+  });
 });
+
 
 
 module.exports = {
