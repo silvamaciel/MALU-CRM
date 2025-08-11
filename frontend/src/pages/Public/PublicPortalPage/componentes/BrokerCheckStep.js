@@ -35,7 +35,7 @@ function BrokerCheckStep({ companyId, onBrokerFound, onBrokerNotFound }) {
             <div className="form-group">
                 <input 
                     type="text" 
-                    placeholder="Digite o seu CPF ou CRECI" 
+                    placeholder="Digite o seu CPF ou CNPJ" 
                     value={identifier} 
                     onChange={(e) => setIdentifier(e.target.value)} 
                     required 
