@@ -14,7 +14,6 @@ import StepFinanceiro from '../../../components/PropostaWizard/StepFinanceiro';
 import StepCorretagem from '../../../components/PropostaWizard/StepCorretagem';
 import StepResumo from '../../../components/PropostaWizard/StepResumo';
 
-import './PropostaContratoFormPage.css';
 
 const STATUS_PROPOSTA_OPCOES = ["Em Elaboração", "Aguardando Aprovações", "Aguardando Assinatura Cliente", "Assinado", "Vendido", "Recusado", "Cancelado"];
 
