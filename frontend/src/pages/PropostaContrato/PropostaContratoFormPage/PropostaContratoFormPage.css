@@ -1,373 +1,107 @@
-/* ================================
-   Página: PropostaContratoFormPage
-   Estilo Clean & Modernizado
-================================ */
+/* ====== WIZARD / SCROLL / STICKY ====== */
 
-/* ===== Header da Página ===== */
-
-body{
-  width: 100%;
-}
-.proposta-contrato-form-page .page-header {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  margin-bottom: 32px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e0e0e0;
+/* altura dinâmica do conteúdo rolável dentro do card */
+.proposta-contrato-form-page .wizard-scroll{
+  /* header + margens ≈ 220px; ajuste se seu topo for maior/menor */
+  max-height: clamp(420px, calc(100vh - 220px), 74vh);
+  overflow: auto;
+  padding: 8px 2px 16px 2px;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
 }
 
-.proposta-contrato-form-page .page-header h1 {
-  margin: 0 0 6px 0;
-  font-size: 2em;
-  font-weight: 600;
-  color: #212529;
+/* sombra sutil nos cantos ao rolar */
+.proposta-contrato-form-page .wizard-scroll {
+  background:
+    linear-gradient(#0000, #0000 10px) padding-box,
+    radial-gradient(12px 12px at 50% 0, rgba(0,0,0,.06), transparent 60%) 0 0/100% 10px no-repeat,
+    radial-gradient(12px 12px at 50% 100%, rgba(0,0,0,.06), transparent 60%) 0 100%/100% 10px no-repeat;
 }
 
-.proposta-contrato-form-page .page-header p {
-  margin: 0;
-  font-size: 1em;
-  color: #6c757d;
+/* ações fixas ao rodapé do card */
+.proposta-contrato-form-page .wizard-actions{
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  background:
+    linear-gradient(180deg, rgba(248,249,250,0) 0%, rgba(248,249,250,1) 32%, rgba(248,249,250,1) 100%);
+  padding: 12px 0 4px;
 }
 
-
-/* ===== Container do Formulário ===== */
-.proposta-contrato-form-page .form-container {
-  max-width: 920px;
-  margin: 0 auto;
-  background-color: #f8f9fa;
-  padding: 28px;
-  border-radius: 12px;
+/* espaço extra para os botões não cobrirem inputs no final do scroll */
+.proposta-contrato-form-page .wizard-scroll::after{
+  content:'';
+  display:block;
+  height: 12px;
 }
 
+/* ====== GRID DO FORM — AUTO-FIT ====== */
 
-/* ===== Seções do Form ===== */
-.proposta-contrato-form-page .form-section {
-  background-color: #fafafa;
-  padding: 24px 28px;
-  border: 1px solid #e7e7e7;
-  border-radius: 10px;
-  margin-bottom: 32px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+/* cada .form-row vira um grid responsivo */
+.proposta-contrato-form-page .form-row{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px 18px;
+  margin-bottom: 18px;
 }
 
-.proposta-contrato-form-page .form-section h3 {
-  margin-top: 0;
-  margin-bottom: 24px;
-  padding-bottom: 10px;
-  font-size: 1.4em;
-  font-weight: 600;
-  border-bottom: 2px solid #007bff;
-  color: #0056b3;
-}
-
-
-/* ===== Grid do Formulário ===== */
-.proposta-contrato-form-page .form-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-  margin-bottom: 24px;
-}
-
-.proposta-contrato-form-page .form-group {
-  flex: 1 1 calc(50% - 12px);
-  min-width: 220px;
+/* garante que inputs não “estourem” o grid */
+.proposta-contrato-form-page .form-group{
+  min-width: 0;
   display: flex;
   flex-direction: column;
 }
 
-.proposta-contrato-form-page .form-group.full-width {
-  flex-basis: 100%;
+/* campos que precisam ocupar a linha inteira */
+.proposta-contrato-form-page .form-group.full-width{
+  grid-column: 1 / -1;
 }
 
+/* ====== AJUSTES DE COMPONENTES (PhoneInput etc.) ====== */
 
-/* ===== Inputs, Labels e Textareas ===== */
-.proposta-contrato-form-page .form-group label {
-  margin-bottom: 8px;
-  font-weight: 500;
-  font-size: 0.95em;
-  color: #343a40;
-}
+.PhoneInput{ width: 100%; display: flex; align-items: center; gap: 8px; }
+.PhoneInputCountry{ flex: 0 0 auto; }
+.PhoneInputInput{ width: 100%; min-width: 0; }
 
+/* inputs/selects/textarea herdados continuam iguais */
 .proposta-contrato-form-page .form-group input[type="text"],
 .proposta-contrato-form-page .form-group input[type="number"],
 .proposta-contrato-form-page .form-group input[type="date"],
 .proposta-contrato-form-page .form-group input[type="email"],
 .proposta-contrato-form-page .form-group select,
-.proposta-contrato-form-page .form-group textarea {
+.proposta-contrato-form-page .form-group textarea{
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #ced4da;
-  border-radius: 6px;
-  font-size: 1em;
-  background-color: #fff;
   box-sizing: border-box;
-  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.proposta-contrato-form-page .form-group input:focus,
-.proposta-contrato-form-page .form-group select:focus,
-.proposta-contrato-form-page .form-group textarea:focus {
-  border-color: #66afe9;
-  box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
-  outline: none;
-}
-
-.proposta-contrato-form-page .form-group textarea {
-  resize: vertical;
-  min-height: 80px;
-}
-
-.proposta-contrato-form-page .form-group small {
-  font-size: 0.85em;
-  color: #6c757d;
-  margin-top: 5px;
-}
-
-
-/* ===== Editor HTML (ReactQuill) ===== */
-.proposta-contrato-form-page .quill-editor-container {
-  margin-top: 5px;
-  border: 1px solid #ced4da;
-  border-radius: 6px;
-  background-color: #fff;
-}
-
-.quill-editor-container .ql-toolbar.ql-snow {
-  border-top-left-radius: 6px;
-  border-top-right-radius: 6px;
-  border-bottom: 1px solid #ced4da;
-}
-
-.quill-editor-container .ql-container.ql-snow {
-  border-bottom-left-radius: 6px;
-  border-bottom-right-radius: 6px;
-  min-height: 350px;
-  font-size: 1rem;
-  border: none;
-}
-
-.quill-editor-container .ql-editor {
-  min-height: 330px;
-}
-
-
-/* ===== Seção Dinâmica de Parcelas ===== */
-.proposta-contrato-form-page .parcela-item-row {
-  border: 1px solid #e9ecef;
-  padding: 18px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  background-color: #fff;
-}
-
-.parcela-item-row .form-row {
-  margin-bottom: 12px;
-}
-
-.parcela-item-row .form-row:last-child {
-  margin-bottom: 0;
-}
-
-
-/* ===== Botões ===== */
-.proposta-contrato-form-page .button-link.delete-link {
-  color: #dc3545;
-  background: none;
-  border: none;
-  padding: 5px 0;
-  text-decoration: underline;
-  cursor: pointer;
-  font-size: 0.85em;
-  display: inline-block;
-  margin-top: 6px;
-}
-
-.proposta-contrato-form-page .outline-button {
-  background-color: transparent;
-  border: 1px dashed #007bff;
-  color: #007bff;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-weight: 500;
-  font-size: 0.95em;
-  cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease;
-  display: block;
-  text-align: center;
-  margin-top: 12px;
-}
-
-.proposta-contrato-form-page .outline-button:hover {
-  background-color: #e7f3ff;
-}
-
-
-/* ===== Ações do Formulário ===== */
-.proposta-contrato-form-page .form-actions {
-  margin-top: 40px;
-  padding-top: 24px;
-  border-top: 1px solid #e0e0e0;
-  display: flex;
-  justify-content: flex-end;
-  gap: 16px;
-}
-
-/*Modal para confirmacao*/
-/* Modal Overlay */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); /* fundo escuro translúcido */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-/* Modal Content */
-.modal-content {
-  background-color: #fff;
-  padding: 2rem;
-  width: 90%;
-  max-width: 500px;
-  border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-  text-align: center;
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-/* Título */
-.modal-content h2 {
-  margin-top: 0;
-  font-size: 1.5rem;
-  color: #333;
-}
-
-/* Parágrafo */
-.modal-content p {
-  font-size: 1rem;
-  color: #555;
-  margin: 1rem 0 2rem;
-  line-height: 1.5;
-}
-
-/* Botões */
-.modal-buttons {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.modal-buttons .cancel-button,
-.modal-buttons .confirm-button {
-  flex: 1;
-  padding: 0.75rem;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-/* Cancelar */
-.cancel-button {
-  background-color: #ccc;
-  color: #333;
-}
-.cancel-button:hover {
-  background-color: #bbb;
-}
-
-/* Confirmar */
-.confirm-button {
-  background-color: #007bff;
-  color: #fff;
-}
-.confirm-button:hover {
-  background-color: #0069d9;
-}
-
-/* Animação */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-
-
-:root{ --app-header-h: 72px; }
-
-.proposta-contrato-form-page{
-  /* a página vira uma coluna e ocupa a altura toda (menos o header global) */
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh - var(--app-header-h));
-  min-height: calc(100vh - var(--app-header-h));
-  overflow: hidden;           /* evita scroll no body */
-  padding: 12px 16px;         /* opcional, pode tirar se já tem padding fora */
-}
-
-/* hardening para o scroll funcionar em layouts flex */
-.proposta-contrato-form-page,
-.proposta-contrato-form-page .page-content,
-.proposta-contrato-form-page .form-container{
-  min-height: 0;
-}
-
-.proposta-contrato-form-page .page-header{
-  flex: 0 0 auto;             /* não rola */
-  margin-bottom: 16px;
-}
-
-.proposta-contrato-form-page .page-content{
-  flex: 1 1 auto;             /* ocupa o restante */
-  overflow: hidden;           /* o scroll ficará dentro do .wizard-scroll */
-}
-
-/* seu “card” principal continua centrado/largo, mas agora vira flex-col */
-.proposta-contrato-form-page .form-container{
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;           /* impede estouro e deixa o filho rolar */
-  max-width: 920px;           /* mantém seu limite de largura */
-  margin: 0 auto;
-}
-
-/* ESTA é a área que deve rolar (envolva os steps com essa div) */
-.proposta-contrato-form-page .wizard-scroll{
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 16px 0;            /* espaço interno; ajuste se quiser */
-}
-
-/* Botões do wizard “grudados” no rodapé do card */
-.proposta-contrato-form-page .wizard-actions{
+/* ====== CABEÇALHO DA ETAPA (opcional sticky) ====== */
+.wizard-step > h3{
   position: sticky;
-  bottom: 0;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0) 0%, #f8f9fa 32%),
-    #f8f9fa;                  /* degrade sutil para leitura */
-  padding: 12px 0 0;
-  border-top: 1px solid #e0e0e0;
-  z-index: 2;
+  top: 0;
+  z-index: 4;
+  background: #f8f9fa;
+  padding: 8px 6px;
+  margin: 0 0 12px 0;
+  border-bottom: 1px solid #e9ecef;
 }
 
-/* Se seu layout externo usa wrappers flex, isso ajuda o scroll a funcionar */
-.content-wrapper,
-.main-content{
-  min-height: 0;  /* só terá efeito se existirem; não quebra nada */
+/* ====== MOBILE TUNING ====== */
+@media (max-width: 768px){
+  .proposta-contrato-form-page .page-header h1{ font-size: 1.6rem; }
+  .proposta-contrato-form-page .form-container{ padding: 18px; }
+  .proposta-contrato-form-page .wizard-scroll{ max-height: calc(100vh - 190px); }
+  .proposta-contrato-form-page .form-group label{ font-size: .95rem; }
+  .proposta-contrato-form-page .form-group input,
+  .proposta-contrato-form-page .form-group select,
+  .proposta-contrato-form-page .form-group textarea{ font-size: 1rem; padding: 10px; }
+  .proposta-contrato-form-page .wizard-actions{ padding: 10px 0 2px; }
+}
+
+@media (max-width: 420px){
+  /* botões ocupam metade da largura para facilitar o toque */
+  .proposta-contrato-form-page .wizard-actions .button{
+    width: 48%;
+    min-width: auto;
+  }
+  .proposta-contrato-form-page .wizard-actions .cancel-button + div{ display:none; } /* remove o filler no mobile */
 }
