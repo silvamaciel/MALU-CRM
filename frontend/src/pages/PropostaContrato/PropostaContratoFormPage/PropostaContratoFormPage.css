@@ -304,3 +304,70 @@ body{
   }
 }
 
+
+
+:root{ --app-header-h: 72px; }
+
+.proposta-contrato-form-page{
+  /* a página vira uma coluna e ocupa a altura toda (menos o header global) */
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--app-header-h));
+  min-height: calc(100vh - var(--app-header-h));
+  overflow: hidden;           /* evita scroll no body */
+  padding: 12px 16px;         /* opcional, pode tirar se já tem padding fora */
+}
+
+/* hardening para o scroll funcionar em layouts flex */
+.proposta-contrato-form-page,
+.proposta-contrato-form-page .page-content,
+.proposta-contrato-form-page .form-container{
+  min-height: 0;
+}
+
+.proposta-contrato-form-page .page-header{
+  flex: 0 0 auto;             /* não rola */
+  margin-bottom: 16px;
+}
+
+.proposta-contrato-form-page .page-content{
+  flex: 1 1 auto;             /* ocupa o restante */
+  overflow: hidden;           /* o scroll ficará dentro do .wizard-scroll */
+}
+
+/* seu “card” principal continua centrado/largo, mas agora vira flex-col */
+.proposta-contrato-form-page .form-container{
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;           /* impede estouro e deixa o filho rolar */
+  max-width: 920px;           /* mantém seu limite de largura */
+  margin: 0 auto;
+}
+
+/* ESTA é a área que deve rolar (envolva os steps com essa div) */
+.proposta-contrato-form-page .wizard-scroll{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px 0;            /* espaço interno; ajuste se quiser */
+}
+
+/* Botões do wizard “grudados” no rodapé do card */
+.proposta-contrato-form-page .wizard-actions{
+  position: sticky;
+  bottom: 0;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0) 0%, #f8f9fa 32%),
+    #f8f9fa;                  /* degrade sutil para leitura */
+  padding: 12px 0 0;
+  border-top: 1px solid #e0e0e0;
+  z-index: 2;
+}
+
+/* Se seu layout externo usa wrappers flex, isso ajuda o scroll a funcionar */
+.content-wrapper,
+.main-content{
+  min-height: 0;  /* só terá efeito se existirem; não quebra nada */
+}
