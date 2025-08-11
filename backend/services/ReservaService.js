@@ -4,6 +4,7 @@ const Reserva = require('../models/Reserva');
 const Lead = require('../models/Lead');
 const Unidade = require('../models/Unidade');
 const Empreendimento = require('../models/Empreendimento');
+const ImovelAvulso = require('../models/ImovelAvulso');
 const LeadStage = require('../models/LeadStage');
 const { logHistory } = require('./LeadService');
 require('../models/ImovelAvulso');
@@ -261,69 +262,85 @@ async function deleteReserva(reservaId, companyId, userId) {
   session.startTransaction();
 
   try {
-    // 1) Busca a reserva (garantindo a empresa)
+    // 1) Reserva da empresa
     const reserva = await Reserva.findOne({ _id: reservaId, company: companyId }).session(session);
-    if (!reserva) {
-      throw new Error('Reserva não encontrada para esta empresa.');
+    if (!reserva) throw new Error('Reserva não encontrada para esta empresa.');
+
+    // 2) Resolve modelo do imóvel de forma resiliente
+    const modelNames = new Set(mongoose.modelNames());
+    const desired = String(reserva.tipoImovel || '').trim();
+    let imovel = null;
+    let imovelModelUsed = null;
+
+    const fetchBy = async (modelName) => {
+      const Model = mongoose.model(modelName);
+      return Model.findOne({ _id: reserva.imovel, company: companyId }).session(session);
+    };
+
+    if (desired && modelNames.has(desired)) {
+      imovel = await fetchBy(desired);
+      imovelModelUsed = desired;
+    }
+    if (!imovel && modelNames.has('Unidade')) {
+      const tryU = await fetchBy('Unidade');
+      if (tryU) { imovel = tryU; imovelModelUsed = 'Unidade'; }
+    }
+    if (!imovel && modelNames.has('ImovelAvulso')) {
+      const tryA = await fetchBy('ImovelAvulso');
+      if (tryA) { imovel = tryA; imovelModelUsed = 'ImovelAvulso'; }
     }
 
-    // 2) Carrega o imóvel polimórfico pelo refPath
-    const ImovelModel = mongoose.model(reserva.tipoImovel); // 'Unidade' ou 'ImovelAvulso'
-    const imovel = await ImovelModel.findOne({ _id: reserva.imovel, company: companyId }).session(session);
-
-    // 3) Tenta carregar o lead — se não existir, seguimos mesmo assim
+    // 3) Lead (se não existir, seguimos)
     let lead = null;
     if (reserva.lead) {
       lead = await Lead.findOne({ _id: reserva.lead, company: companyId }).session(session);
+      if (!lead) {
+        console.warn(`[ReservaService] Lead relacionado não encontrado (reserva ${reservaId}). Prosseguindo.`);
+      }
     }
 
-    // 4) Libera o imóvel (se existir)
+    // 4) Liberar imóvel (se encontrado)
     if (imovel) {
-      // zera “ponteiros”
       if ('currentLeadId' in imovel) imovel.currentLeadId = undefined;
       if ('currentReservaId' in imovel) imovel.currentReservaId = undefined;
 
-      // status padrão para disponível (cubra diferentes schemas)
       if ('statusUnidade' in imovel) imovel.statusUnidade = 'Disponível';
       else if ('statusImovel' in imovel) imovel.statusImovel = 'Disponível';
       else if ('status' in imovel) imovel.status = 'Disponível';
 
       await imovel.save({ session });
+    } else {
+      console.warn(`[ReservaService] Imóvel não localizado (reserva ${reservaId}). Tipo informado: "${desired}".`);
     }
 
-    // 5) Atualiza o lead (se existir) – volta para “Em Atendimento”, se houver esse estágio
+    // 5) Ajustar lead (se existir)
     if (lead) {
       const stageAtendimento = await LeadStage.findOne({
-        company: companyId,
-        nome: { $regex: /^Em Atendimento$/i }
+        company: companyId, nome: { $regex: /^Em Atendimento$/i }
       }).select('_id').lean();
 
       if (stageAtendimento) {
         lead.situacao = stageAtendimento._id;
       }
-      // zera referência de interesse
-      if ('unidadeInteresse' in lead) lead.unidadeInteresse = undefined;
+      if ('unidadeInteresse' in lead && String(lead.unidadeInteresse || '') === String(reserva.imovel || '')) {
+        lead.unidadeInteresse = undefined;
+      }
       await lead.save({ session });
 
-      // histórico
       await logHistory(
         lead._id,
         userId,
         'RESERVA_CANCELADA',
-        `Reserva ${reservaId} excluída e imóvel liberado.`,
-        { reservaId, imovelId: reserva.imovel }
+        `Reserva ${reservaId} excluída. Imóvel liberado${imovel ? ` (${imovelModelUsed}:${imovel._id})` : ''}.`,
+        { reservaId, imovelId: imovel?._id || null, tipoImovel: imovelModelUsed || desired || null }
       );
-    } else {
-      // Sem lead – ainda assim registramos algo no log (opcional)
-      // Você pode ter um logger central; se não, apenas console.warn
-      console.warn(`[ReservaService] Lead relacionado não encontrado (reserva ${reservaId}). Prosseguindo com a exclusão.`);
     }
 
-    // 6) Remove a reserva (hard delete)
+    // 6) Excluir reserva
     await Reserva.deleteOne({ _id: reservaId, company: companyId }).session(session);
 
     await session.commitTransaction();
-    return { reservaId, imovelId: imovel?._id || null, leadId: lead?._id || null };
+    return { ok: true, reservaId, imovelId: imovel?._id || null, leadId: lead?._id || null };
   } catch (err) {
     await session.abortTransaction();
     throw new Error(err.message || 'Erro ao excluir reserva.');
@@ -331,6 +348,10 @@ async function deleteReserva(reservaId, companyId, userId) {
     session.endSession();
   }
 }
+
+
+
+
 
 
 module.exports = {
