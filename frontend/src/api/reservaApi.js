@@ -1,4 +1,4 @@
-/ src/api/reservaApi.js
+//src/api/reservaApi.js
 import axiosInstance from "./axiosInstance";
 
 const API_URL = '/reservas'; // Base URL para endpoints de reserva
