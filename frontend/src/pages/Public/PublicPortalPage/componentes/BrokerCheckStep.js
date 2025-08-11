@@ -31,7 +31,7 @@ function BrokerCheckStep({ companyId, onBrokerFound, onBrokerNotFound }) {
     return (
         <form onSubmit={handleCheck} className="submission-form">
             <h2>Identificação do Parceiro</h2>
-            <p>Para começar, por favor, identifique-se com o seu CPF ou CRECI.</p>
+            <p>Para começar, por favor, identifique-se com o seu CPF ou CNPJ</p>
             <div className="form-group">
                 <input 
                     type="text" 
