@@ -99,3 +99,60 @@
   .data-table tbody td{ padding: 10px 12px; }
   .actions-cell{ gap: 8px; }
 }
+
+/* ===== Paginação ===== */
+.pagination{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  justify-content:center;
+  margin-top:16px;
+  flex-wrap:wrap;
+}
+
+.pg-btn{
+  background:#fff;
+  border:1px solid #e5e7eb;
+  padding:8px 10px;
+  border-radius:10px;
+  font-weight:700;
+  color:#0f172a;
+  cursor:pointer;
+}
+.pg-btn:hover{ filter:brightness(.98); }
+.pg-btn:disabled{
+  opacity:.5; cursor:not-allowed;
+}
+
+.pg-btn.num.active{
+  background:#2563eb;
+  color:#fff;
+  border-color:#2563eb;
+  box-shadow:0 6px 14px rgba(37,99,235,.18);
+}
+
+.pg-info{
+  margin-left:6px;
+  color:#475569;
+  font-size:.9rem;
+}
+
+/* seletor de limite */
+.list-toolbar{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.limit-label{
+  font-weight:600;
+  color:#334155;
+}
+.limit-label select{
+  margin-left:8px;
+  padding:6px 10px;
+  border:1px solid #e5e7eb;
+  border-radius:8px;
+  background:#fff;
+}
+

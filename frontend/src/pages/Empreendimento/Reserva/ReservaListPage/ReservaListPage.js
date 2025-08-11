@@ -1,9 +1,9 @@
 // src/pages/Empreendimento/ReservaListPage/ReservaListPage.js
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getReservasByCompanyApi, deleteReservaApi } from '../../../../api/reservaApi';
 import { toast } from 'react-toastify';
-import './ReservaListPage.css';
+import './ReservaListPage.css'; // (onde fica o CSS da tabela + paginação)
 
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
@@ -16,68 +16,76 @@ const formatDate = (dateString) => {
   }
 };
 
-// mapeia status -> classe (para cores)
-const statusClass = (status) =>
-  `status-${String(status || '')
-    .toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove acento
-    .replace(/\s+/g, '-')}`;
-
 function ReservaListPage() {
   const [reservas, setReservas] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [deletingId, setDeletingId] = useState(null);
   const [error, setError] = useState(null);
+
+  // paginação
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalReservas, setTotalReservas] = useState(0);
 
   const navigate = useNavigate();
 
-  const fetchReservas = useCallback(async (currentPage = 1, currentFilters = {}) => {
+  const fetchReservas = useCallback(async (p = page, l = limit) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await getReservasByCompanyApi(currentPage, 10, currentFilters);
+      const data = await getReservasByCompanyApi(p, l);
+      // Backend retorna: { success, reservas, total, totalPages, currentPage }
       setReservas(data.reservas || []);
-      setTotalPages(data.pages || 1);
       setTotalReservas(data.total || 0);
-      setPage(data.page || currentPage);
+      setTotalPages(data.totalPages || 1);
+      setPage(data.currentPage || p);
     } catch (err) {
-      const errMsg = err?.error || err?.message || 'Erro ao carregar reservas.';
+      const errMsg = err.error || err.message || 'Erro ao carregar reservas.';
       setError(errMsg);
       toast.error(errMsg);
       setReservas([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page, limit]);
 
-  useEffect(() => { fetchReservas(page); }, [fetchReservas, page]);
+  useEffect(() => {
+    fetchReservas(page, limit);
+  }, [fetchReservas, page, limit]);
 
   const handleGerarProposta = (reservaId) => {
     navigate(`/reservas/${reservaId}/proposta-contrato/novo`);
   };
 
-  const handleDeleteReserva = async (id) => {
-    if (!id) return;
-    const ok = window.confirm('Tem certeza que deseja excluir esta reserva? Esta ação não pode ser desfeita.');
-    if (!ok) return;
+  const handleDelete = async (id) => {
     try {
-      setDeletingId(id);
       await deleteReservaApi(id);
-      toast.success('Reserva excluída com sucesso.');
-      fetchReservas(page);
-    } catch (err) {
-      toast.error(err?.error || err?.message || 'Falha ao excluir a reserva.');
-    } finally {
-      setDeletingId(null);
+      toast.success('Reserva excluída.');
+      // se a página ficou “vazia” após deletar, retrocede uma página
+      if (reservas.length === 1 && page > 1) {
+        setPage(page - 1);
+      } else {
+        fetchReservas(page, limit);
+      }
+    } catch (e) {
+      toast.error(e?.message || 'Falha ao excluir reserva.');
     }
   };
 
   const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= totalPages) setPage(newPage);
+    if (newPage >= 1 && newPage <= totalPages && newPage !== page) {
+      setPage(newPage);
+    }
   };
+
+  // janela de páginas (mostra até 5 páginas: atual ±2)
+  const pageNumbers = useMemo(() => {
+    const max = Math.max(1, totalPages);
+    const start = Math.max(1, page - 2);
+    const end = Math.min(max, start + 4);
+    const realStart = Math.max(1, end - 4);
+    return Array.from({ length: end - realStart + 1 }, (_, i) => realStart + i);
+  }, [page, totalPages]);
 
   if (loading) return <div className="admin-page loading"><p>Carregando reservas...</p></div>;
 
@@ -85,6 +93,21 @@ function ReservaListPage() {
     <div className="admin-page reserva-list-page">
       <header className="page-header">
         <h1>Reservas de Unidades ({totalReservas})</h1>
+
+        {/* seletor de itens por página */}
+        <div className="list-toolbar">
+          <label className="limit-label">
+            Itens por página:
+            <select
+              value={limit}
+              onChange={e => { setPage(1); setLimit(Number(e.target.value)); }}
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </label>
+        </div>
       </header>
 
       <div className="page-content">
@@ -94,7 +117,7 @@ function ReservaListPage() {
 
         {reservas.length > 0 && (
           <div className="table-responsive">
-            <table className="data-table reservas-table">
+            <table className="data-table">
               <thead>
                 <tr>
                   <th>Lead</th>
@@ -104,71 +127,108 @@ function ReservaListPage() {
                   <th>Validade</th>
                   <th>Status</th>
                   <th>Criado Por</th>
-                  <th className="th-acoes">Ações</th>
+                  <th>Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {reservas.map((res) => (
-                  <tr key={res._id}>
-                    <td>{res.lead?.nome || 'N/A'}</td>
+                {reservas.map((res) => {
+                  const statusClass = `status-${String(res.statusReserva || 'unknown').toLowerCase().replace(/\s+/g, '-')}`;
+                  const emp = res.tipoImovel === 'Unidade'
+                    ? (res.imovel?.empreendimento?.nome || 'N/A')
+                    : (res.imovel?.titulo || 'N/A');
 
-                    {/* CORRIGIDO: esta coluna precisa de <td> */}
-                    <td>
-                      {res.tipoImovel === 'Unidade'
-                        ? (res.imovel?.empreendimento?.nome || 'N/A')
-                        : (res.imovel?.titulo || 'N/A')}
-                    </td>
+                  return (
+                    <tr key={res._id}>
+                      <td>{res.lead?.nome || 'N/A'}</td>
+                      <td>{emp}</td>
+                      <td>{res.imovel?.identificador || res.imovel?.titulo || 'N/A'}</td>
+                      <td>{formatDate(res.dataReserva)}</td>
+                      <td>{formatDate(res.validadeReserva)}</td>
+                      <td>
+                        <span className={`status-badge ${statusClass}`}>
+                          {res.statusReserva || '—'}
+                        </span>
+                      </td>
+                      <td>{res.createdBy?.nome || 'N/A'}</td>
+                      <td className="actions-cell">
+                        {res.statusReserva === 'Ativa' && (
+                          <button
+                            onClick={() => handleGerarProposta(res._id)}
+                            className="button primary-button small-button"
+                          >
+                            Gerar Proposta/Contrato
+                          </button>
+                        )}
 
-                    <td>{res.imovel?.identificador || res.imovel?.titulo || 'N/A'}</td>
-                    <td>{formatDate(res.dataReserva)}</td>
-                    <td>{formatDate(res.validadeReserva)}</td>
-                    <td>
-                      <span className={`status-badge ${statusClass(res.statusReserva)}`}>
-                        {res.statusReserva || 'N/A'}
-                      </span>
-                    </td>
-                    <td>{res.createdBy?.nome || 'N/A'}</td>
+                        {(res.statusReserva === 'ConvertidaEmProposta' || res.propostaId) && (
+                          <Link
+                            to={`/propostas-contratos/${res.propostaId}`}
+                            className="button-link view-link"
+                          >
+                            Visualizar Proposta
+                          </Link>
+                        )}
 
-                    <td className="actions-cell">
-                      {res.statusReserva === 'Ativa' && (
-                        <button
-                          onClick={() => handleGerarProposta(res._id)}
-                          className="button primary-button small-button"
-                        >
-                          Gerar Proposta/Contrato
+                        <button className="button danger small-button" onClick={() => handleDelete(res._id)}>
+                          Excluir
                         </button>
-                      )}
-
-                      {(res.statusReserva === 'ConvertidaEmProposta' || res.propostaId) && (
-                        <Link
-                          to={`/propostas-contratos/${res.propostaId}`}
-                          className="button-link view-link"
-                        >
-                          Visualizar Proposta
-                        </Link>
-                      )}
-
-                      <button
-                        onClick={() => handleDeleteReserva(res._id)}
-                        className="button danger-button small-button"
-                        disabled={deletingId === res._id}
-                        title="Excluir reserva"
-                      >
-                        {deletingId === res._id ? 'Excluindo...' : 'Excluir'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         )}
 
+        {/* paginação */}
         {totalPages > 1 && (
-          <div className="pagination-controls" style={{ marginTop: '1rem', textAlign: 'center' }}>
-            <button onClick={() => handlePageChange(page - 1)} disabled={page <= 1}>Anterior</button>
-            <span style={{ margin: '0 10px' }}>Página {page} de {totalPages}</span>
-            <button onClick={() => handlePageChange(page + 1)} disabled={page >= totalPages}>Próxima</button>
+          <div className="pagination">
+            <button
+              className="pg-btn"
+              onClick={() => handlePageChange(1)}
+              disabled={page === 1}
+              aria-label="Primeira página"
+            >
+              «
+            </button>
+            <button
+              className="pg-btn"
+              onClick={() => handlePageChange(page - 1)}
+              disabled={page === 1}
+              aria-label="Página anterior"
+            >
+              ‹
+            </button>
+
+            {pageNumbers.map(n => (
+              <button
+                key={n}
+                className={`pg-btn num ${n === page ? 'active' : ''}`}
+                onClick={() => handlePageChange(n)}
+              >
+                {n}
+              </button>
+            ))}
+
+            <button
+              className="pg-btn"
+              onClick={() => handlePageChange(page + 1)}
+              disabled={page === totalPages}
+              aria-label="Próxima página"
+            >
+              ›
+            </button>
+            <button
+              className="pg-btn"
+              onClick={() => handlePageChange(totalPages)}
+              disabled={page === totalPages}
+              aria-label="Última página"
+            >
+              »
+            </button>
+
+            <span className="pg-info">Página {page} de {totalPages}</span>
           </div>
         )}
       </div>
