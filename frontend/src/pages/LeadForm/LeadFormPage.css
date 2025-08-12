@@ -146,3 +146,45 @@
 .lead-form ::placeholder{ color: #9aa4b2; }
 .lead-form select{ background-color:#fff; }
 .lead-form .form-group small{ color:#64748b; }
+
+
+/* 1) Cadeia de altura completa + scroll garantido */
+html, body, #root { height: 100%; }
+.main-content{
+  min-height: 100svh;           /* browsers novos */
+  min-height: 100dvh;           /* fallback */
+  overflow: auto;               /* a página vira o contêiner rolável */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 2) O card do formulário NÃO limita a altura nem corta filhos */
+.lead-form-page{
+  max-height: none;
+  overflow: visible;
+}
+
+/* 3) Área de ações "sticky" sempre visível
+      e reserva de espaço no fim do form para nada ficar escondido */
+.form-actions{
+  position: sticky;
+  bottom: 0;                    /* gruda no final da viewport do container */
+  background: #fff;
+  padding-top: 12px;
+  margin-top: 6px;
+  border-top: 1px solid #e9edf3;
+  z-index: 2;
+}
+
+/* reserva espaço para a barra sticky: evita que os últimos campos fiquem por baixo */
+.lead-form{ padding-bottom: 88px; }
+
+/* telinhas bem baixas: aproxima um pouco a barra */
+@media (max-height: 640px){
+  .lead-form{ padding-bottom: 96px; }
+}
+
+/* 4) Reduz levemente os espaços em telas estreitas para caber melhor */
+@media (max-width: 420px){
+  .lead-form-page{ padding: 14px; }
+  .lead-form{ gap: 10px 12px; }
+}
