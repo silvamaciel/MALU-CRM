@@ -1,335 +1,132 @@
 /* src/pages/LeadDetail/LeadDetailPage.css */
-.lead-detail-page {
-    padding: 1rem;
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    max-height: 90vh;
 
+/* tokens simples p/ espaçamentos fluidos */
+:root{
+  --app-header-h: 64px;                 /* ajuste se seu header tem outra altura */
+  --page-pad: clamp(12px, 2vw, 20px);
+  --gap: clamp(8px, 1.4vw, 14px);
+  --card-bg: #fff;
+  --card-br: 10px;
+  --card-bd: #e9edf3;
+  --shadow: 0 4px 14px rgba(15,23,42,.06);
 }
 
+/* ===== Página ===== */
+.lead-detail-page{
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: var(--gap);
+  padding: var(--page-pad);
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+
+  /* o segredo do scroll em telas baixas */
+  min-height: calc(100dvh - var(--app-header-h));
+  max-height: none;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* estados */
 .lead-detail-page.loading,
-.lead-detail-page.error-page {
-    text-align: center;
-    padding: 3rem;
-    font-size: 1.1em;
+.lead-detail-page.error-page{
+  text-align:center; padding: 2rem; font-size: 1rem;
 }
 
-.error-page h2 {
-    color: #dc3545;
-    margin-bottom: 1rem;
+/* ===== Header/Ações (component LeadHeaderActions) ===== */
+.lead-detail-page .lead-header-actions,
+.lead-detail-page .detail-header,
+.lead-detail-page .header-actions{
+  display:flex; align-items:center; gap: .5rem; flex-wrap: wrap;
 }
 
-.error-message {
-    color: #721c24;
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
-    padding: 1rem;
-    border-radius: 4px;
-    margin-bottom: 1.5rem;
-    display: inline-block;
-    /* Para não ocupar largura total */
+/* se ainda ficar apertado, deixa rolar horizontalmente */
+.lead-detail-page .lead-header-actions{
+  overflow-x: auto; padding-bottom: 2px;
+}
+.lead-detail-page .lead-header-actions::-webkit-scrollbar{ height:6px }
+.lead-detail-page .lead-header-actions::-webkit-scrollbar-thumb{
+  background:#cbd5e1; border-radius:6px;
 }
 
-
-.detail-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #dee2e6;
-    padding-bottom: 1rem;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
-    /* Permite quebrar linha em telas menores */
-    gap: 1rem;
+/* ===== Grid principal ===== */
+.detail-layout-grid{
+  display: grid;
+  grid-template-columns: 1fr;       /* mobile: 1 col */
+  gap: var(--gap);
+  min-height: 0;                    /* permite scroll interno se precisar */
 }
 
-.detail-header h1 {
-    margin: 0;
-    color: #343a40;
-    font-size: 1.8em;
-    flex-grow: 1;
-    /* Ocupa espaço disponível */
+/* desktop: 2 colunas */
+@media (min-width: 992px){
+  .detail-layout-grid{ grid-template-columns: 1.2fr 1fr; }
 }
 
-.header-actions {
-    display: flex;
-    gap: 0.8rem;
+/* transforma os filhos em cards compactos */
+.detail-layout-grid > *{
+  background: var(--card-bg);
+  border: 1px solid var(--card-bd);
+  border-radius: var(--card-br);
+  box-shadow: var(--shadow);
+  padding: clamp(12px, 1.4vw, 16px);
 }
 
-/* Estilos gerais para botões na página */
-.button {
-    padding: 0.6rem 1.2rem;
-    border-radius: 5px;
-    text-decoration: none;
-    font-weight: 500;
-    cursor: pointer;
-    border: 1px solid transparent;
-    transition: all 0.2s ease-in-out;
-    font-size: 0.9em;
-    text-align: center;
+/* Títulos dos cards */
+.detail-layout-grid h2{
+  margin: 0 0 .5rem 0;
+  font-weight: 600;
+  font-size: clamp(15px, 1.2vw, 18px);
+  color: #0f172a;
 }
 
-.back-button {
-    background-color: #6c757d;
-    /* Cinza */
-    border-color: #6c757d;
-    color: white;
+/* ===== Mensagens de erro info ===== */
+.error-message{
+  color:#721c24; background:#f8d7da; border:1px solid #f5c6cb;
+  padding:.75rem; border-radius:6px; margin: .25rem 0 .5rem 0;
+  font-size: .95rem;
 }
 
-.back-button:hover {
-    background-color: #5a626890;
-    border-color: #545b62;
-    color: #ffffff;
+/* ===== Histórico (altura adaptável) ===== */
+.lead-history-list{
+  list-style:none; margin:0; padding:.5rem;
+  border:1px solid #eef2f7; border-radius:8px; background:#fafbfc;
+
+  /* limita sem cortar a página */
+  max-height: min(40vh, 360px);
+  overflow:auto; -webkit-overflow-scrolling:touch;
 }
+.history-entry{ padding:.5rem .25rem; border-bottom:1px solid #f1f5f9; font-size:.95rem }
+.history-entry:last-child{ border-bottom:none }
+.history-timestamp{ display:block; font-size:.8rem; color:#64748b; margin-bottom:.15rem }
 
-.edit-button {
-    background-color: #ffc107;
-    /* Amarelo */
-    border-color: #ffc107;
-    color: #ffffff;
+/* ===== Tarefas ===== */
+.tasks-section h2{ margin-bottom:.5rem }
+
+/* ===== Botões genéricos da página (se usados aqui) ===== */
+.button{
+  padding: .55rem .9rem; border-radius:8px; font-weight:600;
+  border:1px solid #e5e7eb; background:#fff; color:#0f172a;
+  font-size: clamp(13px, 0.9vw, 15px); cursor:pointer;
 }
-
-.edit-button:hover {
-    background-color: #e0a800;
-    border-color: #d39e00;
+.button:hover{ filter: brightness(.98) }
+.back-button{ background:#f1f5f9 } .back-button:hover{ background:#e2e8f0 }
+.edit-button{ background:#fff7e0; border-color:#ffe08a }
+.discard-button-detail, .delete-button-detail{
+  background:#fee2e2; border-color:#fecaca; color:#991b1b;
 }
+.reactivate-button{ background:#dcfce7; border-color:#bbf7d0; color:#166534 }
 
-/* Grid para detalhes */
-.detail-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    /* Colunas responsivas */
-    gap: 0.1rem;
-    /* Espaçamento entre itens */
-}
+/* ===== Ajustes finos nos espaçamentos ===== */
+.detail-item{ background:#f8fafc; border:1px solid #eef2f7; border-radius:8px;
+  padding: .75rem }
+.detail-label{ font-size:.8rem; color:#475569; margin-bottom:.25rem; text-transform:uppercase }
+.detail-value{ font-size:.95rem; color:#0f172a }
 
-.detail-item {
-    background-color: #f8f9fa;
-    padding: 1rem;
-    border-radius: 5px;
-    border: 1px solid #e9ecef;
-    word-wrap: break-word;
-    /* Quebra palavras longas */
-}
+/* quando houver bloco de conversa vazio, não ocupa “buraco” */
+.lead-conversations-column:empty{ display:none }
 
-.detail-label {
-    display: block;
-    font-weight: bold;
-    color: #495057;
-    font-size: 0.85em;
-    margin-bottom: 0.3rem;
-    text-transform: uppercase;
-}
-
-.detail-value {
-    font-size: 1em;
-    color: #212529;
-}
-
-/* Estilos específicos */
-.detail-item.comentario {
-    grid-column: 1 / -1;
-    /* Faz o comentário ocupar a largura inteira */
-}
-
-.comentario-value {
-    white-space: pre-wrap;
-    /* Preserva quebras de linha e espaços */
-    line-height: 1.5;
-}
-
-.discard-info {
-    background-color: #fff3cd;
-    /* Fundo amarelo claro para destaque */
-    border-color: #ffeeba;
-}
-
-.discard-info .detail-label {
-    color: #856404;
-}
-
-.discard-button-detail {
-    background-color: #dc3545;
-    /* Vermelho */
-    border-color: #dc3545;
-    color: white;
-}
-
-.discard-button-detail:hover {
-    background-color: #c82333;
-    border-color: #bd2130;
-}
-
-.reactivate-button {
-    background-color: #28a745;
-    /* Verde sucesso */
-    border-color: #28a745;
-    color: white;
-}
-
-.reactivate-button:hover:not(:disabled) {
-    background-color: #218838;
-    border-color: #1e7e34;
-}
-
-.reactivate-button:disabled {
-    opacity: 0.65;
-    cursor: not-allowed;
-}
-
-/* Estilo para a mensagem de erro da reativação */
-.reactivation-error {
-    /* Similar ao error-message, mas pode ser posicionado diferente */
-    color: #dc3545;
-    margin-top: -1rem;
-    /* Puxa para perto dos botões do header */
-    margin-bottom: 1rem;
-    text-align: right;
-    /* Alinha com os botões */
-    font-size: 0.9em;
-}
-
-
-.delete-button-detail {
-    background-color: #dc3545;
-    /* Vermelho */
-    border-color: #dc3545;
-    color: white;
-    margin-left: auto;
-    /* Empurra para a direita, se houver espaço */
-}
-
-.delete-button-detail:hover {
-    background-color: #c82333;
-    border-color: #bd2130;
-}
-
-.detail-layout-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    /* Uma coluna por padrão (mobile) */
-    gap: 1rem;
-    /* Espaço entre colunas/linhas */
-    margin-top: 1rem;
-}
-
-/* Em telas maiores, usar duas colunas */
-@media (min-width: 992px) {
-    .detail-layout-grid {
-        /* Duas colunas, a primeira um pouco maior */
-        grid-template-columns: 1.5fr 1fr;
-    }
-}
-
-.lead-details-section {
-    margin-bottom: 2.5rem;
-    /* Espaço maior antes da próxima seção */
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid #eee;
-}
-
-.lead-details-section h2 {
-    margin-top: 0;
-    margin-bottom: 1.5rem;
-    font-size: 1.3em;
-    color: #444;
-}
-
-/* Grid para as subseções (Histórico e Conversas) */
-.lead-subsections-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    /* Uma coluna por padrão */
-    gap: 2rem;
-    /* Espaço entre as colunas/linhas */
-}
-
-/* Em telas maiores, usar duas colunas */
-@media (min-width: 992px) {
-    .lead-subsections-grid {
-        grid-template-columns: 1fr 1fr;
-        /* Duas colunas de tamanho igual */
-    }
-}
-
-/* Estilos para as colunas individuais */
-.lead-history-column h2,
-.lead-conversations-column h2 {
-    margin-top: 0;
-    margin-bottom: 1.5rem;
-    font-size: 1.2em;
-    /* Título um pouco menor que o principal */
-    color: #444;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 0.5rem;
-}
-
-/* Estilos para a lista de histórico (mantidos da resposta anterior) */
-.lead-history-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    max-height: 400px;
-    /* Altura máxima, ajuste conforme necessário */
-    overflow-y: auto;
-    border: 1px solid #eee;
-    border-radius: 5px;
-    padding: 0.5rem;
-    /* Padding interno */
-    background-color: #fdfdfd;
-}
-
-.history-entry {
-    padding: 0.7rem 0.5rem;
-    border-bottom: 1px solid #f0f0f0;
-    font-size: 0.9em;
-    line-height: 1.4;
-}
-
-.history-entry:last-child {
-    border-bottom: none;
-}
-
-.history-timestamp {
-    display: block;
-    font-size: 0.8em;
-    color: #888;
-    margin-bottom: 0.2rem;
-}
-
-.history-action {
-    color: #333;
-    margin-right: 0.5rem;
-    text-transform: capitalize;
-}
-
-.history-details {
-    color: #555;
-}
-
-.history-user {
-    font-size: 0.85em;
-    color: #777;
-    font-style: italic;
-    margin-left: 0.5rem;
-}
-
-/* Estilos para a coluna de conversas (placeholder) */
-.lead-conversations-column p {
-    color: #6c757d;
-    font-style: italic;
-    text-align: center;
-    padding: 2rem;
-    background-color: #f8f9fa;
-    border: 1px dashed #ccc;
-    border-radius: 5px;
-}
-
-.detail-item.comentario {
-    grid-column: 1 / -1;
-}
-
-
-
-
+/* scrollbars sutis (opcional) */
+.lead-detail-page::-webkit-scrollbar{ width:10px }
+.lead-detail-page::-webkit-scrollbar-thumb{ background:#cbd5e1; border-radius:8px }
