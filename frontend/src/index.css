@@ -1,221 +1,37 @@
-/* ===== Reset / Base ===== */
-*, *::before, *::after { box-sizing: border-box; }
-html, body, #root { height: 100%; }
+/* Exemplo para src/index.css */
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #e9ecef; /* Um cinza um pouco mais claro para o fundo geral */
+  color: #212529;
   line-height: 1.5;
-  color: #0f172a;                /* ink-900 */
-  background: #f6f8fb;          /* bg */
 }
 
-/* Links discretos */
-a { color: #2563eb; text-decoration: none; transition: color .15s ease; }
-a:hover { color: #1d4ed8; text-decoration: underline; }
-
-/* ===== Tokens ===== */
-:root{
-  /* superfícies */
-  --bg:#f6f8fb;
-  --card:#ffffff;
-  --border:#e5e7eb;
-
-  /* tipografia */
-  --ink-900:#0f172a;
-  --ink-700:#334155;
-  --muted:#64748b;
-
-  /* brand / estados */
-  --brand-50:#eff6ff; --brand-100:#dbeafe; --brand-200:#bfdbfe;
-  --brand-400:#60a5fa; --brand-600:#2563eb; --brand-700:#1d4ed8;
-
-  --success-50:#ecfdf5; --success-100:#d1fae5; --success-200:#a7f3d0;
-  --success-600:#16a34a; --success-700:#15803d;
-
-  --warning-50:#fffbeb; --warning-100:#fef3c7; --warning-200:#fde68a;
-  --warning-600:#f59e0b; --warning-700:#d97706;
-
-  --danger-50:#fef2f2; --danger-100:#fee2e2; --danger-200:#fecaca;
-  --danger-600:#ef4444; --danger-700:#dc2626;
-
-  /* raio / espaços */
-  --radius:10px;
-  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-6:24px;
+/* Remove estilos padrão de link e adiciona transição */
+a {
+  color: #007bff;
+  text-decoration: none;
+  transition: color 0.15s ease-in-out;
 }
 
-/* Cards e grids utilitários (opcional) */
-.card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:var(--radius);
-  padding:var(--space-4);
-  box-shadow:0 1px 2px rgba(15,23,42,.04);
-}
-.grid{ display:grid; gap:var(--space-4); }
-
-/* ===========================
-   BOTÕES (mínimos e previsíveis)
-   =========================== */
-
-/* base – funciona como “neutral/ghost” */
-.button, .btn{
-  appearance:none;
-  border:1px solid var(--border);
-  background:#fff;
-  color:var(--ink-900);
-  font-weight:600;
-  font-size:14px;
-  line-height:1;
-  padding:10px 14px;
-  border-radius:var(--radius);
-  display:inline-flex; align-items:center; justify-content:center;
-  gap:8px;
-  cursor:pointer;
-  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, filter .15s ease;
-}
-.button:hover, .btn:hover{ filter:brightness(.98); }
-.button:disabled, .btn:disabled{ opacity:.6; cursor:not-allowed; }
-.button:focus-visible, .btn:focus-visible{
-  outline:2px solid var(--brand-400); outline-offset:2px;
+a:hover {
+  color: #0056b3;
+  text-decoration: underline;
 }
 
-/* sólido – texto branco */
-.primary-button, .btn--primary{ background:var(--brand-600); border-color:var(--brand-600); color:#fff; }
-.success-button{ background:var(--success-600); border-color:var(--success-600); color:#fff; }
-.warning-button{ background:var(--warning-600); border-color:var(--warning-600); color:#fff; }
-.danger-button{  background:var(--danger-600);  border-color:var(--danger-600);  color:#fff; }
-
-/* soft – fundo clarinho, texto escuro (sempre legível) */
-.primary-soft{ background:var(--brand-50);   border-color:var(--brand-100);   color:var(--brand-700); }
-.success-soft{  background:var(--success-50); border-color:var(--success-100); color:var(--success-700); }
-.warning-soft{  background:var(--warning-50); border-color:var(--warning-100); color:var(--warning-700); }
-.danger-soft{   background:var(--danger-50);  border-color:var(--danger-100);  color:var(--danger-700); }
-.neutral-soft{  background:#f8fafc;          border-color:#e2e8f0;          color:#0f172a; }
-
-/* outline – contorno discreto */
-.outline-button{
-  background:#fff;
-  color:var(--brand-700);
-  border-color:var(--brand-200);
-}
-.outline-button:hover{ background:var(--brand-50); }
-
-/* link button – texto com sublinhado no hover */
-.button-link{
-  background:transparent;
-  border:0;
-  color:var(--ink-700);
-  text-decoration:underline;
-  padding:0;
-  font-weight:600;
-  cursor:pointer;
-}
-.button-link.view-link{ color:var(--brand-700); }
-.button-link.delete-link{ color:var(--danger-700); }
-
-/* tamanhos (opcionais) */
-.button.sm{ padding:8px 12px; font-size:13px; }
-.button.lg{ padding:12px 16px; font-size:15px; }
-
-/* ===========================
-   BADGES / CHIPS para status
-   =========================== */
-.status-badge{
-  display:inline-flex; align-items:center; justify-content:center;
-  border-radius:999px;
-  padding:4px 10px;
-  font-size:12px;
-  font-weight:700;
-  letter-spacing:.02em;
-  border:1px solid var(--border);
+/* Box sizing para facilitar layouts */
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
-/* use nomes coerentes com seus status */
-.status-ativa{          background:var(--success-50); border-color:var(--success-100); color:var(--success-700); }
-.status-distratada{     background:var(--danger-50);  border-color:var(--danger-100);  color:var(--danger-700); }
-.status-convertidaemproposta,
-.status-convertidaemvenda{ background:var(--brand-50); border-color:var(--brand-100); color:var(--brand-700); }
-.status-expirada{       background:var(--warning-50); border-color:var(--warning-100); color:var(--warning-700); }
-.status-pendente{       background:#f8fafc;            border-color:#e2e8f0;           color:#0f172a; }
-
-/* ===========================
-   TABS pills (opcional)
-   =========================== */
-.tabs{ display:flex; flex-wrap:wrap; gap:8px; }
-.tab{
-  padding:8px 12px;
-  border:1px solid var(--border);
-  background:#fff;
-  border-radius:999px;
-  font-weight:600;
-  color:var(--ink-900);
-  cursor:pointer;
-}
-.tab:hover{ background:#f8fafc; }
-.tab.is-active{ background:var(--brand-600); border-color:var(--brand-600); color:#fff; }
-
-/* ===========================
-   Utilitários
-   =========================== */
-.container{ max-width:1200px; margin:0 auto; padding:0 var(--space-4); }
-
-
-/* ===== Tipografia fluida mínima ===== */
-
-/* Escala de tamanhos (de -2 a 4) — ajuste as pontas se quiser maiores/menores */
-:root{
-  /* base confortável ~14–16px */
-  --fs-0: clamp(14px, 0.9rem + 0.3vw, 16px);
-
-  /* menores */
-  --fs--1: clamp(12px, 0.8rem + 0.15vw, 13px);
-  --fs--2: clamp(11px, 0.75rem + 0.1vw, 12px);
-
-  /* maiores (títulos) */
-  --fs-1: clamp(16px, 1.0rem + 0.8vw, 20px);
-  --fs-2: clamp(18px, 1.1rem + 1.4vw, 24px);
-  --fs-3: clamp(22px, 1.2rem + 2.2vw, 32px);
-  --fs-4: clamp(28px, 1.4rem + 3vw, 40px);
+/* Estilos para o container principal da aplicação */
+.App {
+  /* Você pode adicionar padding, max-width, etc., aqui se não usar um componente de Layout separado */
 }
 
-/* Base */
-html, body { font-size: 100%; }
-body{ font-size: var(--fs-0); line-height: 1.55; }
-
-/* Títulos – sempre legíveis, nunca “minúsculos” */
-h1{ font-size: var(--fs-3); line-height: 1.2; margin: 0 0 .5em; }
-h2{ font-size: var(--fs-2); line-height: 1.25; margin: 0 0 .6em; }
-h3{ font-size: var(--fs-1); line-height: 1.3;  margin: 0 0 .6em; }
-h4{ font-size: var(--fs-0); font-weight: 700; margin: 0 0 .6em; }
-
-/* Texto auxiliar */
-small, .text-xs{ font-size: var(--fs--1); }
-.muted{ color: var(--muted); }
-
-/* Botões herdam e também escalam com um limite confortável */
-.button, .btn{
-  font-size: clamp(13px, 0.9vw, 15px);
-  line-height: 1.1;
-}
-
-/* Campos/form controls: não deixar abaixo de 13px (usabilidade) */
-input, select, textarea{
-  font-size: clamp(13px, 0.9vw, 15px);
-}
-
-/* Utilitários de tamanho (quando quiser “forçar” algo específico) */
-.text-sm   { font-size: var(--fs--1) !important; }
-.text-base { font-size: var(--fs-0)  !important; }
-.text-lg   { font-size: var(--fs-1)  !important; }
-.text-xl   { font-size: var(--fs-2)  !important; }
-.text-2xl  { font-size: var(--fs-3)  !important; }
-.text-3xl  { font-size: var(--fs-4)  !important; }
-
-/* Em telas muito pequenas, aumente um pouco a base para legibilidade */
-@media (max-width: 360px){
-  :root{
-    --fs-0: clamp(15px, 1rem + 0.3vw, 17px);
-  }
+main {
+    /* Garante que o main ocupe espaço */
+    display: block;
 }
