@@ -1,11 +1,11 @@
 /* src/pages/LeadDetail/LeadDetailPage.css */
 .lead-detail-page {
-    max-width: 90%;
-    margin: 2rem auto;
-    padding: 2rem;
+    padding: 1rem;
     background-color: #fff;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    max-height: 90vh;
+
 }
 
 .lead-detail-page.loading,
@@ -100,7 +100,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     /* Colunas responsivas */
-    gap: 1.5rem;
+    gap: 0.1rem;
     /* Espaçamento entre itens */
 }
 
@@ -209,9 +209,9 @@
     display: grid;
     grid-template-columns: 1fr;
     /* Uma coluna por padrão (mobile) */
-    gap: 2rem;
+    gap: 1rem;
     /* Espaço entre colunas/linhas */
-    margin-top: 2rem;
+    margin-top: 1rem;
 }
 
 /* Em telas maiores, usar duas colunas */
@@ -324,14 +324,6 @@
     background-color: #f8f9fa;
     border: 1px dashed #ccc;
     border-radius: 5px;
-}
-
-/* Ajuste no grid de detalhes se necessário */
-.detail-grid {
-    /* Seus estilos existentes */
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1rem 1.5rem;
 }
 
 .detail-item.comentario {
