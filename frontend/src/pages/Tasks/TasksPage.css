@@ -188,3 +188,51 @@
 .create-task-form-page .task-form-meta select {
     flex: 1 1 180px; /* Permite quebrar a linha em telas menores */
 }
+
+
+/* ---- Altura segura p/ telas pequenas (mobile/zoom/iframe) ---- */
+:root{
+  /* ajuste se o seu header global tiver outra altura */
+  --app-header-h: 72px;
+}
+
+/* A página vira um grid: header (auto) + conteúdo (1fr) */
+.admin-page.tasks-page{
+  display: grid;
+  grid-template-rows: auto 1fr;
+  /* use unidades “dinâmicas” p/ mobile (barra de endereço) */
+  height: calc(100dvh - 0px);
+  min-height: calc(100dvh - 0px);
+  overflow: hidden;           /* o scroll fica no conteúdo */
+}
+
+/* O conteúdo rola internamente */
+.tasks-page .page-content{
+  min-height: 0;              /* MUITO importante p/ grids */
+  overflow: auto;
+  padding: 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0));
+  -webkit-overflow-scrolling: touch;  /* rolagem suave no iOS */
+}
+
+/* Se o seu layout tiver um header fixo global, subtraia aqui */
+@supports (height: 100svh){
+  .admin-page.tasks-page{
+    height: calc(100svh - 0px);
+    min-height: calc(100svh - 0px);
+  }
+}
+
+/* Quando a altura é bem pequena, compacta um pouco os cartões */
+@media (max-height: 700px){
+  .kpi-container-tasks{
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
+    margin-bottom: 12px;
+  }
+  .kpi-card-task{ padding: 14px; }
+  .tasks-filters{ position: sticky; top: 0; background: #f8f9fb; padding: 8px 0; z-index: 2; }
+}
+
+/* Garante que wrappers não criem “caixa sem rolagem” */
+.tasks-list-container{ min-height: 0; }
