@@ -1,250 +1,148 @@
-/* src/pages/LeadForm/LeadFormPage.css */
-.lead-form-page {
-  max-width: 700px;
-  margin: 2rem auto;
-  padding: 2rem;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+/* ======= Página / Container ======= */
+.main-content{
+  padding: clamp(12px,2vw,24px);
+  min-height: calc(100dvh - 64px); /* ajuste se seu header tiver outra altura */
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-.lead-form-page h1 {
-  text-align: center;
-  color: #333;
-  margin-bottom: 2rem;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 1rem;
+.lead-form-page{
+  max-width: 840px;
+  margin: 0 auto;
+  background: #fff;
+  border: 1px solid #e9edf3;
+  border-radius: 12px;
+  box-shadow: 0 8px 26px rgba(15,23,42,.06);
+  padding: clamp(16px,2.2vw,28px);
 }
 
-.lead-form .form-group {
-  margin-bottom: 1.5rem;
+.lead-form-page h1{
+  margin: 0 0 14px 0;
+  font-size: clamp(20px,2.2vw,26px);
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: .2px;
+  border-bottom: 1px solid #eef2f7;
+  padding-bottom: 10px;
 }
 
-.lead-form label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: bold;
-  color: #555;
-  font-size: 0.9em;
+/* ======= Grid do formulário ======= */
+.lead-form{
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px 16px;
+}
+
+@media (min-width: 760px){
+  .lead-form{
+    grid-template-columns: repeat(2, minmax(0,1fr));
+  }
+}
+
+/* Campos que devem ocupar a linha inteira */
+.lead-form .form-group:has(#nome),
+.lead-form .form-group:has(#endereco),
+.lead-form .form-group:has(textarea),
+.lead-form .form-actions{
+  grid-column: 1 / -1;
+}
+
+/* (Fallback se algum browser antigo não suportar :has)
+   Adicione class="form-group full" no JSX para forçar 100% */
+.lead-form .form-group.full{ grid-column: 1 / -1; }
+
+/* ======= Campos / Labels ======= */
+.lead-form .form-group{
+  display: flex; flex-direction: column; gap: 6px;
+}
+
+.lead-form label{
+  font-size: .95rem;
+  font-weight: 600;
+  color: #334155;
 }
 
 .lead-form input[type="text"],
 .lead-form input[type="email"],
-.lead-form input[type="tel"],
 .lead-form input[type="date"],
+.lead-form input[type="number"],
 .lead-form select,
-/* Se usar select */
-.lead-form textarea {
+.lead-form textarea{
   width: 100%;
-  padding: 0.8rem 1rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 1em;
-  transition: border-color 0.2s ease;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 1rem;
+  color: #0f172a;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
 }
+
+.lead-form textarea{ min-height: 110px; resize: vertical; }
 
 .lead-form input:focus,
 .lead-form select:focus,
-.lead-form textarea:focus {
-  outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+.lead-form textarea:focus{
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.15);
 }
 
-.lead-form textarea {
-  min-height: 100px;
-  resize: vertical;
-}
-
-.submit-button {
-  display: block;
+/* ======= PhoneInput (react-phone-number-input) ======= */
+.phone-input-control.PhoneInput{
+  display: flex; align-items: center; gap: 8px;
   width: 100%;
-  padding: 0.9rem 1.5rem;
-  background-color: #28a745;
-  /* Verde sucesso */
-  color: white;
-  border: none;
-  border-radius: 5px;
-  font-size: 1.1em;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.2s ease, opacity 0.2s ease;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 6px 10px;
+  background: #fff;
 }
 
-.submit-button:hover:not(:disabled) {
-  background-color: #218838;
-  /* Verde mais escuro */
+.PhoneInputCountry{
+  display:flex; align-items:center; gap:6px;
 }
 
-.submit-button:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
-  opacity: 0.7;
+.PhoneInputCountrySelect{
+  appearance: none;
+  border: 0; background: transparent; padding-right: 4px;
+  cursor: pointer; font-size: .95rem; color: #0f172a;
 }
 
-/* Mensagens de erro e sucesso */
-.error-message {
-  color: #721c24;
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
-  padding: 0.8rem;
-  border-radius: 4px;
-  margin-bottom: 1.5rem;
-  text-align: center;
+.PhoneInputCountryIcon{ width: 22px; height: 16px; border-radius: 3px; overflow: hidden; }
+.PhoneInputInput{
+  border: 0; outline: none; flex: 1 1 auto;
+  font-size: 1rem; padding: 6px 2px; background: transparent; color: #0f172a;
 }
 
-.success-message {
-  color: #155724;
-  background-color: #d4edda;
-  border: 1px solid #c3e6cb;
-  padding: 0.8rem;
-  border-radius: 4px;
-  margin-bottom: 1.5rem;
-  text-align: center;
+/* ======= Ações ======= */
+.form-actions{
+  position: sticky; bottom: -1px;  /* fica sempre visível no fim */
+  background: #fff;
+  padding-top: 12px; margin-top: 6px;
+  border-top: 1px solid #e9edf3;
+  display: flex; justify-content: flex-end;
 }
 
-.lead-form select {
-  /* Herdará os estilos dos inputs, mas pode adicionar específicos */
-  background-color: white;
-  /* Garante fundo branco */
-  cursor: pointer;
-}
-
-.lead-form select:required:invalid {
-  color: #6c757d;
-  /* Cor cinza para a opção "Selecione..." */
-}
-
-.lead-form option {
-  color: #212529;
-  /* Cor padrão para as opções */
-}
-
-/* Estilo para a mensagem de "nenhuma opção cadastrada" */
-.lead-form small {
-  display: block;
-  margin-top: 0.3rem;
-  font-size: 0.8em;
-  color: #dc3545;
-  /* Vermelho alerta */
-}
-
-
-.form-top-actions {
-  display: flex;
-  gap: 0.8rem;
-  /* Espaço entre botões */
-  margin-bottom: 1.5rem;
-  /* Espaço abaixo dos botões */
-  padding-bottom: 1rem;
-  /* Espaçamento antes da linha */
-  border-bottom: 1px solid #eee;
-  /* Linha separadora opcional */
-  flex-wrap: wrap;
-  /* Permite quebrar linha em telas pequenas */
-}
-
-/* Container para os botões no topo */
-.form-top-actions {
-  display: flex;
-  gap: 0.8rem;
-  /* Espaço entre botões */
-  margin-bottom: 1.5rem;
-  /* Espaço abaixo dos botões */
-  padding-bottom: 1rem;
-  /* Espaçamento antes da linha */
-  border-bottom: 1px solid #eee;
-  /* Linha separadora opcional */
-  flex-wrap: wrap;
-  /* Permite quebrar linha em telas pequenas */
-}
-
-/* Estilo para os botões no topo (reutilizando .button se definido globalmente ou copie estilos) */
-.form-top-actions .button {
-  padding: 0.5rem 1rem;
-  /* Tamanho um pouco menor */
-  font-size: 0.9em;
-  border-radius: 4px;
-  text-decoration: none;
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition: all 0.2s ease-in-out;
-  display: inline-flex;
-  /* Para alinhar ícone e texto */
-  align-items: center;
-  gap: 0.4rem;
-  /* Espaço entre ícone e texto */
-}
-
-/* Cores específicas para os botões do topo */
-.back-to-detail-button {
-  background-color: #6c757d; /* Cinza */
-  border-color: #6c757d;
-  color: white;
-}
-
-.back-to-detail-button:hover {
-  background-color: #e2e6ea;
-}
-
-.back-to-list-button {
-  background-color: #EA4C89;
-  border-radius: 8px;
-  border-style: none;
-  box-sizing: border-box;
-  color: #FFFFFF;
-  cursor: pointer;
-  display: inline-block;
-  font-family: "Haas Grot Text R Web", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-  height: 40px;
-  line-height: 20px;
-  list-style: none;
-  margin: 0;
-  outline: none;
+.submit-button{
+  appearance: none;
+  border: 1px solid #dbe3f0;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 10px;
   padding: 10px 16px;
-  position: relative;
-  text-align: center;
-  text-decoration: none;
-  transition: color 100ms;
-  vertical-align: baseline;
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: manipulation;
-}
-
-.back-to-list-button:hover {
-  background-color: #e2e6ea;
-}
-
-/* Ajuste no container de ações inferior para alinhar botão Salvar à direita */
-.form-actions {
-  display: flex;
-  margin-top: 2rem;
-  justify-content: flex-end;
-  /* Alinha o conteúdo (botão) à direita */
-}
-
-.form-actions .submit-button {
-  width: auto;
-  padding: 0.9rem 1.5rem;
-  background-color: #28a745;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  font-size: 1.1em;
-  font-weight: bold;
   cursor: pointer;
-  transition: background-color 0.2s ease, opacity 0.2s ease;
+  transition: filter .15s ease;
 }
 
-.form-actions .submit-button:hover:not(:disabled) {
-  background-color: #218838;
+.submit-button:hover{ filter: brightness(.97); }
+
+/* botão full no celular */
+@media (max-width: 480px){
+  .submit-button{ width: 100%; }
 }
 
-.form-actions .submit-button:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
-  opacity: 0.7;
-}
+/* ======= Pequenos detalhes ======= */
+.lead-form ::placeholder{ color: #9aa4b2; }
+.lead-form select{ background-color:#fff; }
+.lead-form .form-group small{ color:#64748b; }
