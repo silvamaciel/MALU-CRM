@@ -1,7 +1,7 @@
 const BrokerContact = require('../models/BrokerContact');
 const Lead = require('../models/Lead');
 const LeadService = require('./LeadService'); // Reutilizaremos o createLead
-const { cpf: cpfValidator } = require('cpf-cnpj-validator'); // Para validar CPF
+const { cpf: cpfValidator, cnpj: cnpjValidator } = require('cpf-cnpj-validator');
 const mongoose = require('mongoose');
 const Company = require('../models/Company');
 
@@ -10,34 +10,46 @@ const Company = require('../models/Company');
  * Verifica se um corretor parceiro já existe PARA UMA EMPRESA ESPECÍFICA.
  */
 const checkBroker = async (identifier, companyId) => {
-    if (!identifier) throw new Error("CPF ou CRECI é obrigatório.");
-    if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
-        throw new Error("ID da empresa inválido.");
-    }
+  if (!identifier) throw new Error("CPF/CNPJ ou CRECI é obrigatório.");
+  if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+    throw new Error("ID da empresa inválido.");
+  }
 
-    const cleanedIdentifier = String(identifier).replace(/\D/g, "");
-    console.log(`[PublicSvc] Verificando parceiro '${cleanedIdentifier}' para a Empresa: ${companyId}`);
+  // Normalizações
+  const raw = String(identifier).trim();
+  const onlyDigits = raw.replace(/\D/g, ""); // p/ CPF/CNPJ
+  const creciNorm = raw;                      // CRECI pode ter letras/zeros à esquerda
 
-    const query = {
-        company: companyId, // <<< ADICIONA O FILTRO DE EMPRESA
-        $or: [
-            { cpfCnpj: cleanedIdentifier },
-            { creci: cleanedIdentifier }
-        ]
-    };
+  // Monta OR dinamicamente
+  const or = [];
+  // CPF (11 dígitos)
+  if (onlyDigits.length === 11 && cpfValidator.isValid(onlyDigits)) {
+    or.push({ cpfCnpj: onlyDigits });
+  }
+  // CNPJ (14 dígitos)
+  if (onlyDigits.length === 14 && cnpjValidator.isValid(onlyDigits)) {
+    or.push({ cpfCnpj: onlyDigits });
+  }
+  // CRECI (sempre considera)
+  or.push({ creci: creciNorm });
 
-    // Remove a verificação por CPF se não for um CPF válido para não dar erro com CRECI
-    if (!cpfValidator.isValid(cleanedIdentifier)) {
-        query.$or.shift(); // Remove a condição do cpfCnpj
-    }
+  const query = {
+    company: companyId,
+    $or: or,
+  };
 
-    const broker = await BrokerContact.findOne(query).select('nome email publicSubmissionToken _id');
+  console.log(
+    `[PublicSvc] Verificando parceiro "${raw}" (digits="${onlyDigits}") para Empresa: ${companyId}`,
+    ' | Query:', JSON.stringify(query)
+  );
 
-    if (broker) {
-        return { exists: true, broker };
-    } else {
-        return { exists: false, broker: null };
-    }
+  const broker = await BrokerContact
+    .findOne(query)
+    .select('nome email publicSubmissionToken _id cpfCnpj creci');
+
+  return broker
+    ? { exists: true, broker }
+    : { exists: false, broker: null };
 };
 
 
