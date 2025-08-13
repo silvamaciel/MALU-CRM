@@ -18,14 +18,14 @@ const checkBroker = async (identifier, companyId) => {
     const cleanedIdentifier = String(identifier).replace(/\D/g, "");
     console.log(`[PublicSvc] Verificando parceiro '${cleanedIdentifier}' para a Empresa: ${companyId}`);
 
-    const query = { 
+    const query = {
         company: companyId, // <<< ADICIONA O FILTRO DE EMPRESA
         $or: [
             { cpfCnpj: cleanedIdentifier },
             { creci: cleanedIdentifier }
         ]
     };
-    
+
     // Remove a verificação por CPF se não for um CPF válido para não dar erro com CRECI
     if (!cpfValidator.isValid(cleanedIdentifier)) {
         query.$or.shift(); // Remove a condição do cpfCnpj
@@ -52,7 +52,7 @@ const submitPublicLead = async (brokerToken, leadData) => {
 
     // 1. Encontra o corretor parceiro pelo TOKEN PÚBLICO
     const broker = await BrokerContact.findOne({ publicSubmissionToken: String(brokerToken).trim() });
-    
+
     if (!broker) {
         console.error(`[PublicSvc DEBUG] Nenhum corretor encontrado para o token fornecido.`);
         throw new Error("Parceiro não encontrado ou token inválido.");
@@ -67,9 +67,9 @@ const submitPublicLead = async (brokerToken, leadData) => {
         submittedByBroker: broker._id,
         approvalStatus: 'Pendente'
     };
-    
+
     const newLead = await LeadService.createLead(dataForCreation, broker.company, null);
-    
+
     return newLead;
 };
 
@@ -110,7 +110,10 @@ const registerBroker = async (companyId, brokerData) => {
     if (cleanedCreci) query.$or.push({ creci: cleanedCreci });
 
     if (query.$or.length > 0) {
+        console.log('[DEBUG] Query de duplicidade:', JSON.stringify(query, null, 2));
         const existingBroker = await BrokerContact.findOne(query);
+        console.log('[DEBUG] Resultado da busca:', existingBroker);
+
         if (existingBroker) {
             throw new Error("Um corretor com este CPF/CNPJ ou CRECI já está registado para esta empresa.");
         }
@@ -129,7 +132,7 @@ const registerBroker = async (companyId, brokerData) => {
 
     await newBroker.save();
     console.log(`[PublicSvc] Novo parceiro '${nome}' registado com sucesso para a empresa '${company.nome}'`);
-    
+
     // --- 6. Retorno dos Dados para o Frontend ---
     // Retorna os dados essenciais para o frontend poder continuar o fluxo (submeter o lead)
     return {
