@@ -70,6 +70,7 @@ const leadSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "LeadStage",
       required: [true, "A situação do lead é obrigatória."],
+      index: true
     },
     motivoDescarte: {
       type: Schema.Types.ObjectId,
