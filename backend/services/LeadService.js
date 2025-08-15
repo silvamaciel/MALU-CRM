@@ -112,11 +112,11 @@ const getLeads = async (queryParams = {}, companyId) => {
   }
 
   if (queryParams.origem && mongoose.Types.ObjectId.isValid(queryParams.origem)) {
-    queryConditions.origem = queryParams.origem;
+    queryConditions.origem = new mongoose.Types.ObjectId(queryParams.origem);
   }
 
   if (queryParams.responsavel && mongoose.Types.ObjectId.isValid(queryParams.responsavel)) {
-    queryConditions.responsavel = queryParams.responsavel;
+    queryConditions.responsavel = new mongoose.Types.ObjectId(queryParams.responsavel);
   }
 
   if (queryParams.tags && queryParams.tags.trim() !== '') {

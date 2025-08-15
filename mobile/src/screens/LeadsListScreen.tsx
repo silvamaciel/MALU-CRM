@@ -1,21 +1,32 @@
 import React, { useMemo, useState } from 'react';
-import { View, ActivityIndicator, FlatList, RefreshControl, Text, Pressable } from 'react-native';
+import {
+  View,
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  Text,
+  Pressable,
+} from 'react-native';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
+
 import { useTheme } from '../ui/theme';
 import AppBar from '../ui/components/AppBar';
 import Fab from '../ui/components/Fab';
 import LeadFiltersSheet, { LeadFiltersUI } from '../ui/components/LeadFiltersSheet';
+import LeadCardItem from '../ui/components/LeadCardItem';
+
 import { getLeads, listOrigens, listSituacoes, listUsuarios } from '../api/leads';
-import LeadListItem from '../ui/components/LeadListItem';
+import { useAuth } from '../context/AuthContext';
 
 export default function LeadsListScreen() {
   const t = useTheme();
   const nav = useNavigation<any>();
+  const { user } = useAuth();
 
   // filtros do UI
   const [filters, setFilters] = useState<LeadFiltersUI>({});
-  // 'all' = todos, 'mine' = apenas meus
+  // 'all' = todos, 'mine' = apenas meus (-> responsavel = user._id)
   const [scope, setScope] = useState<'all' | 'mine'>('all');
   const [showFilters, setShowFilters] = useState(false);
 
@@ -25,25 +36,44 @@ export default function LeadsListScreen() {
   const { data: usuariosRaw = [] } = useQuery({ queryKey: ['usuarios'], queryFn: listUsuarios });
 
   const situacoes = useMemo(
-    () => (situacoesRaw || []).map((s: any) => ({ value: s._id || s.value, label: s.nome || s.label })),
+    () =>
+      (situacoesRaw || []).map((s: any) => ({
+        value: s.value ?? s._id,
+        label: s.label ?? s.nome,
+      })),
     [situacoesRaw]
   );
+
   const origens = useMemo(
-    () => (origensRaw || []).map((o: any) => ({ value: o._id || o.value, label: o.nome || o.label })),
+    () =>
+      (origensRaw || [])
+        .map((o: any) => ({
+          value: o.value ?? o._id,
+          label: o.label ?? o.nome,
+        })),
     [origensRaw]
   );
+
   const usuarios = useMemo(
-    () => (usuariosRaw || []).map((u: any) => ({ value: u._id || u.value, label: u.nome || u.label })),
+    () =>
+      (usuariosRaw || []).map((u: any) => ({
+        value: u.value ?? u._id,
+        label: u.label ?? u.nome,
+      })),
     [usuariosRaw]
   );
 
-  // filtros enviados à API
-  const apiFilters = useMemo(() => {
-    const f: Record<string, any> = { ...filters };
-    if (scope === 'mine') f.mine = '1' as const; // literal
-    // mapeamentos padrão do backend: q, situacao, origem, responsavel, mine
-    return f;
-  }, [filters, scope]);
+  // === MAPA DE FILTROS PARA O BACKEND ===
+  // backend aceita: termoBusca, origem, responsavel, tags, dataInicio, dataFim, situacao
+  const apiParams = useMemo(() => {
+    const p: Record<string, any> = {};
+    if (filters.q) p.termoBusca = filters.q;
+    if (filters.origem) p.origem = filters.origem;
+    if (filters.responsavel) p.responsavel = filters.responsavel;
+    if (filters.situacao) p.situacao = filters.situacao; // agora suportado no backend
+    if (scope === 'mine' && user?._id) p.responsavel = user._id; // escopo “Minhas”
+    return p;
+  }, [filters, scope, user?._id]);
 
   // paginação infinita
   const {
@@ -55,17 +85,13 @@ export default function LeadsListScreen() {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ['leads', apiFilters],
+    queryKey: ['leads', apiParams],
     initialPageParam: 1,
     queryFn: async ({ pageParam }) => {
-      // envia page/limit + filtros
-      const res = await getLeads({ page: pageParam, limit: 20, ...apiFilters });
-      // aceitar múltiplos formatos
-      const root = (res as any)?.data ?? res;
-      const items = root?.leads || root?.items || root?.data || root || [];
-      const page = root?.page ?? pageParam;
-      const totalPages = root?.totalPages ?? (root?.meta?.totalPages ?? undefined);
-      return { items, page, totalPages };
+      // envia page/limit + filtros válidos pro backend
+      const res = await getLeads({ page: pageParam, limit: 20, ...apiParams });
+      // getLeads já normaliza para { items, page, totalPages }
+      return res;
     },
     getNextPageParam: (last) => {
       if (!last?.totalPages) return undefined;
@@ -77,11 +103,7 @@ export default function LeadsListScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: t.colors.bg }}>
-      <AppBar
-        title="Leads"
-        rightIcon="filter"
-        onRightPress={() => setShowFilters(true)}
-      />
+      <AppBar title="Leads" rightIcon="filter" onRightPress={() => setShowFilters(true)} />
 
       {/* Toggle Todas | Minhas */}
       <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 12, paddingTop: 8 }}>
@@ -100,7 +122,7 @@ export default function LeadsListScreen() {
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} />}
           contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: 100 }}
           renderItem={({ item }) => (
-            <LeadListItem
+            <LeadCardItem
               lead={item}
               onPress={() => nav.navigate('LeadDetail', { id: item._id || item.id })}
             />
@@ -140,7 +162,15 @@ export default function LeadsListScreen() {
   );
 }
 
-function ScopePill({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+function ScopePill({
+  label,
+  active,
+  onPress,
+}: {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}) {
   const t = useTheme();
   return (
     <Pressable
@@ -154,7 +184,9 @@ function ScopePill({ label, active, onPress }: { label: string; active: boolean;
         backgroundColor: active ? t.colors.primary + '20' : t.colors.surface,
       }}
     >
-      <Text style={{ color: active ? t.colors.primary : t.colors.text, fontWeight: '600' }}>{label}</Text>
+      <Text style={{ color: active ? t.colors.primary : t.colors.text, fontWeight: '600' }}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
