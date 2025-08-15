@@ -15,9 +15,11 @@ import AppBar from '../ui/components/AppBar';
 import Fab from '../ui/components/Fab';
 import LeadFiltersSheet, { LeadFiltersUI } from '../ui/components/LeadFiltersSheet';
 import LeadCardItem from '../ui/components/LeadCardItem';
+import Chip from '../ui/components/Chip';
 
 import { getLeads, listOrigens, listSituacoes, listUsuarios } from '../api/leads';
 import { useAuth } from '../context/AuthContext';
+import { useDebounce } from '../ui/hooks/useDebounce';
 
 export default function LeadsListScreen() {
   const t = useTheme();
@@ -30,6 +32,9 @@ export default function LeadsListScreen() {
   const [scope, setScope] = useState<'all' | 'mine'>('all');
   const [showFilters, setShowFilters] = useState(false);
 
+  // debounce para busca
+  const debouncedQ = useDebounce(filters.q, 300);
+
   // opções dos selects
   const { data: situacoesRaw = [] } = useQuery({ queryKey: ['situacoes'], queryFn: listSituacoes });
   const { data: origensRaw = [] } = useQuery({ queryKey: ['origens'], queryFn: listOrigens });
@@ -38,42 +43,44 @@ export default function LeadsListScreen() {
   const situacoes = useMemo(
     () =>
       (situacoesRaw || []).map((s: any) => ({
-        value: s.value ?? s._id,
-        label: s.label ?? s.nome,
-      })),
+        value: String(s.value ?? s._id ?? ''),
+        label: String(s.label ?? s.nome ?? ''),
+      })).filter(o => o.value),
     [situacoesRaw]
   );
 
   const origens = useMemo(
     () =>
-      (origensRaw || [])
-        .map((o: any) => ({
-          value: o.value ?? o._id,
-          label: o.label ?? o.nome,
-        })),
+      (origensRaw || []).map((o: any) => ({
+        value: String(o.value ?? o._id ?? ''),
+        label: String(o.label ?? o.nome ?? ''),
+      })).filter(o => o.value),
     [origensRaw]
   );
 
   const usuarios = useMemo(
     () =>
       (usuariosRaw || []).map((u: any) => ({
-        value: u.value ?? u._id,
-        label: u.label ?? u.nome,
-      })),
+        value: String(u.value ?? u._id ?? ''),
+        label: String(u.label ?? u.nome ?? ''),
+      })).filter(o => o.value),
     [usuariosRaw]
   );
+
+  const labelBy = (list: { value: string; label: string }[], v?: string | null) =>
+    v ? (list.find((o) => o.value === v)?.label ?? '') : '';
 
   // === MAPA DE FILTROS PARA O BACKEND ===
   // backend aceita: termoBusca, origem, responsavel, tags, dataInicio, dataFim, situacao
   const apiParams = useMemo(() => {
     const p: Record<string, any> = {};
-    if (filters.q) p.termoBusca = filters.q;
+    if (debouncedQ) p.termoBusca = debouncedQ;
     if (filters.origem) p.origem = filters.origem;
     if (filters.responsavel) p.responsavel = filters.responsavel;
-    if (filters.situacao) p.situacao = filters.situacao; // agora suportado no backend
+    if (filters.situacao) p.situacao = filters.situacao;
     if (scope === 'mine' && user?._id) p.responsavel = user._id; // escopo “Minhas”
     return p;
-  }, [filters, scope, user?._id]);
+  }, [debouncedQ, filters.origem, filters.responsavel, filters.situacao, scope, user?._id]);
 
   // paginação infinita
   const {
@@ -101,6 +108,9 @@ export default function LeadsListScreen() {
 
   const flat = (data?.pages || []).flatMap((p: any) => p.items);
 
+  const hasAnyFilter =
+    !!filters.q || !!filters.origem || !!filters.responsavel || !!filters.situacao;
+
   return (
     <View style={{ flex: 1, backgroundColor: t.colors.bg }}>
       <AppBar title="Leads" rightIcon="filter" onRightPress={() => setShowFilters(true)} />
@@ -109,6 +119,39 @@ export default function LeadsListScreen() {
       <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 12, paddingTop: 8 }}>
         <ScopePill label="Todas" active={scope === 'all'} onPress={() => setScope('all')} />
         <ScopePill label="Minhas" active={scope === 'mine'} onPress={() => setScope('mine')} />
+      </View>
+
+      {/* Chips de filtros ativos */}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 12, paddingTop: 6 }}>
+        {!!filters.q && (
+          <Chip
+            text={`Busca: ${filters.q}`}
+            onClear={() => setFilters((f) => ({ ...f, q: undefined }))}
+          />
+        )}
+        {!!filters.origem && (
+          <Chip
+            text={`Origem: ${labelBy(origens, filters.origem) || 'selecionada'}`}
+            onClear={() => setFilters((f) => ({ ...f, origem: undefined }))}
+          />
+        )}
+        {!!filters.responsavel && (
+          <Chip
+            text={`Resp.: ${labelBy(usuarios, filters.responsavel) || 'selecionado'}`}
+            onClear={() => setFilters((f) => ({ ...f, responsavel: undefined }))}
+          />
+        )}
+        {!!filters.situacao && (
+          <Chip
+            text={`Situação: ${labelBy(situacoes, filters.situacao) || 'selecionada'}`}
+            onClear={() => setFilters((f) => ({ ...f, situacao: undefined }))}
+          />
+        )}
+        {hasAnyFilter && (
+          <Pressable onPress={() => setFilters({})} style={{ paddingVertical: 6, paddingHorizontal: 8 }}>
+            <Text style={{ color: t.colors.primary, fontWeight: '600' }}>Limpar</Text>
+          </Pressable>
+        )}
       </View>
 
       {isLoading ? (
