@@ -1,5 +1,5 @@
 // src/screens/TasksScreen.tsx
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   View,
   ActivityIndicator,
@@ -9,7 +9,7 @@ import {
   Pressable,
 } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 import { useTheme } from '../ui/theme';
 import AppBar from '../ui/components/AppBar';
@@ -26,6 +26,7 @@ import { scheduleTaskReminder, cancelTaskReminder } from '../utils/notifications
 export default function TasksScreen() {
   const t = useTheme();
   const nav = useNavigation<any>();
+  const route = useRoute<any>();
   const qc = useQueryClient();
 
   // filtros base (iguais ao web: status Pendente/Concluída/Todas, etc.)
@@ -34,7 +35,7 @@ export default function TasksScreen() {
   // escopo: todas ou minhas (adiciona mine: '1')
   const [scope, setScope] = useState<'all' | 'mine'>('all');
 
-  // ✅ Opção recomendada: tipar o useMemo para garantir o literal de 'mine'
+  // ✅ Tipar explicitamente para garantir o literal de 'mine'
   const mergedFilters = useMemo<TaskFilters>(
     () => ({
       ...filters,
@@ -47,6 +48,18 @@ export default function TasksScreen() {
   const [showFilters, setShowFilters] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
+  const [prefillLeadId, setPrefillLeadId] = useState<string | undefined>(undefined);
+
+  // Se a tela vier com params.leadId (ex: vindo de LeadDetail -> "nova tarefa"), pré-seleciona
+  useEffect(() => {
+    const lid = route?.params?.leadId as string | undefined;
+    if (lid) {
+      setPrefillLeadId(lid);
+      setShowForm(true);
+      // opcional: limpar o param para não reabrir ao voltar
+      // nav.setParams({ leadId: undefined });
+    }
+  }, [route?.params?.leadId]);
 
   // Uma chamada para lista + KPIs
   const { data, isLoading, isRefetching, refetch } = useQuery({
@@ -68,9 +81,10 @@ export default function TasksScreen() {
   );
 
   // Leads -> select de lead no modal
+  // ❗ Corrigido: passar string ('') em vez de number
   const { data: leadsOptions = [] } = useQuery({
-    queryKey: ['leads-select'],
-    queryFn: () => listLeadsForSelect(100),
+    queryKey: ['leads-select', ''],
+    queryFn: () => listLeadsForSelect(''), // busca inicial (sem termo) para popular o select
   });
 
   // Alternar status
@@ -108,13 +122,19 @@ export default function TasksScreen() {
     onSuccess: async (newTask) => {
       setShowForm(false);
       setEditing(null);
+      setPrefillLeadId(undefined);
       await qc.invalidateQueries({ queryKey: ['tasks'] });
       await scheduleTaskReminder(newTask._id, newTask.title, newTask.dueDate);
     },
     onError: (e: any) => {
-    console.log('Create/Update task error:', e?.response?.data || e);
-    alert(e?.response?.data?.error || e?.response?.data?.message || e.message || 'Falha ao salvar tarefa.');
-  },
+      console.log('Create/Update task error:', e?.response?.data || e);
+      alert(
+        e?.response?.data?.error ||
+          e?.response?.data?.message ||
+          e.message ||
+          'Falha ao salvar tarefa.'
+      );
+    },
   });
 
   return (
@@ -171,7 +191,14 @@ export default function TasksScreen() {
       )}
 
       {/* FAB para criar tarefa */}
-      <Fab onPress={() => { setEditing(null); setShowForm(true); }} />
+      <Fab
+        onPress={() => {
+          // se veio com leadId na rota, usa; senão, mantém undefined
+          setEditing(null);
+          setPrefillLeadId(route?.params?.leadId as string | undefined);
+          setShowForm(true);
+        }}
+      />
 
       {/* Filtros */}
       <TaskFiltersSheet
@@ -186,15 +213,24 @@ export default function TasksScreen() {
       {/* Modal criar/editar */}
       <TaskFormModal
         visible={showForm}
-        onClose={() => { setShowForm(false); setEditing(null); }}
+        onClose={() => { setShowForm(false); setEditing(null); setPrefillLeadId(undefined); }}
         processing={save.isPending}
-        initial={editing ? {
-          title: editing.title,
-          description: editing.description,
-          dueDate: editing.dueDate,
-          leadId: typeof editing.lead === 'string' ? editing.lead : editing.lead?._id,
-          assignedTo: typeof editing.assignedTo === 'string' ? editing.assignedTo : editing.assignedTo?._id,
-        } : undefined}
+        initial={
+          editing
+            ? {
+                title: editing.title,
+                description: editing.description,
+                dueDate: editing.dueDate,
+                leadId: typeof editing.lead === 'string' ? editing.lead : editing.lead?._id,
+                assignedTo:
+                  typeof editing.assignedTo === 'string'
+                    ? editing.assignedTo
+                    : editing.assignedTo?._id,
+              }
+            : prefillLeadId
+            ? { leadId: prefillLeadId }
+            : undefined
+        }
         onSubmit={(v) => save.mutate(v)}
         leads={leadsOptions}
         assignees={assignees}

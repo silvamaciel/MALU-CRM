@@ -1,4 +1,3 @@
-// src/utils/notifications.ts
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
@@ -7,6 +6,32 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 type SchedIndex = Record<string, string>;
 const KEY = 'TASK_NOTIF_INDEX';
 const DAILY_KEY = 'DAILY_SUMMARY_NOTIF_ID';
+
+function fmtTimeLocal(d: Date) {
+  // HH:mm no locale do usuário
+  return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+}
+
+function isSameDay(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() &&
+         a.getMonth() === b.getMonth() &&
+         a.getDate() === b.getDate();
+}
+
+function labelForDue(due: Date) {
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(now.getDate() + 1);
+
+  const time = fmtTimeLocal(due);
+
+  if (isSameDay(due, now)) return `hoje às ${time}`;
+  if (isSameDay(due, tomorrow)) return `amanhã às ${time}`;
+
+  // dd/mm/aaaa às HH:mm (usa locale para data)
+  const date = due.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' });
+  return `${date} às ${time}`;
+}
 
 export async function setupNotifications() {
   Notifications.setNotificationHandler({
@@ -21,12 +46,12 @@ export async function setupNotifications() {
   });
 
   if (Platform.OS === 'android') {
-  await Notifications.setNotificationChannelAsync('default', {
-    name: 'Geral',
-    importance: Notifications.AndroidImportance.DEFAULT,
-    sound: 'default',
-  });
-}
+    await Notifications.setNotificationChannelAsync('default', {
+      name: 'Geral',
+      importance: Notifications.AndroidImportance.DEFAULT,
+      sound: 'default', // precisa ser string em Android (ex: 'default')
+    });
+  }
 
   if (Device.isDevice) {
     const { status } = await Notifications.getPermissionsAsync();
@@ -56,23 +81,33 @@ export async function scheduleDailySummary(hour = 8, minute = 0) {
   await AsyncStorage.setItem(DAILY_KEY, id);
 }
 
-/** Agenda lembrete 30min antes da dueDate (se ainda for futuro) */
+/**
+ * Agenda lembrete 30min antes da dueDate (se ainda for futuro).
+ * O texto da notificação mostra a hora local do vencimento (ex.: "hoje às 16:00"),
+ * evitando a mensagem fixa "em 30 minutos".
+ */
 export async function scheduleTaskReminder(taskId: string, title: string, dueISO?: string) {
   if (!dueISO) return;
-  const due = new Date(dueISO).getTime();
-  const fireAt = due - 30 * 60 * 1000;
-  if (fireAt <= Date.now()) return;
+  const due = new Date(dueISO);
+  const fireAtMs = due.getTime() - 30 * 60 * 1000;
 
-  // cancela agendamento anterior (se houver)
+  if (fireAtMs <= Date.now()) {
+    // Se já passou do ponto de 30min antes, não agenda (ou você pode optar por agendar "agora + 1min")
+    return;
+  }
+
+  // Cancela agendamento anterior (se houver)
   await cancelTaskReminder(taskId);
+
+  const whenLabel = labelForDue(due); // "hoje às HH:mm", "amanhã às HH:mm" ou "dd/mm/aaaa às HH:mm"
 
   const notifId = await Notifications.scheduleNotificationAsync({
     content: {
       title: 'Tarefa próxima do prazo',
-      body: `${title} — vence em ~30 minutos.`,
+      body: `${title} — vence ${whenLabel}.`,
       sound: true,
     },
-    trigger: { date: new Date(fireAt) } as any,
+    trigger: { date: new Date(fireAtMs) } as any,
   });
 
   const idx = JSON.parse((await AsyncStorage.getItem(KEY)) || '{}') as SchedIndex;

@@ -1,4 +1,5 @@
 import { api } from './http';
+import { endpoints } from './config';
 
 const isHex24 = (v: any) => /^[a-fA-F0-9]{24}$/.test(String(v).trim());
 
@@ -158,4 +159,22 @@ export async function listLeadsForSelect(q: string) {
   const root = (data as any)?.data ?? data;
   const items: Lead[] = root?.leads || root?.items || root || [];
   return items.map((l) => ({ value: l._id, label: l.nome }));
+}
+
+export async function listLeads(params: { page?: number; limit?: number; search?: string } = {}) {
+  const { data: raw } = await api.get(endpoints.leads, { params });
+  const items =
+    Array.isArray(raw) ? raw
+      : Array.isArray(raw?.data) ? raw.data
+        : Array.isArray(raw?.leads) ? raw.leads
+          : Array.isArray(raw?.items) ? raw.items
+            : [];
+  const meta = {
+    count: raw?.count ?? items.length ?? 0,
+    page: raw?.page ?? params.page ?? 1,
+    limit: raw?.limit ?? params.limit ?? items.length ?? 0,
+    totalPages: raw?.totalPages ?? null,
+    success: raw?.success ?? true,
+  };
+  return { items, meta, raw };
 }
