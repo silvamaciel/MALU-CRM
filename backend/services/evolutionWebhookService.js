@@ -34,126 +34,204 @@ const fixBrazilianMobileNumber = (phone) => {
 
 /**
  * Processa o evento 'messages.upsert' (nova mensagem recebida) do webhook da Evolution API.
- * @param {object} payload - O corpo do webhook.
+ * Somente trata mensagens de TEXTO. Não cria Lead em mensagens outgoing.
+ * - Outgoing (fromMe: true) sem lead: cria/atualiza Conversation órfã (lead: null).
+ * - Incoming sem lead: cria lead (se permitido) e reatribui a Conversation órfã ao novo lead.
  */
 const processMessageUpsert = async (payload) => {
-    // 1. Extração e Validação Inicial
-    const { instance, data } = payload;
-    const message = data.message;
-    const key = data.key;
+  try {
+    const { instance, data } = payload || {};
+    const message = data?.message;
+    const key = data?.key;
     const remoteJid = key?.remoteJid;
 
-    if (!instance || !message || !remoteJid) { return; }
+    // Guarda inicial (suporta apenas TEXTO)
+    if (!instance || !message || !remoteJid) return;
+    if (!message.conversation) return; // ignorar não-texto
 
-    const crmInstance = await EvolutionInstance.findOne({ instanceName: instance });
-    if (!crmInstance) { return; }
-
+    // Ignorar grupos conforme configuração
     const isGroupMessage = remoteJid.endsWith('@g.us');
+    const crmInstance = await EvolutionInstance.findOne({ instanceName: instance });
+    if (!crmInstance) return;
     if (isGroupMessage && !crmInstance.receiveFromGroups) {
-        console.log(`[WebhookSvc] Mensagem de grupo ignorada.`);
-        return;
+      console.log(`[WebhookSvc] Mensagem de grupo ignorada para a instância '${instance}'.`);
+      return;
     }
-    
-    // 2. Determinar o Tipo e Conteúdo da Mensagem
-    let contentType = 'other', content = '[Tipo de mensagem não suportado]', mediaUrl = null, mediaMimeType = null, lastMessagePreview = 'Nova Mídia';
-    if (message.conversation) {
-        contentType = 'text';
-        content = message.conversation;
-        lastMessagePreview = content.length > 30 ? content.substring(0, 30) + '...' : content;
-    } else if (message.imageMessage) {
-        contentType = 'image';
-        mediaUrl = message.imageMessage.url;
-        mediaMimeType = message.imageMessage.mimetype;
-        content = message.imageMessage.caption || 'Imagem';
-        lastMessagePreview = '📷 Imagem';
-    } else if (message.audioMessage) {
-        contentType = 'audio';
-        mediaUrl = message.audioMessage.url;
-        mediaMimeType = message.audioMessage.mimetype;
-        content = 'Áudio';
-        lastMessagePreview = '🎤 Áudio';
-    } else if (message.documentMessage) {
-        contentType = 'document';
-        mediaUrl = message.documentMessage.url;
-        mediaMimeType = message.documentMessage.mimetype;
-        content = message.documentMessage.fileName || 'Documento';
-        lastMessagePreview = '📄 Documento';
-    } else {
-        console.log('[WebhookSvc] Tipo de mensagem não suportado. Ignorando.');
-        return;
-    }
-    
-    // 3. Buscar a Foto do Perfil Ativamente
-    let contactPhotoUrl = null;
-    try {
-        const profilePicResponse = await axios.post(`${process.env.EVOLUTION_API_URL}/chat/fetchProfilePictureUrl/${instance}`, { number: remoteJid }, { headers: { 'apikey': crmInstance.apiKey } });
-        if (profilePicResponse.data?.profilePictureUrl) {
-            contactPhotoUrl = profilePicResponse.data.profilePictureUrl;
-            console.log(`[WebhookSvc] Foto do perfil encontrada para ${remoteJid}.`);
-        }
-    } catch (picError) {
-        console.warn(`[WebhookSvc] Não foi possível buscar a foto do perfil para ${remoteJid}.`);
-    }
-    
-    // 4. Lógica Principal
-    const companyId = crmInstance.company;
-    const messageDirection = key.fromMe ? 'outgoing' : 'incoming';
-    const leadPhoneNumber = fixBrazilianMobileNumber(remoteJid.split('@')[0]);
+
+    // Normalização de número (apenas parte antes de @)
+    const jidRaw = String(remoteJid);
+    const numberOnly = jidRaw.split('@')[0];                 // ex: "558191083489"
+    let leadPhoneNumber = fixBrazilianMobileNumber(numberOnly); // ex: "5581991083489"
     const senderPhoneWithPlus = `+${leadPhoneNumber}`;
 
-    try {
-        let lead = await Lead.findOne({ contato: senderPhoneWithPlus, company: companyId });
+    // Direção & remetente
+    const messageDirection = key?.fromMe ? 'outgoing' : 'incoming';
+    const senderIdentifier = key?.fromMe ? (crmInstance.ownerNumber || 'CRM_USER') : remoteJid;
 
-        if (!lead && !key.fromMe) {
-            if (crmInstance.autoCreateLead) {
-                const origemDoc = await origemService.findOrCreateOrigem({ nome: 'WhatsApp' }, companyId);
-                const leadData = {
-                    nome: data.pushName || `Contato WhatsApp ${senderPhoneWithPlus}`,
-                    contato: senderPhoneWithPlus,
-                    origem: origemDoc._id,
-                };
-                lead = await LeadService.createLead(leadData, companyId, crmInstance.createdBy);
-            }
-        }
-        
-        // 5. ATUALIZAÇÃO ÚNICA E ATÔMICA DA CONVERSA
-        const findQuery = lead ? { lead: lead._id, channel: 'WhatsApp' } : { company: companyId, channelInternalId: remoteJid, lead: null };
-        
-        const updatePayload = {
-            $set: {
-                company: companyId,
-                channelInternalId: remoteJid,
-                lastMessage: lastMessagePreview,
-                lastMessageAt: new Date(),
-                contactPhotoUrl: contactPhotoUrl,
-                instanceName: instance,
-                ...(lead && { leadNameSnapshot: lead.nome }),
-                ...(!lead && { tempContactName: data.pushName || `Contato ${senderPhoneWithPlus}` })
-            },
-            ...(messageDirection === 'incoming' && { $inc: { unreadCount: 1 } })
-        };
-        
-        const conversation = await Conversation.findOneAndUpdate(findQuery, updatePayload, { upsert: true, new: true });
-
-        if (!conversation) {
-            console.error(`[WebhookSvc] CRÍTICO: Não foi possível encontrar ou criar conversa para ${senderPhoneWithPlus}`);
-            return;
-        }
-
-        const newMessage = new Message({
-            conversation: conversation._id,
-            company: companyId,
-            channelMessageId: key.id,
-            direction: messageDirection,
-            senderId: key.fromMe ? (crmInstance.ownerNumber || 'CRM_USER') : remoteJid,
-            contentType, content, mediaUrl, mediaMimeType
-        });
-        await newMessage.save();
-
-        console.log(`[WebhookSvc] Mensagem (direção: ${messageDirection}, tipo: ${contentType}) salva para a Conversa ID: ${conversation._id}`);
-    } catch (error) {
-        console.error(`[WebhookSvc] Erro ao processar mensagem para ${senderPhoneWithPlus}:`, error.message);
+    // Idempotência por channelMessageId
+    if (key?.id) {
+      const exists = await Message.exists({ company: crmInstance.company, channelMessageId: key.id });
+      if (exists) {
+        console.log(`[WebhookSvc] Mensagem ${key.id} já processada. Ignorando duplicata.`);
+        return;
+      }
     }
+
+    // Preview e conteúdo (somente texto)
+    const text = String(message.conversation || '');
+    const lastMessagePreview = text.length > 30 ? text.substring(0, 30) + '...' : text;
+
+    // Foto de perfil (usar apenas o número); opcional: cachear fora
+    let contactPhotoUrl = null;
+    try {
+      const profilePicUrl = `${process.env.EVOLUTION_API_URL}/chat/fetchProfilePictureUrl/${instance}`;
+      const profileBody = { number: numberOnly };
+      const profileHeaders = { headers: { apikey: crmInstance.apiKey } };
+      const profilePicResponse = await axios.post(profilePicUrl, profileBody, profileHeaders);
+      if (profilePicResponse?.data?.profilePictureUrl) {
+        contactPhotoUrl = profilePicResponse.data.profilePictureUrl;
+        console.log(`[WebhookSvc] Foto do perfil encontrada para ${numberOnly}.`);
+      }
+    } catch (picError) {
+      console.warn(`[WebhookSvc] Não foi possível buscar a foto do perfil para ${numberOnly}.`);
+    }
+
+    const companyId = crmInstance.company;
+
+    // 1) Tenta achar Lead existente
+    let lead = await Lead.findOne({ contato: senderPhoneWithPlus, company: companyId });
+    let conversation;
+
+    if (!lead) {
+      if (messageDirection === 'outgoing') {
+        // ===== OUTGOING (de você para alguém que não é lead): NÃO cria Lead =====
+        // Cria/atualiza Conversation órfã (lead: null) indexada por channelInternalId (remoteJid)
+        conversation = await Conversation.findOneAndUpdate(
+          { company: companyId, channelInternalId: remoteJid, lead: null },
+          {
+            $set: {
+              tempContactName: `Contato ${senderPhoneWithPlus}`, // NÃO usar pushName (é seu nome em outgoing)
+              contactPhotoUrl: contactPhotoUrl,
+              channelInternalId: remoteJid,
+              instanceName: instance,
+              lastMessage: lastMessagePreview,
+              channel: 'WhatsApp'
+            },
+            $setOnInsert: {
+              unreadCount: 0
+            }
+          },
+          { upsert: true, new: true }
+        );
+      } else {
+        // ===== INCOMING (alguém te enviou mensagem) =====
+        if (crmInstance.autoCreateLead) {
+          console.log(`[WebhookSvc] Nenhum lead encontrado para ${senderPhoneWithPlus}. Criando um novo...`);
+          const origemDoc = await origemService.findOrCreateOrigem(
+            { nome: 'WhatsApp', descricao: 'Lead recebido via WhatsApp (Evolution API)' },
+            companyId
+          );
+
+          const leadData = {
+            // Aqui sim usar pushName: é o nome de quem enviou pra você
+            nome: data?.pushName || `Contato WhatsApp ${senderPhoneWithPlus}`,
+            contato: senderPhoneWithPlus,
+            origem: origemDoc._id
+          };
+
+          lead = await LeadService.createLead(leadData, companyId, crmInstance.createdBy);
+          console.log(`[WebhookSvc] Novo lead criado (ID: ${lead._id}).`);
+        } else {
+          // Auto-create OFF: mantém órfã
+          conversation = await Conversation.findOneAndUpdate(
+            { company: companyId, channelInternalId: remoteJid, lead: null },
+            {
+              $set: {
+                tempContactName: data?.pushName || `Contato ${senderPhoneWithPlus}`,
+                contactPhotoUrl: contactPhotoUrl,
+                channelInternalId: remoteJid,
+                instanceName: instance,
+                lastMessage: lastMessagePreview,
+                channel: 'WhatsApp'
+              },
+              $setOnInsert: { unreadCount: 0 }
+            },
+            { upsert: true, new: true }
+          );
+        }
+      }
+    }
+
+    // 2) Se já existe Lead (ou foi criado agora), garantir Conversation vinculada ao Lead
+    if (lead) {
+      // Se havia uma conversation órfã para esse JID, reatribui ao lead
+      const orphanConv = await Conversation.findOne({
+        company: companyId,
+        channelInternalId: remoteJid,
+        lead: null
+      });
+
+      if (orphanConv) {
+        orphanConv.lead = lead._id;
+        orphanConv.leadNameSnapshot = lead.nome;
+        orphanConv.instanceName = instance;
+        orphanConv.contactPhotoUrl = contactPhotoUrl || orphanConv.contactPhotoUrl;
+        orphanConv.lastMessage = lastMessagePreview;
+        orphanConv.channel = 'WhatsApp';
+        await orphanConv.save();
+        conversation = orphanConv;
+      } else {
+        // Upsert por lead
+        conversation = await Conversation.findOneAndUpdate(
+          { lead: lead._id, channel: 'WhatsApp' },
+          {
+            $set: {
+              company: companyId,
+              channelInternalId: remoteJid,
+              leadNameSnapshot: lead.nome,
+              instanceName: instance,
+              contactPhotoUrl: contactPhotoUrl,
+              lastMessage: lastMessagePreview
+            },
+            $setOnInsert: { unreadCount: 0 }
+          },
+          { upsert: true, new: true }
+        );
+      }
+    }
+
+    if (!conversation) {
+      console.error(`[WebhookSvc] Não foi possível encontrar ou criar uma conversa para ${senderPhoneWithPlus}`);
+      return;
+    }
+
+    // 3) Atualiza last/unread
+    conversation.lastMessage = lastMessagePreview;
+    conversation.lastMessageAt = new Date();
+    if (messageDirection === 'incoming') {
+      conversation.unreadCount = (conversation.unreadCount || 0) + 1;
+    }
+    await conversation.save();
+
+    // 4) Salva a mensagem (conteúdo texto)
+    const newMessage = new Message({
+      conversation: conversation._id,
+      company: companyId,
+      channelMessageId: key?.id,
+      direction: messageDirection,
+      senderId: senderIdentifier,
+      content: text,
+      lastMessage: lastMessagePreview,
+      contentType: 'text',
+      mediaUrl: null,
+      mediaMimeType: null
+    });
+    await newMessage.save();
+
+    console.log(`[WebhookSvc] Mensagem (${messageDirection}) salva. Conversa: ${conversation._id}`);
+  } catch (error) {
+    console.error('[WebhookSvc] Erro em processMessageUpsert:', error?.message || error);
+  }
 };
 
 
