@@ -110,7 +110,7 @@ const processMessageUpsert = async (payload) => {
           { company: companyId, channelInternalId: remoteJid, lead: null },
           {
             $set: {
-              tempContactName: `Contato ${senderPhoneWithPlus}`, // NÃO usar pushName (é seu nome em outgoing)
+              tempContactName: senderPhoneWithPlus, // NÃO usar pushName (é seu nome em outgoing)
               contactPhotoUrl: contactPhotoUrl,
               channelInternalId: remoteJid,
               instanceName: instance,
@@ -147,7 +147,7 @@ const processMessageUpsert = async (payload) => {
             { company: companyId, channelInternalId: remoteJid, lead: null },
             {
               $set: {
-                tempContactName: data?.pushName || `Contato ${senderPhoneWithPlus}`,
+                tempContactName: data?.pushName || senderPhoneWithPlus,
                 contactPhotoUrl: contactPhotoUrl,
                 channelInternalId: remoteJid,
                 instanceName: instance,
