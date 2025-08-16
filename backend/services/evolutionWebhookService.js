@@ -92,7 +92,7 @@ const processMessageUpsert = async (payload) => {
         contactPhotoUrl = profilePicResponse.data.profilePictureUrl;
         console.log(`[WebhookSvc] Foto do perfil encontrada para ${numberOnly}.`);
       }
-    } catch (picError) {
+    } catch {
       console.warn(`[WebhookSvc] Não foi possível buscar a foto do perfil para ${numberOnly}.`);
     }
 
@@ -110,22 +110,21 @@ const processMessageUpsert = async (payload) => {
           { company: companyId, channelInternalId: remoteJid, lead: null },
           {
             $set: {
-              tempContactName: senderPhoneWithPlus, // NÃO usar pushName (é seu nome em outgoing)
+              tempContactName: senderPhoneWithPlus, // << só o número, sem "Contato"
               contactPhotoUrl: contactPhotoUrl,
               channelInternalId: remoteJid,
               instanceName: instance,
               lastMessage: lastMessagePreview,
               channel: 'WhatsApp'
             },
-            $setOnInsert: {
-              unreadCount: 0
-            }
+            $setOnInsert: { unreadCount: 0 }
           },
           { upsert: true, new: true }
         );
       } else {
         // ===== INCOMING (alguém te enviou mensagem) =====
         if (crmInstance.autoCreateLead) {
+          // Cria lead e depois reatribui a órfã (se houver)
           console.log(`[WebhookSvc] Nenhum lead encontrado para ${senderPhoneWithPlus}. Criando um novo...`);
           const origemDoc = await origemService.findOrCreateOrigem(
             { nome: 'WhatsApp', descricao: 'Lead recebido via WhatsApp (Evolution API)' },
@@ -133,7 +132,6 @@ const processMessageUpsert = async (payload) => {
           );
 
           const leadData = {
-            // Aqui sim usar pushName: é o nome de quem enviou pra você
             nome: data?.pushName || `Contato WhatsApp ${senderPhoneWithPlus}`,
             contato: senderPhoneWithPlus,
             origem: origemDoc._id
@@ -142,12 +140,14 @@ const processMessageUpsert = async (payload) => {
           lead = await LeadService.createLead(leadData, companyId, crmInstance.createdBy);
           console.log(`[WebhookSvc] Novo lead criado (ID: ${lead._id}).`);
         } else {
-          // Auto-create OFF: mantém órfã
+          // Auto-create OFF: mantém órfã, MAS atualiza o tempContactName
+          // (A) Atualiza tempContactName no INCOMING sem lead
+          const incomingName = data?.pushName || senderPhoneWithPlus;
           conversation = await Conversation.findOneAndUpdate(
             { company: companyId, channelInternalId: remoteJid, lead: null },
             {
               $set: {
-                tempContactName: data?.pushName || senderPhoneWithPlus,
+                tempContactName: incomingName, // << substitui "+numero" pelo pushName quando disponível
                 contactPhotoUrl: contactPhotoUrl,
                 channelInternalId: remoteJid,
                 instanceName: instance,
@@ -173,7 +173,7 @@ const processMessageUpsert = async (payload) => {
 
       if (orphanConv) {
         orphanConv.lead = lead._id;
-        orphanConv.leadNameSnapshot = lead.nome;
+        orphanConv.leadNameSnapshot = lead.nome; // substitui tempContactName por nome do lead no snapshot
         orphanConv.instanceName = instance;
         orphanConv.contactPhotoUrl = contactPhotoUrl || orphanConv.contactPhotoUrl;
         orphanConv.lastMessage = lastMessagePreview;
