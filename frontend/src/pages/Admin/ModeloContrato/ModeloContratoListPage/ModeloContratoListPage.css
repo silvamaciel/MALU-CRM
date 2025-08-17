@@ -1,146 +1,171 @@
-/* src/pages/Admin/ModeloContrato/ModeloContratoListPage/ModeloContratoListPage.css */
+/* ===== Paleta local ===== */
+.mc-page {
+  --primary: #8a4dff;
+  --primary-hover: #7b44e6;
+  --background: #f3f4f6;
+  --card-bg: #ffffff;
+  --text-main: #1f2937;
+  --text-light: #6b7280;
+  --border-color: #e5e7eb;
+  --danger: #ef4444;
 
-.modelo-contrato-list-page .page-header {
+  background: var(--background);
+  color: var(--text-main);
+  min-height: 100%;
+  padding: 12px;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+   overflow-y: auto;
+  overflow-x: auto;
+}
+
+.mc-page-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 16px;
+}
+
+/* ===== Header ===== */
+.mc-header {
+  display: flex;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #e0e0e0;
+  justify-content: space-between;
+  gap: 12px;
 }
-
-.modelo-contrato-list-page .page-header h1 {
+.mc-header h1 {
   margin: 0;
-  font-size: 1.8em;
-  color: #333;
+  color: var(--text-main);
 }
 
-/* Reutiliza estilos de tabela de outros componentes, se você tiver um CSS global para tabelas */
-.modelo-contrato-list-page .table-responsive {
-  overflow-x: auto; /* Permite scroll horizontal em telas pequenas */
+/* ===== Botões e links ===== */
+.mc-btn-primary,
+.mc-btn-outline,
+.mc-link-ghost {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1.2;
+  user-select: none;
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease,
+              box-shadow .2s ease, transform .02s ease-in;
 }
 
-.modelo-contrato-list-page .data-table {
+/* primário */
+.mc-btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border: 1px solid transparent;
+}
+.mc-btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+.mc-btn-primary:active:not(:disabled) { transform: translateY(0.5px); }
+.mc-btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+
+/* outline neutro */
+.mc-btn-outline {
+  background: var(--card-bg);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+}
+.mc-btn-outline:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(138,77,255,.12);
+}
+.mc-btn-outline:disabled { opacity: .6; cursor: not-allowed; }
+
+/* link fantasma (usa cor primária, sem borda) */
+a.mc-link-ghost {
+  color: var(--primary);
+  padding: 0.45rem 0.7rem;
+  text-decoration: none;
+}
+a.mc-link-ghost:hover { background: rgba(138,77,255,.08); }
+
+/* ===== Tabela + rolagem ===== */
+.mc-table-scroller {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;   /* rolagem vertical garantida */
+  overflow-x: hidden;
+}
+
+.mc-table-wrap {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 0.5rem;
+  overflow-x: auto;
+}
+
+.mc-data-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 20px;
-  background-color: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border-radius: 6px;
-  overflow: hidden; /* Para que o border-radius funcione nas bordas da tabela */
+  font-size: 0.95rem;
 }
 
-.modelo-contrato-list-page .data-table th,
-.modelo-contrato-list-page .data-table td {
-  border: 1px solid #ddd;
-  padding: 12px 15px; /* Aumentei um pouco o padding para melhor leitura */
+.mc-data-table thead th {
   text-align: left;
-  font-size: 0.95em;
-  vertical-align: middle; /* Alinha verticalmente no meio */
-}
-
-.modelo-contrato-list-page .data-table th {
-  background-color: #f8f9fa; /* Um cinza um pouco mais claro para cabeçalho */
+  color: var(--text-light);
   font-weight: 600;
-  color: #495057;
-  text-transform: uppercase; /* Opcional: para cabeçalhos */
-  font-size: 0.85em; /* Opcional: menor para cabeçalhos */
+  background: #fafafa;
+  border-bottom: 1px solid var(--border-color);
+  padding: 10px 12px;
+  white-space: nowrap;
 }
 
-.modelo-contrato-list-page .data-table tr:nth-child(even) {
-  background-color: #fdfdfd;
+.mc-data-table tbody td {
+  border-bottom: 1px solid var(--border-color);
+  padding: 12px;
+  vertical-align: middle;
+  color: var(--text-main);
 }
 
-.modelo-contrato-list-page .data-table tr:hover {
-  background-color: #f1f3f5; /* Um hover sutil */
+.mc-data-table tbody tr:hover { background: #fafbff; }
+
+.mc-cell-strong { font-weight: 600; }
+
+.mc-cell-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
-.modelo-contrato-list-page .actions-cell {
-    white-space: nowrap; /* Impede que os botões quebrem linha */
+/* ===== Paginação ===== */
+.mc-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+.mc-page-indicator { color: var(--text-light); }
+
+/* ===== Mensagens ===== */
+.mc-error-message { color: var(--danger); margin: 6px 0 2px; }
+
+/* ===== Responsividade ===== */
+/* 1) até 900px: esconder Tipo de Documento */
+@media (max-width: 900px) {
+  .mc-data-table .col-tipo,
+  .mc-data-table th.col-tipo { display: none; }
 }
 
-.modelo-contrato-list-page .actions-cell .button-link {
-  margin-right: 8px;
-  padding: 6px 12px; 
-  font-size: 0.9em;
-  text-decoration: none;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
+/* 2) até 640px: esconder Criado Em; mantém Nome + Ações */
+@media (max-width: 640px) {
+  .mc-data-table .col-criado,
+  .mc-data-table th.col-criado { display: none; }
+  .mc-page { padding: 8px; }
+  .mc-data-table tbody td { padding: 10px; }
 }
 
-.modelo-contrato-list-page .actions-cell .button-link.edit-link {
-  background-color: #ffc107; /* Amarelo para editar */
-  color: #212529;
-  border: 1px solid #ffc107;
-}
-.modelo-contrato-list-page .actions-cell .button-link.edit-link:hover {
-  background-color: #e0a800;
-}
-
-/* Estilo para o botão de desativar (você adicionará este botão depois) */
-.modelo-contrato-list-page .actions-cell .button-link.delete-link {
-  background-color: #dc3545; /* Vermelho para deletar/desativar */
-  color: white;
-  border: 1px solid #dc3545;
-}
-.modelo-contrato-list-page .actions-cell .button-link.delete-link:hover {
-  background-color: #c82333;
-}
-
-
-.modelo-contrato-list-page .actions-cell .button-link:last-child {
-  margin-right: 0;
-}
-
-/* Reutiliza estilos de paginação */
-.modelo-contrato-list-page .pagination-controls {
-  margin-top: 20px; /* Aumentei a margem */
-  text-align: center;
-  padding: 10px 0;
-}
-
-.modelo-contrato-list-page .pagination-controls button {
-  padding: 8px 15px; /* Aumentei o padding */
-  margin: 0 5px;
-  border: 1px solid #dee2e6;
-  background-color: #fff;
-  color: #007bff;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-.modelo-contrato-list-page .pagination-controls button:hover:not(:disabled) {
-  background-color: #007bff;
-  color: #fff;
-}
-
-.modelo-contrato-list-page .pagination-controls button:disabled {
-  background-color: #e9ecef;
-  color: #6c757d;
-  cursor: not-allowed;
-  border-color: #ced4da;
-}
-
-.modelo-contrato-list-page .pagination-controls span {
-  margin: 0 10px;
-  font-size: 0.95em;
-  color: #495057;
-}
-
-/* Estilos para mensagens de erro ou "nenhum item encontrado" */
-.modelo-contrato-list-page .error-message {
-  color: #721c24;
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
-  padding: 10px 15px;
-  border-radius: 4px;
-  margin-bottom: 20px;
-}
-
-.modelo-contrato-list-page .page-content > p { /* Para a mensagem "Nenhum modelo..." */
-    color: #6c757d;
-    font-style: italic;
-    text-align: center;
-    padding: 20px;
-}
+/* Defesa extra caso layout global use altura fixa */
+html, body, #root { min-height: 100%; }

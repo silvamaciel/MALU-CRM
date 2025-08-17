@@ -1,18 +1,17 @@
-// src/components/Layout/MainLayout.js
-import React, { useState, useEffect, useCallback } from 'react'; // <<< Adicionado useEffect, useCallback
+import React, { useState, useEffect, useCallback } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../Sidebar/Sidebar';
 import Header from '../Header/Header';
 import './MainLayout.css';
 
-const MOBILE_BREAKPOINT = 992; 
+const MOBILE_BREAKPOINT = 992;
 
 function MainLayout({ userData, handleLogout }) {
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
     const closeMobileSidebar = useCallback(() => {
         setIsMobileSidebarOpen(false);
-    }, []); 
+    }, []);
 
     const toggleMobileSidebar = useCallback(() => {
         setIsMobileSidebarOpen(prevState => !prevState);
@@ -27,32 +26,42 @@ function MainLayout({ userData, handleLogout }) {
         window.addEventListener('resize', handleResize);
         handleResize();
         return () => window.removeEventListener('resize', handleResize);
-    }, [closeMobileSidebar]); // Depende de closeMobileSidebar
+    }, [closeMobileSidebar]);
+
+    // --- Fix: vh dinâmico para mobile ---
+    useEffect(() => {
+        const setVh = () => {
+            const vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--app-vh', `${vh}px`);
+        };
+        setVh();
+        window.addEventListener('resize', setVh);
+        window.addEventListener('orientationchange', setVh);
+        return () => {
+            window.removeEventListener('resize', setVh);
+            window.removeEventListener('orientationchange', setVh);
+        };
+    }, []);
 
     return (
-        // Adiciona classe condicional para CSS
         <div className={`main-layout ${isMobileSidebarOpen ? 'mobile-sidebar-open' : ''}`}>
-
-            {/* <<< NOVO: Overlay para fechar ao clicar fora >>> */}
             {isMobileSidebarOpen && (
                 <div
                     className="mobile-sidebar-overlay"
-                    onClick={closeMobileSidebar} // <<< Fecha ao clicar no overlay
-                    aria-hidden="true" // Para acessibilidade
+                    onClick={closeMobileSidebar}
+                    aria-hidden="true"
                 ></div>
             )}
 
-            {/* Passa a função de FECHAR para a Sidebar */}
             <Sidebar
                 userData={userData}
                 handleLogout={handleLogout}
-                closeMobileSidebar={closeMobileSidebar} // <<< Nova prop
+                closeMobileSidebar={closeMobileSidebar}
             />
 
             <div className="content-wrapper">
-                 {/* Passa a função de TOGGLE para o Header */}
-                 <Header onToggleSidebar={toggleMobileSidebar} userData={userData} />
-                 <div className="main-content">
+                <Header onToggleSidebar={toggleMobileSidebar} userData={userData} />
+                <div className="main-content">
                     <Outlet />
                 </div>
             </div>

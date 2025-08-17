@@ -11,6 +11,8 @@
   --danger: #ef4444;
   --warning: #f59e0b;
   color: var(--text-main);
+  overflow-y: auto;
+  overflow-x: auto;
 }
 
 /* Título e container */

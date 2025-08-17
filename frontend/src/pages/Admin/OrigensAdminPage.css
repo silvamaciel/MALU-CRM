@@ -8,6 +8,8 @@
   --text-light: #6b7280;
   --border-color: #e5e7eb;
   --danger: #ef4444;
+   overflow-y: auto;
+  overflow-x: auto;
 }
 
 /* ===== Estrutura para garantir rolagem até o fim ===== */

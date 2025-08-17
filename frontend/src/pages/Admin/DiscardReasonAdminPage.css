@@ -1,0 +1,200 @@
+/* ===== Paleta local ===== */
+.dr-page {
+  --primary: #8a4dff;
+  --primary-hover: #7b44e6;
+  --background: #f3f4f6;
+  --card-bg: #ffffff;
+  --text-main: #1f2937;
+  --text-light: #6b7280;
+  --border-color: #e5e7eb;
+  --danger: #ef4444;
+
+  background: var(--background);
+  color: var(--text-main);
+  padding: 12px;
+
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+.dr-page-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 16px;
+}
+
+.dr-page h1 { margin: 0; color: var(--text-main); }
+
+.dr-header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* ===== Tabela + rolagem ===== */
+.dr-table-scroller {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;   /* rolagem vertical segura */
+  overflow-x: hidden;
+}
+
+.dr-table-wrap {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 0.5rem;
+  overflow-x: auto;
+}
+
+.dr-table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.dr-table-wrap thead th {
+  text-align: left;
+  color: var(--text-light);
+  font-weight: 600;
+  background: #fafafa;
+  border-bottom: 1px solid var(--border-color);
+  padding: 10px 12px;
+  white-space: nowrap;
+}
+
+.dr-table-wrap tbody td {
+  border-bottom: 1px solid var(--border-color);
+  padding: 12px;
+  vertical-align: middle;
+  color: var(--text-main);
+}
+
+.dr-table-wrap tbody tr:hover { background: #fafbff; }
+
+.dr-cell-strong { font-weight: 600; }
+.dr-cell-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ===== Botões ===== */
+.dr-btn-primary,
+.dr-btn-outline,
+.dr-btn-ghost,
+.dr-btn-danger {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1.2;
+  user-select: none;
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease,
+              box-shadow .2s ease, transform .02s ease-in;
+}
+
+.dr-btn-primary { background: var(--primary); color: #fff; border: 1px solid transparent; }
+.dr-btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+.dr-btn-primary:active:not(:disabled) { transform: translateY(0.5px); }
+.dr-btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+
+.dr-btn-outline { background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border-color); }
+.dr-btn-outline:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); box-shadow: 0 0 0 3px rgba(138,77,255,.12); }
+.dr-btn-outline:disabled { opacity: .6; cursor: not-allowed; }
+
+.dr-btn-ghost { color: var(--primary); padding: 0.45rem 0.7rem; }
+.dr-btn-ghost:hover:not(:disabled) { background: rgba(138,77,255,.08); }
+.dr-btn-ghost:disabled { opacity: .6; cursor: not-allowed; }
+
+.dr-btn-danger { background: #fff; color: var(--danger); border: 1px solid var(--danger); }
+.dr-btn-danger:hover:not(:disabled) { background: rgba(239,68,68,.08); }
+.dr-btn-danger:disabled { opacity: .6; cursor: not-allowed; }
+
+/* ===== Modal ===== */
+.dr-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17,24,39,.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1000;
+}
+
+.dr-modal-card {
+  width: 100%;
+  max-width: 520px;
+  background: var(--card-bg);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 15px 60px rgba(0,0,0,.2);
+  padding: 18px;
+}
+
+.dr-modal-card h2 { margin: 0 0 10px 0; }
+
+.dr-form-group { display: flex; flex-direction: column; gap: 6px; margin: 12px 0; }
+.dr-form-group label { color: var(--text-main); font-weight: 600; font-size: 0.9rem; }
+
+.dr-form-group input[type="text"],
+.dr-form-group textarea {
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text-main);
+  transition: border-color .2s ease, box-shadow .2s ease;
+  resize: vertical;
+}
+.dr-form-group input::placeholder,
+.dr-form-group textarea::placeholder { color: var(--text-light); }
+
+.dr-form-group input[type="text"]:focus,
+.dr-form-group textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 0.25rem rgba(138,77,255,.22);
+  outline: 0;
+}
+
+.dr-form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 12px; }
+
+/* Mensagens */
+.dr-error-message { color: var(--danger); margin: 8px 0; font-size: 0.92rem; }
+.dr-modal-error { margin-top: 4px; }
+
+/* ConfirmModal (classe passada via prop) */
+.confirm-button-delete {
+  background: var(--danger) !important;
+  color: #fff !important;
+  border: 1px solid var(--danger) !important;
+}
+.confirm-button-delete:hover { background: #d23434 !important; }
+
+/* ===== Responsividade ===== */
+/* até 900px: esconder Descrição */
+@media (max-width: 900px) {
+  .dr-table-wrap .col-descricao,
+  .dr-table-wrap th.col-descricao { display: none; }
+}
+
+/* até 640px: esconder Data; mantém Nome + Ações */
+@media (max-width: 640px) {
+  .dr-table-wrap .col-data,
+  .dr-table-wrap th.col-data { display: none; }
+
+  .dr-page { padding: 8px; }
+  .dr-table-wrap tbody td { padding: 10px; }
+}
+
+/* Defesa extra caso o layout global use altura fixa */
+html, body, #root { min-height: 100%; }

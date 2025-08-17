@@ -9,6 +9,8 @@
   --border-color: #e5e7eb;
   --success: #10b981;
   --danger: #ef4444;
+   overflow-y: auto;
+  overflow-x: auto;
 }
 
 /* ===== Estrutura e rolagem segura ===== */

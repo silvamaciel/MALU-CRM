@@ -1,347 +1,246 @@
-/* src/pages/Admin/ModeloContrato/ModeloContratoFormPage/ModeloContratoFormPage.css */
+/* ===== Paleta local ===== */
+.mcf-page {
+  --primary: #8a4dff;
+  --primary-hover: #7b44e6;
+  --background: #f3f4f6;
+  --card-bg: #ffffff;
+  --text-main: #1f2937;
+  --text-light: #6b7280;
+  --border-color: #e5e7eb;
+  --danger: #ef4444;
 
-.modelo-contrato-form-page .page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #e0e0e0;
+  background: var(--background);
+  color: var(--text-main);
+
+  overflow-y: auto;
+  padding: 12px;
 }
 
-.modelo-contrato-form-page .page-header h1 {
+.mcf-page-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 16px; /* respiro ao fim */
+}
+
+.mcf-header h1 {
   margin: 0;
-  font-size: 1.8em;
-  color: #333;
+  color: var(--text-main);
 }
 
-.modelo-contrato-form-page {
-  max-width: 90%; /* Ou a largura que preferir para o formulário */
-  margin: 0 auto; /* Centraliza o formulário na página */
-  background-color: #fff;
-  padding: 25px 30px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+/* ===== Card do formulário ===== */
+.mcf-form {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 0 rgba(0,0,0,.02);
 }
 
-.form-container {
-  display: flex;
-  flex-direction: column;
-  width: 90%;
+.mcf-error-message {
+  color: var(--danger);
+  margin: 6px 0 10px;
+  font-size: 0.95rem;
 }
 
-.modelo-contrato-form-page .form-group {
-  margin-bottom: 20px; /* Aumenta um pouco o espaçamento entre os grupos */
-  display: flex;
-  flex-direction: column;
-}
-
-.modelo-contrato-form-page .form-group label {
-  margin-bottom: 8px; /* Mais espaço entre label e input */
-  font-weight: 600; /* Labels um pouco mais fortes */
-  font-size: 0.9em;
-  color: #454545;
-}
-
-.modelo-contrato-form-page .form-group input[type="text"],
-.modelo-contrato-form-page .form-group select,
-.modelo-contrato-form-page .form-group textarea {
-  width: 100%;
-  padding: 12px 15px; /* Padding um pouco maior para inputs */
-  border: 1px solid #ced4da; /* Borda um pouco mais suave */
-  border-radius: 5px; /* Bordas mais arredondadas */
-  box-sizing: border-box;
-  font-size: 1em;
-  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
-
-.modelo-contrato-form-page .form-group input:focus,
-.modelo-contrato-form-page .form-group select:focus,
-.modelo-contrato-form-page .form-group textarea:focus {
-  border-color: #007bff;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); /* Sombra de foco do Bootstrap */
-  outline: none;
-}
-
-.modelo-contrato-form-page .form-group textarea {
-  resize: vertical;
-  min-height: 250px; /* Altura maior para o template HTML */
-  font-family: 'Courier New', Courier, monospace; /* Fonte monoespaçada para HTML */
-  font-size: 0.95em;
-  line-height: 1.5;
-}
-
-.modelo-contrato-form-page .form-group small {
-    font-size: 0.85em;
-    color: #6c757d;
-    margin-top: 5px;
-    display: block;
-}
-
-.modelo-contrato-form-page .form-actions {
-  margin-top: 30px;
-  padding-top: 20px;
-  border-top: 1px solid #e9ecef;
-  display: flex;
-  justify-content: flex-end;
+/* Grid inicial (nome + tipo) */
+.mcf-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
   gap: 12px;
 }
-
-.modelo-contrato-form-page .form-actions .button {
-  padding: 10px 22px; /* Botões um pouco maiores */
-  font-size: 1em;
+@media (max-width: 740px) {
+  .mcf-grid-2 { grid-template-columns: 1fr; }
 }
 
-/* Estilo para mensagem de erro do formulário */
-.modelo-contrato-form-page .error-message {
-  color: #721c24;
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
-  padding: 10px 15px;
-  border-radius: 4px;
-  margin-bottom: 20px;
-  font-size: 0.9em;
-}
-
-
-.modelo-contrato-form-page .tabs-container {
+/* ===== Inputs ===== */
+.mcf-form-group {
   display: flex;
-  margin-bottom: 15px;
-  border-bottom: 1px solid #dee2e6;
+  flex-direction: column;
+  gap: 6px;
+  margin: 10px 0;
 }
 
-.modelo-contrato-form-page .tab-button {
-  padding: 10px 15px;
-  cursor: pointer;
-  border: none;
-  background-color: transparent;
-  border-bottom: 3px solid transparent; /* Para o efeito de aba ativa */
-  margin-bottom: -1px; /* Alinha com a borda inferior do container */
-  font-size: 1em;
-  color: #007bff;
-}
-
-.modelo-contrato-form-page .tab-button:hover {
-  background-color: #f8f9fa;
-}
-
-.modelo-contrato-form-page .tab-button.active {
-  border-bottom-color: #007bff;
-  color: #0056b3;
+.mcf-form-group label {
+  font-size: 0.92rem;
   font-weight: 600;
+  color: var(--text-main);
 }
 
-.modelo-contrato-form-page .html-preview {
-  border: 1px solid #ccc;
+.mcf-form-group input,
+.mcf-form-group select {
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text-main);
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.mcf-form-group input::placeholder { color: var(--text-light); }
+
+.mcf-form-group input:focus,
+.mcf-form-group select:focus {
+  outline: 0;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 0.25rem rgba(138,77,255,.18);
+}
+
+/* ===== Tabs ===== */
+.mcf-tabs {
+  display: inline-flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--border-color);
+  margin-top: 8px;
+}
+
+.mcf-tab {
+  all: unset;
+  padding: 0.55rem 0.9rem;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+.mcf-tab:hover { background: rgba(138,77,255,.08); color: var(--primary); }
+
+.mcf-tab.active {
+  color: var(--primary);
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-bottom-color: #fff;
+}
+
+/* ===== Quill ===== */
+.mcf-quill .ql-toolbar {
+  border-radius: 8px 8px 0 0;
+  border-color: var(--border-color);
+}
+.mcf-quill .ql-container {
+  border-radius: 0 0 8px 8px;
+  border-color: var(--border-color);
+  min-height: 330px;
+}
+
+/* ===== Code / Preview ===== */
+.mcf-codearea {
+  min-height: 330px;
+  width: 100%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Courier New", monospace;
+  font-size: .95em;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text-main);
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+.mcf-codearea:focus {
+  outline: 0;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 0.25rem rgba(138,77,255,.18);
+}
+
+.mcf-preview {
+  border: 1px solid var(--border-color);
   padding: 15px;
-  min-height: 300px; /* Mesma altura do textarea */
-  background: #fff; /* Fundo branco para melhor visualização */
+  min-height: 330px;
+  background: #f9f9f9;
   overflow: auto;
-  line-height: 1.6; /* Melhora a legibilidade do texto renderizado */
+  border-radius: 8px;
 }
 
-.modelo-contrato-form-page .placeholders-list {
+/* ===== Ações ===== */
+.mcf-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.mcf-btn-primary,
+.mcf-btn-outline {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease,
+              box-shadow .2s ease, transform .02s ease-in;
+}
+
+.mcf-btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border: 1px solid transparent;
+}
+.mcf-btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+.mcf-btn-primary:active:not(:disabled) { transform: translateY(0.5px); }
+.mcf-btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+
+.mcf-btn-outline {
+  background: #fff;
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+}
+.mcf-btn-outline:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(138,77,255,.12);
+}
+
+/* ===== Placeholders ===== */
+.mcf-section { margin-top: 18px; }
+.mcf-ph-group { margin-bottom: 14px; }
+.mcf-ph-title { display: inline-block; margin-bottom: 6px; }
+
+.mcf-ph-list {
   list-style: none;
   padding: 0;
-  max-height: 200px; /* Altura máxima para a lista de placeholders */
-  overflow-y: auto;
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 4px;
-  padding: 10px;
-  font-size: 0.85em;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 700px) {
+  .mcf-ph-list { grid-template-columns: 1fr 1fr; }
 }
 
-.modelo-contrato-form-page .placeholders-list li {
-  padding: 5px 0;
-  border-bottom: 1px solid #e9ecef;
-}
-.modelo-contrato-form-page .placeholders-list li:last-child {
-  border-bottom: none;
-}
-.modelo-contrato-form-page .placeholders-list code {
-  background-color: #e0e0e0; /* Fundo um pouco mais escuro para o placeholder */
-  padding: 2px 5px;
-  border-radius: 3px;
-  font-family: 'Courier New', Courier, monospace;
-  color: #c7254e; /* Cor para o placeholder */
-}
-
-/* Estilos para o container do CKEditor */
-.modelo-contrato-form-page .ckeditor-container {
-  /* min-height já foi definido inline no JS, mas podemos definir aqui se quisermos um padrão */
-  /* border já foi definido inline no JS */
-  margin-top: 5px; /* Espaço acima do editor */
-}
-
-/* O CKEditor por padrão já vem com estilos para a toolbar e a área de edição.
-   A altura do editor CKEditor pode ser controlada pela configuração 'height' ou
-   pelo CSS no elemento .ck-editor__editable.
-   Para o ClassicBuild, a altura é geralmente definida no container da área editável.
-   Se for necessário forçar uma altura mínima para a área de edição: */
-.modelo-contrato-form-page .ckeditor-container .ck-editor__editable_inline {
-  min-height: 330px; /* Altura mínima para a área de edição */
-  border: 1px solid #ced4da; /* Adiciona borda se não estiver presente por padrão ou para sobrescrever */
-  border-top: none; /* CKEditor classic build geralmente tem a toolbar e o editável como blocos separados */
-  padding: 0 10px; /* Espaçamento interno */
-  background-color: #fff;
-  border-bottom-left-radius: 5px; /* Arredondar cantos inferiores */
-  border-bottom-right-radius: 5px;
-}
-
-/* A toolbar do CKEditor já tem seus próprios estilos.
-   Se precisar customizar a toolbar (ex: bordas arredondadas no topo): */
-.modelo-contrato-form-page .ckeditor-container .ck-toolbar {
-  border-top-left-radius: 5px;
-  border-top-right-radius: 5px;
-  border-color: #ced4da; /* Garante que a borda da toolbar combine */
-}
-
-/* As regras específicas para .quill-editor-container, .ql-toolbar.ql-snow,
-   .ql-container.ql-snow, e .ql-editor foram removidas. */
-
-/* A lista de placeholders já tem estilos definidos acima e não precisa ser repetida.
-   Apenas garantindo que a última definição seja a que prevalece, se houver sobreposição. */
-
-/* === ReactQuill Editor === */
-.modelo-contrato-form-page .ql-toolbar {
-  border: 1px solid #ced4da;
-  border-top-left-radius: 5px;
-  border-top-right-radius: 5px;
-  background-color: #f8f9fa;
-  padding: 8px;
-  margin-top: 5px;
-}
-
-.modelo-contrato-form-page .ql-container {
-  border: 1px solid #ced4da;
-  border-top: none;
-  border-bottom-left-radius: 5px;
-  border-bottom-right-radius: 5px;
-  background-color: #fff;
-  min-height: 330px;
-  font-size: 1em;
-}
-
-.modelo-contrato-form-page .ql-editor {
-  min-height: 280px;
-  line-height: 1.6;
-  padding: 12px;
-  font-family: 'Arial', sans-serif;
-  color: #333;
-}
-
-.modelo-contrato-form-page .ql-editor strong {
-  font-weight: bold;
-}
-
-.modelo-contrato-form-page .ql-editor code {
-  background-color: #eee;
-  padding: 2px 4px;
-  border-radius: 4px;
-  font-family: 'Courier New', monospace;
-}
-
-/* Corrige alinhamento dos botões da toolbar customizada */
-.modelo-contrato-form-page #toolbar {
+.mcf-ph-item {
   display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-bottom: 8px;
+  align-items: center;
+  gap: 10px;
 }
 
-/* Botões personalizados da toolbar (se tiver ícones ou texto) */
-.modelo-contrato-form-page .ql-toolbar button {
-  background: transparent;
-  border: none;
+.mcf-ph-badge {
+  all: unset;
+  background: #fff;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Courier New", monospace;
+  font-size: 0.85rem;
   cursor: pointer;
 }
+.mcf-ph-badge:hover { background: rgba(138,77,255,.08); }
 
-.modelo-contrato-form-page .ql-toolbar button:hover {
-  background-color: #e2e6ea;
-  border-radius: 4px;
-}
+.mcf-ph-desc { color: var(--text-light); }
 
-/* Ajusta visual da tabela inserida no Quill */
-.modelo-contrato-form-page .ql-editor table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-}
-
-.modelo-contrato-form-page .ql-editor table,
-.modelo-contrato-form-page .ql-editor th,
-.modelo-contrato-form-page .ql-editor td {
-  border: 1px solid #ccc;
+/* ===== Pequenos ajustes responsivos ===== */
+@media (max-width: 640px) {
+  .mcf-page { padding: 8px; }
+  .mcf-form { padding: 12px; }
+  .mcf-preview { min-height: 260px; }
+  .mcf-codearea { min-height: 260px; }
 }
 
-.modelo-contrato-form-page .ql-editor th,
-.modelo-contrato-form-page .ql-editor td {
-  padding: 8px;
-  text-align: left;
-}
-
-/* Copiar HTML (caso use handler custom de source/html) */
-.modelo-contrato-form-page .ql-html-button {
-  font-size: 0.85em;
-  padding: 5px 8px;
-  background-color: #007bff;
-  color: #fff;
-  border-radius: 4px;
-  margin-left: 10px;
-  cursor: pointer;
-  border: none;
-}
-
-.modelo-contrato-form-page .ql-html-button:hover {
-  background-color: #0056b3;
-}
-
-
-/* Alinhamento */
-.ql-editor .ql-align-center {
-  text-align: center;
-}
-.ql-editor .ql-align-right {
-  text-align: right;
-}
-.ql-editor .ql-align-justify {
-  text-align: justify;
-}
-
-/* Fontes */
-.ql-editor .ql-font-sans-serif {
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-}
-.ql-editor .ql-font-serif {
-  font-family: Georgia, 'Times New Roman', serif;
-}
-.ql-editor .ql-font-monospace {
-  font-family: 'Courier New', Courier, monospace;
-}
-.ql-editor .ql-font-arial {
-  font-family: Arial, sans-serif;
-}
-.ql-editor .ql-font-times-new-roman {
-  font-family: "Times New Roman", Times, serif;
-}
-.ql-editor .ql-font-comic-sans {
-  font-family: "Comic Sans MS", cursive, sans-serif;
-}
-
-/* Preview igual ao editor */
-.html-preview {
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  line-height: 1.6;
-  color: #333;
-}
-
-.html-preview .ql-align-center {
-  text-align: center;
-}
-.html-preview .ql-align-right {
-  text-align: right;
-}
-.html-preview .ql-align-justify {
-  text-align: justify;
-}
+/* Defesa extra caso o layout global use altura fixa */
+html, body, #root { min-height: 100%; }
