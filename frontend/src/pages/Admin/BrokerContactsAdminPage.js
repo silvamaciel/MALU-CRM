@@ -1,4 +1,3 @@
-// src/pages/Admin/BrokerContactsAdminPage.js
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'react-toastify';
 
@@ -22,7 +21,7 @@ import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 
-// CSS compartilhado
+// CSS exclusivo
 import './BrokerContactsAdminPage.css';
 
 // ---------------------------------------------
@@ -178,7 +177,7 @@ function BrokersSection() {
   };
 
   return (
-    <section>
+    <section className="brokers-section">
       <div className="section-header">
         <h2>Canal de Parceiros</h2>
         <div className="section-actions">
@@ -192,7 +191,7 @@ function BrokersSection() {
 
       {!isLoading && !error && (
         <div className="admin-table-container">
-          <table>
+          <table className="brokers-table">
             <thead>
               <tr>
                 <th>Nome</th>
@@ -378,7 +377,7 @@ function RequestsSection() {
   };
 
   return (
-    <section>
+    <section className="requests-section">
       <div className="section-header">
         <h2>Solicitações de Leads</h2>
         <div className="section-actions">
@@ -397,7 +396,7 @@ function RequestsSection() {
 
       {!isLoadingReq && !reqError && (
         <div className="admin-table-container">
-          <table>
+          <table className="requests-table">
             <thead>
               <tr>
                 <th>Cliente</th>
@@ -420,15 +419,17 @@ function RequestsSection() {
                   <td>{r.corretorResponsavel?.nome || '-'}</td>
                   <td><StatusTag value={r.status} /></td>
                   <td>{new Date(r.createdAt).toLocaleString('pt-BR')}</td>
-                  <td style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                    {r.status === 'Pendente' ? (
-                      <>
-                        <button className="button" onClick={() => handleApprove(r)} disabled={isActioning}>Aprovar</button>
-                        <button className="button delete-button-table" onClick={() => handleReject(r)} disabled={isActioning}>Rejeitar</button>
-                      </>
-                    ) : (
-                      <em>-</em>
-                    )}
+                  <td className="actions">
+                    <div className="actions-cell">
+                      {r.status === 'Pendente' ? (
+                        <>
+                          <button className="button" onClick={() => handleApprove(r)} disabled={isActioning}>Aprovar</button>
+                          <button className="button delete-button-table" onClick={() => handleReject(r)} disabled={isActioning}>Rejeitar</button>
+                        </>
+                      ) : (
+                        <em>-</em>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -453,7 +454,7 @@ export default function BrokerContactsAdminPage() {
     <div className="admin-page broker-admin-page">
       <h1>Canal de Parceiros</h1>
 
-      <div className="admin-tabs" style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+      <div className="admin-tabs">
         <button className={`button ${tab === 'requests' ? 'primary' : ''}`} onClick={() => setTab('requests')}>
           Solicitações de Leads
         </button>

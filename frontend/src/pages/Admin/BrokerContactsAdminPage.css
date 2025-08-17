@@ -1,195 +1,279 @@
-/* ===== Layout base ===== */
-.admin-page {
-  --bg: #f6f8fb;
-  --card: #fff;
-  --ink: #0f172a;
-  --muted: #64748b;
-  --brand: #2563eb;
-  --ok: #16a34a;
-  --warn: #f59e0b;
-  --err: #dc2626;
-  --border: #e5e7eb;
+/* Paleta */
+.broker-admin-page {
+  --primary: #8a4dff;
+  --primary-hover: #7b44e6;
+  --background: #f3f4f6;
+  --card-bg: #ffffff;
+  --text-main: #1f2937;
+  --text-light: #6b7280;
+  --border-color: #e5e7eb;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
 
-  color: var(--ink);
-  background: var(--bg);
+  /* pedido: a página principal SEMPRE com scroll */
+  overflow-y: auto;
+  overflow-x: auto;
+
+  padding: 12px;
+  background: var(--background);
+  color: var(--text-main);
+  box-sizing: border-box;
 }
 
-/* Título + linha */
-.admin-page > h1 {
-  font-weight: 700;
-  letter-spacing: .2px;
-  margin: 8px 0 12px;
+/* Tabs */
+.admin-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 12px;
+  flex-wrap: wrap;
 }
-.admin-page > h1 + hr,
-.admin-page .divider {
-  border: none;
-  border-top: 1px solid var(--border);
-  margin: 8px 0 20px;
-}
-
-/* ===== Tabs ===== */
 .admin-tabs .button {
-  background: #e9eef9;
-  color: #1e293b;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 10px;
+  padding: 0.55rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: #fff;
+  color: var(--text-main);
   font-weight: 600;
 }
 .admin-tabs .button.primary {
-  background: var(--brand);
+  background: var(--primary);
+  border-color: var(--primary);
   color: #fff;
 }
-.admin-tabs { gap: 10px; }
+.admin-tabs .button.primary:hover { background: var(--primary-hover); }
 
-/* ===== Section header ===== */
+/* Section header */
 .section-header {
-  display: flex; align-items: center; justify-content: space-between;
-  margin: 14px 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
 }
-.section-header h2 { margin: 0; font-size: 20px; }
-.section-actions { display: flex; gap: 10px; align-items: center; }
-.section-actions .select {
-  border: 1px solid var(--border); border-radius: 8px;
-  padding: 6px 10px; background: #fff;
+.section-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
 }
-.badge {
-  background: #eef2ff; color: #3730a3; font-weight: 700;
-  padding: 4px 8px; border-radius: 999px; font-size: 12px;
-}
-
-/* ===== Card tabela ===== */
-.admin-table-container {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  overflow: hidden;
-  box-shadow: 0 1px 2px rgba(16,24,40,.04);
-  overflow-x: auto;
-}
-
-/* Tabela */
-.admin-table-container table {
-  width: 100%; border-collapse: separate; border-spacing: 0;
-  font-size: 14px;
-  min-width: 900px;
-
-}
-.admin-table-container thead th {
-  position: sticky; top: 0; z-index: 1;
-  background: #f8fafc; color: var(--muted);
-  text-transform: uppercase; letter-spacing: .6px; font-size: 12px;
-  border-bottom: 1px solid var(--border);
-  padding: 10px 14px;
-}
-.admin-table-container tbody td {
-  padding: 12px 14px; border-bottom: 1px solid var(--border);
-  vertical-align: middle;
-}
-.admin-table-container tbody tr:hover {
-  background: #f9fbff;
-}
-.admin-table-container tbody tr:nth-child(odd) {
+.select {
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
   background: #fff;
 }
-.admin-table-container tbody tr:nth-child(even) {
-  background: #fcfdff;
-}
-
-/* Coluna ações */
-.admin-table-container td:last-child,
-.admin-table-container th:last-child {
-  text-align: right; width: 1%;
-}
-.actions-cell { display: inline-flex; gap: 8px; }
-
-/* ===== Botões ===== */
-.button {
-  background: #e2e8f0; color: #0f172a; border: none;
-  padding: 8px 12px; border-radius: 10px; font-weight: 600; cursor: pointer;
-}
-.button:hover { filter: brightness(.97); }
-.button:disabled { opacity: .6; cursor: not-allowed; }
-.add-button { background: var(--ok); color: #fff; }
-.view-button-table { background: #e2e8f0; }
-.edit-button-table { background: #dbeafe; color: #1d4ed8; }
-.delete-button-table { background: #fee2e2; color: #b91c1c; }
-
-/* ===== Status pill ===== */
-.status-tag {
-  padding: 4px 10px; border-radius: 999px; font-weight: 700; font-size: 12px;
-}
-.status-pendente  { background: #fff7ed; color: #9a3412; }   /* amber */
-.status-aprovado  { background: #ecfdf5; color: #065f46; }   /* green */
-.status-rejeitado { background: #fef2f2; color: #991b1b; }   /* red */
-
-/* ===== Responsividade ===== */
-@media (max-width: 980px) {
-  .admin-table-container thead { display: none; }
-  .admin-table-container tbody tr {
-    display: grid; grid-template-columns: 1fr; gap: 4px;
-    padding: 10px 12px; border-bottom: 1px solid var(--border);
-  }
-  .admin-table-container tbody td {
-    border: none; padding: 6px 0;
-  }
-  .admin-table-container tbody td[data-label]::before {
-    content: attr(data-label) " "; color: var(--muted); font-size: 12px;
-    display: inline-block; min-width: 140px; text-transform: uppercase; letter-spacing: .6px;
-  }
-  .actions-cell { justify-content: flex-start; }
-}
-
-
-/* Scroll lateral confortável */
-.admin-table-container {
-  overflow-x: auto;
-  padding-bottom: 8px;            /* espaço p/ barra */
-}
-.admin-table-container table {
-  min-width: 1100px;              /* evita esmagar colunas */
-}
-
-/* Coluna de Ações — largura fixa + sem quebra */
-.admin-table-container th.actions,
-.admin-table-container td.actions {
-  width: 260px;                   /* ajuste conforme gosto */
-  text-align: right;
-  white-space: nowrap;
-}
-
-/* Linha de botões */
-.actions-cell {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  flex-wrap: nowrap;              /* não quebrar */
-}
-
-/* Botões compactos e estáveis */
-.button {
+.badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 34px;                   /* altura padrão */
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 13px;
-  line-height: 1;
-  white-space: nowrap;            /* não quebrar texto */
+  min-width: 28px;
+  height: 24px;
+  padding: 0 8px;
+  font-weight: 700;
+  font-size: .85rem;
+  color: #fff;
+  background: var(--primary);
+  border-radius: 999px;
 }
 
-/* Opcional: quando a tela for muito estreita, permitir wrap controlado */
-@media (max-width: 980px) {
-  .admin-table-container th.actions,
-  .admin-table-container td.actions {
-    width: 100%;
-    text-align: left;
-  }
-  .actions-cell {
-    justify-content: flex-start;
-    flex-wrap: wrap;              /* agora pode quebrar em 2 linhas */
-    gap: 6px;
-  }
+/* Table container e tabela base */
+.admin-table-container {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: 0 1px 0 rgba(0,0,0,.02);
+  overflow-x: auto;
+}
+
+.admin-table-container table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px; /* evita colunas esmagadas em telas muito estreitas */
+}
+
+.admin-table-container thead th {
+  text-align: left;
+  color: var(--text-light);
+  font-weight: 600;
+  background: #fafafa;
+  border-bottom: 1px solid var(--border-color);
+  padding: 10px 12px;
+  white-space: nowrap;
+}
+
+.admin-table-container tbody td {
+  border-bottom: 1px solid var(--border-color);
+  padding: 12px;
+  vertical-align: middle;
+  color: var(--text-main);
+}
+
+.admin-table-container tbody tr:hover { background: #fafbff; }
+
+.actions .actions-cell {
+  display: inline-flex;
+  gap: 8px;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+/* StatusTag */
+.status-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+.status-pendente { background: rgba(245,158,11,.12); color: #92400e; border-color: rgba(245,158,11,.35); }
+.status-aprovado { background: rgba(16,185,129,.12); color: #065f46; border-color: rgba(16,185,129,.35); }
+.status-rejeitado { background: rgba(239,68,68,.12); color: #7f1d1d; border-color: rgba(239,68,68,.35); }
+
+/* View modal grid */
+.view-modal-content .view-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 10px;
+}
+.view-modal-content .detail-item {
+  display: flex; gap: 6px;
+}
+.view-modal-content .detail-label { font-weight: 700; color: var(--text-light); }
+.view-modal-content .detail-value { color: var(--text-main); }
+@media (max-width: 640px) {
+  .view-modal-content .view-grid { grid-template-columns: 1fr; }
+}
+
+/* Botões herdados + focus bonito */
+.button:focus-visible,
+select:focus-visible,
+input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(138,77,255,.18);
+  border-color: var(--primary);
+}
+
+/* Mensagens */
+.error-message { color: var(--danger); font-weight: 600; }
+
+/* --------- Responsividade por tabela (usando classes adicionadas no JS) --------- */
+
+/* Brokers: Nome(1), Contato(2), Email(3), CRECI(4), Imobiliária(5), Status(6), Ações(7) */
+@media (max-width: 900px) {
+  .brokers-table th:nth-child(3),
+  .brokers-table td:nth-child(3), /* Email */
+  .brokers-table th:nth-child(4),
+  .brokers-table td:nth-child(4)  /* CRECI */
+  { display: none; }
+}
+@media (max-width: 640px) {
+  .brokers-table th:nth-child(5),
+  .brokers-table td:nth-child(5)  /* Imobiliária */
+  { display: none; }
+}
+
+/* Requests: Cliente(1), Contato(2), Email(3), Comentário(4), Corretor(5), Status(6), Criado(7), Ações(8) */
+@media (max-width: 900px) {
+  .requests-table th:nth-child(3),
+  .requests-table td:nth-child(3), /* Email */
+  .requests-table th:nth-child(4),
+  .requests-table td:nth-child(4)  /* Comentário */
+  { display: none; }
+}
+@media (max-width: 640px) {
+  .requests-table th:nth-child(7),
+  .requests-table td:nth-child(7)  /* Criado em */
+  { display: none; }
+}
+
+/* Ajustes compactos em telas pequenas */
+@media (max-width: 640px) {
+  .admin-table-container tbody td { padding: 10px; }
+  .actions .actions-cell { gap: 6px; }
+}
+
+
+/* ====== BOTÕES (escopo da página) ====== */
+.broker-admin-page .button {
+  background: var(--primary);
+  color: #fff;
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  padding: 0.55rem 0.9rem;
+  font-weight: 600;
+  transition: background .15s ease, border-color .15s ease, opacity .15s ease;
+}
+.broker-admin-page .button:hover:not(:disabled) {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+.broker-admin-page .button:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+/* Variações comuns usadas na tabela/modais */
+.broker-admin-page .add-button,
+.broker-admin-page .submit-button,
+.broker-admin-page .primary-button {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.broker-admin-page .add-button:hover,
+.broker-admin-page .submit-button:hover,
+.broker-admin-page .primary-button:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.broker-admin-page .view-button-table {
+  background: #fff;
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+}
+.broker-admin-page .view-button-table:hover { background: #f9f9ff; }
+
+.broker-admin-page .edit-button-table {
+  background: var(--warning);
+  border-color: var(--warning);
+  color: #111827;
+}
+.broker-admin-page .edit-button-table:hover {
+  filter: brightness(0.95);
+}
+
+.broker-admin-page .delete-button-table,
+.broker-admin-page .danger-button {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+.broker-admin-page .delete-button-table:hover,
+.broker-admin-page .danger-button:hover {
+  filter: brightness(0.95);
+}
+
+.broker-admin-page .cancel-button {
+  background: #fff;
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+}
+.broker-admin-page .cancel-button:hover { background: #f9fafb; }
+
+/* ====== EXCEÇÃO: abas continuam com visual “neutro/primário” ====== */
+.broker-admin-page .admin-tabs .button {
+  background: #fff;
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+}
+.broker-admin-page .admin-tabs .button.primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.broker-admin-page .admin-tabs .button.primary:hover {
+  background: var(--primary-hover);
 }
