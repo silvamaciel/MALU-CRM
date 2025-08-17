@@ -1,250 +1,363 @@
-// src/pages/Admin/UsuariosAdminPage.js
-import React, { useState, useEffect, useCallback } from 'react';
-// API Functions for Users - <<< Verifique o caminho/nome do arquivo e funções >>>
-import { getUsuarios, createUser, updateUser, deleteUser } from '../../api/users'; // Ou usuarios.js
-import { toast } from 'react-toastify';
-// Shared Components
-import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
-// Shared Admin CSS
-import './AdminPages.css';
+import React, { useState, useEffect, useCallback } from "react";
+import { getUsuarios, createUser, updateUser, deleteUser } from "../../api/users";
+import { toast } from "react-toastify";
+import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 
-// Valores possíveis para o perfil (deve bater com o enum do backend)
-const PERFIS_DISPONIVEIS = ['admin', 'corretor'];
+// CSS exclusivo desta página
+import "./UsuariosAdminPage.css";
+
+const PERFIS_DISPONIVEIS = ["admin", "corretor"];
 
 function UsuariosAdminPage() {
-    // State para lista
-    const [users, setUsers] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-    // State para modal/formulário Add/Edit
-    const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-    const [currentUser, setCurrentUser] = useState(null); // null=Add, obj=Edit
-    const [isProcessingForm, setIsProcessingForm] = useState(false);
-    const [formError, setFormError] = useState(null);
-    // State para os campos do formulário
-    const [formData, setFormData] = useState({ nome: '', email: '', perfil: 'corretor', senha: '', ativo: true });
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isProcessingForm, setIsProcessingForm] = useState(false);
+  const [formError, setFormError] = useState(null);
 
-    // State para modal de confirmação Delete
-    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-    const [deleteTargetUser, setDeleteTargetUser] = useState(null);
-    const [isDeleting, setIsDeleting] = useState(false);
-    const [deleteErrorState, setDeleteErrorState] = useState(null);
+  const [formData, setFormData] = useState({
+    nome: "",
+    email: "",
+    perfil: "corretor",
+    senha: "",
+    ativo: true,
+  });
 
-    // Função para buscar usuários da empresa logada
-    const fetchUsers = useCallback(async () => {
-        setIsLoading(true); setError(null);
-        try {
-            // A API getUsuarios agora deve retornar apenas usuários da empresa correta
-            const data = await getUsuarios();
-            setUsers(data || []);
-        } catch (err) {
-            const errorMsg = err.message || "Falha ao carregar usuários.";
-            setError(errorMsg); toast.error(errorMsg); setUsers([]);
-        } finally { setIsLoading(false); }
-    }, []);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [deleteTargetUser, setDeleteTargetUser] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteErrorState, setDeleteErrorState] = useState(null);
 
-    // Efeito inicial para buscar
-    useEffect(() => {
-        fetchUsers();
-    }, [fetchUsers]);
+  const fetchUsers = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await getUsuarios();
+      setUsers(data || []);
+    } catch (err) {
+      const errorMsg = err.message || "Falha ao carregar usuários.";
+      setError(errorMsg);
+      toast.error(errorMsg);
+      setUsers([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-    // --- Handlers ---
-    const handleInputChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ? checked : value
-        }));
-    };
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
-    const resetFormData = () => {
-        setFormData({ nome: '', email: '', perfil: 'corretor', senha: '', ativo: true });
-    };
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+  };
 
-    const handleOpenAddModal = () => {
-        setCurrentUser(null); resetFormData(); setFormError(null); setIsFormModalOpen(true);
-    };
+  const resetFormData = () => {
+    setFormData({ nome: "", email: "", perfil: "corretor", senha: "", ativo: true });
+  };
 
-    const handleOpenEditModal = (user) => {
-        setCurrentUser(user);
-        setFormData({ // Preenche o form com dados atuais
-            nome: user.nome || '',
-            email: user.email || '',
-            perfil: user.perfil || 'corretor',
-            senha: '', // Senha nunca é preenchida, só definida se for alterar
-            ativo: user.ativo === undefined ? true : user.ativo // Default true se não existir
-        });
-        setFormError(null); setIsFormModalOpen(true);
-    };
+  const handleOpenAddModal = () => {
+    setCurrentUser(null);
+    resetFormData();
+    setFormError(null);
+    setIsFormModalOpen(true);
+  };
 
-    const handleCloseFormModal = () => {
-        setIsFormModalOpen(false); setCurrentUser(null); resetFormData(); setFormError(null); setIsProcessingForm(false);
-    };
+  const handleOpenEditModal = (user) => {
+    setCurrentUser(user);
+    setFormData({
+      nome: user.nome || "",
+      email: user.email || "",
+      perfil: user.perfil || "corretor",
+      senha: "",
+      ativo: user.ativo === undefined ? true : user.ativo,
+    });
+    setFormError(null);
+    setIsFormModalOpen(true);
+  };
 
-    const handleSaveUser = async (event) => {
-        event.preventDefault(); setFormError(null); setIsProcessingForm(true);
+  const handleCloseFormModal = () => {
+    setIsFormModalOpen(false);
+    setCurrentUser(null);
+    resetFormData();
+    setFormError(null);
+    setIsProcessingForm(false);
+  };
 
-        // Prepara dados a enviar, removendo senha se vazia
-        const userData = { ...formData };
-        if (!userData.senha) {
-            delete userData.senha; // Só envia senha se algo foi digitado
-        }
-        // Validação básica
-        if (!userData.nome || !userData.email || !userData.perfil) {
-            setFormError("Nome, Email e Perfil são obrigatórios."); setIsProcessingForm(false); return;
-        }
-        if (!/\S+@\S+\.\S+/.test(userData.email)) {
-            setFormError("Formato de email inválido."); setIsProcessingForm(false); return;
-        }
+  const handleSaveUser = async (event) => {
+    event.preventDefault();
+    setFormError(null);
+    setIsProcessingForm(true);
 
-        try {
-            let successMessage;
-            if (currentUser && currentUser._id) { // Edit Mode
-                await updateUser(currentUser._id, userData);
-                successMessage = `Usuário "${userData.nome}" atualizado!`;
-            } else { // Add Mode
-                await createUser(userData);
-                successMessage = `Usuário "${userData.nome}" criado!`;
-            }
-            toast.success(successMessage); fetchUsers(); handleCloseFormModal();
-        } catch (err) {
-            const errorMsg = err.error || err.message || "Falha ao salvar usuário.";
-            setFormError(errorMsg); toast.error(errorMsg); console.error(err);
-        } finally { setIsProcessingForm(false); }
-    };
+    const userData = { ...formData };
+    if (!userData.senha) delete userData.senha;
 
-    const handleOpenDeleteConfirm = (user) => {
-        setDeleteTargetUser(user); setDeleteErrorState(null); setIsDeleteConfirmOpen(true);
-    };
+    if (!userData.nome || !userData.email || !userData.perfil) {
+      setFormError("Nome, Email e Perfil são obrigatórios.");
+      setIsProcessingForm(false);
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(userData.email)) {
+      setFormError("Formato de email inválido.");
+      setIsProcessingForm(false);
+      return;
+    }
 
-    const handleCloseDeleteConfirm = () => {
-        setIsDeleteConfirmOpen(false); setDeleteTargetUser(null); setDeleteErrorState(null); setIsDeleting(false);
-    };
+    try {
+      if (currentUser && currentUser._id) {
+        await updateUser(currentUser._id, userData);
+        toast.success(`Usuário "${userData.nome}" atualizado!`);
+      } else {
+        await createUser(userData);
+        toast.success(`Usuário "${userData.nome}" criado!`);
+      }
+      fetchUsers();
+      handleCloseFormModal();
+    } catch (err) {
+      const errorMsg = err.error || err.message || "Falha ao salvar usuário.";
+      setFormError(errorMsg);
+      toast.error(errorMsg);
+      console.error(err);
+    } finally {
+      setIsProcessingForm(false);
+    }
+  };
 
-    const handleConfirmDelete = async () => {
-        if (!deleteTargetUser) return; setIsDeleting(true); setDeleteErrorState(null);
-        try {
-            const result = await deleteUser(deleteTargetUser._id);
-            toast.success(result.message || "Usuário excluído!");
-            handleCloseDeleteConfirm(); fetchUsers();
-        } catch (err) {
-             const errorMsg = err.error || err.message || "Falha ao excluir usuário.";
-             setDeleteErrorState(errorMsg); toast.error(errorMsg); console.error(err);
-        } finally { setIsDeleting(false); }
-    };
-    // --- Fim Handlers ---
+  const handleOpenDeleteConfirm = (user) => {
+    setDeleteTargetUser(user);
+    setDeleteErrorState(null);
+    setIsDeleteConfirmOpen(true);
+  };
 
+  const handleCloseDeleteConfirm = () => {
+    setIsDeleteConfirmOpen(false);
+    setDeleteTargetUser(null);
+    setDeleteErrorState(null);
+    setIsDeleting(false);
+  };
 
-    // --- Renderização ---
-    return (
-        <div className="admin-page users-admin-page">
-            <h1>Gerenciar Usuários</h1>
-            <button onClick={handleOpenAddModal} className="button add-button" disabled={isFormModalOpen || isDeleteConfirmOpen}>
-               + Adicionar Novo Usuário
-            </button>
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetUser) return;
+    setIsDeleting(true);
+    setDeleteErrorState(null);
+    try {
+      const result = await deleteUser(deleteTargetUser._id);
+      toast.success(result.message || "Usuário excluído!");
+      handleCloseDeleteConfirm();
+      fetchUsers();
+    } catch (err) {
+      const errorMsg = err.error || err.message || "Falha ao excluir usuário.";
+      setDeleteErrorState(errorMsg);
+      toast.error(errorMsg);
+      console.error(err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
-            {isLoading && <p>Carregando usuários...</p>}
-            {error && <p className="error-message">{error}</p>}
+  return (
+    <div className="usr-page">
+      <div className="usr-page-inner">
+        <h1>Gerenciar Usuários</h1>
 
-            {!isLoading && !error && (
-                <div className="admin-table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Nome</th>
-                                <th>Email</th>
-                                <th>Perfil</th>
-                                <th>Status</th>
-                                <th>Criado Em</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {users.map(user => (
-                                <tr key={user._id}>
-                                    <td>{user.nome}</td>
-                                    <td>{user.email}</td>
-                                    <td>{user.perfil}</td>
-                                    <td>{user.ativo ? 'Ativo' : 'Inativo'}</td>
-                                    <td>{new Date(user.createdAt).toLocaleDateString('pt-BR')}</td>
-                                    <td>
-                                        <button onClick={() => handleOpenEditModal(user)} className="button edit-button-table" disabled={isFormModalOpen || isDeleteConfirmOpen}>Editar</button>
-                                        <button onClick={() => handleOpenDeleteConfirm(user)} className="button delete-button-table" disabled={isFormModalOpen || isDeleteConfirmOpen}>Excluir</button>
-                                    </td>
-                                </tr>
-                            ))}
-                            {users.length === 0 && (
-                                <tr><td colSpan="6">Nenhum usuário encontrado nesta empresa.</td></tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            )}
-
-            {/* Modal/Formulário para Adicionar/Editar Usuário */}
-            {isFormModalOpen && (
-                <div className="form-modal-overlay">
-                    <div className="form-modal-content">
-                        <h2>{currentUser ? 'Editar Usuário' : 'Adicionar Novo Usuário'}</h2>
-                        <form onSubmit={handleSaveUser}>
-                            {/* Nome */}
-                            <div className="form-group">
-                                <label htmlFor="userName">Nome *</label>
-                                <input type="text" id="userName" name="nome" value={formData.nome} onChange={handleInputChange} required disabled={isProcessingForm} />
-                            </div>
-                            {/* Email */}
-                             <div className="form-group">
-                                <label htmlFor="userEmail">Email *</label>
-                                <input type="email" id="userEmail" name="email" value={formData.email} onChange={handleInputChange} required disabled={isProcessingForm || !!currentUser} />
-                                {currentUser && <small>Email não pode ser alterado.</small>}
-                                </div>
-                             {/* Perfil */}
-                             <div className="form-group">
-                                <label htmlFor="userPerfil">Perfil *</label>
-                                <select id="userPerfil" name="perfil" value={formData.perfil} onChange={handleInputChange} required disabled={isProcessingForm}>
-                                    {PERFIS_DISPONIVEIS.map(p => <option key={p} value={p}>{p}</option>)}
-                                </select>
-                            </div>
-                             {/* Senha (Opcional na edição, talvez obrigatório na criação manual?) */}
-                             <div className="form-group">
-                                <label htmlFor="userSenha">Nova Senha</label>
-                                <input type="password" id="userSenha" name="senha" value={formData.senha} onChange={handleInputChange} placeholder={currentUser ? 'Deixe em branco para não alterar' : 'Obrigatório ao criar'} disabled={isProcessingForm} />
-                                {!currentUser && <small>Senha necessária para login local.</small>}
-                            </div>
-                             {/* Status Ativo */}
-                             <div className="form-group form-group-checkbox">
-                                 <input type="checkbox" id="userAtivo" name="ativo" checked={formData.ativo} onChange={handleInputChange} disabled={isProcessingForm} />
-                                <label htmlFor="userAtivo">Usuário Ativo</label>
-                            </div>
-
-                            {formError && <p className="error-message modal-error">{formError}</p>}
-                            <div className="form-actions">
-                                <button type="submit" className="button submit-button" disabled={isProcessingForm}>
-                                    {isProcessingForm ? 'Salvando...' : (currentUser ? 'Salvar Alterações' : 'Adicionar Usuário')}
-                                </button>
-                                <button type="button" className="button cancel-button" onClick={handleCloseFormModal} disabled={isProcessingForm}>
-                                    Cancelar
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* Modal de Confirmação de Exclusão */}
-             <ConfirmModal
-                isOpen={isDeleteConfirmOpen}
-                onClose={handleCloseDeleteConfirm}
-                onConfirm={handleConfirmDelete}
-                title="Confirmar Exclusão de Usuário"
-                message={`Tem certeza que deseja excluir o usuário "${deleteTargetUser?.nome || ''}" (${deleteTargetUser?.email || ''})? Leads associados podem precisar de novo responsável.`}
-                confirmText="Excluir Usuário" cancelText="Cancelar"
-                confirmButtonClass="confirm-button-delete"
-                isProcessing={isDeleting} errorMessage={deleteErrorState}
-             />
+        <div className="usr-header-actions">
+          <button
+            onClick={handleOpenAddModal}
+            className="usr-btn-primary"
+            disabled={isFormModalOpen || isDeleteConfirmOpen}
+          >
+            + Adicionar Novo Usuário
+          </button>
         </div>
-    );
+
+        {isLoading && <p>Carregando usuários...</p>}
+        {error && <p className="usr-error-message">{error}</p>}
+
+        {!isLoading && !error && (
+          <div className="usr-table-scroller">
+            <div className="usr-table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th className="col-nome">Nome</th>
+                    <th className="col-email">Email</th>
+                    <th className="col-perfil">Perfil</th>
+                    <th className="col-status">Status</th>
+                    <th className="col-criado">Criado Em</th>
+                    <th className="col-acoes" style={{ width: 220, textAlign: "right" }}>
+                      Ações
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((user) => (
+                    <tr key={user._id}>
+                      <td className="usr-cell-strong col-nome">{user.nome}</td>
+                      <td className="col-email">{user.email}</td>
+                      <td className="col-perfil">{user.perfil}</td>
+                      <td className="col-status">
+                        <span className={`usr-badge ${user.ativo ? "ok" : "off"}`}>
+                          {user.ativo ? "Ativo" : "Inativo"}
+                        </span>
+                      </td>
+                      <td className="col-criado">
+                        {user.createdAt ? new Date(user.createdAt).toLocaleDateString("pt-BR") : "-"}
+                      </td>
+                      <td className="usr-cell-actions col-acoes">
+                        <button
+                          onClick={() => handleOpenEditModal(user)}
+                          className="usr-btn-ghost"
+                          disabled={isFormModalOpen || isDeleteConfirmOpen}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => handleOpenDeleteConfirm(user)}
+                          className="usr-btn-danger"
+                          disabled={isFormModalOpen || isDeleteConfirmOpen}
+                        >
+                          Excluir
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {users.length === 0 && (
+                    <tr>
+                      <td colSpan="6">Nenhum usuário encontrado nesta empresa.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Modal Add/Edit */}
+      {isFormModalOpen && (
+        <div className="usr-modal-overlay">
+          <div className="usr-modal-card">
+            <h2>{currentUser ? "Editar Usuário" : "Adicionar Novo Usuário"}</h2>
+            <form onSubmit={handleSaveUser} noValidate>
+              <div className="usr-form-grid">
+                {/* Nome */}
+                <div className="usr-form-group">
+                  <label htmlFor="userName">Nome *</label>
+                  <input
+                    id="userName"
+                    name="nome"
+                    type="text"
+                    value={formData.nome}
+                    onChange={handleInputChange}
+                    required
+                    disabled={isProcessingForm}
+                  />
+                </div>
+                {/* Email */}
+                <div className="usr-form-group">
+                  <label htmlFor="userEmail">Email *</label>
+                  <input
+                    id="userEmail"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required
+                    disabled={isProcessingForm || !!currentUser}
+                  />
+                  {currentUser && <small>Email não pode ser alterado.</small>}
+                </div>
+                {/* Perfil */}
+                <div className="usr-form-group">
+                  <label htmlFor="userPerfil">Perfil *</label>
+                  <select
+                    id="userPerfil"
+                    name="perfil"
+                    value={formData.perfil}
+                    onChange={handleInputChange}
+                    required
+                    disabled={isProcessingForm}
+                  >
+                    {PERFIS_DISPONIVEIS.map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {/* Senha */}
+                <div className="usr-form-group">
+                  <label htmlFor="userSenha">Nova Senha</label>
+                  <input
+                    id="userSenha"
+                    name="senha"
+                    type="password"
+                    value={formData.senha}
+                    onChange={handleInputChange}
+                    placeholder={currentUser ? "Deixe em branco para não alterar" : "Obrigatório ao criar"}
+                    disabled={isProcessingForm}
+                  />
+                  {!currentUser && <small>Senha necessária para login local.</small>}
+                </div>
+                {/* Status */}
+                <div className="usr-form-group usr-form-group-checkbox">
+                  <input
+                    id="userAtivo"
+                    name="ativo"
+                    type="checkbox"
+                    checked={formData.ativo}
+                    onChange={handleInputChange}
+                    disabled={isProcessingForm}
+                  />
+                  <label htmlFor="userAtivo">Usuário Ativo</label>
+                </div>
+              </div>
+
+              {formError && <p className="usr-error-message usr-modal-error">{formError}</p>}
+
+              <div className="usr-form-actions">
+                <button type="submit" className="usr-btn-primary" disabled={isProcessingForm}>
+                  {isProcessingForm
+                    ? "Salvando..."
+                    : currentUser
+                    ? "Salvar Alterações"
+                    : "Adicionar Usuário"}
+                </button>
+                <button
+                  type="button"
+                  className="usr-btn-outline"
+                  onClick={handleCloseFormModal}
+                  disabled={isProcessingForm}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmação de Exclusão */}
+      <ConfirmModal
+        isOpen={isDeleteConfirmOpen}
+        onClose={handleCloseDeleteConfirm}
+        onConfirm={handleConfirmDelete}
+        title="Confirmar Exclusão de Usuário"
+        message={`Tem certeza que deseja excluir o usuário "${
+          deleteTargetUser?.nome || ""
+        }" (${deleteTargetUser?.email || ""})? Leads associados podem precisar de novo responsável.`}
+        confirmText="Excluir Usuário"
+        cancelText="Cancelar"
+        confirmButtonClass="confirm-button-delete"
+        isProcessing={isDeleting}
+        errorMessage={deleteErrorState}
+      />
+    </div>
+  );
 }
 
 export default UsuariosAdminPage;

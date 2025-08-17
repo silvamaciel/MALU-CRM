@@ -1,56 +1,213 @@
-/* Em LeadStageAdminPage.css */
-
-.admin-table-container {
-    overflow-x: auto;
-    margin-top: 1.5rem;
-    border: 1px solid #e9ecef;
-    border-radius: 6px;
-    display: block; /* ESSENCIAL em mobile */
-    width: 100%;     /* Garante que respeita o container pai */
-    overflow-x: auto;
+/* ===== Paleta local (exclusiva desta página) ===== */
+.lsa-page {
+  --primary: #8a4dff;
+  --primary-hover: #7b44e6;
+  --background: #f3f4f6;
+  --card-bg: #ffffff;
+  --text-main: #1f2937;
+  --text-light: #6b7280;
+  --border-color: #e5e7eb;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  color: var(--text-main);
 }
 
-.admin-table-container table {
-    min-width: 600px; /* Ou maior, se necessário */
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 900px;
+/* Título e container */
+.lsa-page h1,
+.lsa-page h2 {
+  color: var(--text-main);
+  margin: 0 0 12px 0;
 }
 
-.admin-table-container th,
-.admin-table-container td {
-    white-space: nowrap; /* Não deixa quebrar o texto */
-    padding: 8px 12px;
-    text-align: left;
+.lsa-header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
-
-.situacoes-sortable-list {
-  list-style: none;
-  padding: 0;
-  max-width: 500px; /* Ou a largura que desejar */
+/* ===== Botões (escopo local) ===== */
+.lsa-btn-primary,
+.lsa-btn-outline,
+.lsa-btn-ghost,
+.lsa-btn-danger,
+.lsa-save-order {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1.2;
+  user-select: none;
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease,
+              box-shadow .2s ease, transform .02s ease-in;
 }
 
-.situacao-item {
-  background-color: #fff;
-  border: 1px solid #ddd;
-  padding: 10px 15px;
-  margin-bottom: 8px;
-  border-radius: 4px;
+/* Primário */
+.lsa-btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border: 1px solid transparent;
+}
+.lsa-btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+.lsa-btn-primary:active:not(:disabled) { transform: translateY(0.5px); }
+.lsa-btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+
+/* Outline neutro */
+.lsa-btn-outline {
+  background: var(--card-bg);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+}
+.lsa-btn-outline:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(138,77,255,.12);
+}
+.lsa-btn-outline:disabled { opacity: .6; cursor: not-allowed; }
+
+/* Ghost */
+.lsa-btn-ghost {
+  color: var(--primary);
+  padding: 0.45rem 0.7rem;
+}
+.lsa-btn-ghost:hover:not(:disabled) { background: rgba(138,77,255,.08); }
+.lsa-btn-ghost:disabled { opacity: .6; cursor: not-allowed; }
+
+/* Perigo */
+.lsa-btn-danger {
+  background: #fff;
+  color: var(--danger);
+  border: 1px solid var(--danger);
+}
+.lsa-btn-danger:hover:not(:disabled) { background: rgba(239,68,68,.08); }
+.lsa-btn-danger:disabled { opacity: .6; cursor: not-allowed; }
+
+/* Botão "Salvar ordem" */
+.lsa-save-order { margin: 15px 0; }
+
+/* ===== Tabela ===== */
+.lsa-table-wrap {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 0.5rem;
+  overflow: hidden;
+}
+
+.lsa-table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.lsa-table-wrap thead th {
+  text-align: left;
+  color: var(--text-light);
+  font-weight: 600;
+  background: #fafafa;
+  border-bottom: 1px solid var(--border-color);
+  padding: 10px 12px;
+}
+
+.lsa-table-wrap tbody td {
+  border-bottom: 1px solid var(--border-color);
+  padding: 12px;
+  vertical-align: middle;
+  color: var(--text-main);
+}
+
+.lsa-table-wrap tbody tr:hover { background: #fafbff; }
+
+.lsa-cell-name { font-weight: 600; }
+
+.lsa-cell-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ===== Modal ===== */
+.lsa-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17,24,39,.45);
   display: flex;
   align-items: center;
-  cursor: grab;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  justify-content: center;
+  padding: 16px;
+  z-index: 1000;
 }
 
-.situacao-item.dragging {
-  background-color: #e6f7ff; /* Cor de destaque ao arrastar */
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+.lsa-modal-card {
+  width: 100%;
+  max-width: 520px;
+  background: var(--card-bg);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 15px 60px rgba(0,0,0,.2);
+  padding: 18px;
 }
 
-.situacao-item .drag-handle {
-  margin-right: 10px;
-  color: #aaa;
-  cursor: grab;
+.lsa-modal-card h2 { margin: 0 0 10px 0; }
+
+.lsa-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 12px 0;
 }
 
+.lsa-form-group label {
+  color: var(--text-main);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.lsa-form-group input[type="text"] {
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text-main);
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+.lsa-form-group input[type="text"]::placeholder { color: var(--text-light); }
+.lsa-form-group input[type="text"]:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 0.25rem rgba(138,77,255,.22);
+  outline: 0;
+}
+
+.lsa-form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+/* ===== Mensagens ===== */
+.lsa-error-message {
+  color: var(--danger);
+  margin: 8px 0;
+  font-size: 0.92rem;
+}
+.lsa-modal-error { margin-top: 4px; }
+
+/* ===== ConfirmModal (classe passada via prop) ===== */
+.confirm-button-delete {
+  background: var(--danger) !important;
+  color: #fff !important;
+  border: 1px solid var(--danger) !important;
+}
+.confirm-button-delete:hover { background: #d23434 !important; }
+
+/* Links com estilo outline (escopo local) */
+a.lsa-btn-outline { text-decoration: none; }

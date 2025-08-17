@@ -1,0 +1,213 @@
+/* ===== Paleta local ===== */
+.org-page {
+  --primary: #8a4dff;
+  --primary-hover: #7b44e6;
+  --background: #f3f4f6;
+  --card-bg: #ffffff;
+  --text-main: #1f2937;
+  --text-light: #6b7280;
+  --border-color: #e5e7eb;
+  --danger: #ef4444;
+}
+
+/* ===== Estrutura para garantir rolagem até o fim ===== */
+.org-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: 12px;
+  background: var(--background);
+}
+
+.org-page-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  /* Se seu layout tiver header fixo, ajuste a margem inferior */
+  padding-bottom: 16px; /* espaço para não “cortar” no fim */
+}
+
+/* Área que pode rolar (vertical) quando a tela é baixa */
+.org-table-scroller {
+  flex: 1 1 auto;
+  min-height: 0;             /* importante para permitir overflow em flex container */
+  overflow-y: auto;          /* habilita rolagem vertical aqui */
+  overflow-x: hidden;
+}
+
+/* ===== Título e ações ===== */
+.org-page h1,
+.org-page h2 { color: var(--text-main); margin: 0 0 8px 0; }
+
+.org-header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* ===== Botões (escopo local) ===== */
+.org-btn-primary,
+.org-btn-outline,
+.org-btn-ghost,
+.org-btn-danger {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1.2;
+  user-select: none;
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease,
+              box-shadow .2s ease, transform .02s ease-in;
+}
+
+.org-btn-primary { background: var(--primary); color: #fff; border: 1px solid transparent; }
+.org-btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+.org-btn-primary:active:not(:disabled) { transform: translateY(0.5px); }
+.org-btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+
+.org-btn-outline { background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border-color); }
+.org-btn-outline:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); box-shadow: 0 0 0 3px rgba(138,77,255,.12); }
+.org-btn-outline:disabled { opacity: .6; cursor: not-allowed; }
+
+.org-btn-ghost { color: var(--primary); padding: 0.45rem 0.7rem; }
+.org-btn-ghost:hover:not(:disabled) { background: rgba(138,77,255,.08); }
+.org-btn-ghost:disabled { opacity: .6; cursor: not-allowed; }
+
+.org-btn-danger { background: #fff; color: var(--danger); border: 1px solid var(--danger); }
+.org-btn-danger:hover:not(:disabled) { background: rgba(239,68,68,.08); }
+.org-btn-danger:disabled { opacity: .6; cursor: not-allowed; }
+
+/* ===== Tabela ===== */
+.org-table-wrap {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 0.5rem;
+  overflow-x: auto; /* rolagem horizontal segura, se precisar */
+}
+
+.org-table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.org-table-wrap thead th {
+  text-align: left;
+  color: var(--text-light);
+  font-weight: 600;
+  background: #fafafa;
+  border-bottom: 1px solid var(--border-color);
+  padding: 10px 12px;
+  white-space: nowrap;
+}
+
+.org-table-wrap tbody td {
+  border-bottom: 1px solid var(--border-color);
+  padding: 12px;
+  vertical-align: middle;
+  color: var(--text-main);
+}
+
+.org-table-wrap tbody tr:hover { background: #fafbff; }
+
+.org-cell-name { font-weight: 600; }
+.org-cell-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ===== Modal ===== */
+.org-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17,24,39,.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1000;
+}
+
+.org-modal-card {
+  width: 100%;
+  max-width: 520px;
+  background: var(--card-bg);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 15px 60px rgba(0,0,0,.2);
+  padding: 18px;
+}
+
+.org-modal-card h2 { margin: 0 0 10px 0; }
+
+.org-form-group { display: flex; flex-direction: column; gap: 6px; margin: 12px 0; }
+.org-form-group label { color: var(--text-main); font-weight: 600; font-size: 0.9rem; }
+
+.org-form-group input[type="text"],
+.org-form-group textarea {
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text-main);
+  transition: border-color .2s ease, box-shadow .2s ease;
+  resize: vertical;
+}
+.org-form-group input::placeholder,
+.org-form-group textarea::placeholder { color: var(--text-light); }
+
+.org-form-group input[type="text"]:focus,
+.org-form-group textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 0.25rem rgba(138,77,255,.22);
+  outline: 0;
+}
+
+.org-form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 12px; }
+
+/* ===== Mensagens ===== */
+.org-error-message { color: var(--danger); margin: 8px 0; font-size: 0.92rem; }
+.org-modal-error { margin-top: 4px; }
+
+/* ===== ConfirmModal (classe passada via prop) ===== */
+.confirm-button-delete {
+  background: var(--danger) !important;
+  color: #fff !important;
+  border: 1px solid var(--danger) !important;
+}
+.confirm-button-delete:hover { background: #d23434 !important; }
+
+/* ===== Responsividade ===== */
+/* Esconde a coluna Descrição em telas médias */
+@media (max-width: 900px) {
+  .org-table-wrap .col-descricao,
+  .org-table-wrap th.col-descricao {
+    display: none;
+  }
+}
+
+/* Esconde a coluna Data em telas pequenas; mantém Nome + Ações */
+@media (max-width: 640px) {
+  .org-table-wrap .col-data,
+  .org-table-wrap th.col-data {
+    display: none;
+  }
+
+  /* Garante respiro e rolagem confortável em telas pequenas */
+  .org-page { padding: 8px; }
+  .org-table-wrap tbody td { padding: 10px; }
+}
+
+/* Extra defesa: se algum container pai usa height fixa, isso ajuda a rolar */
+html, body, #root {
+  min-height: 100%;
+}

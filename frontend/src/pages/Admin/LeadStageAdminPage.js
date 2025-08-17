@@ -1,20 +1,18 @@
-// src/pages/Admin/LeadStageAdminPage.js
 import React, { useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom"; // Para links, se necessário
+import { Link } from "react-router-dom";
 import {
   getLeadStages,
   createLeadStage,
   updateLeadStage,
   deleteLeadStage,
-  updateLeadStagesOrderApi
+  updateLeadStagesOrderApi,
 } from "../../api/leadStages";
 import { toast } from "react-toastify";
-
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
-//import './AdminPages.css';
-import './AdminPages.css';
+
+// CSS exclusivo desta página
+import "./LeadStageAdminPage.css";
 
 const reorder = (list, startIndex, endIndex) => {
   const result = Array.from(list);
@@ -24,29 +22,27 @@ const reorder = (list, startIndex, endIndex) => {
 };
 
 function LeadStageAdminPage() {
-  const [Stages, setStages] = useState([]);  // Use o nome Stages conforme seu código original
+  const [Stages, setStages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // --- State para Add/Edit ---
+  // Add/Edit
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [currentStage, setCurrentStage] = useState(null); // null para Add, objeto para Edit
-  const [stageName, setStageName] = useState(""); // <<< NOVO state para o input nome
-  // const [stageOrder, setStageOrder] = useState(''); // se precisar
+  const [currentStage, setCurrentStage] = useState(null);
+  const [stageName, setStageName] = useState("");
   const [isProcessingForm, setIsProcessingForm] = useState(false);
   const [formError, setFormError] = useState(null);
 
-  // Para habilitar o botão de salvar ordem
+  // Ordenação
   const [isSavingOrder, setIsSavingOrder] = useState(false);
   const [orderChanged, setOrderChanged] = useState(false);
 
-  // --- State para Delete ---
+  // Delete
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [deleteTargetStage, setDeleteTargetStage] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteErrorState, setDeleteErrorState] = useState(null);
 
-  // Função para buscar situações (igual antes)
   const fetchStages = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -62,20 +58,13 @@ function LeadStageAdminPage() {
     }
   }, []);
 
-  // Efeito para buscar ao montar o componente (igual antes)
   useEffect(() => {
     fetchStages();
   }, [fetchStages]);
 
   const onDragEnd = (result) => {
-    if (!result.destination) {
-      return;
-    }
-    const items = reorder(
-      Stages,  // manter "Stages"
-      result.source.index,
-      result.destination.index
-    );
+    if (!result.destination) return;
+    const items = reorder(Stages, result.source.index, result.destination.index);
     setStages(items);
     setOrderChanged(true);
   };
@@ -83,8 +72,7 @@ function LeadStageAdminPage() {
   const handleSaveOrder = async () => {
     setIsSavingOrder(true);
     try {
-      const orderedStageIds = Stages.map(s => s._id)
-      console.log("DEBUG: IDs de situação ordenados enviados:", orderedStageIds);
+      const orderedStageIds = Stages.map((s) => s._id);
       await updateLeadStagesOrderApi(orderedStageIds);
       toast.success("Ordem das situações salva com sucesso!");
       setOrderChanged(false);
@@ -95,43 +83,35 @@ function LeadStageAdminPage() {
     }
   };
 
-  // --- Handlers ATUALIZADOS para Add/Edit ---
+  // Add/Edit
   const handleOpenAddModal = () => {
-    setCurrentStage(null); // Garante modo Add
-    setStageName(""); // Limpa input nome
-    // setStageOrder('');      // Limpa input ordem (se usar)
-    setFormError(null); // Limpa erros do form
-    setIsFormModalOpen(true); // Abre o form/modal
+    setCurrentStage(null);
+    setStageName("");
+    setFormError(null);
+    setIsFormModalOpen(true);
   };
 
   const handleOpenEditModal = (stage) => {
-    setCurrentStage(stage); // Define qual estágio editar
-    setStageName(stage.nome); // Preenche input nome com valor atual
-    // setStageOrder(stage.ordem || ''); // Preenche ordem (se usar)
-    setFormError(null); // Limpa erros do form
-    setIsFormModalOpen(true); // Abre o form/modal
+    setCurrentStage(stage);
+    setStageName(stage.nome || "");
+    setFormError(null);
+    setIsFormModalOpen(true);
   };
 
   const handleCloseFormModal = () => {
     setIsFormModalOpen(false);
     setCurrentStage(null);
     setStageName("");
-    // setStageOrder('');
     setFormError(null);
-    setIsProcessingForm(false); // Garante reset
+    setIsProcessingForm(false);
   };
 
-  // Função chamada ao submeter o form de Add/Edit
   const handleSaveStage = async (event) => {
     event.preventDefault();
     setFormError(null);
     setIsProcessingForm(true);
 
-    const stageData = {
-      nome: stageName.trim(),
-      // ordem: stageOrder ? parseInt(stageOrder, 10) : undefined,
-    };
-
+    const stageData = { nome: stageName.trim() };
     if (!stageData.nome) {
       setFormError("O nome da situação não pode estar vazio.");
       setIsProcessingForm(false);
@@ -139,20 +119,16 @@ function LeadStageAdminPage() {
     }
 
     try {
-      let result;
-      let successMessage;
       if (currentStage && currentStage._id) {
-        result = await updateLeadStage(currentStage._id, stageData);
-        successMessage = `Situação "${result.nome}" atualizada com sucesso!`;
+        const result = await updateLeadStage(currentStage._id, stageData);
+        toast.success(`Situação "${result.nome}" atualizada com sucesso!`);
       } else {
-        result = await createLeadStage(stageData);
-        successMessage = `Situação "${result.nome}" criada com sucesso!`;
+        const result = await createLeadStage(stageData);
+        toast.success(`Situação "${result.nome}" criada com sucesso!`);
       }
-      toast.success(successMessage);
       fetchStages();
       handleCloseFormModal();
     } catch (err) {
-      console.error("Erro ao salvar situação:", err);
       const errorMsg = err.error || err.message || "Falha ao salvar situação.";
       setFormError(errorMsg);
       toast.error(errorMsg);
@@ -161,7 +137,7 @@ function LeadStageAdminPage() {
     }
   };
 
-  // --- Handlers de Delete (iguais antes) ---
+  // Delete
   const handleOpenDeleteConfirm = (stage) => {
     setDeleteTargetStage(stage);
     setDeleteErrorState(null);
@@ -185,7 +161,6 @@ function LeadStageAdminPage() {
       handleCloseDeleteConfirm();
       fetchStages();
     } catch (err) {
-      console.error("Erro ao deletar situação:", err);
       const errorMsg = err.error || err.message || "Falha ao excluir situação.";
       setDeleteErrorState(errorMsg);
       toast.error(errorMsg);
@@ -195,127 +170,113 @@ function LeadStageAdminPage() {
   };
 
   if (isLoading) return <p>Carregando situações...</p>;
-  if (error) return <p className="error-message">{error}</p>;
+  if (error) return <p className="lsa-error-message">{error}</p>;
 
   return (
-    <div className="admin-page lead-stage-admin-page">
+    <div className="lsa-page">
       <h1>Gerenciar Situações de Lead</h1>
-      <Link to="/leads" className="button back-to-list-button">
-        <i className="fas fa-list"></i> Voltar para Lista
-      </Link>
-      <p></p>
-      <button
-        onClick={handleOpenAddModal}
-        className="button add-button"
-        disabled={isFormModalOpen || isDeleteConfirmOpen}
-      >
-        + Adicionar Nova Situação
-      </button>
 
-      {isLoading && <p>Carregando situações...</p>}
-      {error && <p className="error-message">{error}</p>}
+      <div className="lsa-header-actions">
+        <Link to="/leads" className="lsa-btn-outline">
+          <i className="fas fa-list" /> Voltar para Lista
+        </Link>
 
-      {!isLoading && !error && (
-        <div className="admin-table-container">
-          <DragDropContext onDragEnd={onDragEnd}>
-            <Droppable droppableId="stagesDroppable">
-              {(provided) => (
-                <table {...provided.droppableProps} ref={provided.innerRef}>
-                  <thead>
+        <button
+          onClick={handleOpenAddModal}
+          className="lsa-btn-primary"
+          disabled={isFormModalOpen || isDeleteConfirmOpen}
+        >
+          + Adicionar Nova Situação
+        </button>
+      </div>
+
+      <div className="lsa-table-wrap">
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="stagesDroppable">
+            {(provided) => (
+              <table {...provided.droppableProps} ref={provided.innerRef}>
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>Data Criação</th>
+                    <th style={{ width: 200, textAlign: "right" }}>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Stages.map((stage, index) => (
+                    <Draggable key={stage._id} draggableId={stage._id} index={index}>
+                      {(provided, snapshot) => (
+                        <tr
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          style={{
+                            ...provided.draggableProps.style,
+                            backgroundColor: snapshot.isDragging ? "#f0f8ff" : "inherit",
+                            cursor: "grab",
+                          }}
+                        >
+                          <td className="lsa-cell-name">{stage.nome}</td>
+                          <td>
+                            {stage.createdAt
+                              ? new Date(stage.createdAt).toLocaleDateString("pt-BR")
+                              : "-"}
+                          </td>
+                          <td className="lsa-cell-actions">
+                            <button
+                              onClick={() => handleOpenEditModal(stage)}
+                              className="lsa-btn-ghost"
+                              disabled={isFormModalOpen || isDeleteConfirmOpen}
+                            >
+                              Editar
+                            </button>
+                            <button
+                              onClick={() => handleOpenDeleteConfirm(stage)}
+                              className="lsa-btn-danger"
+                              disabled={isFormModalOpen || isDeleteConfirmOpen}
+                            >
+                              Excluir
+                            </button>
+                          </td>
+                        </tr>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                  {Stages.length === 0 && (
                     <tr>
-                      <th>Nome</th>
-                      {/* <th>Ordem</th> */}
-                      <th>Data Criação</th>
-                      <th>Ações</th>
+                      <td colSpan="3">Nenhuma situação encontrada. Crie a primeira!</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {Stages.map((stage, index) => (
-                      <Draggable
-                        key={stage._id}
-                        draggableId={stage._id}
-                        index={index}
-                      >
-                        {(provided, snapshot) => (
-                          <tr
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            style={{
-                              ...provided.draggableProps.style,
-                              backgroundColor: snapshot.isDragging
-                                ? "#f0f8ff"
-                                : "inherit",
-                              cursor: "move",
-                            }}
-                          >
-                            <td>{stage.nome}</td>
-                            {/* <td>{stage.ordem}</td> */}
-                            <td>
-                              {new Date(stage.createdAt).toLocaleDateString(
-                                "pt-BR"
-                              )}
-                            </td>
-                            <td>
-                              <button
-                                onClick={() => handleOpenEditModal(stage)}
-                                className="button edit-button-table"
-                                disabled={isFormModalOpen || isDeleteConfirmOpen}
-                              >
-                                Editar
-                              </button>
-                              <button
-                                onClick={() => handleOpenDeleteConfirm(stage)}
-                                className="button delete-button-table"
-                                disabled={isFormModalOpen || isDeleteConfirmOpen}
-                              >
-                                Excluir
-                              </button>
-                            </td>
-                          </tr>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                    {Stages.length === 0 && (
-                      <tr>
-                        <td colSpan="4">
-                          Nenhuma situação encontrada. Crie a primeira!
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              )}
-            </Droppable>
-          </DragDropContext>
+                  )}
+                </tbody>
+              </table>
+            )}
+          </Droppable>
+        </DragDropContext>
 
-          {orderChanged && (
-            <button
-              onClick={handleSaveOrder}
-              disabled={isSavingOrder}
-              className="button primary-button"
-              style={{ margin: "15px 0" }}
-            >
-              {isSavingOrder ? "Salvando ordem..." : "Salvar nova ordem"}
-            </button>
-          )}
-        </div>
-      )}
+        {orderChanged && (
+          <button
+            onClick={handleSaveOrder}
+            disabled={isSavingOrder}
+            className="lsa-btn-primary lsa-save-order"
+          >
+            {isSavingOrder ? "Salvando ordem..." : "Salvar nova ordem"}
+          </button>
+        )}
+      </div>
 
-      {/* --- Modal/Formulário Simples para Adicionar/Editar --- */}
+      {/* Modal Add/Edit */}
       {isFormModalOpen && (
-        <div className="form-modal-overlay">
-          <div className="form-modal-content">
-            <h2>
-              {currentStage ? "Editar Situação" : "Adicionar Nova Situação"}
-            </h2>
-            <form onSubmit={handleSaveStage}>
-              <div className="form-group">
+        <div className="lsa-modal-overlay">
+          <div className="lsa-modal-card">
+            <h2>{currentStage ? "Editar Situação" : "Adicionar Nova Situação"}</h2>
+
+            <form onSubmit={handleSaveStage} noValidate>
+              <div className="lsa-form-group">
                 <label htmlFor="stageName">Nome da Situação:</label>
                 <input
-                  type="text"
                   id="stageName"
+                  type="text"
                   value={stageName}
                   onChange={(e) => setStageName(e.target.value)}
                   placeholder="Digite o nome"
@@ -324,29 +285,10 @@ function LeadStageAdminPage() {
                 />
               </div>
 
-              {/* input para ordem, se quiser usar */}
-              {/* <div className="form-group">
-                <label htmlFor="stageOrder">Ordem:</label>
-                <input
-                  type="number"
-                  id="stageOrder"
-                  value={stageOrder}
-                  onChange={(e) => setStageOrder(e.target.value)}
-                  placeholder="Ex: 1"
-                  disabled={isProcessingForm}
-                />
-              </div> */}
+              {formError && <p className="lsa-error-message lsa-modal-error">{formError}</p>}
 
-              {formError && (
-                <p className="error-message modal-error">{formError}</p>
-              )}
-
-              <div className="form-actions">
-                <button
-                  type="submit"
-                  className="button submit-button"
-                  disabled={isProcessingForm}
-                >
+              <div className="lsa-form-actions">
+                <button type="submit" className="lsa-btn-primary" disabled={isProcessingForm}>
                   {isProcessingForm
                     ? "Salvando..."
                     : currentStage
@@ -355,7 +297,7 @@ function LeadStageAdminPage() {
                 </button>
                 <button
                   type="button"
-                  className="button cancel-button"
+                  className="lsa-btn-outline"
                   onClick={handleCloseFormModal}
                   disabled={isProcessingForm}
                 >
@@ -366,9 +308,8 @@ function LeadStageAdminPage() {
           </div>
         </div>
       )}
-      {/* --- Fim Modal/Formulário --- */}
 
-      {/* Modal de Confirmação de Exclusão (igual antes) */}
+      {/* Confirm Delete */}
       <ConfirmModal
         isOpen={isDeleteConfirmOpen}
         onClose={handleCloseDeleteConfirm}

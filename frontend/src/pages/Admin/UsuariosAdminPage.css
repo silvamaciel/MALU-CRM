@@ -1,0 +1,245 @@
+/* ===== Paleta local ===== */
+.usr-page {
+  --primary: #8a4dff;
+  --primary-hover: #7b44e6;
+  --background: #f3f4f6;
+  --card-bg: #ffffff;
+  --text-main: #1f2937;
+  --text-light: #6b7280;
+  --border-color: #e5e7eb;
+  --success: #10b981;
+  --danger: #ef4444;
+}
+
+/* ===== Estrutura e rolagem segura ===== */
+.usr-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: 12px;
+  background: var(--background);
+  color: var(--text-main);
+}
+
+.usr-page-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 16px;
+}
+
+.usr-table-scroller {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ===== Títulos e ações topo ===== */
+.usr-page h1,
+.usr-page h2 {
+  color: var(--text-main);
+  margin: 0 0 8px 0;
+}
+
+.usr-header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* ===== Botões (escopo local) ===== */
+.usr-btn-primary,
+.usr-btn-outline,
+.usr-btn-ghost,
+.usr-btn-danger {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1.2;
+  user-select: none;
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease,
+              box-shadow .2s ease, transform .02s ease-in;
+}
+
+.usr-btn-primary { background: var(--primary); color: #fff; border: 1px solid transparent; }
+.usr-btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+.usr-btn-primary:active:not(:disabled) { transform: translateY(0.5px); }
+.usr-btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+
+.usr-btn-outline { background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border-color); }
+.usr-btn-outline:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); box-shadow: 0 0 0 3px rgba(138,77,255,.12); }
+.usr-btn-outline:disabled { opacity: .6; cursor: not-allowed; }
+
+.usr-btn-ghost { color: var(--primary); padding: 0.45rem 0.7rem; }
+.usr-btn-ghost:hover:not(:disabled) { background: rgba(138,77,255,.08); }
+.usr-btn-ghost:disabled { opacity: .6; cursor: not-allowed; }
+
+.usr-btn-danger { background: #fff; color: var(--danger); border: 1px solid var(--danger); }
+.usr-btn-danger:hover:not(:disabled) { background: rgba(239,68,68,.08); }
+.usr-btn-danger:disabled { opacity: .6; cursor: not-allowed; }
+
+/* ===== Badges de Status ===== */
+.usr-badge {
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+.usr-badge.ok { background: rgba(16,185,129,.1); color: #065f46; border-color: rgba(16,185,129,.25); }
+.usr-badge.off { background: rgba(239,68,68,.1); color: #7f1d1d; border-color: rgba(239,68,68,.25); }
+
+/* ===== Tabela ===== */
+.usr-table-wrap {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 0.5rem;
+  overflow-x: auto;
+}
+
+.usr-table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.usr-table-wrap thead th {
+  text-align: left;
+  color: var(--text-light);
+  font-weight: 600;
+  background: #fafafa;
+  border-bottom: 1px solid var(--border-color);
+  padding: 10px 12px;
+  white-space: nowrap;
+}
+
+.usr-table-wrap tbody td {
+  border-bottom: 1px solid var(--border-color);
+  padding: 12px;
+  vertical-align: middle;
+  color: var(--text-main);
+}
+
+.usr-table-wrap tbody tr:hover { background: #fafbff; }
+
+.usr-cell-strong { font-weight: 600; }
+
+.usr-cell-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ===== Modal ===== */
+.usr-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17,24,39,.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1000;
+}
+
+.usr-modal-card {
+  width: 100%;
+  max-width: 640px;
+  background: var(--card-bg);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 15px 60px rgba(0,0,0,.2);
+  padding: 18px;
+}
+
+.usr-modal-card h2 { margin: 0 0 10px 0; }
+
+.usr-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 12px;
+}
+@media (max-width: 640px) {
+  .usr-form-grid { grid-template-columns: 1fr; }
+}
+
+.usr-form-group { display: flex; flex-direction: column; gap: 6px; }
+.usr-form-group label { color: var(--text-main); font-weight: 600; font-size: 0.9rem; }
+.usr-form-group small { color: var(--text-light); }
+
+.usr-form-group input[type="text"],
+.usr-form-group input[type="email"],
+.usr-form-group input[type="password"],
+.usr-form-group select {
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text-main);
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+.usr-form-group input::placeholder { color: var(--text-light); }
+
+.usr-form-group input:focus,
+.usr-form-group select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 0.25rem rgba(138,77,255,.22);
+  outline: 0;
+}
+
+.usr-form-group-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.usr-form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+/* ===== Mensagens ===== */
+.usr-error-message { color: var(--danger); margin: 8px 0; font-size: 0.92rem; }
+.usr-modal-error { margin-top: 4px; }
+
+/* ===== ConfirmModal (classe passada via prop) ===== */
+.confirm-button-delete {
+  background: var(--danger) !important;
+  color: #fff !important;
+  border: 1px solid var(--danger) !important;
+}
+.confirm-button-delete:hover { background: #d23434 !important; }
+
+/* ===== Responsividade de colunas ===== */
+/* Esconde “Criado Em” em telas médias */
+@media (max-width: 900px) {
+  .usr-table-wrap .col-criado,
+  .usr-table-wrap th.col-criado { display: none; }
+}
+
+/* Esconde “Email” e “Perfil” em telas pequenas; mantém Nome + Status + Ações */
+@media (max-width: 640px) {
+  .usr-table-wrap .col-email,
+  .usr-table-wrap th.col-email,
+  .usr-table-wrap .col-perfil,
+  .usr-table-wrap th.col-perfil { display: none; }
+
+  .usr-page { padding: 8px; }
+  .usr-table-wrap tbody td { padding: 10px; }
+}
+
+/* Defesa extra se o layout global tiver altura fixa */
+html, body, #root { min-height: 100%; }
