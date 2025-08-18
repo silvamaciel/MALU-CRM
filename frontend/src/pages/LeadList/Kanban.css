@@ -1,161 +1,224 @@
-/* src/pages/LeadList/Kanban.css */
-.kanban-board-page .page-content {
-  overflow-x: auto;
-  padding-bottom: 20px; /* Espaço para scrollbar horizontal não cobrir conteúdo */
-}
+/* =========================================================
+   LeadListPage (Kanban) — versão compacta
+   Tipografia menor, espaçamentos reduzidos e overrides do LeadCard no escopo.
+   Usa (se existirem) variáveis de cor do CRM.
+   ========================================================= */
 
-.kanban-container {
+.admin-page.lead-list-page.kanban-board-page {
+  /* Escala base menor só aqui dentro */
+  font-size: 14px;
+  line-height: 1.35;
   display: flex;
-  flex-direction: row;
-  gap: 16px;
-  padding: 8px 0;
-  min-height: calc(100vh - 250px); /* Ajuste conforme altura do seu header/footer */
-  align-items: flex-start; /* Colunas começam do topo */
-}
-
-.kanban-column {
-  flex: 0 0 240px; /* Largura da coluna */
-  max-width: 320px;
-  background-color: #f0f2f5; /* Fundo da coluna mais suave */
-  border-radius: 10px;
-  padding: 0; /* Padding será interno ao título e conteúdo */
-  display: flex;
-  flex-direction: column; /* Título em cima, conteúdo abaixo */
-  max-height: calc(100vh - 280px); /* Altura máxima da coluna, permite scroll interno */
-  box-shadow: 0 2px 4px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.24);
-}
-
-.kanban-column.dragging-over {
-  background-color: #e6f0ff; /* Azul claro suave ao arrastar sobre */
-}
-
-.kanban-column-title {
-  font-size: 1.05em; /* Um pouco maior */
-  font-weight: 600;
-  padding: 12px 15px;
-  margin: 0;
-  border-bottom: 1px solid #d1d9e0;
-  color: #172b4d; /* Azul escuro para texto */
-  background-color: #e9ecef; /* Fundo levemente diferente para o título */
-  border-top-left-radius: 6px;
-  border-top-right-radius: 6px;
-}
-
-.kanban-column-content {
-  flex-grow: 1;
-  min-height: 80px;
-  overflow-y: auto; /* Scroll vertical se muitos cards */
-  padding: 3px;
-}
-
-.lead-card {
-  background-color: #ffffff;
-  border-radius: 4px;
+  flex-direction: column;
+  height: 100%;
   padding: 12px;
-  margin-bottom: 10px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  background: var(--background, #f6f8fb);
+  color: var(--text-main, #0f172a);
+}
+
+/* =========================
+   Header
+   ========================= */
+.kanban-board-page .page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  padding: 10px 12px;
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 10px;
+}
+
+.kanban-board-page .page-header h1 {
+  font-size: 16px;         /* era 20px */
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-main, #0f172a);
+}
+
+.kanban-board-page .header-actions-kanban {
+  display: flex;
+  gap: 6px;
+}
+
+.kanban-board-page .header-actions-kanban .button {
+  font-size: 12.5px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--primary, #6f42c1);
+  background: var(--primary, #6f42c1);
+  color: #fff;
+}
+.kanban-board-page .header-actions-kanban .button:hover {
+  background: var(--primary-hover, #59339e);
+  border-color: var(--primary-hover, #59339e);
+}
+.kanban-board-page .header-actions-kanban .button.outline-button {
+  background: #fff;
+  color: var(--primary, #6f42c1);
+  border-color: var(--primary, #6f42c1);
+}
+
+/* =========================
+   Container do Kanban
+   ========================= */
+.kanban-board-page .kanban-container {
+  display: flex;
+  gap: 12px;                      /* era 16 */
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.kanban-board-page .kanban-column {
+  background: #fff;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 10px;
+  flex: 0 0 260px;                /* era 280 */
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 150px);
+}
+
+.kanban-board-page .kanban-column.dragging-over {
+  background: #f3f7ff;
+  outline: 2px dashed var(--primary, #6f42c1);
+  outline-offset: -6px;
+}
+
+.kanban-board-page .kanban-column-title {
+  font-size: 13px;                /* era 15 */
+  font-weight: 800;
+  padding: 8px 10px;              /* era 12 */
+  margin: 0;
+  background: #f7f9fd;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 10px 10px 0 0;
+  color: var(--text-main, #0f172a);
+}
+
+.kanban-board-page .kanban-column-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;                   /* era 12 */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;                       /* era 12 */
+}
+
+/* =========================
+   Lead Card (wrapper do Draggable)
+   ========================= */
+.kanban-board-page .lead-card {
+  background: #fff;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  padding: 8px;                   /* era 10 */
   cursor: grab;
-  border: 1px solid #dfe1e6;
-  transition: box-shadow 0.2s ease-in-out;
+  transition: box-shadow .15s ease, transform .15s ease, border-color .15s;
 }
-.lead-card:hover {
-  border-color: #007bff;
+.kanban-board-page .lead-card:hover {
+  border-color: #d8dee7;
+  box-shadow: 0 4px 12px rgba(15,23,42,.06);
 }
-
-.lead-card.dragging {
-  background-color: #f8f9fa;
-  transform: rotate(2deg);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.15);
-}
-
-.lead-card-header {
-  cursor: pointer; /* Indica que o header é clicável para detalhes */
-}
-.lead-card-header:hover h4 {
-  color: #0056b3;
+.kanban-board-page .lead-card.dragging {
+  background: #eef6ff;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.16);
+  transform: rotate(1.5deg);
 }
 
-.lead-card h4 {
-  font-size: 1em;
-  margin-top: 0;
-  margin-bottom: 8px;
-  color: #172b4d;
+/* =========================
+   Estado vazio
+   ========================= */
+.kanban-board-page .kanban-empty-column {
+  font-size: 12px;                /* era 13 */
+  font-style: italic;
+  color: var(--text-light, #6b7280);
+  text-align: center;
+  margin: 6px 0 2px;
+}
+
+/* =========================================================
+   OVERRIDES TIPOGRÁFICOS DO LEADCARD (sem editar LeadCard.css)
+   Escopo: dentro do .kanban-board-page
+   ========================================================= */
+
+/* Título do lead (h4) menor */
+.kanban-board-page .lead-card-kanban .lead-name h4 {
+  font-size: 13px;                /* reduzido */
+  line-height: 0.9;
+  margin: 5px;
+  font-weight: 700;
+}
+
+/* Texto principal do card (contato, etc) */
+.kanban-board-page .lead-card-kanban .lead-card-body {
+  font-size: 10.5px;
+}
+
+/* Labels dentro do body (ex.: "Responsável:") */
+.kanban-board-page .lead-card-kanban .lead-card-body strong {
   font-weight: 500;
 }
 
-.lead-card p {
-  font-size: 0.75em;
-  color: #42526e;
-  margin-bottom: 5px;
-  line-height: 1.0;
-  word-break: break-word;
-}
-.lead-card p:last-of-type {
-  margin-bottom: 8px;
+/* Badge de tarefa (próxima tarefa) */
+.kanban-board-page .lead-card-kanban .task-badge {
+  font-size: 11.5px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  line-height: 0.9;
 }
 
-.lead-card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 10px;
-  border-top: 1px solid #f0f2f5;
-  padding-top: 8px;
+/* " +X tarefa(s)" */
+.kanban-board-page .lead-card-kanban .extra-tasks {
+  font-size: 11px;
 }
 
-.lead-card-footer small {
-  font-size: 0.78em;
-  color: #6b778c;
+/* Rodapé do card */
+.kanban-board-page .lead-card-kanban .lead-card-footer {
+  font-size: 11.5px;
+  margin-top: 1px;
 }
 
-.lead-card-actions {
-  display: flex;
-  gap: 8px;
+/* Ações (ícones) menores, com hover sutil */
+.kanban-board-page .lead-card-kanban .lead-card-actions {
+  gap: 4px;
+}
+.kanban-board-page .lead-card-kanban .lead-card-actions .action-icon {
+  font-size: 16px;                /* reduz ligeiro (eram emojis grandes) */
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: transform .12s ease, background-color .12s ease;
+}
+.kanban-board-page .lead-card-kanban .lead-card-actions .action-icon:hover {
+  transform: scale(1.08);
+  background: rgba(111, 66, 193, .08); /* primária translúcida */
 }
 
-.lead-card-actions .action-icon {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1.1em; /* Ajuste o tamanho dos ícones/emojis */
-  padding: 2px;
-  color: #5e6c84;
-}
-.lead-card-actions .action-icon:hover {
-  color: #007bff;
+/* Tags do lead menores */
+.kanban-board-page .lead-card-kanban .card-tag {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 12px;
 }
 
-.kanban-empty-column {
-  text-align: center;
-  color: #7a869a;
-  font-style: italic;
-  padding: 20px;
-  border: 2px dashed #d1d9e0;
-  border-radius: 4px;
-  margin: 10px;
-}
-
-.card-tags-container {
-    margin-top: 8px;
-    display: flex;
+/* =========================
+   Responsivo
+   ========================= */
+@media (max-width: 900px) {
+  .kanban-board-page .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .kanban-board-page .header-actions-kanban {
     flex-wrap: wrap;
-    gap: 4px;
-}
-.card-tag {
-    background-color: #e9ecef;
-    color: #495057;
-    font-size: 0.75em;
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-weight: 500;
+  }
 }
 
-.filters-wrapper.closed {
-  display: none;
-transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out;
-
-}
-.filters-wrapper.open {
-  display: block; /* ou flex/grid dependendo do layout */
-transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out;
+@media (max-width: 640px) {
+  .kanban-board-page { font-size: 13.5px; } /* levemente maior no mobile */
+  .kanban-board-page .kanban-container { gap: 10px; }
+  .kanban-board-page .kanban-column { flex-basis: 240px; }
+  .kanban-board-page .kanban-column-title { font-size: 12.5px; }
 }
