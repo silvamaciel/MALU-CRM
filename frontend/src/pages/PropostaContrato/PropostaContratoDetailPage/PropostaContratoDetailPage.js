@@ -335,7 +335,7 @@ function PropostaContratoDetailPage() {
 
           <Link
             to={`/propostas-contratos/${propostaContrato._id}/editar`}
-            className="button primary-button"
+            className="button-link-prime"
             style={{ marginRight: "10px" }}
             // Desabilitar se status não permitir edição
             // disabled={!["Em Elaboração", "Aguardando Aprovações"].includes(propostaContrato.statusPropostaContrato)}

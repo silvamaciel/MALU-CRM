@@ -1,123 +1,332 @@
-/* src/pages/PropostaContrato/PropostaContratoDetailPage/PropostaContratoDetailPage.css */
+/* ==========================================
+   PropostaContratoDetailPage.css
+   Usa variáveis de cor no :root:
+   --primary, --primary-hover, --background, --card-bg,
+   --text-main, --text-light, --border-color, --success,
+   --danger, --warning
+   ========================================== */
 
+/* Página */
+.proposta-contrato-detail-page.admin-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--background);
+  padding: 16px;
+  border-radius: 12px;
+
+  /* pedido: garantir scroll nessa página */
+  overflow-y: auto;
+  overflow-x: auto;
+  box-sizing: border-box;
+}
+
+/* Cabeçalho */
 .proposta-contrato-detail-page .page-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #e0e0e0;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 14px 16px;
 }
-
 .proposta-contrato-detail-page .page-header h1 {
   margin: 0;
-  font-size: 1.8em;
-  color: #333;
+  font-size: 1.2rem;
+  color: var(--text-main);
 }
 
-.proposta-contrato-detail-page .header-actions .button,
-.proposta-contrato-detail-page .header-actions .button-link {
-  margin-left: 10px;
-}
-
-/* VVVVV Estilos para o layout principal da página de detalhes VVVVV */
-.proposta-contrato-detail-page .page-content-detail {
-  display: flex;
-  flex-direction: column; /* Padrão para telas menores: informações em cima, contrato embaixo */
-  gap: 25px;
-}
-
-.proposta-contrato-detail-page .info-sidebar-ou-superior {
-  background-color: #f8f9fa; /* Um fundo leve para a seção de informações */
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
-.proposta-contrato-detail-page .info-section {
-  margin-bottom: 20px;
-}
-.proposta-contrato-detail-page .info-section:last-child {
-  margin-bottom: 0;
-}
-
-.proposta-contrato-detail-page .info-section h3 {
-  font-size: 1.2em; /* Título da seção de informações um pouco menor */
-  color: #007bff;
-  margin-top: 0;
-  margin-bottom: 15px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.proposta-contrato-detail-page .detail-item-display strong {
-  display: block;
+/* Links de cabeçalho */
+.proposta-contrato-detail-page .button-link {
+  color: var(--primary);
+  text-decoration: none;
   font-weight: 600;
-  color: #495057;
-  font-size: 0.9em;
-  margin-bottom: 3px;
+}
+.proposta-contrato-detail-page .button-link:hover {
+  text-decoration: underline;
 }
 
-.proposta-contrato-detail-page .detail-item-display p {
+.proposta-contrato-detail-page .button-link-prime:hover{
+  background-color:#7c3aed;
+  color: white;
+  font-weight: 600;
+}
+
+.proposta-contrato-detail-page .button-link-prime{
+  background-color: #6366f1;
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0.2rem;
+  border-radius: 1rem;
+}
+
+
+
+/* Botões (escopo da página) */
+.proposta-contrato-detail-page .button {
+  background: var(--primary);
+  color: #fff;
+  border: 1px solid var(--primary);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-weight: 600;
+  transition: background .15s ease, border-color .15s ease, opacity .15s ease;
+}
+.proposta-contrato-detail-page .button:hover:not(:disabled) {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+.proposta-contrato-detail-page .button:disabled {
+  opacity: .6; cursor: not-allowed;
+}
+.proposta-contrato-detail-page .small-button { padding: 6px 10px; font-size: .9rem; }
+.proposta-contrato-detail-page .primary-button {
+  background: var(--primary); border-color: var(--primary); color: #fff;
+}
+.proposta-contrato-detail-page .action-button {
+  background: #fff; color: var(--text-main);
+  border: 1px solid var(--border-color);
+}
+.proposta-contrato-detail-page .action-button:hover { background: #f9fafb; }
+
+/* Tratamento para o botão “Registrar Distrato” que veio com classe acidental (árabe) */
+.proposta-contrato-detail-page .button.danger-button,
+.proposta-contrato-detail-page .button[class*="خطر-button"] {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+.proposta-contrato-detail-page .button.danger-button:hover,
+.proposta-contrato-detail-page .button[class*="خطر-button"]:hover {
+  filter: brightness(0.95);
+}
+
+/* Seção Status + Ações */
+.proposta-contrato-detail-page .status-actions-section {
+  background: #f0f8ff;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+.proposta-contrato-detail-page .status-buttons-container {
+  display: flex; flex-wrap: wrap; gap: 10px;
+}
+
+/* Badges de status */
+.proposta-contrato-detail-page .status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: 1px solid var(--border-color);
+  background: #fff;
+  color: var(--text-main);
+}
+
+/* Mapeamentos (usamos a classe gerada status-<slug>) */
+.proposta-contrato-detail-page .status-em- elaboração,
+.proposta-contrato-detail-page .status-em-elação { /* fallback p/ variações */
+  background:#eef2ff;color:#3730a3;border-color:#c7d2fe;
+}
+.proposta-contrato-detail-page .status-em-elaboração,
+.proposta-contrato-detail-page .status-em-elaboracao {
+  background:#eef2ff;color:#3730a3;border-color:#c7d2fe;
+}
+.proposta-contrato-detail-page .status-aguardando-aprovações,
+.proposta-contrato-detail-page .status-aguardando-aprovacoes {
+  background:#fef3c7;color:#92400e;border-color:#fde68a;
+}
+.proposta-contrato-detail-page .status-aguardando-assinatura-cliente {
+  background:#e0f2fe;color:#075985;border-color:#bae6fd;
+}
+.proposta-contrato-detail-page .status-assinado {
+  background:#ecfdf5;color:#065f46;border-color:#a7f3d0;
+}
+.proposta-contrato-detail-page .status-vendido {
+  background:#d1fae5;color:#065f46;border-color:#a7f3d0;
+}
+.proposta-contrato-detail-page .status-recusado {
+  background:#fee2e2;color:#991b1b;border-color:#fecaca;
+}
+.proposta-contrato-detail-page .status-cancelado {
+  background:#ffe4e6;color:#9f1239;border-color:#fecdd3;
+}
+.proposta-contrato-detail-page .status-distrato-realizado {
+  background:#f3f4f6;color:#374151;border-color:#e5e7eb;
+}
+
+/* Conteúdo */
+.proposta-contrato-detail-page .page-content {
+  display: grid;
+  grid-template-columns: minmax(260px, 420px) 1fr;
+  gap: 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.proposta-contrato-detail-page .info-section,
+.proposta-contrato-detail-page .contrato-preview-section {
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.proposta-contrato-detail-page .info-section h3,
+.proposta-contrato-detail-page .contrato-preview-section h3 {
   margin: 0 0 10px 0;
-  color: #212529;
-  font-size: 0.95em;
+  color: var(--text-main);
 }
 
-.proposta-contrato-detail-page .contrato-main-content {
-  flex-grow: 1; /* Permite que esta seção cresça se estiver em layout flexível */
-  background-color: #fff;
-  padding: 25px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.proposta-contrato-detail-page .contract-content-section h3 {
-  font-size: 1.5em; /* Título do conteúdo do contrato maior */
-  color: #333;
-  margin-top: 0;
-  margin-bottom: 20px;
-}
-
+/* Pré-visualização do contrato (HTML) */
 .proposta-contrato-detail-page .html-preview-container {
-  border: 1px solid #e9ecef;
-  padding: 20px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  min-height: 340px;
+  padding: 14px;
+  background: #fafafa;
+  overflow: auto;                 /* scroll local do preview */
+  max-height: 70vh;               /* evita crescer demais */
+  color: var(--text-main);
+}
+
+/* Conteúdo rico que vem do HTML gerado */
+.proposta-contrato-detail-page .html-preview-container h1,
+.proposta-contrato-detail-page .html-preview-container h2,
+.proposta-contrato-detail-page .html-preview-container h3 {
+  margin: .6em 0 .4em;
+  line-height: 1.25;
+}
+.proposta-contrato-detail-page .html-preview-container p { margin: .45em 0; }
+.proposta-contrato-detail-page .html-preview-container ul,
+.proposta-contrato-detail-page .html-preview-container ol { padding-left: 1.2rem; }
+
+/* Estados gerais */
+.proposta-contrato-detail-page .error-page .error-message {
+  color: var(--danger);
+  margin-bottom: .75rem;
+}
+
+/* Responsivo */
+@media (max-width: 960px) {
+  .proposta-contrato-detail-page .page-content {
+    grid-template-columns: 1fr;    /* empilha colunas */
+  }
+}
+@media (max-width: 640px) {
+  .proposta-contrato-detail-page .page-header {
+    flex-direction: column; align-items: flex-start;
+  }
+}
+
+
+/* ============= FIX ESPECÍFICO PARA ESTA PÁGINA ============= */
+
+/* Fallbacks caso as vars não existam */
+:root {
+  --pcd-primary: var(--primary, #7c3aed);
+  --pcd-primary-hover: var(--primary-hover, #6d28d9);
+  --pcd-border: var(--border-color, #e5e7eb);
+  --pcd-text: var(--text-main, #111827);
+  --pcd-danger: var(--danger, #dc2626);
+}
+
+/* Alcance alto: estiliza <button> e <a> com classe .button dentro da página */
+.proposta-contrato-detail-page a.button,
+.proposta-contrato-detail-page button.button {
+  -webkit-appearance: none;
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  background: var(--pcd-primary);
+  color: #fff;
+  border: 1px solid var(--pcd-primary);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, opacity .15s ease;
+}
+.proposta-contrato-detail-page a.button:hover,
+.proposta-contrato-detail-page button.button:hover {
+  background: var(--pcd-primary-hover);
+  border-color: var(--pcd-primary-hover);
+}
+.proposta-contrato-detail-page a.button:disabled,
+.proposta-contrato-detail-page button.button:disabled {
+  opacity: .6; cursor: not-allowed;
+}
+.proposta-contrato-detail-page .small-button { padding: 6px 10px; font-size: .9rem; }
+
+/* Variações */
+.proposta-contrato-detail-page a.primary-button,
+.proposta-contrato-detail-page button.primary-button {
+  background: var(--pcd-primary);
+  border-color: var(--pcd-primary);
+  color: #fff;
+}
+
+.proposta-contrato-detail-page a.action-button,
+.proposta-contrato-detail-page button.action-button {
+  background: #fff;
+  color: var(--pcd-text);
+  border: 1px solid var(--pcd-border);
+}
+.proposta-contrato-detail-page a.action-button:hover,
+.proposta-contrato-detail-page button.action-button:hover {
+  background: #f9fafb;
+}
+
+/* Botão de distrato (classe veio diferente) */
+.proposta-contrato-detail-page button.danger-button,
+.proposta-contrato-detail-page button[class*="خطر-button"] {
+  background: var(--pcd-danger);
+  border-color: var(--pcd-danger);
+  color: #fff;
+}
+.proposta-contrato-detail-page button.danger-button:hover,
+.proposta-contrato-detail-page button[class*="خطر-button"]:hover {
+  filter: brightness(0.95);
+}
+
+/* Links tipo “Voltar para Reservas” */
+.proposta-contrato-detail-page .button-link {
+  color: var(--pcd-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+.proposta-contrato-detail-page .button-link:hover { text-decoration: underline; }
+
+
+:where([class*="خطر-button"]) {
+  background: #dc3545 !important;
+  border-color: #c12a36 !important;
+  color: #fff !important;
+  box-shadow: 0 1px 2px rgba(220,53,69,.25);
+}
+
+.button.primary-button {
+  display: inline-block;
+  background: #6366f1;
+  color: #fff !important;
+  padding: 8px 14px;
   border-radius: 6px;
-  background-color: #fff; /* Fundo branco para o conteúdo do contrato */
-  line-height: 1.7; /* Melhor legibilidade para texto longo */
-  font-size: 1em; /* Garante um bom tamanho de fonte para o contrato */
-  min-height: 400px; /* Altura mínima para o conteúdo */
-  max-height: 70vh; 
-  overflow-y: auto; 
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
 }
 
-/* Estilo para status (você pode já ter isso globalmente) */
-.status-badge {
-    padding: 0.25em 0.6em;
-    font-size: 0.85em;
-    font-weight: 600;
-    border-radius: 0.25rem;
-    display: inline-block;
-}
-.status-em-elaboração { background-color: #ffc107; color: #212529; }
-.status-assinado, .status-vendido { background-color: #28a745; color: white; }
-.status-recusado, .status-cancelado { background-color: #dc3545; color: white; }
-.status-aguardando-assinatura, .status-aguardando-aprovações { background-color: #17a2b8; color: white; }
-
-
-/* Para telas maiores, podemos tentar um layout de duas colunas */
-@media (min-width: 992px) {
-  .proposta-contrato-detail-page .page-content-detail {
-    flex-direction: row; /* Lado a lado */
-    align-items: flex-start; /* Alinha itens no topo */
-  }
-  .proposta-contrato-detail-page .info-sidebar-ou-superior {
-    flex: 0 0 320px; /* Largura fixa para a barra lateral de informações */
-    max-width: 320px;
-    max-height: calc(100vh - 200px);
-    overflow-y: auto;
-  }
-  .proposta-contrato-detail-page .contrato-main-content {
-    flex: 1 1 auto; /* Ocupa o restante do espaço */
-  }
+.button.primary-button:hover {
+  background: #4f46e5;
+  color: #fff !important; /* evita que fique branco */
+  text-decoration: none;
 }
