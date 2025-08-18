@@ -277,8 +277,7 @@ function LeadListPage() {
         situacao: finishStageId,
       });
       toast.success(
-        `Lead "${updatedLeadFromApi.nome}" movido para "${
-          targetStage?.nome || ""
+        `Lead "${updatedLeadFromApi.nome}" movido para "${targetStage?.nome || ""
         }"!`
       );
       setAllLeadsRaw((prevAll) =>
@@ -334,12 +333,12 @@ function LeadListPage() {
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`kanban-column ${
-                      snapshot.isDraggingOver ? "dragging-over" : ""
-                    }`}
+                    className={`kanban-column ${snapshot.isDraggingOver ? "dragging-over" : ""
+                      }`}
                   >
                     <h3 className="kanban-column-title">
-                      {stage.nome} ({leadsByStage[stage._id]?.length || 0})
+                      {stage.nome}
+                      <span className="count-badge">{leadsByStage[stage._id]?.length || 0}</span>
                     </h3>
                     <div className="kanban-column-content">
                       {(leadsByStage[stage._id] || []).map((lead, index) => (
@@ -353,9 +352,8 @@ function LeadListPage() {
                               ref={providedCard.innerRef}
                               {...providedCard.draggableProps}
                               {...providedCard.dragHandleProps}
-                              className={`lead-card ${
-                                snapshotCard.isDragging ? "dragging" : ""
-                              }`}
+                              className={`lead-card ${snapshotCard.isDragging ? "dragging" : ""
+                                }`}
                             >
                               <LeadCard
                                 lead={lead}
@@ -372,8 +370,8 @@ function LeadListPage() {
                       {provided.placeholder}
                       {(!leadsByStage[stage._id] ||
                         leadsByStage[stage._id]?.length === 0) && (
-                        <p className="kanban-empty-column">Nenhum lead aqui.</p>
-                      )}
+                          <p className="kanban-empty-column">Nenhum lead aqui.</p>
+                        )}
                     </div>
                   </div>
                 )}
