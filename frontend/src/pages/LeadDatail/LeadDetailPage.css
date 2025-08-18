@@ -1,412 +1,132 @@
-/* ======================================================
-   LeadDetailPage.css — layout 2 colunas com cards e scroll
-   Usa variáveis globais do CRM:
-   --primary, --primary-hover, --border-color, --card-bg,
-   --text-main, --text-light, --danger, --success, --background
-   ====================================================== */
+/* src/pages/LeadDetail/LeadDetailPage.css */
 
-.lead-detail-page {
-  --_primary: var(--primary, #6f42c1);
-  --_primaryHover: var(--primary-hover, #59339e);
-  --_border: var(--border-color, #e5e7eb);
-  --_card: var(--card-bg, #fff);
-  --_text: var(--text-main, #0f172a);
-  --_muted: var(--text-light, #64748b);
-  --_danger: var(--danger, #ef4444);
-  --_success: var(--success, #16a34a);
-  --_bg: var(--background, #f6f7fb);
+/* tokens simples p/ espaçamentos fluidos */
+:root{
+  --app-header-h: 64px;                 /* ajuste se seu header tem outra altura */
+  --page-pad: clamp(12px, 2vw, 20px);
+  --gap: clamp(8px, 1.4vw, 14px);
+  --card-bg: #fff;
+  --card-br: 10px;
+  --card-bd: #e9edf3;
+  --shadow: 0 4px 14px rgba(15,23,42,.06);
+}
 
-  height: calc(100vh - 64px);
-  /* ocupa a viewport, ajusta se tiver header fixo */
-  padding: 12px 14px;
-  background: var(--_bg);
+/* ===== Página ===== */
+.lead-detail-page{
   display: grid;
-  grid-template-columns: minmax(360px, 1.15fr) minmax(340px, 0.85fr);
-  gap: 14px;
-  box-sizing: border-box;
-  overflow-y: auto;
-  overflow-x: auto;
-}
-
-/* Garante que as colunas não “explodam” e respeitem o grid */
-.left-pane,
-.right-pane {
-  min-width: 0;
-  /* importante para evitar overflow horizontal */
-  min-height: 0;
-  /* permite filhos com height:100% controlar scroll */
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-/* =========================
-   CARDS base
-   ========================= */
-.card,
-.chat-card {
-  background: var(--_card);
-  border: 1px solid var(--_border);
-  border-radius: 14px;
-  box-shadow: 0 2px 10px rgba(2, 6, 23, .06);
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  /* permite que o conteúdo interno use flex:1 + overflow */
-  height: 100%;
-  overflow: hidden;
-  /* rolagem só nos filhos */
-}
-
-/* =========================
-   TOOLBAR (ações do topo)
-   ========================= */
-.toolbar {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.btn {
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1;
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid var(--_border);
+  grid-template-rows: auto 1fr;
+  gap: var(--gap);
+  padding: var(--page-pad);
   background: #fff;
-  color: var(--_text);
-  cursor: pointer;
-  transition: transform .05s ease, filter .15s ease, border-color .15s ease, color .15s ease;
-}
+  border-radius: 8px;
+  box-shadow: var(--shadow);
 
-.btn .i {
-  margin-right: 6px;
-}
-
-.btn:hover {
-  border-color: var(--_primary);
-  color: var(--_primary);
-}
-
-.btn:active {
-  transform: translateY(1px);
-}
-
-.btn.primary {
-  color: #fff;
-  border-color: transparent;
-  background: linear-gradient(180deg, var(--_primary) 0%, var(--_primaryHover) 100%);
-}
-
-.btn.primary:hover {
-  filter: brightness(.97);
-}
-
-.btn.success {
-  color: #fff;
-  border-color: transparent;
-  background: linear-gradient(180deg, #16a34a 0%, #128a3f 100%);
-}
-
-.btn.danger {
-  color: #fff;
-  border-color: transparent;
-  background: linear-gradient(180deg, #ef4444 0%, #d93c3c 100%);
-}
-
-.btn.ghost {
-  background: #fff;
-}
-
-/* =========================
-   TABS (abas da coluna direita)
-   ========================= */
-.tabs {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.tab {
-  font-size: 13px;
-  font-weight: 700;
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid var(--_border);
-  background: #fff;
-  color: var(--_text);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: border-color .15s ease, color .15s ease, background .15s ease;
-}
-
-.tab:hover {
-  border-color: var(--_primary);
-  color: var(--_primary);
-}
-
-.tab.active {
-  color: #fff;
-  border-color: transparent;
-  background: linear-gradient(180deg, var(--_primary) 0%, var(--_primaryHover) 100%);
-}
-
-/* Container das abas: mantém rolagem só no conteúdo */
-.tab-panels {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-}
-
-.panel.card {
-  min-height: 0;
+  /* o segredo do scroll em telas baixas */
+  min-height: calc(100dvh - var(--app-header-h));
+  max-height: none;
   overflow: auto;
-  /* rolagem aqui */
-  padding: 12px;
-}
-
-/* =========================
-   CHAT (coluna esquerda)
-   ========================= */
-.chat-card {
-  padding: 0;
-  /* o ChatWindow já tem padding próprio */
-}
-
-/* Normaliza o ChatWindow para não “tomar” a página */
-.chat-card .chat-window {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  height: 100%;
-  width: 100%;
-}
-
-/* header do chat */
-.chat-card .chat-window .chat-header {
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--_border);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #fff;
-}
-
-.chat-card .chat-window .chat-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  object-fit: cover;
-}
-
-.chat-card .chat-window .chat-header-info h4 {
-  margin: 0 0 2px 0;
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--_text);
-}
-
-.chat-card .chat-window .chat-header-info span {
-  font-size: 12px;
-  color: var(--_muted);
-}
-
-/* lista de mensagens = ocupa o espaço e rola internamente */
-.chat-card .chat-window .messages-area {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-  padding: 8px 10px;
-  background: #e9dfd6;
-  /* seu fundo tipo Whats */
-}
-
-/* input fixo ao rodapé do card */
-.chat-card .chat-window .message-input-area {
-  display: flex;
-  gap: 8px;
-  padding: 10px;
-  border-top: 1px solid var(--_border);
-  background: #fff;
-}
-
-.chat-card .chat-window .message-input-area input {
-  flex: 1;
-  min-width: 0;
-  border: 1px solid var(--_border);
-  border-radius: 10px;
-  padding: 8px 10px;
-  font-size: 14px;
-  outline: none;
-}
-
-.chat-card .chat-window .message-input-area button {
-  border-radius: 999px;
-  padding: 8px 14px;
-  background: linear-gradient(180deg, var(--_primary) 0%, var(--_primaryHover) 100%);
-  border: 1px solid transparent;
-  color: #fff;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-/* bolhas básicas (vêm do seu MessageBubble.css, aqui só garantimos que nada é absoluto) */
-.chat-card .message-bubble-wrapper {
-  max-width: 70%;
-}
-
-/* =========================
-   TASKS – mantém compacta
-   ========================= */
-.tasks-card {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* Se o TaskList der uma barra de filtros, estiliza de leve */
-.tasks-card .filters,
-.tasks-card .task-filters,
-.tasks-card .filters-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  padding: 8px;
-  background: #fbfbff;
-  border: 1px solid var(--_border);
-  border-radius: 10px;
-}
-
-/* lista e itens (nomes genéricos para abraçar diferentes markups) */
-.tasks-card .task-list,
-.tasks-card .tasks-list,
-.tasks-card ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  gap: 10px;
-}
-
-.tasks-card .task-item,
-.tasks-card li,
-.tasks-card .task-row {
-  background: #fff;
-  border: 1px solid var(--_border);
-  border-radius: 12px;
-  padding: 10px 12px;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  grid-template-areas:
-    "check title due"
-    "check meta  actions";
-  gap: 6px 10px;
-  align-items: center;
-  box-shadow: 0 1px 6px rgba(15, 23, 42, .04);
-}
-
-.tasks-card .task-item input[type="checkbox"] {
-  grid-area: check;
-  width: 16px;
-  height: 16px;
-}
-
-.tasks-card .task-title,
-.tasks-card .task-desc,
-.tasks-card .title {
-  grid-area: title;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--_text);
-}
-
-.tasks-card .task-meta,
-.tasks-card .meta {
-  grid-area: meta;
-  font-size: 12px;
-  color: var(--_muted);
-}
-
-.tasks-card .task-due,
-.tasks-card .due,
-.tasks-card .badge-due {
-  grid-area: due;
-  justify-self: end;
-  font-size: 12px;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: #eef2ff;
-  color: #3730a3;
-  border: 1px solid #e0e7ff;
-}
-
-.tasks-card .task-actions,
-.tasks-card .actions {
-  grid-area: actions;
-  justify-self: end;
-  display: flex;
-  gap: 6px;
-}
-
-.tasks-card .actions .button-link,
-.tasks-card .task-actions .button-link {
-  color: var(--_primary);
-  text-decoration: none;
-  font-weight: 700;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-}
-
-.tasks-card .actions .button-link:hover {
-  text-decoration: underline;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 /* estados */
-.tasks-card .task-item.overdue .task-due {
-  background: #fee2e2;
-  color: #991b1b;
-  border-color: #fecaca;
+.lead-detail-page.loading,
+.lead-detail-page.error-page{
+  text-align:center; padding: 2rem; font-size: 1rem;
 }
 
-.tasks-card .task-item.soon .task-due {
-  background: #fef3c7;
-  color: #92400e;
-  border-color: #fde68a;
+/* ===== Header/Ações (component LeadHeaderActions) ===== */
+.lead-detail-page .lead-header-actions,
+.lead-detail-page .detail-header,
+.lead-detail-page .header-actions{
+  display:flex; align-items:center; gap: .5rem; flex-wrap: wrap;
 }
 
-.tasks-card .task-item.done {
-  opacity: .7;
+/* se ainda ficar apertado, deixa rolar horizontalmente */
+.lead-detail-page .lead-header-actions{
+  overflow-x: auto; padding-bottom: 2px;
+}
+.lead-detail-page .lead-header-actions::-webkit-scrollbar{ height:6px }
+.lead-detail-page .lead-header-actions::-webkit-scrollbar-thumb{
+  background:#cbd5e1; border-radius:6px;
 }
 
-/* =========================
-   RESPONSIVO
-   ========================= */
-@media (max-width: 1100px) {
-  .lead-detail-page {
-    grid-template-columns: 1fr;
-    /* vira 1 coluna */
-    height: auto;
-    min-height: 100vh;
-  }
-
-  .left-pane .chat-card,
-  .right-pane .panel.card {
-    max-height: 70vh;
-    /* cada card rola internamente */
-  }
+/* ===== Grid principal ===== */
+.detail-layout-grid{
+  display: grid;
+  grid-template-columns: 1fr;       /* mobile: 1 col */
+  gap: var(--gap);
+  min-height: 0;                    /* permite scroll interno se precisar */
 }
 
-@media (max-width: 640px) {
-
-  .btn,
-  .tab {
-    width: 100%;
-    justify-content: center;
-  }
+/* desktop: 2 colunas */
+@media (min-width: 992px){
+  .detail-layout-grid{ grid-template-columns: 1.2fr 1fr; }
 }
+
+/* transforma os filhos em cards compactos */
+.detail-layout-grid > *{
+  background: var(--card-bg);
+  border: 1px solid var(--card-bd);
+  border-radius: var(--card-br);
+  box-shadow: var(--shadow);
+  padding: clamp(12px, 1.4vw, 16px);
+}
+
+/* Títulos dos cards */
+.detail-layout-grid h2{
+  margin: 0 0 .5rem 0;
+  font-weight: 600;
+  font-size: clamp(15px, 1.2vw, 18px);
+  color: #0f172a;
+}
+
+/* ===== Mensagens de erro info ===== */
+.error-message{
+  color:#721c24; background:#f8d7da; border:1px solid #f5c6cb;
+  padding:.75rem; border-radius:6px; margin: .25rem 0 .5rem 0;
+  font-size: .95rem;
+}
+
+/* ===== Histórico (altura adaptável) ===== */
+.lead-history-list{
+  list-style:none; margin:0; padding:.5rem;
+  border:1px solid #eef2f7; border-radius:8px; background:#fafbfc;
+
+  /* limita sem cortar a página */
+  max-height: min(40vh, 360px);
+  overflow:auto; -webkit-overflow-scrolling:touch;
+}
+.history-entry{ padding:.5rem .25rem; border-bottom:1px solid #f1f5f9; font-size:.95rem }
+.history-entry:last-child{ border-bottom:none }
+.history-timestamp{ display:block; font-size:.8rem; color:#64748b; margin-bottom:.15rem }
+
+/* ===== Tarefas ===== */
+.tasks-section h2{ margin-bottom:.5rem }
+
+/* ===== Botões genéricos da página (se usados aqui) ===== */
+.button{
+  padding: .55rem .9rem; border-radius:8px; font-weight:600;
+  border:1px solid #e5e7eb; background:#fff; color:#0f172a;
+  font-size: clamp(13px, 0.9vw, 15px); cursor:pointer;
+}
+.button:hover{ filter: brightness(.98) }
+.back-button{ background:#f1f5f9 } .back-button:hover{ background:#e2e8f0 }
+.edit-button{ background:#fff7e0; border-color:#ffe08a }
+.discard-button-detail, .delete-button-detail{
+  background:#fee2e2; border-color:#fecaca; color:#991b1b;
+}
+.reactivate-button{ background:#dcfce7; border-color:#bbf7d0; color:#166534 }
+
+/* ===== Ajustes finos nos espaçamentos ===== */
+.detail-item{ background:#f8fafc; border:1px solid #eef2f7; border-radius:8px;
+  padding: .75rem }
+.detail-label{ font-size:.8rem; color:#475569; margin-bottom:.25rem; text-transform:uppercase }
+.detail-value{ font-size:.95rem; color:#0f172a }
+
+/* quando houver bloco de conversa vazio, não ocupa “buraco” */
+.lead-conversations-column:empty{ display:none }
+
+/* scrollbars sutis (opcional) */
+.lead-detail-page::-webkit-scrollbar{ width:10px }
+.lead-detail-page::-webkit-scrollbar-thumb{ background:#cbd5e1; border-radius:8px }
