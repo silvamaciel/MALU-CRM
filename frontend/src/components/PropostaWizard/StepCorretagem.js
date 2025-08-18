@@ -1,27 +1,82 @@
-// src/components/PropostaWizard/StepCorretagem.js
-import React from 'react';
+import React, { useMemo } from 'react';
 import './WizardSteps.css';
 import './StepCorretagem.css';
 
 function StepCorretagem({ formData, setFormData, isSaving, brokerContactsList }) {
   const corretagem = formData.corretagem || {};
 
+  const valorBase = Number(formData.valorPropostaContrato || 0);
+  const modo = corretagem.modoCalculo || 'valor'; // 'valor' | 'percent'
+
+  const percentual = corretagem.percentual || ''; // guardamos no estado, mas só enviamos valorCorretagem
+
+  // Calcula valorCorretagem quando o modo é percentual (para exibir e gravar)
+  const valorCorretagemCalc = useMemo(() => {
+    if (modo !== 'percent') return Number(corretagem.valorCorretagem || 0);
+    const p = Number(percentual || 0);
+    return (p / 100) * valorBase;
+  }, [modo, percentual, valorBase, corretagem.valorCorretagem]);
+
   const handleCorretagemChange = (e) => {
     const { name, value } = e.target;
+
+    // Troca de modo
+    if (name === 'modoCalculo') {
+      setFormData(prev => ({
+        ...prev,
+        corretagem: {
+          ...prev.corretagem,
+          modoCalculo: value, // 'valor' | 'percent'
+        }
+      }));
+      return;
+    }
+
+    // Entrada do percentual
+    if (name === 'percentual') {
+      const pct = value === '' ? '' : Math.max(0, Number(value));
+      setFormData(prev => ({
+        ...prev,
+        corretagem: {
+          ...prev.corretagem,
+          percentual: pct,
+          // Mantemos valorCorretagem coerente no estado para o submit final
+          valorCorretagem: ((pct || 0) / 100) * Number(prev.valorPropostaContrato || 0),
+        }
+      }));
+      return;
+    }
+
+    // Entrada direta do valor em R$
+    if (name === 'valorCorretagem') {
+      const v = value === '' ? '' : Math.max(0, Number(value));
+      setFormData(prev => ({
+        ...prev,
+        corretagem: {
+          ...prev.corretagem,
+          valorCorretagem: v,
+        }
+      }));
+      return;
+    }
+
+    // Demais campos (selects/textarea)
     setFormData(prev => ({
       ...prev,
       corretagem: {
         ...prev.corretagem,
-        [name]: name === 'valorCorretagem' ? parseFloat(value) || 0 : value
+        [name]: value
       }
     }));
   };
 
-  const formatCurrency = (value) => {
-    const number = parseFloat(value);
-    if (isNaN(number)) return '';
-    return number.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-  };
+  const formatBRL = (num) =>
+    Number(num || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  const pctFromValor = useMemo(() => {
+    const v = Number(corretagem.valorCorretagem || 0);
+    return valorBase > 0 ? (v / valorBase) * 100 : 0;
+  }, [corretagem.valorCorretagem, valorBase]);
 
   return (
     <div className="wizard-step">
@@ -50,20 +105,76 @@ function StepCorretagem({ formData, setFormData, isSaving, brokerContactsList })
           </div>
 
           <div className="form-group">
-            <label htmlFor="valorCorretagem">Valor da Corretagem (R$)</label>
-            <input
-              type="number"
-              id="valorCorretagem"
-              name="valorCorretagem"
-              value={corretagem.valorCorretagem || ''}
-              onChange={handleCorretagemChange}
-              step="0.01"
-              min="0"
-              disabled={isSaving}
-              placeholder="0,00"
-            />
+            <label>Forma de cálculo</label>
+            <div className="modo-switch">
+              <label className={`pill ${modo === 'valor' ? 'active' : ''}`}>
+                <input
+                  type="radio"
+                  name="modoCalculo"
+                  value="valor"
+                  checked={modo === 'valor'}
+                  onChange={handleCorretagemChange}
+                  disabled={isSaving}
+                />
+                Valor (R$)
+              </label>
+              <label className={`pill ${modo === 'percent' ? 'active' : ''}`}>
+                <input
+                  type="radio"
+                  name="modoCalculo"
+                  value="percent"
+                  checked={modo === 'percent'}
+                  onChange={handleCorretagemChange}
+                  disabled={isSaving}
+                />
+                Percentual (%)
+              </label>
+            </div>
           </div>
         </div>
+
+        {/* Campos condicionais */}
+        {modo === 'valor' ? (
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="valorCorretagem">Valor da Corretagem (R$)</label>
+              <input
+                type="number"
+                id="valorCorretagem"
+                name="valorCorretagem"
+                value={corretagem.valorCorretagem === '' ? '' : Number(corretagem.valorCorretagem || 0)}
+                onChange={handleCorretagemChange}
+                step="0.01"
+                min="0"
+                disabled={isSaving}
+                placeholder="0,00"
+              />
+              <small className="money-preview">
+                {formatBRL(corretagem.valorCorretagem || 0)} {valorBase > 0 ? `(~${pctFromValor.toFixed(2)}%)` : ''}
+              </small>
+            </div>
+          </div>
+        ) : (
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="percentual">Percentual da Corretagem (%)</label>
+              <input
+                type="number"
+                id="percentual"
+                name="percentual"
+                value={percentual === '' ? '' : Number(percentual)}
+                onChange={handleCorretagemChange}
+                step="0.01"
+                min="0"
+                disabled={isSaving}
+                placeholder="ex.: 6"
+              />
+              <small className="money-preview">
+                Base: {formatBRL(valorBase)} • Calculado: <strong>{formatBRL(valorCorretagemCalc)}</strong>
+              </small>
+            </div>
+          </div>
+        )}
 
         <div className="form-group full-width">
           <label htmlFor="condicoesPagamentoCorretagem">Condições de Pagamento</label>

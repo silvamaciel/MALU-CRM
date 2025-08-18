@@ -1,107 +1,181 @@
-/* ====== WIZARD / SCROLL / STICKY ====== */
-
-/* altura dinâmica do conteúdo rolável dentro do card */
-.proposta-contrato-form-page .wizard-scroll{
-  /* header + margens ≈ 220px; ajuste se seu topo for maior/menor */
-  max-height: clamp(420px, calc(100vh - 220px), 74vh);
-  overflow: auto;
-  padding: 8px 2px 16px 2px;
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
+/* ===== Página ===== */
+.proposta-contrato-form-page.admin-page {
+  /* garante que a página principal permite rolagem quando necessário */
+  overflow-y: auto;
+  overflow-x: auto;
 }
 
-/* sombra sutil nos cantos ao rolar */
-.proposta-contrato-form-page .wizard-scroll {
-  background:
-    linear-gradient(#0000, #0000 10px) padding-box,
-    radial-gradient(12px 12px at 50% 0, rgba(0,0,0,.06), transparent 60%) 0 0/100% 10px no-repeat,
-    radial-gradient(12px 12px at 50% 100%, rgba(0,0,0,.06), transparent 60%) 0 100%/100% 10px no-repeat;
+.proposta-contrato-form-page .page-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
-/* ações fixas ao rodapé do card */
-.proposta-contrato-form-page .wizard-actions{
-  position: sticky;
-  bottom: 0;
-  z-index: 5;
-  background:
-    linear-gradient(180deg, rgba(248,249,250,0) 0%, rgba(248,249,250,1) 32%, rgba(248,249,250,1) 100%);
-  padding: 12px 0 4px;
+.proposta-contrato-form-page .page-header h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
 }
 
-/* espaço extra para os botões não cobrirem inputs no final do scroll */
-.proposta-contrato-form-page .wizard-scroll::after{
-  content:'';
-  display:block;
-  height: 12px;
+.proposta-contrato-form-page .page-header p {
+  margin: 0;
+  color: #6b7280;
+  font-weight: 600;
 }
 
-/* ====== GRID DO FORM — AUTO-FIT ====== */
-
-/* cada .form-row vira um grid responsivo */
-.proposta-contrato-form-page .form-row{
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 16px 18px;
-  margin-bottom: 18px;
+/* ===== Card do Wizard ===== */
+.proposta-contrato-form-page .page-content {
+  padding: 0;
 }
 
-/* garante que inputs não “estourem” o grid */
-.proposta-contrato-form-page .form-group{
-  min-width: 0;
+.proposta-contrato-form-page .form-container {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  border: 1px solid #eef1f4;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
-/* campos que precisam ocupar a linha inteira */
-.proposta-contrato-form-page .form-group.full-width{
-  grid-column: 1 / -1;
+/* Área rolável onde cada etapa renderiza */
+.proposta-contrato-form-page .wizard-scroll {
+  /* altura confortável, ajusta conforme sua tela */
+  max-height: min(62vh, 780px);
+  padding: 16px;
+  overflow-y: auto;
+  overflow-x: auto;
+  background: #fafbfc;
 }
 
-/* ====== AJUSTES DE COMPONENTES (PhoneInput etc.) ====== */
-
-.PhoneInput{ width: 100%; display: flex; align-items: center; gap: 8px; }
-.PhoneInputCountry{ flex: 0 0 auto; }
-.PhoneInputInput{ width: 100%; min-width: 0; }
-
-/* inputs/selects/textarea herdados continuam iguais */
-.proposta-contrato-form-page .form-group input[type="text"],
-.proposta-contrato-form-page .form-group input[type="number"],
-.proposta-contrato-form-page .form-group input[type="date"],
-.proposta-contrato-form-page .form-group input[type="email"],
-.proposta-contrato-form-page .form-group select,
-.proposta-contrato-form-page .form-group textarea{
-  width: 100%;
-  box-sizing: border-box;
+/* ===== Ações (grudadas embaixo do card) ===== */
+.proposta-contrato-form-page .wizard-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-top: 1px solid #eef1f4;
+  background: #fff;
 }
 
-/* ====== CABEÇALHO DA ETAPA (opcional sticky) ====== */
-.wizard-step > h3{
-  position: sticky;
-  top: 0;
-  z-index: 4;
-  background: #f8f9fa;
-  padding: 8px 6px;
-  margin: 0 0 12px 0;
-  border-bottom: 1px solid #e9ecef;
+/* ===== Botões (cores herdadas do tema + hover fix) ===== */
+.proposta-contrato-form-page .wizard-actions .button {
+  min-height: 38px;
+  border-radius: 10px;
+  font-weight: 700;
+  transition: transform .05s ease, box-shadow .2s ease, background .2s ease, color .2s ease;
 }
 
-/* ====== MOBILE TUNING ====== */
-@media (max-width: 768px){
-  .proposta-contrato-form-page .page-header h1{ font-size: 1.6rem; }
-  .proposta-contrato-form-page .form-container{ padding: 18px; }
-  .proposta-contrato-form-page .wizard-scroll{ max-height: calc(100vh - 190px); }
-  .proposta-contrato-form-page .form-group label{ font-size: .95rem; }
-  .proposta-contrato-form-page .form-group input,
-  .proposta-contrato-form-page .form-group select,
-  .proposta-contrato-form-page .form-group textarea{ font-size: 1rem; padding: 10px; }
-  .proposta-contrato-form-page .wizard-actions{ padding: 10px 0 2px; }
+.proposta-contrato-form-page .wizard-actions .button:active {
+  transform: translateY(1px);
 }
 
-@media (max-width: 420px){
-  /* botões ocupam metade da largura para facilitar o toque */
-  .proposta-contrato-form-page .wizard-actions .button{
-    width: 48%;
-    min-width: auto;
+/* primário (próximo) */
+.proposta-contrato-form-page .wizard-actions .primary-button {
+  background: #3b82f6;             /* azul */
+  color: #fff;
+}
+.proposta-contrato-form-page .wizard-actions .primary-button:hover {
+  background: #2563eb;
+}
+
+/* salvar/concluir */
+.proposta-contrato-form-page .wizard-actions .submit-button {
+  background: #8b5cf6;             /* roxo */
+  color: #fff;
+}
+.proposta-contrato-form-page .wizard-actions .submit-button:hover {
+  background: #7c3aed;
+}
+
+/* anterior */
+.proposta-contrato-form-page .wizard-actions .cancel-button {
+  background: #f3f4f6;
+  color: #374151;
+}
+.proposta-contrato-form-page .wizard-actions .cancel-button:hover {
+  background: #e5e7eb;
+}
+
+/* ===== Mensagens ===== */
+.proposta-contrato-form-page .error-message {
+  margin: 12px 16px 0;
+}
+
+/* ===== Modal de confirmação (usa base global, mas reforço aqui para consistência) ===== */
+.proposta-contrato-form-page .modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+
+  /* sempre permitir scroll */
+  overflow-y: auto;
+  overflow-x: auto;
+  padding: 24px;
+}
+
+.proposta-contrato-form-page .modal-content {
+  width: min(560px, 94vw);
+  background: #fff;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 12px 34px rgba(0,0,0,.18);
+}
+
+.proposta-contrato-form-page .modal-content h2 {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
+}
+
+.proposta-contrato-form-page .modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.proposta-contrato-form-page .modal-buttons .cancel-button {
+  background: #f3f4f6;
+  color: #374151;
+  border-radius: 10px;
+  font-weight: 700;
+  padding: 10px 14px;
+}
+.proposta-contrato-form-page .modal-buttons .cancel-button:hover {
+  background: #e5e7eb;
+}
+
+.proposta-contrato-form-page .modal-buttons .confirm-button {
+  background: #16a34a; /* verde */
+  color: #fff;
+  border-radius: 10px;
+  font-weight: 700;
+  padding: 10px 14px;
+}
+.proposta-contrato-form-page .modal-buttons .confirm-button:hover {
+  background: #15803d;
+}
+
+/* ===== Ajustes responsivos ===== */
+@media (max-width: 900px) {
+  .proposta-contrato-form-page .wizard-scroll {
+    max-height: 58vh;
   }
-  .proposta-contrato-form-page .wizard-actions .cancel-button + div{ display:none; } /* remove o filler no mobile */
+}
+@media (max-width: 640px) {
+  .proposta-contrato-form-page .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .proposta-contrato-form-page .wizard-scroll {
+    max-height: 55vh;
+  }
 }
