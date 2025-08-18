@@ -1,57 +1,153 @@
-import React, { useState, useEffect, useCallback } from "react";
+// src/pages/LeadDetail/LeadDetailPage.js
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+
+// APIs
 import {
-  getLeadById,
-  discardLead,
+  getLeadById as getLeadByIdApi,
   updateLead,
+  discardLead,
   deleteLead,
   getLeadHistory,
 } from "../../api/leads";
 import { getLeadStages } from "../../api/leadStages";
 
+// Chat APIs
+import {
+  listConversationsApi,
+  getMessagesApi,
+  sendMessageApi,
+} from "../../api/chatApi";
+
+// Componentes existentes
 import DiscardLeadModal from "../../components/DiscardLeadModal/DiscardLeadModal";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 import ReservaFormModal from "./ReservaFormModal";
-import LeadHeaderActions from "./components/LeadHeaderActions";
 import LeadInfo from "./components/LeadInfo";
 import LeadHistory from "./components/LeadHistory";
-import TaskList from '../../components/TaskList/TaskList';
+import TaskList from "../../components/TaskList/TaskList";
 
-import ChatModalForLead from "./components/ChatModalForLead";
+// Chat UI (seus componentes)
+import ChatWindow from "../../pages/ChatPage/componentes/ChatWindow";
 
+// Estilos
 import "./LeadDetailPage.css";
-import "../../components/TaskList/styleTaskList.css";
-import { toast } from "react-toastify";
+import "../../components/TaskList/styleTaskList.css"; // mantém o seu arquivo atual
 
+// ------------------------------------
+// Painel de Chat específico do Lead
+// (carrega só a conversa vinculada ao lead atual)
+// ------------------------------------
+function LeadChatPane({ leadId }) {
+  const [conversation, setConversation] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(false);
+  const [beforeCursor, setBeforeCursor] = useState(null);
+
+  // Busca única conversa vinculada ao lead
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        setLoading(true);
+        const convResult = await listConversationsApi({ leadId, limit: 1 });
+        const conv = (convResult.items || [])[0] || null;
+        if (!mounted) return;
+
+        setConversation(conv || null);
+
+        if (conv?._id) {
+          // carrega últimas mensagens
+          const { items, nextBefore } = await getMessagesApi(conv._id, { limit: 40 });
+          if (!mounted) return;
+          setMessages(items || []);
+          setHasMore(!!nextBefore);
+          setBeforeCursor(nextBefore);
+        } else {
+          setMessages([]);
+          setHasMore(false);
+          setBeforeCursor(null);
+        }
+      } catch (e) {
+        console.error("Erro ao carregar chat do lead:", e);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [leadId]);
+
+  const onLoadOlderMessages = useCallback(async () => {
+    if (!conversation?._id || !hasMore || !beforeCursor) return;
+    const { items, nextBefore } = await getMessagesApi(conversation._id, {
+      limit: 30,
+      before: beforeCursor,
+    });
+    setMessages(prev => [...(items || []), ...prev]); // prepend
+    setHasMore(!!nextBefore);
+    setBeforeCursor(nextBefore);
+  }, [conversation?._id, hasMore, beforeCursor]);
+
+  const onSendMessage = useCallback(
+    async (text) => {
+      if (!conversation?._id || !text?.trim()) return;
+      try {
+        const sent = await sendMessageApi(conversation._id, text.trim());
+        // Se o backend já devolve a mensagem “completa”, basta dar append:
+        setMessages(prev => [...prev, sent]);
+      } catch (err) {
+        console.error("Falha ao enviar mensagem:", err);
+      }
+    },
+    [conversation?._id]
+  );
+
+  // O ChatWindow é o seu componente visual (bolhas, input, etc)
+  return (
+    <div className="chat-card">
+      <ChatWindow
+        conversation={conversation}
+        messages={messages}
+        loading={loading}
+        onSendMessage={onSendMessage}
+        onLoadOlderMessages={onLoadOlderMessages}
+        hasMoreMessages={hasMore}
+      />
+    </div>
+  );
+}
+
+// ------------------------------------
+// Página de Detalhe do Lead (2 colunas)
+// ------------------------------------
 function LeadDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
 
   const [leadDetails, setLeadDetails] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [situacoesList, setSituacoesList] = useState([]);
   const [historyList, setHistoryList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
-  const [historyError, setHistoryError] = useState(null);
+  const [error, setError] = useState(null);
+
+  // ações/modais
   const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
   const [isDiscarding, setIsDiscarding] = useState(false);
   const [discardError, setDiscardError] = useState(null);
-  const [isReactivating, setIsReactivating] = useState(false);
-  const [reactivateError, setReactivateError] = useState(null);
+
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteTargetLead, setDeleteTargetLead] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState(null);
-  const [refreshKey, setRefreshKey] = useState(0);
+
   const [isReservaModalOpen, setIsReservaModalOpen] = useState(false);
 
-  // Novo: modal de chat
-  const [isChatOpen, setIsChatOpen] = useState(false);
+  // Right-pane: abas
+  const [activeTab, setActiveTab] = useState("info"); // "info" | "tasks" | "history"
 
-  const forceRefresh = useCallback(() => setRefreshKey(prev => prev + 1), []);
-
-  const fetchData = useCallback(async () => {
+  const fetchAll = useCallback(async () => {
     if (!id) {
       setError("ID inválido.");
       setIsLoading(false);
@@ -61,7 +157,7 @@ function LeadDetailPage() {
     setIsLoadingHistory(true);
     try {
       const [leadData, situacoesData, historyData] = await Promise.all([
-        getLeadById(id),
+        getLeadByIdApi(id),
         getLeadStages(),
         getLeadHistory(id),
       ]);
@@ -71,7 +167,6 @@ function LeadDetailPage() {
     } catch (err) {
       const errorMessage = err.message || "Falha ao carregar dados.";
       setError(errorMessage);
-      setHistoryError("Falha ao carregar histórico.");
       setLeadDetails(null);
       setSituacoesList([]);
       setHistoryList([]);
@@ -81,10 +176,14 @@ function LeadDetailPage() {
     }
   }, [id]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData, refreshKey]);
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
+  const canShowReactivate = useMemo(() => {
+    const n = leadDetails?.situacao?.nome?.toLowerCase?.() || "";
+    return n === "descartado";
+  }, [leadDetails]);
+
+  // --------- Handlers topo ----------
   const handleOpenDiscardModal = () => {
     setDiscardError(null);
     setIsDiscardModalOpen(true);
@@ -100,39 +199,28 @@ function LeadDetailPage() {
     setDiscardError(null);
     try {
       await discardLead(leadDetails._id, discardData);
-      toast.success(`Lead "${leadDetails.nome}" descartado!`);
-      handleCloseDiscardModal();
-      forceRefresh();
+      // toast… se estiver usando
+      setIsDiscardModalOpen(false);
+      fetchAll();
     } catch (err) {
       const errorMsg = err.message || "Falha ao descartar.";
       setDiscardError(errorMsg);
-      toast.error(errorMsg);
     } finally {
       setIsDiscarding(false);
     }
   };
 
   const handleReactivateLead = async () => {
-    if (!situacoesList.length) return;
-    const situacaoAtendimento = situacoesList.find(s => s.nome === "Em Atendimento");
-    if (!situacaoAtendimento) {
-      const errorMsg = "Status 'Em Atendimento' não encontrado.";
-      setReactivateError(errorMsg);
-      toast.error(errorMsg);
-      return;
-    }
-    setIsReactivating(true);
-    setReactivateError(null);
+    const situacaoAtendimento =
+      situacoesList.find(s => s.nome === "Em Atendimento") ||
+      situacoesList.find(s => s.nome === "Novo");
+    if (!situacaoAtendimento) return;
+
     try {
       await updateLead(leadDetails._id, { situacao: situacaoAtendimento._id });
-      toast.success(`Lead "${leadDetails.nome}" reativado!`);
-      forceRefresh();
+      fetchAll();
     } catch (err) {
-      const errorMsg = err.message || "Falha ao reativar.";
-      setReactivateError(errorMsg);
-      toast.error(errorMsg);
-    } finally {
-      setIsReactivating(false);
+      console.error(err);
     }
   };
 
@@ -153,28 +241,19 @@ function LeadDetailPage() {
     setDeleteError(null);
     try {
       await deleteLead(deleteTargetLead._id);
-      toast.success(`Lead "${deleteTargetLead.nome}" excluído!`);
-      handleCloseDeleteModal();
+      setIsDeleteModalOpen(false);
       navigate("/leads");
     } catch (err) {
-      const errorMsg = err.message || "Falha ao excluir.";
-      setDeleteError(errorMsg);
-      toast.error(errorMsg);
+      setDeleteError(err.message || "Falha ao excluir.");
     } finally {
       setIsDeleting(false);
     }
   };
 
-  const handleOpenReservaModal = () => {
-    if (["Vendido", "Descartado", "Em Reserva"].includes(leadDetails.situacao?.nome)) {
-      toast.warn(`Lead com status "${leadDetails.situacao.nome}" não pode ter nova reserva.`);
-      return;
-    }
-    setIsReservaModalOpen(true);
-  };
-  const handleCloseReservaModal = (reservaCriadaComSucesso = false) => {
+  const handleOpenReservaModal = () => setIsReservaModalOpen(true);
+  const handleCloseReservaModal = (ok = false) => {
     setIsReservaModalOpen(false);
-    if (reservaCriadaComSucesso) forceRefresh();
+    if (ok) fetchAll();
   };
 
   if (isLoading && !leadDetails) return <div className="lead-detail-page loading">Carregando...</div>;
@@ -183,52 +262,94 @@ function LeadDetailPage() {
 
   return (
     <div className="lead-detail-page">
-      <LeadHeaderActions
-        id={id}
-        leadDetails={leadDetails}
-        situacoesList={situacoesList}
-        isReactivating={isReactivating}
-        onDiscard={handleOpenDiscardModal}
-        onReactivate={handleReactivateLead}
-        onDelete={handleOpenDeleteModal}
-        onReserva={handleOpenReservaModal}
-        // opcional: você pode adicionar um botão dentro do LeadHeaderActions para chat:
-        // onChat={() => setIsChatOpen(true)}
-      />
 
-      {reactivateError && <p className="error-message reactivation-error">{reactivateError}</p>}
+      {/* COLUNA ESQUERDA: CHAT */}
+      <section className="left-pane">
+        <LeadChatPane leadId={leadDetails._id} />
+      </section>
 
-      {/* botão simples p/ abrir modal de chat (posicione como preferir) */}
-      <div style={{ margin: "8px 0 12px" }}>
-        <button className="button outline-button" onClick={() => setIsChatOpen(true)}>
-          Abrir Chat do Lead
-        </button>
-      </div>
+      {/* COLUNA DIREITA: AÇÕES + ABAS */}
+      <section className="right-pane">
 
-      <div className="detail-layout-grid">
-        <LeadInfo leadDetails={leadDetails} />
+        {/* Barra de ações */}
+        <div className="toolbar">
+          <button className="btn ghost" onClick={() => navigate(`/leads/${id}/editar`)}>
+            <span className="i">✏️</span> Editar
+          </button>
 
-        <LeadHistory
-          historyList={historyList}
-          isLoadingHistory={isLoadingHistory}
-          historyError={historyError}
-          leadDetails={leadDetails}
-          onTagsUpdated={forceRefresh}
-        />
+          <button className="btn ghost" onClick={handleOpenDiscardModal}>
+            <span className="i">🗃️</span> Descartar
+          </button>
 
-        <div className="lead-conversations-column">
-          {/* você pode futuramente colocar widgets de comunicação aqui */}
+          <button className="btn danger" onClick={handleOpenDeleteModal}>
+            <span className="i">🗑️</span> Excluir
+          </button>
+
+          <button className="btn primary" onClick={handleOpenReservaModal}>
+            <span className="i">📌</span> Criar Reserva
+          </button>
+
+          {canShowReactivate && (
+            <button className="btn success" onClick={handleReactivateLead}>
+              <span className="i">🔄</span> Reativar
+            </button>
+          )}
         </div>
 
-        <div className="tasks-section">
-          <h2>Tarefas</h2>
-          <TaskList
-            filters={{ lead: id }}
-            currentLeadId={id}
-          />
+        {/* Abas */}
+        <div className="tabs">
+          <button
+            className={`tab ${activeTab === "info" ? "active" : ""}`}
+            onClick={() => setActiveTab("info")}
+          >
+            <span className="i">🛈</span> Informações
+          </button>
+          <button
+            className={`tab ${activeTab === "tasks" ? "active" : ""}`}
+            onClick={() => setActiveTab("tasks")}
+          >
+            <span className="i">✅</span> Tarefas
+          </button>
+          <button
+            className={`tab ${activeTab === "history" ? "active" : ""}`}
+            onClick={() => setActiveTab("history")}
+          >
+            <span className="i">🕑</span> Histórico
+          </button>
         </div>
-      </div>
 
+        {/* Conteúdo das Abas */}
+        <div className="tab-panels">
+          {activeTab === "info" && (
+            <div className="panel card">
+              <LeadInfo leadDetails={leadDetails} />
+            </div>
+          )}
+
+          {activeTab === "tasks" && (
+            <div className="panel card tasks-card">
+              <TaskList
+                filters={{ lead: id }}
+                currentLeadId={id}
+              />
+            </div>
+          )}
+
+          {activeTab === "history" && (
+            <div className="panel card">
+              <LeadHistory
+                historyList={historyList}
+                isLoadingHistory={isLoadingHistory}
+                historyError={null}
+                leadDetails={leadDetails}
+                onTagsUpdated={fetchAll}
+              />
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Modais */}
       <DiscardLeadModal
         isOpen={isDiscardModalOpen}
         onClose={handleCloseDiscardModal}
@@ -243,7 +364,7 @@ function LeadDetailPage() {
         onClose={handleCloseDeleteModal}
         onConfirm={handleConfirmDelete}
         title="Confirmar Exclusão"
-        message={`Excluir permanentemente o lead \"${deleteTargetLead?.nome || ""}\"?`}
+        message={`Excluir permanentemente o lead "${deleteTargetLead?.nome || ""}"?`}
         confirmText="Sim, Excluir"
         cancelText="Cancelar"
         confirmButtonClass="confirm-button-delete"
@@ -251,7 +372,7 @@ function LeadDetailPage() {
         errorMessage={deleteError}
       />
 
-      {isReservaModalOpen && leadDetails && (
+      {isReservaModalOpen && (
         <ReservaFormModal
           leadId={leadDetails._id}
           leadNome={leadDetails.nome}
@@ -259,13 +380,6 @@ function LeadDetailPage() {
           onClose={handleCloseReservaModal}
         />
       )}
-
-      {/* Modal de Chat focado no lead */}
-      <ChatModalForLead
-        isOpen={isChatOpen}
-        onClose={() => setIsChatOpen(false)}
-        leadId={id}
-      />
     </div>
   );
 }

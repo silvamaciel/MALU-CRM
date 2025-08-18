@@ -1,134 +1,105 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
-import ChatWindow from "../../../pages/ChatPage/componentes/ChatWindow";
-import {
-  listConversationsApi,
-  getMessagesApi,
-  sendMessageApi,
-  createLeadFromConversationApi,
-} from "../../../api/chatApi";
-import "./ChatModalForLead.css";
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import ChatWindow from '../../ChatPage/componentes/ChatWindow';
+import { listConversationsApi, getMessagesApi, sendMessageApi, createLeadFromConversationApi } from '../../../api/chatApi';
 
-function ChatModalForLead({ isOpen, onClose, leadId }) {
-  const [conversation, setConversation] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [loadingConv, setLoadingConv] = useState(false);
-  const [loadingMsgs, setLoadingMsgs] = useState(false);
-  const [hasMoreMessages, setHasMoreMessages] = useState(true);
-  const nextBeforeRef = useRef(null); // cursor de paginação (antes do mais antigo carregado)
+export default function LeadChatModal({ leadId, isOpen, onClose }) {
+    const [conversation, setConversation] = useState(null);
+    const [messages, setMessages] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [hasMoreMessages, setHasMoreMessages] = useState(false);
+    const nextBeforeRef = useRef(null); // cursor para carregar antigas
+    const pollingRef = useRef(null);    // opcional: polling de novas
 
-  // Carrega conversa vinculada ao lead
-  const fetchConversation = useCallback(async () => {
-    setLoadingConv(true);
-    try {
-      const { items } = await listConversationsApi({ leadId });
-      const conv = Array.isArray(items) && items.length ? items[0] : null;
-      setConversation(conv || null);
-      return conv;
-    } finally {
-      setLoadingConv(false);
-    }
-  }, [leadId]);
+    const loadConversation = useCallback(async () => {
+        setLoading(true);
+        try {
+            const { items } = await listConversationsApi({ leadId, limit: 1 });
+            const conv = items?.[0] || null;
+            setConversation(conv);
 
-  // Primeira carga de mensagens
-  const fetchInitialMessages = useCallback(async (convId) => {
-    if (!convId) return;
-    setLoadingMsgs(true);
-    try {
-      const { items, nextBefore } = await getMessagesApi(convId, { limit: 30 });
-      const sorted = [...items].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-      setMessages(sorted);
-      setHasMoreMessages(Boolean(nextBefore));
-      nextBeforeRef.current = nextBefore || null;
-    } finally {
-      setLoadingMsgs(false);
-    }
-  }, []);
+            if (conv?._id) {
+                // pega o último bloco de mensagens (sem before/after)
+                const { items: msgs, nextBefore } = await getMessagesApi(conv._id, { limit: 30 });
+                setMessages(msgs || []);
+                nextBeforeRef.current = nextBefore || null;
+                setHasMoreMessages(Boolean(nextBefore));
+            } else {
+                setMessages([]);
+                nextBeforeRef.current = null;
+                setHasMoreMessages(false);
+            }
+        } finally {
+            setLoading(false);
+        }
+    }, [leadId]);
 
-  // Paginar mensagens antigas (prepend)
-  const onLoadOlderMessages = useCallback(async () => {
-    if (!conversation?._id || !hasMoreMessages || loadingMsgs) return;
-    setLoadingMsgs(true);
-    try {
-      const { items, nextBefore } = await getMessagesApi(conversation._id, {
-        limit: 30,
-        before: nextBeforeRef.current || undefined,
-      });
-      const merged = [...items, ...messages];
-      const sorted = merged.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-      setMessages(sorted);
-      setHasMoreMessages(Boolean(nextBefore));
-      nextBeforeRef.current = nextBefore || null;
-    } finally {
-      setLoadingMsgs(false);
-    }
-  }, [conversation?._id, hasMoreMessages, loadingMsgs, messages]);
+    // abre o modal e carrega a conversa do lead
+    useEffect(() => {
+        if (isOpen && leadId) loadConversation();
+        return () => {
+            // limpa polling ao fechar modal
+            if (pollingRef.current) { clearInterval(pollingRef.current); pollingRef.current = null; }
+        };
+    }, [isOpen, leadId, loadConversation]);
 
-  // Enviar mensagem
-  const onSendMessage = useCallback(
-    async (text) => {
-      if (!conversation?._id || !text?.trim()) return;
-      const msg = await sendMessageApi(conversation._id, text.trim());
-      setMessages((prev) => [...prev, msg]);
-    },
-    [conversation?._id]
-  );
+    useEffect(() => {
+        if (!isOpen || !conversation?._id) return;
+        pollingRef.current = setInterval(async () => {
+            // pega mensagens novas com after = última mensagem atual
+            const last = messages[messages.length - 1];
+            const { items: novas } = await getMessagesApi(conversation._id, { after: last?._id });
+            if (novas?.length) setMessages(prev => [...prev, ...novas]);
+        }, 5000);
+        return () => clearInterval(pollingRef.current);
+    }, [isOpen, conversation?._id, messages]);
 
-  // Criar lead a partir da conversa (provavelmente não vai ser usado nesse modal,
-  // mas mantive suporte do ChatWindow)
-  const onCreateLead = useCallback(
-    async (conversationId) => {
-      await createLeadFromConversationApi(conversationId);
-      // Recarrega conversa para refletir vínculo atualizado
-      const conv = await fetchConversation();
-      if (conv?._id) await fetchInitialMessages(conv._id);
-    },
-    [fetchConversation, fetchInitialMessages]
-  );
+    const handleLoadOlder = useCallback(async () => {
+        if (!conversation?._id || !nextBeforeRef.current) return;
+        const { items: older, nextBefore } = await getMessagesApi(conversation._id, {
+            limit: 30,
+            before: nextBeforeRef.current,
+        });
+        // prepend mantendo ordem ASC
+        setMessages(prev => [...older, ...prev]);
+        nextBeforeRef.current = nextBefore || null;
+        setHasMoreMessages(Boolean(nextBefore));
+    }, [conversation]);
 
-  // Boot do modal
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      if (!isOpen || !leadId) return;
-      setConversation(null);
-      setMessages([]);
-      setHasMoreMessages(true);
-      nextBeforeRef.current = null;
+    const handleSendMessage = useCallback(async (text) => {
+        if (!conversation?._id) return;
+        const sent = await sendMessageApi(conversation._id, text);
+        setMessages(prev => [...prev, sent]); // append
+    }, [conversation]);
 
-      const conv = await fetchConversation();
-      if (!alive) return;
-      if (conv?._id) await fetchInitialMessages(conv._id);
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [isOpen, leadId, fetchConversation, fetchInitialMessages]);
+    const handleCreateLeadFromConv = useCallback(async () => {
+        // normalmente não precisa aqui, pois já temos leadId.
+        if (!conversation?._id) return;
+        await createLeadFromConversationApi(conversation._id);
+        await loadConversation();
+    }, [conversation, loadConversation]);
 
-  if (!isOpen) return null;
+    if (!isOpen) return null;
 
-  return (
-    <div className="lead-chat-modal-overlay" role="dialog" aria-modal="true">
-      <div className="lead-chat-modal">
-        <header className="lead-chat-modal-header">
-          <h3>Chat do Lead</h3>
-          <button className="close-button" onClick={onClose} aria-label="Fechar">×</button>
-        </header>
+    return (
+        <div className="modal-overlay chat-modal">
+            <div className="modal-card">
+                <div className="modal-header">
+                    <h3>Conversa do Lead</h3>
+                    <button className="close-btn" onClick={onClose}>✕</button>
+                </div>
 
-        <div className="lead-chat-modal-body">
-          <ChatWindow
-            conversation={conversation}
-            messages={messages}
-            loading={loadingConv || loadingMsgs}
-            onSendMessage={onSendMessage}
-            onCreateLead={onCreateLead}
-            onBack={null}             
-            onLoadOlderMessages={onLoadOlderMessages}
-            hasMoreMessages={hasMoreMessages}
-          />
+                <div className="modal-body">
+                    <ChatWindow
+                        conversation={conversation}
+                        messages={messages}
+                        loading={loading}
+                        onSendMessage={handleSendMessage}
+                        onCreateLead={handleCreateLeadFromConv}
+                        onLoadOlderMessages={handleLoadOlder}
+                        hasMoreMessages={hasMoreMessages}
+                    />
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }
-
-export default ChatModalForLead;
