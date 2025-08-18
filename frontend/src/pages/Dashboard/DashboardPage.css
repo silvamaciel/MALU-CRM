@@ -1,94 +1,152 @@
-/* ===== Container base ===== */
-.dashboard-page{
-  padding: clamp(12px,2.5vw,24px);
+/* ===========================
+   DashboardPage.css
+   Paleta via variáveis globais:
+   --primary, --primary-hover, --danger, --border-color, --card-bg, --background,
+   --text-main, --text-light
+   =========================== */
+
+.admin-page.dashboard-page {
+  --_primary: var(--primary, #6f42c1);
+  --_primaryHover: var(--primary-hover, #56339d);
+  --_border: var(--border-color, #e5e7eb);
+  --_card: var(--card-bg, #fff);
+  --_bg: var(--background, #f6f8fb);
+  --_text: var(--text-main, #111827);
+  --_muted: var(--text-light, #6b7280);
+
+  background: var(--_bg);
+  color: var(--_text);
+  padding: 16px;
+  min-height: 100%;
+  min-width: 100%;
+
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+/* Casca central com limite de largura */
+.dashboard-shell{
+  max-width: 1280px;
   margin: 0 auto;
-  max-width: 1200px;
-  overflow-x: hidden; /* hardening */
 }
-.dashboard-shell{display:flex;flex-direction:column;gap:12px;min-width:0}
 
-/* ===== Header / Filters ===== */
-.dashboard-header{display:flex;flex-direction:column;gap:12px}
+/* ================= Header ================= */
+.dashboard-header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
 .dashboard-title{
-  margin:0;
-  text-align:center;
-  color:#333;
-  font-size:clamp(18px,2.2vw,28px);
-  font-weight:700;
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0;
 }
 
-/* Stack que se adapta (linha -> coluna) e nunca estoura */
+/* Bloco que empacota “Visão” e “Período” e adapta no mobile */
 .filters-stack{
-  display:grid;
-  grid-template-columns: 1fr auto;
+  display: flex;
+  align-items: center;
   gap: 10px;
-  align-items:center;
-}
-@media (max-width: 520px){
-  .filters-stack{grid-template-columns: 1fr; justify-items:stretch}
+  flex-wrap: wrap;
 }
 
-/* Componente "segmented" genérico */
+/* ================= Segmented Buttons ================= */
 .segmented{
-  display:flex; align-items:center; gap:8px;
-  background:#f0f2f5; padding:6px; border-radius:8px;
-  max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch;
-  scrollbar-width:none;
+  display: inline-flex;
+  background: linear-gradient(180deg, #fff, #f7f7fb);
+  border: 1px solid var(--_border);
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
+  box-shadow: 0 1px 3px rgba(15,23,42,.06);
 }
-.segmented::-webkit-scrollbar{display:none}
 
-/* Botões dentro dos grupos: fluidos e sem largura fixa */
 .segmented .button{
-  flex:0 0 auto;
-  padding: clamp(6px,.8vw,10px) clamp(10px,1.6vw,16px);
-  font-size: clamp(12px,1vw,14px);
-  border-radius:8px;
-  white-space:nowrap;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  padding: 8px 12px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--_text);
+  transition: background .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease;
 }
 
-/* Reforço visual para chips de período ativos */
-.time-filter-buttons .button.small-button{
-  background:#fff; color:#555; border:1px solid #ddd;
+/* Estados */
+.segmented .button.outline-button{
+  background: #fff;
+  border-color: transparent;
+  color: var(--_text);
 }
-.time-filter-buttons .button.small-button.active{
-  background:#007bff; color:#fff; border-color:#007bff; font-weight:600;
-}
-
-/* ===== Body ===== */
-.dashboard-body{min-width:0}
-.dashboard-content{min-width:0}
-
-/* ===== Cards resumo (mantidos) ===== */
-.summary-cards{
-  display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
-}
-.summary-card{
-  background:#fff;border:1px solid #e5e7eb;border-left:5px solid #0d6efd;
-  border-radius:10px;padding:16px;text-align:center;
-  box-shadow:0 1px 2px rgba(0,0,0,.05);
-}
-.summary-card:nth-child(2){border-left-color:#198754}
-.summary-card:nth-child(3){border-left-color:#ffc107}
-.summary-card h2{margin:0 0 6px;font-size:clamp(12px,1vw,14px);color:#6c757d}
-.summary-card .summary-value{font-size:clamp(22px,3vw,36px);font-weight:700;color:#343a40}
-
-/* ===== Charts ===== */
-.charts-section{
-  display:grid; gap:16px;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-}
-.chart-container, .chart-container-bar, .chart-container-line{
-  background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;
-  min-height:300px; display:flex;flex-direction:column;justify-content:center;align-items:stretch;
-}
-.chart-container canvas, .chart-container svg,
-.chart-container-bar canvas, .chart-container-bar svg,
-.chart-container-line canvas, .chart-container-line svg{
-  width:100% !important; height:auto !important;
+.segmented .button.outline-button:hover{
+  border-color: var(--_border);
+  background: #fafafa;
 }
 
-/* ===== Utilitários ===== */
-.page-content{min-width:0; overflow-x:hidden}
+.segmented .button.primary-button{
+  background: linear-gradient(135deg, var(--_primary), var(--_primaryHover));
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 1px 6px rgba(111,66,193,.25);
+}
+.segmented .button.primary-button:hover{
+  filter: brightness(.98);
+}
+
+/* Botões de período “pequenos” */
+.segmented .button.small-button{
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+.segmented .button.small-button.active{
+  background: linear-gradient(135deg, var(--_primary), var(--_primaryHover));
+  color: #fff;
+  box-shadow: 0 1px 6px rgba(111,66,193,.25);
+}
+
+/* ================= Corpo ================= */
+.dashboard-body{
+  display: block;
+}
+
+.dashboard-content{
+  background: var(--_card);
+  border: 1px solid var(--_border);
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 1px 6px rgba(15,23,42,.06);
+  min-height: 300px;
+}
+
+/* Conteúdo interno dos cards dos seus componentes pode herdar… */
+.dashboard-content h2{
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+/* ================= Responsivo ================= */
+@media (max-width: 900px){
+  .dashboard-header{
+    align-items: stretch;
+  }
+  .filters-stack{
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .segmented{
+    width: 100%;
+    justify-content: space-between;
+  }
+  .segmented .button{
+    flex: 1;
+    text-align: center;
+  }
+}
