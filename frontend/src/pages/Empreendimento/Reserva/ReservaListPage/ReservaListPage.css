@@ -1,10 +1,22 @@
 /* ===========================
-   ReservaListPage.css
-   Paleta esperada via :root
-   --primary, --primary-hover, --background, --card-bg,
-   --text-main, --text-light, --border-color, --success,
-   --danger, --warning
+   ReservaListPage.css (completo)
    =========================== */
+
+/* Paleta base (coloque no seu tema global; mantive aqui com fallbacks) */
+:root {
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --danger: #dc2626;
+  --warning: #d97706;
+  --success: #059669;
+
+  --background: #f7f9fc;
+  --card-bg: #ffffff;
+  --border-color: #e5e7eb;
+
+  --text-main: #111827;
+  --text-light: #6b7280;
+}
 
 /* Página */
 .reserva-list-page.admin-page {
@@ -15,8 +27,6 @@
   padding: 16px;
   border-radius: 12px;
   box-sizing: border-box;
-
-  /* pedido: garantir scroll na página */
   overflow-y: auto;
   overflow-x: auto;
 }
@@ -32,19 +42,16 @@
   border-radius: 12px;
   padding: 14px 16px;
 }
-
 .reserva-list-page .page-header h1 {
   margin: 0;
   font-size: 1.2rem;
   color: var(--text-main);
 }
-
 .reserva-list-page .list-toolbar {
   display: flex;
   align-items: center;
   gap: 10px;
 }
-
 .reserva-list-page .limit-label {
   display: inline-flex;
   align-items: center;
@@ -70,19 +77,16 @@
   border-radius: 12px;
   padding: 12px;
 }
-
 .reserva-list-page .filter-group {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
 }
-
 .reserva-list-page .filter-label {
   font-weight: 600;
   color: var(--text-main);
 }
-
 .reserva-list-page .filter-group select,
 .reserva-list-page .filter-group input[type="date"] {
   padding: 7px 10px;
@@ -91,7 +95,6 @@
   background: #fff;
   color: var(--text-main);
 }
-
 .reserva-list-page .tilde { color: var(--text-light); }
 
 .reserva-list-page .chip {
@@ -141,22 +144,17 @@
 }
 
 /* Tabela */
-.reserva-list-page .table-wrap {
-  display: block;
-}
-
+.reserva-list-page .table-wrap { display: block; }
 .reserva-list-page .table-responsive {
   width: 100%;
-  overflow-x: auto;   /* horizontal quando precisar */
+  overflow-x: auto;
   overflow-y: hidden;
 }
-
 .reserva-list-page .data-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 900px;   /* evita “apertar” demais colunas */
+  min-width: 900px;
 }
-
 .reserva-list-page .data-table thead th {
   text-align: left;
   font-weight: 700;
@@ -166,7 +164,6 @@
   padding: 10px 12px;
   white-space: nowrap;
 }
-
 .reserva-list-page .data-table tbody td {
   padding: 10px 12px;
   border-bottom: 1px solid var(--border-color);
@@ -174,6 +171,7 @@
   vertical-align: middle;
 }
 
+/* Célula de ações */
 .reserva-list-page .actions-cell {
   display: flex;
   align-items: center;
@@ -181,35 +179,54 @@
   white-space: nowrap;
 }
 
-/* Botões padrão (escopo da página) */
+/* ===========================
+   Botões (escopo da página)
+   =========================== */
+
+/* Base na página: não define cor (evita conflito) */
 .reserva-list-page .button {
-  background: var(--primary);
-  color: #fff;
-  border: 1px solid var(--primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 8px;
   padding: 8px 12px;
   font-weight: 600;
+  border: 1px solid transparent;
   transition: background .15s ease, border-color .15s ease, opacity .15s ease;
+  text-decoration: none;
+  cursor: pointer;
 }
-.reserva-list-page .button:hover:not(:disabled) {
+.reserva-list-page .button:disabled { opacity: .6; cursor: not-allowed; }
+.reserva-list-page .small-button { padding: 6px 10px; font-size: 0.9rem; }
+
+/* Primário */
+.reserva-list-page .button.primary-button {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.reserva-list-page .button.primary-button:hover:not(:disabled) {
   background: var(--primary-hover);
   border-color: var(--primary-hover);
 }
-.reserva-list-page .button:disabled { opacity: .6; cursor: not-allowed; }
 
-.reserva-list-page .small-button { padding: 6px 10px; font-size: 0.9rem; }
-
-.reserva-list-page .primary-button { /* redundante pra clareza */
-  background: var(--primary);
-  border-color: var(--primary);
-  color: #fff;
-}
-
-.reserva-list-page .danger-button {
+/* Perigo (Excluir) */
+.reserva-list-page .button.danger-button {
   background: var(--danger);
+  color: #fff;
   border-color: var(--danger);
 }
-.reserva-list-page .danger-button:hover { filter: brightness(0.95); }
+.reserva-list-page .button.danger-button:hover:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+/* Botão “fantasma” (filtros) */
+.reserva-list-page .button.ghost {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+}
+.reserva-list-page .button.ghost:hover { background: #f5f5f5; }
 
 /* Links de ação */
 .reserva-list-page .button-link.view-link {
@@ -219,7 +236,7 @@
 }
 .reserva-list-page .button-link.view-link:hover { text-decoration: underline; }
 
-/* Badges de status */
+/* Status badges */
 .reserva-list-page .status-badge {
   display: inline-block;
   padding: 4px 8px;
@@ -231,15 +248,15 @@
   color: var(--text-main);
 }
 
-/* mapeamentos (case-insensitive pelo JS que gera a classe) */
-.reserva-list-page .status-ativa           { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; } /* green */
-.reserva-list-page .status-convertidaemproposta { background: #eef2ff; color: #3730a3; border-color: #c7d2fe; } /* indigo */
-.reserva-list-page .status-convertidaemvenda    { background: #fef3c7; color: #92400e; border-color: #fde68a; } /* amber */
-.reserva-list-page .status-distratada      { background: #fee2e2; color: #991b1b; border-color: #fecaca; } /* red */
-.reserva-list-page .status-expirada        { background: #f3f4f6; color: #374151; border-color: #e5e7eb; } /* gray */
-.reserva-list-page .status-cancelada       { background: #ffe4e6; color: #9f1239; border-color: #fecdd3; } /* rose */
+/* Mapeamentos de status */
+.reserva-list-page .status-ativa                 { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; } /* green */
+.reserva-list-page .status-convertidaemproposta  { background: #eef2ff; color: #3730a3; border-color: #c7d2fe; } /* indigo */
+.reserva-list-page .status-convertidaemvenda     { background: #fef3c7; color: #92400e; border-color: #fde68a; } /* amber */
+.reserva-list-page .status-distratada            { background: #fee2e2; color: #991b1b; border-color: #fecaca; } /* red */
+.reserva-list-page .status-expirada              { background: #f3f4f6; color: #374151; border-color: #e5e7eb; } /* gray */
+.reserva-list-page .status-cancelada             { background: #ffe4e6; color: #9f1239; border-color: #fecdd3; } /* rose */
 
-/* Paginação “sticky” no rodapé da área rolável */
+/* Paginação sticky */
 .reserva-list-page .pagination-bar {
   position: sticky;
   bottom: 0;
@@ -252,7 +269,6 @@
   border-top: 1px solid var(--border-color);
   margin-top: 4px;
 }
-
 .reserva-list-page .page-btn {
   padding: 8px 12px;
   border-radius: 8px;
@@ -264,14 +280,20 @@
 .reserva-list-page .page-btn:disabled { opacity: .5; cursor: not-allowed; }
 .reserva-list-page .page-info { color: var(--text-light); }
 
-/* Responsivo básico */
+/* Responsivo */
 @media (max-width: 900px) {
-  .reserva-list-page .page-header { flex-direction: column; align-items: flex-start; gap: 8px; }
-  .reserva-list-page .list-toolbar { width: 100%; justify-content: flex-start; }
+  .reserva-list-page .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .reserva-list-page .list-toolbar {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
-
 @media (max-width: 640px) {
   .reserva-list-page .filter-bar { padding: 10px; }
   .reserva-list-page .filter-group { width: 100%; }
-  .reserva-list-page .data-table { min-width: 760px; } /* segura layout; scroll horizontal resolve */
+  .reserva-list-page .data-table { min-width: 760px; }
 }
