@@ -1,93 +1,107 @@
-/* src/components/LeadTagsManager/LeadTagsManager.css */
+:root{
+  --primary:#8a4dff;
+  --primary-hover:#7b44e6;
+  --background:#f3f4f6;
+  --card-bg:#ffffff;
+  --text-main:#1f2937;
+  --text-light:#6b7280;
+  --border-color:#e5e7eb;
+  --danger:#ef4444;
 
-.tags-manager-container {
-    background-color: #f8f9fa;
-    padding: 20px;
-    border-radius: 6px;
-    border: 1px solid #e9ecef;
-    margin-top: 25px; /* Espaço em relação ao conteúdo acima */
-}
+  --radius:12px;
+  --shadow:0 8px 22px rgba(2,6,23,.08);
 
-.tags-manager-container h3 {
-    margin-top: 0;
-    margin-bottom: 15px;
-    font-size: 1.2em;
-    color: #343a40;
-    border-bottom: 1px solid #dee2e6;
-    padding-bottom: 10px;
-}
-
-.tags-manager-container .form-group {
-    margin-bottom: 15px;
-}
-.tags-manager-container .form-group label {
-    font-weight: 500;
-    margin-bottom: 5px;
-    display: block;
-}
-.tags-manager-container .form-group small {
-    color: #6c757d;
-    font-size: 0.85em;
-}
-.tags-manager-container .form-group input {
-    width: 100%;
-    padding: 8px 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+  --focus-ring: linear-gradient(90deg,
+                  rgba(138,77,255,.5),
+                  rgba(123,68,230,.5));
 }
 
-.tags-display-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 10px;
-  margin-top: 10px;
-  background-color: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  min-height: 40px;
+/* Container */
+.tags-manager-container{
+  background:var(--card-bg);
+  border:1px solid var(--border-color);
+  border-radius:var(--radius);
+  padding:1rem 1.25rem;
+  box-shadow:var(--shadow);
+}
+.tags-manager-container > h3{
+  font-size:1.05rem; font-weight:700;
+  margin-bottom:.75rem; color:var(--text-main);
 }
 
-.tag-item {
-  display: flex;
-  align-items: center;
-  background-color: #007bff;
-  color: white;
-  padding: 5px 10px;
-  border-radius: 15px;
-  font-size: 0.9em;
-  font-weight: 500;
-}
+/* Input com anel em degradê */
+.form-group{ margin-bottom:1rem; }
+.form-group label{ font-weight:600; display:block; margin-bottom:.25rem; }
+.form-group small{ color:var(--text-light); }
 
-.tag-item span {
-    margin-right: 8px;
+.input-wrap{
+  padding:2px;
+  border-radius:12px;
+  background:var(--border-color);
+  transition:background .2s ease;
 }
+.input-wrap:focus-within{ background:var(--focus-ring); }
 
-.tag-item button {
-  background: none;
-  border: none;
-  color: white;
-  cursor: pointer;
-  font-size: 1.3em;
-  line-height: 1;
-  padding: 0;
-  font-weight: bold;
-  opacity: 0.7;
+#tag-input{
+  width:100%;
+  padding:.65rem .85rem;
+  border:0; outline:0;
+  border-radius:10px;
+  background:#fff; color:var(--text-main);
+  box-shadow:0 1px 0 rgba(0,0,0,.02) inset;
 }
-.tag-item button:hover {
-  opacity: 1;
-}
+#tag-input:disabled{ background:#f3f4f6; color:#9ca3af; }
 
-.no-tags-message {
-  width: 100%;
-  text-align: center;
-  color: #6c757d;
-  font-style: italic;
-  font-size: 0.9em;
-  padding: 10px 0;
+/* Área das tags */
+.tags-display-container{
+  display:flex; flex-wrap:wrap; gap:.6rem;
+  min-height:44px;
+  padding:.65rem;
+  border-radius:12px; background:#fff;
+  border:1px dashed var(--border-color);
 }
+.no-tags-message{ margin:.25rem 0; color:var(--text-light); }
 
-.tags-manager-actions {
-    text-align: right;
-    margin-top: 15px;
+/* Chips com gradiente violeta */
+.tag-item{
+  display:inline-flex; align-items:center; gap:.45rem;
+  padding:.42rem .72rem;
+  border-radius:999px;
+  background:linear-gradient(135deg, #f5f3ff, #ede9fe);
+  color:#5b21b6; /* violeta escuro para contraste */
+  border:1px solid #ddd6fe;
+  font-weight:600; font-size:.9rem;
+}
+.tag-item button{
+  appearance:none; border:0; background:transparent;
+  color:#5b21b6; font-size:1rem; line-height:1;
+  padding:0 .12rem; cursor:pointer; border-radius:6px;
+}
+.tag-item button:hover{ background:rgba(91,33,182,.08); }
+.tag-item button:disabled{ opacity:.55; cursor:not-allowed; }
+
+/* Botão primário com gradiente fixo */
+.tags-manager-actions{
+  display:flex; justify-content:flex-end;
+  margin-top:1rem;
+}
+.button{
+  border-radius:10px; font-weight:700;
+  padding:.6rem 1rem;
+  border:0; cursor:pointer;
+  transition:.14s ease;
+}
+.button:active{ transform:translateY(1px); }
+.submit-button{
+  color:#fff;
+  background-image:linear-gradient(90deg, var(--primary), var(--primary-hover));
+  box-shadow:0 6px 16px rgba(138,77,255,.25);
+}
+.submit-button:hover{
+  filter:brightness(1.05);
+  box-shadow:0 8px 20px rgba(123,68,230,.32);
+}
+.submit-button:disabled{
+  opacity:.75; cursor:not-allowed;
+  box-shadow:none; filter:saturate(.9);
 }

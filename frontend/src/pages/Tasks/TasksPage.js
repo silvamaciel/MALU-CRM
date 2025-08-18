@@ -108,31 +108,9 @@ function TasksPage() {
         </div>
 
       </div>
-      {/* Paginação sticky ao final do conteúdo */}
-        {totalPages > 1 && (
-          <div className="pagination-bar">
-            <button
-              onClick={() => handlePageChange(page - 1)}
-              disabled={page <= 1}
-              className="page-btn"
-              type="button"
-            >
-              ◀ Anterior
-            </button>
-            <span className="page-info">
-              Página {page} de {totalPages} — {totalTasks} tarefas
-            </span>
-            <button
-              onClick={() => handlePageChange(page + 1)}
-              disabled={page >= totalPages}
-              className="page-btn"
-              type="button"
-            >
-              Próxima ▶
-            </button>
-          </div>
-        )}
+
     </div>
+    
   );
 }
 

@@ -1,59 +1,115 @@
-/* src/components/LeadTagsModal/LeadTagsModal.css */
-/* O .form-modal-overlay e .form-modal-content podem ser reutilizados de um CSS global de modais */
-.form-modal-overlay {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex; align-items: center; justify-content: center; z-index: 1050;
-}
-.form-modal-content {
-  background-color: #fff; padding: 25px 30px; border-radius: 8px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); width: 100%;
+/* =========================================================
+   LeadTagsModal.css  —  Padrão visual unificado (violeta)
+   ========================================================= */
+
+:root{
+  --primary:#8a4dff;
+  --primary-hover:#7b44e6;
+  --background:#f3f4f6;
+  --card-bg:#ffffff;
+  --text-main:#1f2937;
+  --text-light:#6b7280;
+  --border-color:#e5e7eb;
+  --danger:#ef4444;
+
+  --radius:16px;
+  --shadow:0 10px 30px rgba(2,6,23,.12);
+  --overlay:rgba(2,6,23,.48);
+  --focus:0 0 0 3px rgba(138,77,255,.35);
 }
 
-.tags-display-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 10px;
-  margin-top: 10px;
-  margin-bottom: 20px;
-  background-color: #f8f9fa;
-  border: 1px solid #e9ecef;
-  border-radius: 4px;
-  min-height: 50px;
+.form-modal-overlay{
+  position:fixed; inset:0; z-index:1000;
+  display:grid; place-items:center;
+  background:var(--overlay);
+  animation: modalFadeIn .22s ease;
+}
+@keyframes modalFadeIn{ from{opacity:0} to{opacity:1} }
+
+.form-modal-content{
+  position:relative; width:min(560px,92vw);
+  background:var(--card-bg); color:var(--text-main);
+  border:1px solid var(--border-color);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:1rem 1.25rem 1rem;
+  transform:translateY(12px) scale(.985);
+  animation: modalUp .22s cubic-bezier(.2,.8,.2,1) forwards;
+}
+@keyframes modalUp{
+  to{ transform:translateY(0) scale(1); }
 }
 
-.tag-item {
-  display: flex;
-  align-items: center;
-  background-color: #007bff;
-  color: white;
-  padding: 5px 10px;
-  border-radius: 15px; /* Bordas arredondadas para pílula */
-  font-size: 0.9em;
-  font-weight: 500;
+.form-modal-content > h2{
+  font-size:1.1rem; font-weight:800; margin:0 0 .75rem 0;
 }
 
-.tag-item button {
-  background: none;
-  border: none;
-  color: white;
-  margin-left: 8px;
-  cursor: pointer;
-  font-size: 1.2em;
-  line-height: 1;
-  padding: 0;
-  font-weight: bold;
+.form-group{ margin-bottom:1rem; }
+.form-group label{
+  display:block; font-weight:700; margin-bottom:.25rem;
 }
-.tag-item button:hover {
-  opacity: 0.8;
+.form-group small{ color:var(--text-light); }
+
+#tag-input{
+  width:100%; padding:.65rem .8rem;
+  border:1px solid var(--border-color);
+  border-radius:12px; background:#fff; color:var(--text-main);
+  transition:border-color .12s ease, box-shadow .12s ease;
+}
+#tag-input:focus{
+  outline:none; border-color:var(--primary); box-shadow:var(--focus);
+}
+#tag-input:disabled{ background:#f3f4f6; color:#9ca3af; }
+
+.tags-display-container{
+  display:flex; flex-wrap:wrap; gap:.5rem;
+  min-height:40px; padding:.5rem; border:1px dashed var(--border-color);
+  border-radius:12px; background:#fff;
+}
+.no-tags-message{ margin:.25rem 0; color:var(--text-light); }
+
+.tag-item{
+  display:inline-flex; align-items:center; gap:.35rem;
+  padding:.35rem .6rem; border-radius:999px;
+  background:#f5f3ff; color:#5b21b6; /* roxo escuro */
+  border:1px solid #ede9fe; font-weight:600; font-size:.9rem;
+}
+.tag-item button{
+  appearance:none; border:0; background:transparent;
+  color:#5b21b6; font-size:1rem; line-height:1;
+  padding:0 .1rem; cursor:pointer; border-radius:8px;
+}
+.tag-item button:hover{ background:#ede9fe; }
+.tag-item button:disabled{ opacity:.55; cursor:not-allowed; }
+
+.form-actions{
+  display:flex; gap:.75rem; justify-content:flex-end;
+  padding-top:1rem; border-top:1px solid var(--border-color);
 }
 
-.no-tags-message {
-  width: 100%;
-  text-align: center;
-  color: #6c757d;
-  font-style: italic;
-  font-size: 0.9em;
-  padding: 10px 0;
+.button{
+  appearance:none; cursor:pointer; user-select:none;
+  border:1px solid var(--border-color); border-radius:12px;
+  padding:.6rem .95rem; font-weight:700; transition:.12s ease;
+  background:#fff; color:var(--text-main);
+}
+.button:active{ transform:translateY(1px); }
+.button:focus-visible{ outline:none; box-shadow:var(--focus); }
+
+.cancel-button{ background:#fff; }
+.cancel-button:hover{ background:#f3f4f6; }
+
+.submit-button{
+  background:var(--primary); color:#fff; border-color:transparent;
+}
+.submit-button:hover{ background:var(--primary-hover); }
+.submit-button:disabled{
+  opacity:.75; cursor:not-allowed; filter:saturate(.85);
+}
+
+@media (max-width:640px){
+  .form-modal-content{
+    width:100vw; max-width:100vw; border-radius:16px 16px 0 0;
+    margin:0; padding:1rem 1rem .75rem;
+  }
 }
