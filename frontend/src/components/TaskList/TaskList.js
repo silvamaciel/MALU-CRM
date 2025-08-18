@@ -8,7 +8,15 @@ import EditTaskModal from '../EditTaskModal/EditTaskModal';
 import CreateTaskModal from '../CreateTaskModal/CreateTaskModal';
 import './styleTaskList.css';
 
-function TaskList({ filters, onTaskUpdate, currentLeadId = null }) {
+function TaskList({
+  filters,
+  onTaskUpdate,
+  currentLeadId = null,
+  // novos props p/ paginação:
+  page = 1,
+  limit = 10,
+  onLoaded, // (meta) => { total, totalPages, currentPage }
+}) {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -21,8 +29,10 @@ function TaskList({ filters, onTaskUpdate, currentLeadId = null }) {
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  // Novo: escopo do owner (todas/minhas), com persistência
-  const [ownerScope, setOwnerScope] = useState(() => localStorage.getItem('taskScope') || 'all');
+  // Escopo (todas/minhas) com persistência
+  const [ownerScope, setOwnerScope] = useState(
+    () => localStorage.getItem('taskScope') || 'all'
+  );
   useEffect(() => {
     localStorage.setItem('taskScope', ownerScope);
   }, [ownerScope]);
@@ -34,28 +44,35 @@ function TaskList({ filters, onTaskUpdate, currentLeadId = null }) {
         ...(filters || {}),
         ...(currentLeadId ? { lead: currentLeadId } : {}),
         ...(ownerScope === 'mine' ? { mine: '1' } : {}),
+        page,
+        limit,
       };
 
       const data = await getTasksApi(effectiveFilters);
-      const raw = data.tasks || [];
-      const scoped = currentLeadId
-        ? raw.filter(t => (t.lead?._id || t.lead) === currentLeadId)
-        : raw;
+      // Backend retorna: { tasks, kpis, totalTasks, totalPages, currentPage }
+      const list = Array.isArray(data?.tasks) ? data.tasks : [];
 
-      setTasks(scoped);
+      setTasks(list);
+      onLoaded?.({
+        total: data?.totalTasks ?? list.length,
+        totalPages: data?.totalPages ?? 1,
+        currentPage: data?.currentPage ?? page,
+      });
     } catch (error) {
       toast.error('Erro ao carregar a lista de tarefas.');
       console.error('Erro em fetchTasks:', error);
+      setTasks([]);
+      onLoaded?.({ total: 0, totalPages: 1, currentPage: 1 });
     } finally {
       setLoading(false);
     }
-  }, [filters, currentLeadId, ownerScope]);
+  }, [filters, currentLeadId, ownerScope, page, limit, onLoaded]);
 
   useEffect(() => {
     fetchTasks();
   }, [fetchTasks]);
 
-  const handleOpenEditModal = task => {
+  const handleOpenEditModal = (task) => {
     setTaskToEdit(task);
     setIsEditModalOpen(true);
   };
@@ -66,7 +83,7 @@ function TaskList({ filters, onTaskUpdate, currentLeadId = null }) {
   const handleEditSuccess = () => {
     handleCloseEditModal();
     fetchTasks();
-    if (onTaskUpdate) onTaskUpdate();
+    onTaskUpdate?.();
   };
 
   const handleOpenCreateModal = () => setIsCreateModalOpen(true);
@@ -74,22 +91,22 @@ function TaskList({ filters, onTaskUpdate, currentLeadId = null }) {
   const handleCreateSuccess = () => {
     handleCloseCreateModal();
     fetchTasks();
-    if (onTaskUpdate) onTaskUpdate();
+    onTaskUpdate?.();
   };
 
-  const handleToggleStatus = async task => {
+  const handleToggleStatus = async (task) => {
     try {
       const newStatus = task.status === 'Pendente' ? 'Concluída' : 'Pendente';
       await updateTaskApi(task._id, { status: newStatus });
       toast.success(`Tarefa marcada como ${newStatus.toLowerCase()}!`);
       fetchTasks();
-      if (onTaskUpdate) onTaskUpdate();
+      onTaskUpdate?.();
     } catch {
       toast.error('Erro ao atualizar status da tarefa.');
     }
   };
 
-  const handleOpenDeleteModal = task => {
+  const handleOpenDeleteModal = (task) => {
     setDeleteTarget(task);
     setIsDeleteModalOpen(true);
   };
@@ -100,7 +117,7 @@ function TaskList({ filters, onTaskUpdate, currentLeadId = null }) {
       await deleteTaskApi(deleteTarget._id);
       toast.success('Tarefa excluída com sucesso!');
       fetchTasks();
-      if (onTaskUpdate) onTaskUpdate();
+      onTaskUpdate?.();
     } catch {
       toast.error('Falha ao excluir tarefa.');
     } finally {
@@ -138,7 +155,7 @@ function TaskList({ filters, onTaskUpdate, currentLeadId = null }) {
 
       <div className="tasks-list-component">
         {tasks.length > 0 ? (
-          tasks.map(task => (
+          tasks.map((task) => (
             <div
               key={task._id}
               className={`task-item-full status-${task.status.toLowerCase()}`}
@@ -148,19 +165,27 @@ function TaskList({ filters, onTaskUpdate, currentLeadId = null }) {
                   type="checkbox"
                   checked={task.status === 'Concluída'}
                   onChange={() => handleToggleStatus(task)}
-                  title={`Marcar como ${task.status === 'Pendente' ? 'Concluída' : 'Pendente'}`}
+                  title={`Marcar como ${
+                    task.status === 'Pendente' ? 'Concluída' : 'Pendente'
+                  }`}
                 />
               </div>
               <div className="task-content">
                 <p className="task-title">{task.title}</p>
-                {task.description && <p className="task-description">{task.description}</p>}
+                {task.description && (
+                  <p className="task-description">{task.description}</p>
+                )}
                 <div className="task-metadata-full">
                   <span>
-                    Vence em: <strong>{new Date(task.dueDate).toLocaleString('pt-BR')}</strong>
+                    Vence em:{' '}
+                    <strong>
+                      {new Date(task.dueDate).toLocaleString('pt-BR')}
+                    </strong>
                   </span>
                   {task.lead && (
                     <span>
-                      Lead: <Link to={`/leads/${task.lead._id}`}>{task.lead.nome}</Link>
+                      Lead:{' '}
+                      <Link to={`/leads/${task.lead._id}`}>{task.lead.nome}</Link>
                     </span>
                   )}
                   <span>
@@ -169,13 +194,25 @@ function TaskList({ filters, onTaskUpdate, currentLeadId = null }) {
                 </div>
               </div>
               <div className="task-actions">
-                <button onClick={() => handleOpenEditModal(task)} className="button-link edit-link-task">Editar</button>
-                <button onClick={() => handleOpenDeleteModal(task)} className="button-link delete-link-task">Excluir</button>
+                <button
+                  onClick={() => handleOpenEditModal(task)}
+                  className="button-link edit-link-task"
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={() => handleOpenDeleteModal(task)}
+                  className="button-link delete-link-task"
+                >
+                  Excluir
+                </button>
               </div>
             </div>
           ))
         ) : (
-          <p className="no-tasks-message">Nenhuma tarefa encontrada para este filtro.</p>
+          <p className="no-tasks-message">
+            Nenhuma tarefa encontrada para este filtro.
+          </p>
         )}
       </div>
 

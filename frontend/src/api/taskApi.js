@@ -4,17 +4,24 @@ import axiosInstance from "./axiosInstance";
 const API_URL = '/tasks';
 
 /**
- * Busca tarefas com base em filtros (ex: por leadId).
- * @param {object} params - Objeto de filtros, ex: { lead: 'LEAD_ID' }.
+ * Busca tarefas paginadas + KPIs.
+ * Aceita filtros e paginação: { status, lead, assignedTo, page, limit }
+ * Retorno: { tasks, kpis, totalTasks, totalPages, currentPage }
  */
 export const getTasksApi = async (params = {}) => {
-    try {
-        const response = await axiosInstance.get(API_URL, { params });
-        return response.data.data; // Retorna o array de tarefas
-    } catch (error) {
-        console.error("Erro ao buscar tarefas:", error.response?.data || error.message);
-        throw error.response?.data || new Error("Falha ao buscar tarefas.");
+  try {
+    const response = await axiosInstance.get(API_URL, { params });
+    // O backend envia em response.data.data
+    const payload = response?.data?.data;
+    // payload deve ser: { tasks, kpis, totalTasks, totalPages, currentPage }
+    if (!payload || typeof payload !== "object") {
+      throw new Error("Resposta inesperada do servidor.");
     }
+    return payload;
+  } catch (error) {
+    console.error("Erro ao buscar tarefas:", error.response?.data || error.message);
+    throw error.response?.data || new Error("Falha ao buscar tarefas.");
+  }
 };
 
 /**

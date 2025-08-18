@@ -5,65 +5,135 @@ import TaskList from '../../components/TaskList/TaskList';
 import './TasksPage.css';
 
 const KPICard = ({ title, value, className }) => (
-    <div className={`kpi-card-task ${className}`}>
-        <span className="kpi-value">{value}</span>
-        <span className="kpi-label">{title}</span>
-    </div>
+  <div className={`kpi-card-task ${className}`}>
+    <span className="kpi-value">{value}</span>
+    <span className="kpi-label">{title}</span>
+  </div>
 );
 
 function TasksPage() {
-    const [kpis, setKpis] = useState({ concluidas: 0, vencidas: 0, aVencer: 0 });
-    const [loadingKpis, setLoadingKpis] = useState(true);
-    const [filter, setFilter] = useState('Pendente');
-    const [refreshKey, setRefreshKey] = useState(0); // Para forçar a atualização dos KPIs
+  const [kpis, setKpis] = useState({ concluidas: 0, vencidas: 0, aVencer: 0 });
+  const [loadingKpis, setLoadingKpis] = useState(true);
 
-    // Esta função agora busca apenas os KPIs. A lista de tarefas será buscada pelo TaskList.
-    const fetchKpis = useCallback(async () => {
-        setLoadingKpis(true);
-        try {
-            // O backend já filtra pelo utilizador logado. A API retorna os KPIs de qualquer forma.
-            const data = await getTasksApi();
-            setKpis(data.kpis || { concluidas: 0, vencidas: 0, aVencer: 0 });
-        } catch (error) {
-            toast.error("Erro ao carregar KPIs de tarefas.");
-        } finally {
-            setLoadingKpis(false);
-        }
-    }, []);
+  const [filter, setFilter] = useState('Pendente');
 
-    useEffect(() => {
-        fetchKpis();
-    }, [fetchKpis, refreshKey]);
+  // paginação
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalTasks, setTotalTasks] = useState(0);
 
-    // O objeto de filtros que será passado para o componente TaskList
-    // O backend já adiciona o 'assignedTo' automaticamente, não precisamos enviar
-    const taskFilters = {
-        status: filter,
-    };
+  const [refreshKey, setRefreshKey] = useState(0); // Força recarregar KPIs após update
 
-    return (
-        <div className="admin-page tasks-page">
-            <header className="page-header">
-                <h1>Minhas Tarefas</h1>
-            </header>
-            <div className="page-content">
-                <div className="kpi-container-tasks">
-                    <KPICard title="A Vencer" value={kpis.aVencer} className="kpi-due" />
-                    <KPICard title="Vencidas" value={kpis.vencidas} className="kpi-overdue" />
-                    <KPICard title="Concluídas" value={kpis.concluidas} className="kpi-done" />
-                </div>
+  // KPIs (independente de paginação)
+  const fetchKpis = useCallback(async () => {
+    setLoadingKpis(true);
+    try {
+      const data = await getTasksApi(); // backend já filtra pelo usuário
+      setKpis(data.kpis || { concluidas: 0, vencidas: 0, aVencer: 0 });
+    } catch {
+      toast.error('Erro ao carregar KPIs de tarefas.');
+    } finally {
+      setLoadingKpis(false);
+    }
+  }, []);
 
-                <div className="tasks-filters">
-                    <button onClick={() => setFilter('Pendente')} className={`button ${filter === 'Pendente' ? 'primary-button' : 'outline-button'}`}>Pendentes</button>
-                    <button onClick={() => setFilter('Concluída')} className={`button ${filter === 'Concluída' ? 'primary-button' : 'outline-button'}`}>Concluídas</button>
-                </div>
+  useEffect(() => { fetchKpis(); }, [fetchKpis, refreshKey]);
 
-                <div className="tasks-list-container">
-                    <TaskList filters={taskFilters} onTaskUpdate={() => setRefreshKey(prev => prev + 1)} />
-                </div>
-            </div>
+  // Filtros passados ao TaskList
+  const taskFilters = { status: filter };
+
+  // Quando trocar o filtro, voltar para a página 1
+  useEffect(() => { setPage(1); }, [filter, limit]);
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) setPage(newPage);
+  };
+
+  return (
+    <div className="admin-page tasks-page">
+      <header className="page-header">
+        <h1>Minhas Tarefas</h1>
+        <div className="list-toolbar">
+          <label className="limit-label">
+            Itens por página:
+            <select
+              value={limit}
+              onChange={(e) => setLimit(Number(e.target.value))}
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </label>
         </div>
-    );
+      </header>
+
+      <div className="page-content">
+        <div className="kpi-container-tasks">
+          <KPICard title="A Vencer" value={kpis.aVencer} className="kpi-due" />
+          <KPICard title="Vencidas" value={kpis.vencidas} className="kpi-overdue" />
+          <KPICard title="Concluídas" value={kpis.concluidas} className="kpi-done" />
+        </div>
+
+        <div className="tasks-filters">
+          <button
+            onClick={() => setFilter('Pendente')}
+            className={`button ${filter === 'Pendente' ? 'primary-button' : 'outline-button'}`}
+          >
+            Pendentes
+          </button>
+          <button
+            onClick={() => setFilter('Concluída')}
+            className={`button ${filter === 'Concluída' ? 'primary-button' : 'outline-button'}`}
+          >
+            Concluídas
+          </button>
+        </div>
+
+        <div className="tasks-list-container">
+          <TaskList
+            key={`${filter}-${page}-${limit}`}     // força recarregar quando mudar
+            filters={taskFilters}
+            page={page}
+            limit={limit}
+            onLoaded={(meta) => {
+              // meta esperado do TaskList
+              setTotalTasks(meta?.total ?? 0);
+              setTotalPages(meta?.totalPages ?? 1);
+              if (meta?.currentPage) setPage(meta.currentPage);
+            }}
+            onTaskUpdate={() => setRefreshKey(prev => prev + 1)}
+          />
+        </div>
+
+      </div>
+      {/* Paginação sticky ao final do conteúdo */}
+        {totalPages > 1 && (
+          <div className="pagination-bar">
+            <button
+              onClick={() => handlePageChange(page - 1)}
+              disabled={page <= 1}
+              className="page-btn"
+              type="button"
+            >
+              ◀ Anterior
+            </button>
+            <span className="page-info">
+              Página {page} de {totalPages} — {totalTasks} tarefas
+            </span>
+            <button
+              onClick={() => handlePageChange(page + 1)}
+              disabled={page >= totalPages}
+              className="page-btn"
+              type="button"
+            >
+              Próxima ▶
+            </button>
+          </div>
+        )}
+    </div>
+  );
 }
 
 export default TasksPage;
