@@ -40,63 +40,71 @@ const coerceToDate = async (val) => {
  * Lista conversas com cursor pagination + lastMessage e unreadCount embarcados.
  * GET /conversations?limit=30&cursor=<base64>
  */
-const listConversations = async (companyId, { limit = 30, cursor = null } = {}) => {
-    if (!companyId) return { items: [], nextCursor: null };
+const listConversations = async (
+  companyId,
+  { limit = 30, cursor = null, leadId = null } = {}
+) => {
+  if (!companyId) return { items: [], nextCursor: null };
 
-    // Filtro base
-    const match = { company: new mongoose.Types.ObjectId(companyId) };
-    // Cursor composto (lastMessageAt desc, _id desc)
-    if (cursor) {
-        const c = decodeCursor(cursor);
-        if (c?.ts && c?.id) {
-            match.$or = [
-                { lastMessageAt: { $lt: c.ts } },
-                { lastMessageAt: c.ts, _id: { $lt: c.id } }
-            ];
-        }
+  // Filtro base
+  const match = { company: new mongoose.Types.ObjectId(companyId) };
+
+  // 👉 Filtro opcional por lead
+  if (leadId) {
+    try {
+      match.lead = new mongoose.Types.ObjectId(leadId);
+    } catch {
+      // leadId inválido => retorna vazio, mas não quebra
+      return { items: [], nextCursor: null };
     }
+  }
 
-    // Pipeline agregada para matar N+1
-    const pipeline = [
-        { $match: match },
-        { $sort: { lastMessageAt: -1, _id: -1 } },
-        { $limit: Number(limit) + 1 },
+  // Cursor composto (lastMessageAt desc, _id desc)
+  if (cursor) {
+    const c = decodeCursor(cursor);
+    if (c?.ts && c?.id) {
+      match.$or = [
+        { lastMessageAt: { $lt: c.ts } },
+        { lastMessageAt: c.ts, _id: { $lt: c.id } },
+      ];
+    }
+  }
 
-        // last message
-        {
-          $lookup: {
-            from: 'messages',
-            let: { convId: '$_id' },
-            pipeline: [
-              { $match: { $expr: { $eq: ['$conversation', '$$convId'] } } },
-              { $sort: { createdAt: -1 } },
-              { $limit: 1 },
-              { $project: { direction: 1, content: 1 } }
-            ],
-            as: 'lastMsg'
-          }
-        },
-        {
-          $addFields: {
-            lastMessage: { $ifNull: [{ $arrayElemAt: ['$lastMsg.content', 0] }, '' ] },
-            lastMessageDirection: { $arrayElemAt: ['$lastMsg.direction', 0] }
-          }
-        },
-        {
-          $project: {
-            lastMsg: 0
-          }
-        }
-    ];
+  const pipeline = [
+    { $match: match },
+    { $sort: { lastMessageAt: -1, _id: -1 } },
+    { $limit: Number(limit) + 1 },
 
-    const docs = await Conversation.aggregate(pipeline).exec();
+    // last message
+    {
+      $lookup: {
+        from: 'messages',
+        let: { convId: '$_id' },
+        pipeline: [
+          { $match: { $expr: { $eq: ['$conversation', '$$convId'] } } },
+          { $sort: { createdAt: -1 } },
+          { $limit: 1 },
+          { $project: { direction: 1, content: 1 } },
+        ],
+        as: 'lastMsg',
+      },
+    },
+    {
+      $addFields: {
+        lastMessage: { $ifNull: [{ $arrayElemAt: ['$lastMsg.content', 0] }, '' ] },
+        lastMessageDirection: { $arrayElemAt: ['$lastMsg.direction', 0] },
+      },
+    },
+    { $project: { lastMsg: 0 } },
+  ];
 
-    const hasExtra = docs.length > limit;
-    const items = hasExtra ? docs.slice(0, limit) : docs;
-    const nextCursor = hasExtra ? encodeCursor(docs[limit - 1]) : null;
+  const docs = await Conversation.aggregate(pipeline).exec();
 
-    // Nota: unreadCount confiável vem da Conversation (você já reseta na leitura)
-    return { items, nextCursor };
+  const hasExtra = docs.length > limit;
+  const items = hasExtra ? docs.slice(0, limit) : docs;
+  const nextCursor = hasExtra ? encodeCursor(docs[limit - 1]) : null;
+
+  return { items, nextCursor };
 };
 
 

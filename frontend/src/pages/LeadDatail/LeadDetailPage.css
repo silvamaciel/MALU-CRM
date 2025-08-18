@@ -1,132 +1,193 @@
-/* src/pages/LeadDetail/LeadDetailPage.css */
+/* =========================================
+   LeadDetailPage.css — versão colorida
+   Usa variáveis globais do CRM:
+   --primary, --primary-hover, --border-color, --card-bg,
+   --background, --text-main, --text-light, --success, --danger, --warning
+   ========================================= */
 
-/* tokens simples p/ espaçamentos fluidos */
 :root{
-  --app-header-h: 64px;                 /* ajuste se seu header tem outra altura */
-  --page-pad: clamp(12px, 2vw, 20px);
-  --gap: clamp(8px, 1.4vw, 14px);
-  --card-bg: #fff;
-  --card-br: 10px;
-  --card-bd: #e9edf3;
-  --shadow: 0 4px 14px rgba(15,23,42,.06);
+  --primary:#6f42c1;
+  --primary-hover:#5a32a3;
+  --border-color:#e5e7eb;
+  --card-bg:#ffffff;
+  --background:#f6f8fb;
+  --text-main:#0f172a;
+  --text-light:#6b7280;
+  --success:#16a34a;
+  --danger:#ef4444;
+  --warning:#f59e0b;
 }
 
-/* ===== Página ===== */
 .lead-detail-page{
-  display: grid;
-  grid-template-rows: auto 1fr;
-  gap: var(--gap);
-  padding: var(--page-pad);
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: var(--shadow);
-
-  /* o segredo do scroll em telas baixas */
-  min-height: calc(100dvh - var(--app-header-h));
-  max-height: none;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
+  background:var(--background);
+  color:var(--text-main);
+  padding:16px;
+  border-radius:12px;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
 }
 
-/* estados */
+/* estados básicos */
 .lead-detail-page.loading,
 .lead-detail-page.error-page{
-  text-align:center; padding: 2rem; font-size: 1rem;
+  display:grid; place-items:center; min-height:50vh;
+  color:var(--text-light);
 }
 
-/* ===== Header/Ações (component LeadHeaderActions) ===== */
-.lead-detail-page .lead-header-actions,
-.lead-detail-page .detail-header,
-.lead-detail-page .header-actions{
-  display:flex; align-items:center; gap: .5rem; flex-wrap: wrap;
+/* ===== header de ações (componente externo) ===== */
+.lead-header-actions{
+  background:var(--card-bg);
+  border:1px solid var(--border-color);
+  border-radius:12px;
+  padding:12px;
+  box-shadow:0 4px 18px rgba(15,23,42,.05);
 }
 
-/* se ainda ficar apertado, deixa rolar horizontalmente */
-.lead-detail-page .lead-header-actions{
-  overflow-x: auto; padding-bottom: 2px;
-}
-.lead-detail-page .lead-header-actions::-webkit-scrollbar{ height:6px }
-.lead-detail-page .lead-header-actions::-webkit-scrollbar-thumb{
-  background:#cbd5e1; border-radius:6px;
-}
-
-/* ===== Grid principal ===== */
+/* ===== layout principal ===== */
 .detail-layout-grid{
-  display: grid;
-  grid-template-columns: 1fr;       /* mobile: 1 col */
-  gap: var(--gap);
-  min-height: 0;                    /* permite scroll interno se precisar */
+  display:grid;
+  grid-template-columns: 1.4fr 1fr; /* info + histórico */
+  grid-template-areas:
+    "info history"
+    "tasks history";
+  gap:14px;
 }
 
-/* desktop: 2 colunas */
-@media (min-width: 992px){
-  .detail-layout-grid{ grid-template-columns: 1.2fr 1fr; }
+/* ===== cartões base ===== */
+.card{
+  background:var(--card-bg);
+  border:1px solid var(--border-color);
+  border-radius:12px;
+  box-shadow:0 8px 26px rgba(15,23,42,.06);
+  overflow:hidden;
 }
 
-/* transforma os filhos em cards compactos */
-.detail-layout-grid > *{
-  background: var(--card-bg);
-  border: 1px solid var(--card-bd);
-  border-radius: var(--card-br);
-  box-shadow: var(--shadow);
-  padding: clamp(12px, 1.4vw, 16px);
+.card .card-header{
+  padding:10px 12px;
+  font-weight:800;
+  font-size:13px;
+  border-bottom:1px solid var(--border-color);
+  background:linear-gradient(90deg, rgba(111,66,193,.12), rgba(111,66,193,0));
+  position:relative;
+}
+.card .card-header::before{
+  content:""; position:absolute; left:0; top:0; bottom:0; width:4px;
+  background:var(--primary);
+}
+.card .card-body{ padding:12px }
+
+/* ===== LeadInfo (coluna esquerda topo) ===== */
+.lead-info-card{ grid-area: info }
+.lead-info-card .info-grid{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(180px,1fr));
+  gap:10px 14px;
+}
+.lead-info-card .info-item{
+  display:flex; flex-direction:column; gap:4px;
+  font-size:13px;
+}
+.lead-info-card .info-item label{
+  font-size:11px; text-transform:uppercase; letter-spacing:.02em;
+  color:var(--text-light); font-weight:800;
+}
+.lead-info-card .info-item .value{
+  background:#fafaff; border:1px solid #ecebff;
+  padding:8px 10px; border-radius:10px;
 }
 
-/* Títulos dos cards */
-.detail-layout-grid h2{
-  margin: 0 0 .5rem 0;
-  font-weight: 600;
-  font-size: clamp(15px, 1.2vw, 18px);
-  color: #0f172a;
+/* tags */
+.lead-info-card .tags{
+  display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;
+}
+.lead-info-card .tag{
+  background:#ede9fe; color:#4c1d95; border:1px solid #ddd6fe;
+  font-size:11px; font-weight:800; padding:3px 8px; border-radius:999px;
 }
 
-/* ===== Mensagens de erro info ===== */
+/* status pill */
+.status-pill{
+  display:inline-flex; align-items:center; gap:6px;
+  background:#f3f0ff; color:#4c1d95; border:1px solid #e5d9ff;
+  padding:4px 10px; border-radius:999px; font-weight:800; font-size:12px;
+}
+
+/* ===== LeadHistory (coluna direita) ===== */
+.lead-history-card{ grid-area: history }
+.lead-history-card .card-body{
+  max-height: calc(100vh - 260px);
+  overflow:auto;
+}
+.history-item{
+  display:grid; grid-template-columns: 110px 1fr;
+  gap:10px; padding:10px 0; border-bottom:1px dashed var(--border-color);
+  font-size:13px;
+}
+.history-item:last-child{ border-bottom:none }
+.history-item .when{
+  color:var(--text-light); font-weight:700;
+}
+.history-item .what{
+  line-height:1.35;
+}
+.history-badge{
+  background:#ecfeff; color:#083344; border:1px solid #cffafe;
+  font-size:11px; font-weight:800; padding:2px 8px; border-radius:999px;
+}
+
+/* ===== Tarefas (baseado em TaskList) ===== */
+.tasks-section{ grid-area: tasks }
+.tasks-section > h2{
+  margin:0 0 8px 0; font-size:14px; font-weight:900;
+}
+.tasks-section .card{
+  border-color:#dbeafe;
+  box-shadow:0 8px 26px rgba(59,130,246,.08);
+}
+.tasks-section .card .card-header{
+  background:linear-gradient(90deg, rgba(59,130,246,.12), rgba(59,130,246,0));
+}
+.tasks-section .card .card-header::before{ background:#3b82f6 }
+
+/* ===== utilidades para botões primários/perigo ===== */
+.btn-primary{
+  background:var(--primary); border:1px solid var(--primary); color:#fff;
+  padding:8px 12px; border-radius:10px; font-weight:800; cursor:pointer;
+  transition:filter .15s ease, transform .05s ease;
+}
+.btn-primary:hover{ filter:brightness(.96) }
+.btn-primary:active{ transform:translateY(1px) }
+
+.btn-danger{
+  background:var(--danger); border:1px solid var(--danger); color:#fff;
+}
+.btn-outline{
+  background:#fff; color:var(--primary); border:1px solid var(--primary);
+}
+
+/* ===== mensagens de erro avulsas ===== */
 .error-message{
-  color:#721c24; background:#f8d7da; border:1px solid #f5c6cb;
-  padding:.75rem; border-radius:6px; margin: .25rem 0 .5rem 0;
-  font-size: .95rem;
+  color:var(--danger); font-weight:700; font-size:12px;
+  background:#fff1f2; border:1px solid #ffe4e6; padding:8px 10px;
+  border-radius:10px;
 }
 
-/* ===== Histórico (altura adaptável) ===== */
-.lead-history-list{
-  list-style:none; margin:0; padding:.5rem;
-  border:1px solid #eef2f7; border-radius:8px; background:#fafbfc;
-
-  /* limita sem cortar a página */
-  max-height: min(40vh, 360px);
-  overflow:auto; -webkit-overflow-scrolling:touch;
+/* ===== responsivo ===== */
+@media (max-width:1024px){
+  .detail-layout-grid{
+    grid-template-columns:1fr;
+    grid-template-areas:
+      "info"
+      "history"
+      "tasks";
+  }
+  .lead-info-card .info-grid{
+    grid-template-columns:1fr 1fr;
+  }
 }
-.history-entry{ padding:.5rem .25rem; border-bottom:1px solid #f1f5f9; font-size:.95rem }
-.history-entry:last-child{ border-bottom:none }
-.history-timestamp{ display:block; font-size:.8rem; color:#64748b; margin-bottom:.15rem }
-
-/* ===== Tarefas ===== */
-.tasks-section h2{ margin-bottom:.5rem }
-
-/* ===== Botões genéricos da página (se usados aqui) ===== */
-.button{
-  padding: .55rem .9rem; border-radius:8px; font-weight:600;
-  border:1px solid #e5e7eb; background:#fff; color:#0f172a;
-  font-size: clamp(13px, 0.9vw, 15px); cursor:pointer;
+@media (max-width:640px){
+  .lead-info-card .info-grid{ grid-template-columns:1fr }
+  .history-item{ grid-template-columns: 1fr }
 }
-.button:hover{ filter: brightness(.98) }
-.back-button{ background:#f1f5f9 } .back-button:hover{ background:#e2e8f0 }
-.edit-button{ background:#fff7e0; border-color:#ffe08a }
-.discard-button-detail, .delete-button-detail{
-  background:#fee2e2; border-color:#fecaca; color:#991b1b;
-}
-.reactivate-button{ background:#dcfce7; border-color:#bbf7d0; color:#166534 }
-
-/* ===== Ajustes finos nos espaçamentos ===== */
-.detail-item{ background:#f8fafc; border:1px solid #eef2f7; border-radius:8px;
-  padding: .75rem }
-.detail-label{ font-size:.8rem; color:#475569; margin-bottom:.25rem; text-transform:uppercase }
-.detail-value{ font-size:.95rem; color:#0f172a }
-
-/* quando houver bloco de conversa vazio, não ocupa “buraco” */
-.lead-conversations-column:empty{ display:none }
-
-/* scrollbars sutis (opcional) */
-.lead-detail-page::-webkit-scrollbar{ width:10px }
-.lead-detail-page::-webkit-scrollbar-thumb{ background:#cbd5e1; border-radius:8px }

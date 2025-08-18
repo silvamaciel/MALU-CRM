@@ -1,5 +1,3 @@
-// src/pages/LeadDetail/LeadDetailPage.js
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -19,8 +17,10 @@ import LeadInfo from "./components/LeadInfo";
 import LeadHistory from "./components/LeadHistory";
 import TaskList from '../../components/TaskList/TaskList';
 
+import ChatModalForLead from "./components/ChatModalForLead";
+
 import "./LeadDetailPage.css";
-import "../../components/TaskList/styleTaskList.css"
+import "../../components/TaskList/styleTaskList.css";
 import { toast } from "react-toastify";
 
 function LeadDetailPage() {
@@ -45,6 +45,9 @@ function LeadDetailPage() {
   const [deleteError, setDeleteError] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isReservaModalOpen, setIsReservaModalOpen] = useState(false);
+
+  // Novo: modal de chat
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const forceRefresh = useCallback(() => setRefreshKey(prev => prev + 1), []);
 
@@ -86,14 +89,12 @@ function LeadDetailPage() {
     setDiscardError(null);
     setIsDiscardModalOpen(true);
   };
-
   const handleCloseDiscardModal = () => {
     if (!isDiscarding) {
       setIsDiscardModalOpen(false);
       setDiscardError(null);
     }
   };
-
   const handleConfirmDiscard = async (discardData) => {
     setIsDiscarding(true);
     setDiscardError(null);
@@ -140,7 +141,6 @@ function LeadDetailPage() {
     setDeleteError(null);
     setIsDeleteModalOpen(true);
   };
-
   const handleCloseDeleteModal = () => {
     if (!isDeleting) {
       setDeleteTargetLead(null);
@@ -148,7 +148,6 @@ function LeadDetailPage() {
       setDeleteError(null);
     }
   };
-
   const handleConfirmDelete = async () => {
     setIsDeleting(true);
     setDeleteError(null);
@@ -173,7 +172,6 @@ function LeadDetailPage() {
     }
     setIsReservaModalOpen(true);
   };
-
   const handleCloseReservaModal = (reservaCriadaComSucesso = false) => {
     setIsReservaModalOpen(false);
     if (reservaCriadaComSucesso) forceRefresh();
@@ -194,12 +192,22 @@ function LeadDetailPage() {
         onReactivate={handleReactivateLead}
         onDelete={handleOpenDeleteModal}
         onReserva={handleOpenReservaModal}
+        // opcional: você pode adicionar um botão dentro do LeadHeaderActions para chat:
+        // onChat={() => setIsChatOpen(true)}
       />
 
       {reactivateError && <p className="error-message reactivation-error">{reactivateError}</p>}
 
+      {/* botão simples p/ abrir modal de chat (posicione como preferir) */}
+      <div style={{ margin: "8px 0 12px" }}>
+        <button className="button outline-button" onClick={() => setIsChatOpen(true)}>
+          Abrir Chat do Lead
+        </button>
+      </div>
+
       <div className="detail-layout-grid">
         <LeadInfo leadDetails={leadDetails} />
+
         <LeadHistory
           historyList={historyList}
           isLoadingHistory={isLoadingHistory}
@@ -207,7 +215,9 @@ function LeadDetailPage() {
           leadDetails={leadDetails}
           onTagsUpdated={forceRefresh}
         />
+
         <div className="lead-conversations-column">
+          {/* você pode futuramente colocar widgets de comunicação aqui */}
         </div>
 
         <div className="tasks-section">
@@ -249,6 +259,13 @@ function LeadDetailPage() {
           onClose={handleCloseReservaModal}
         />
       )}
+
+      {/* Modal de Chat focado no lead */}
+      <ChatModalForLead
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        leadId={id}
+      />
     </div>
   );
 }

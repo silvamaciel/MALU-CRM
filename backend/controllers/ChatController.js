@@ -4,14 +4,32 @@ const ChatService = require('../services/ChatService');
 const ErrorResponse = require('../utils/errorResponse');
 
 /**
- * @desc    Listar todas as conversas da empresa
- * @route   GET /api/chat/conversations
+ * @desc    Listar conversas da empresa (opcionalmente filtrando por leadId)
+ * @route   GET /api/chat/conversations?limit=30&cursor=<base64>&leadId=<ObjectId>
  * @access  Privado
  */
 const listConversationsController = asyncHandler(async (req, res) => {
   const companyId = req.user.company;
-  const { limit, cursor } = req.query;
-  const result = await ChatService.listConversations(companyId, { limit, cursor });
+
+  // lê e saneia os params
+  const {
+    limit: rawLimit,
+    cursor = null,
+    leadId = null,      
+  } = req.query;
+
+  const limit = Math.min(
+    Math.max(parseInt(rawLimit ?? '30', 10) || 30, 1),
+    100
+  );
+
+  // repassa tudo para o service (ele já lida com leadId inválido)
+  const result = await ChatService.listConversations(companyId, {
+    limit,
+    cursor,
+    leadId,
+  });
+
   res.status(200).json({ success: true, ...result });
 });
 
