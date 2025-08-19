@@ -52,22 +52,6 @@ function TasksPage() {
 
   return (
     <div className="admin-page tasks-page">
-      <header className="page-header">
-        <h1>Minhas Tarefas</h1>
-        <div className="list-toolbar">
-          <label className="limit-label">
-            Itens por página:
-            <select
-              value={limit}
-              onChange={(e) => setLimit(Number(e.target.value))}
-            >
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-            </select>
-          </label>
-        </div>
-      </header>
 
       <div className="page-content">
         <div className="kpi-container-tasks">
