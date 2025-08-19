@@ -1,93 +1,201 @@
-/* src/pages/Empreendimento/UnidadeFormPage/UnidadeFormPage.css */
-.unidade-form-page .form-container {
-    max-width: 800px; /* Ajuste conforme necessário */
-    margin: 0 auto;
+/* Paleta */
+:root{
+  --primary:#8a4dff;
+  --primary-hover:#7b44e6;
+  --background:#f3f4f6;
+  --card-bg:#ffffff;
+  --text-main:#1f2937;
+  --text-light:#6b7280;
+  --border-color:#e5e7eb;
+  --danger:#ef4444;
+
+  --radius:12px;
+  --shadow:0 8px 22px rgba(2,6,23,.08);
+  --focus:0 0 0 3px rgba(138,77,255,.30);
+
+  --tint-05: rgba(138,77,255,.05);
+  --tint-08: rgba(138,77,255,.08);
+  --tint-12: rgba(138,77,255,.12);
+
+  /* alturas confortáveis para a área rolável da seção */
+  --section-max: clamp(340px, 52vh, 640px);
 }
 
-.unidade-form-page .form-section {
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin-bottom: 25px;
+/* Página base com tipografia FLUIDA (menor) */
+.admin-page.unidade-form-page{
+  display:flex; flex-direction:column;
+  height:100%; min-height:0;
+  font-size: clamp(13px, 0.4vw + 11px, 15px);
+  line-height: 1.35;
 }
 
-.unidade-form-page .form-section h3 {
-    margin-top: 0;
-    margin-bottom: 20px;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
-    font-size: 1.3em;
-    color: #333;
+/* Header */
+.page-header{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:1rem; margin-bottom:.5rem;
+}
+.page-header h1{
+  margin:0; color:var(--text-main); font-weight:800;
+  font-size: clamp(1rem, 0.9vw + 1rem, 1.35rem);
 }
 
-.unidade-form-page .form-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px; /* Espaço entre os form-groups na mesma linha */
-    margin-bottom: 15px;
+/* ===== Scroll ÚNICO da página ===== */
+.page-content{
+  flex:1; min-height:0; overflow:auto;
+  padding:.75rem; border:1px solid var(--border-color);
+  border-radius:var(--radius); background:var(--card-bg); box-shadow:var(--shadow);
+
+  scrollbar-width: thin; scrollbar-color: var(--primary) var(--background);
+}
+.page-content::-webkit-scrollbar{ width:10px; height:10px; }
+.page-content::-webkit-scrollbar-thumb{
+  background:linear-gradient(180deg, var(--primary), var(--primary-hover));
+  border-radius:8px;
+}
+.page-content::-webkit-scrollbar-track{ background:var(--background); border-radius:8px; }
+
+/* Form */
+.form-container{ display:flex; flex-direction:column; gap:0.9rem; min-width:0; }
+
+/* Seção com header sticky e corpo rolável */
+.form-section{
+  position:relative; display:flex; flex-direction:column;
+  border:1px solid var(--border-color); border-radius:14px; background:#fff;
+  box-shadow:0 6px 18px rgba(17,24,39,.05); overflow:hidden;
 }
 
-.unidade-form-page .form-group {
-    flex: 1 1 calc(50% - 10px); /* Ocupa 50% menos o gap, permitindo 2 por linha */
-    min-width: 200px; /* Largura mínima para responsividade */
-    display: flex;
-    flex-direction: column;
+/* faixa lateral roxa */
+.form-section::before{
+  content:""; position:absolute; left:0; top:0; bottom:0; width:6px;
+  background:linear-gradient(180deg, var(--primary), var(--primary-hover));
 }
 
-.unidade-form-page .form-group.full-width {
-    flex-basis: 100%;
+/* header da seção */
+.section-header{
+  position:sticky; top:0; z-index:2;
+  padding:.85rem 1rem .55rem;
+  background:linear-gradient(180deg, #fff, rgba(255,255,255,.9));
+  border-bottom:1px solid var(--border-color);
+}
+.section-header h3{
+  display:inline-flex; align-items:center; gap:.5rem;
+  margin:0; padding:.25rem .6rem; border-radius:999px;
+  background:linear-gradient(90deg, var(--tint-12), rgba(123,68,230,.12));
+  color:var(--text-main); font-weight:800;
+  font-size: clamp(.95rem, .35vw + .85rem, 1.05rem);
+}
+.section-header h3::before{
+  content:""; width:9px; height:9px; border-radius:50%;
+  background:linear-gradient(180deg, var(--primary), var(--primary-hover));
+  box-shadow:0 0 0 4px var(--tint-12);
 }
 
-.unidade-form-page .form-group label {
-    margin-bottom: 6px;
-    font-weight: 500;
-    font-size: 0.9em;
-    color: #555;
+/* corpo rolável da seção */
+.section-scroll{
+  overflow:auto; max-height: var(--section-max);
+  padding:.75rem 1rem 1rem;
+  background: linear-gradient(0deg, var(--tint-05), var(--tint-05)), #fff;
+
+  scrollbar-width: thin; scrollbar-color: var(--primary) var(--background);
+}
+.section-scroll::-webkit-scrollbar{ width:10px; height:10px; }
+.section-scroll::-webkit-scrollbar-thumb{
+  background:linear-gradient(180deg, var(--primary), var(--primary-hover));
+  border-radius:8px;
+}
+.section-scroll::-webkit-scrollbar-track{ background:var(--background); border-radius:8px; }
+
+/* Grid */
+.form-row{
+  display:grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap:.7rem;
+}
+.full-width{ grid-column: 1 / -1; }
+
+@media (max-width:1200px){ .form-row{ grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width:900px){  .form-row{ grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width:640px){
+  .page-header{ flex-direction:column; align-items:flex-start; gap:.4rem; }
+  .form-row{ grid-template-columns: 1fr; }
 }
 
-.unidade-form-page .form-group input[type="text"],
-.unidade-form-page .form-group input[type="number"],
-.unidade-form-page .form-group input[type="url"],
-.unidade-form-page .form-group select,
-.unidade-form-page .form-group textarea {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box; /* Importante para padding não aumentar largura total */
-    font-size: 1em;
+/* Campos */
+.form-group{ display:flex; flex-direction:column; gap:.3rem; min-width:0; }
+.form-group label{ font-weight:700; color:#3b3b58; }
+.form-group input,
+.form-group select,
+.form-group textarea{
+  width:100%; padding:.5rem .65rem;
+  border:1px solid var(--border-color); border-radius:10px;
+  background:#fff; color:var(--text-main); font:inherit;
+  transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.form-group textarea{ resize:vertical; }
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus{
+  outline:none; border-color:var(--primary); box-shadow:var(--focus);
+  background:linear-gradient(0deg, rgba(138,77,255,.03), rgba(138,77,255,.03)), #fff;
 }
 
-.unidade-form-page .form-group textarea {
-    resize: vertical;
-    min-height: 80px;
+/* Switch “Destaque” */
+.form-group-checkbox{ display:flex; align-items:center; gap:.55rem; }
+.form-group-checkbox input[type="checkbox"]{
+  appearance:none; width:42px; height:24px; border-radius:999px; position:relative;
+  background:#e5e7eb; border:1px solid #d1d5db; cursor:pointer;
+  transition:background .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.form-group-checkbox input[type="checkbox"]::after{
+  content:""; position:absolute; top:50%; left:4px; transform:translateY(-50%);
+  width:16px; height:16px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.15);
+  transition:left .15s ease;
+}
+.form-group-checkbox input[type="checkbox"]:checked{
+  background:linear-gradient(90deg, var(--primary), var(--primary-hover));
+  border-color:transparent; box-shadow:0 4px 10px rgba(138,77,255,.2);
+}
+.form-group-checkbox input[type="checkbox"]:checked::after{ left:22px; }
+.form-group-checkbox .checkbox-label{ font-weight:600; color:var(--text-main); }
+
+/* Erro */
+.error-message{
+  color:#b91c1c; background:#fee2e2; border:1px solid #fecaca;
+  padding:.55rem .75rem; border-radius:10px;
 }
 
-.unidade-form-page .form-group-checkbox {
-    flex-direction: row;
-    align-items: center;
-    flex-basis: 100%; /* Ocupa a linha toda */
+/* ===== AÇÕES – STICKY no final da página (dentro do container que rola) ===== */
+.form-actions{
+  position:sticky; bottom:0; z-index:3;
+  display:flex; justify-content:flex-end; gap:.5rem;
+  padding:.6rem .75rem;
+  background:#fff; border-top:1px solid var(--border-color);
+  border-radius:0 0 12px 12px;
+  backdrop-filter: blur(2px);
+}
+.form-actions::before{
+  content:""; position:absolute; left:0; right:0; top:0; height:3px;
+  background:linear-gradient(90deg, var(--primary), var(--primary-hover));
+  border-radius:3px 3px 0 0;
 }
 
-.unidade-form-page .form-group-checkbox input[type="checkbox"] {
-    width: auto;
-    margin-right: 8px;
+/* Botões (compactos) */
+.button.submit-button{
+  color:#fff; border:0; border-radius:10px;
+  padding:.45rem .8rem;                    /* menor */
+  font-weight:700;
+  font-size: clamp(.85rem, .25vw + .78rem, .95rem);
+  cursor:pointer;
+  background-image:linear-gradient(90deg, var(--primary), var(--primary-hover));
+  box-shadow:0 4px 12px rgba(138,77,255,.2);
 }
-.unidade-form-page .form-group-checkbox .checkbox-label {
-    margin-bottom: 0; /* Remove margem inferior da label do checkbox */
-    font-weight: normal; /* Ou mantenha 500 se preferir */
-}
+.button.submit-button:hover{ filter:brightness(1.04); }
 
-.unidade-form-page .form-actions {
-    margin-top: 25px;
-    text-align: right;
+.button.cancel-button{
+  background:#fff; color:var(--text-main);
+  border:1px solid var(--border-color); border-radius:10px;
+  padding:.42rem .75rem;                    /* menor */
+  font-weight:700;
+  font-size: clamp(.84rem, .22vw + .76rem, .92rem);
+  cursor:pointer;
 }
-
-.unidade-form-page .form-actions .button {
-    margin-left: 10px;
-}
-
-.unidade-form-page .form-actions .button:first-child {
-    margin-left: 0;
-}
+.button.cancel-button:hover{ background:#f9fafb; }
