@@ -239,7 +239,6 @@ function ReservaListPage() {
                     <th>Empreendimento</th>
                     <th>Unidade</th>
                     <th>Data Reserva</th>
-                    <th>Validade</th>
                     <th>Status</th>
                     <th>Criado Por</th>
                     <th>Ações</th>
@@ -269,7 +268,6 @@ function ReservaListPage() {
                         <td>{empreendNome}</td>
                         <td>{unidadeIdent}</td>
                         <td>{formatDate(res.dataReserva)}</td>
-                        <td>{formatDate(res.validadeReserva)}</td>
                         <td>
                           <span className={`status-badge ${statusClass}`}>
                             {res.statusReserva}
