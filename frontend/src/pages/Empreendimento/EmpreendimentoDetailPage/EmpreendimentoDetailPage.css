@@ -180,7 +180,7 @@
 /* Mobile: se precisar, a página pode rolar */
 @media (max-width: 720px){
   .admin-page.empreendimento-detail-page{
-    height:auto; min-height:100vh;
+    height:auto; min-height:100%;
   }
   .admin-page.empreendimento-detail-page .page-content{
     overflow:auto;
