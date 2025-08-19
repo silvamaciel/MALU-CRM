@@ -1,0 +1,121 @@
+:root{
+  --primary:#8a4dff;
+  --primary-hover:#7b44e6;
+  --background:#f3f4f6;
+  --card-bg:#ffffff;
+  --text-main:#1f2937;
+  --text-light:#6b7280;
+  --border-color:#e5e7eb;
+  --danger:#ef4444;
+
+  --radius:12px;
+  --units-body-max: clamp(320px, 58vh, 72vh);
+}
+
+/* ===== Raiz da lista: ocupa 100% do espaço do modal/aba ===== */
+.unidades-list-section{
+  display:flex; flex-direction:column;
+  height:100%; min-height:0;   /* <- fundamental p/ o scroll funcionar */
+  overflow:hidden;
+}
+
+/* Se o componente estiver dentro de um modal, essa classe garante encaixe 100% */
+.modal-fit{ height:100%; min-height:0; }
+
+/* Toolbar, títulos etc. (mantenha os seus) */
+.units-toolbar{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:.75rem; margin-bottom:.5rem;
+}
+.units-title{ margin:0; font-weight:800; color:var(--text-main); }
+.units-total{ color:var(--text-light); }
+
+/* ===== Área rolável (vertical) que contém a tabela e a paginação ===== */
+.units-scroll{
+  flex:1; min-height:0;
+  overflow:auto;                     /* scroll vertical aqui */
+  -webkit-overflow-scrolling: touch;
+  display:flex; flex-direction:column; gap:.5rem;
+  scrollbar-width: thin; scrollbar-color: var(--primary) var(--background);
+}
+.units-scroll::-webkit-scrollbar{ width:10px; height:10px; }
+.units-scroll::-webkit-scrollbar-thumb{
+  background:linear-gradient(180deg, var(--primary), var(--primary-hover));
+  border-radius:8px;
+}
+.units-scroll::-webkit-scrollbar-track{ background:var(--background); border-radius:8px; }
+
+/* ===== Wrapper da tabela: scroll horizontal ===== */
+.table-responsive{
+  background:#fff;
+  border:1px solid var(--border-color);
+  border-radius:12px;
+  box-shadow:0 6px 18px rgba(17,24,39,.05);
+  overflow:auto;          /* borda bonita */
+  overflow-x:auto;          /* <- scroll lateral */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ===== Tabela ===== */
+.units-table{
+  width:max-content;        /* encolhe/expande conforme colunas */
+  min-width:100%;           /* nunca menor que o container (ativa scroll-x quando necessário) */
+  border-collapse:separate;
+  border-spacing:0;
+  table-layout:fixed;       /* fixa alinhamento entre thead e tbody */
+  font-size: clamp(.86rem, .25vw + .8rem, .95rem);
+}
+
+/* THEAD fixo no topo da área rolável (units-scroll) */
+.units-table thead th{
+  position:sticky; top:0; z-index:2;
+  text-align:left;
+  padding:.65rem .75rem;
+  border-bottom:1px solid var(--border-color);
+  background:#fff;
+  color:var(--text-main);
+  font-weight:800;
+}
+
+/* Corpo normal (sem display:block); quem rola é o .units-scroll */
+.units-table tbody td{
+  padding:.6rem .75rem;
+  border-bottom:1px solid var(--border-color);
+  color:var(--text-main);
+}
+.units-table tbody tr:nth-child(odd){
+  background: linear-gradient(0deg, rgba(138,77,255,.03), rgba(138,77,255,.03)), #fff;
+}
+.td-identificador{ font-weight:800; }
+
+/* Larguras mínimas das colunas */
+.units-table thead th:nth-child(1),
+.units-table tbody td:nth-child(1){ width:18%; min-width:120px; }
+.units-table thead th:nth-child(2),
+.units-table tbody td:nth-child(2){ width:30%; min-width:180px; }
+.units-table thead th:nth-child(3),
+.units-table tbody td:nth-child(3){ width:18%; min-width:130px; }
+.units-table thead th:nth-child(4),
+.units-table tbody td:nth-child(4){ width:22%; min-width:160px; }
+.units-table thead th:nth-child(5),
+.units-table tbody td:nth-child(5){ width:12%; min-width:110px; }
+
+/* ===== Paginação colada no rodapé (dentro do mesmo scroll) ===== */
+.units-pagination.sticky-footer{
+  position:sticky; bottom:0; z-index:3;
+  background:#fff;
+  border-top:1px solid var(--border-color);
+  border-radius:12px;
+  padding:.5rem .75rem;
+  display:flex; align-items:center; justify-content:space-between;
+  box-shadow:0 -4px 12px rgba(17,24,39,.06);
+}
+
+/* Botões de paginação (mantenha os seus estilos e classes) */
+
+/* ===== Mobile ===== */
+@media (max-width: 720px){
+  :root{ --units-body-max: clamp(260px, 55vh, 64vh); }
+  .table-responsive{ overflow-x:auto; }
+  .units-table{ min-width:680px; } /* ativa scroll-x mais cedo em telas estreitas */
+}

@@ -1,6 +1,8 @@
-/* src/pages/Empreendimento/EmpreendimentoDetailPage/EmpreendimentoDetailPage.css */
+/* ================================
+   EmpreendimentoDetailPage.css
+   ================================ */
 
-/* Paleta base */
+/* Paleta / tokens */
 :root{
   --primary:#8a4dff;
   --primary-hover:#7b44e6;
@@ -20,120 +22,169 @@
   --tint-12: rgba(138,77,255,.12);
 }
 
-/* Página base + tipografia fluida */
+/* ===== Página: ocupa 100% do viewport pai; rolagem só nos painéis ===== */
 .admin-page.empreendimento-detail-page{
   display:flex; flex-direction:column;
-  height:100%; min-height:0;
+  height:100%;
+  min-height:0;
   font-size: clamp(13px, 0.45vw + 11px, 15px);
   line-height:1.4;
+  overflow:hidden; /* segura filhos; quem rola são os painéis internos */
 }
 
-/* Header */
-.page-header{
+/* ===== Header ===== */
+.admin-page.empreendimento-detail-page .page-header{
   display:flex; align-items:center; justify-content:space-between;
   gap:1rem; margin-bottom:.75rem;
 }
-.page-header h1{
+.admin-page.empreendimento-detail-page .page-header h1{
   margin:0; color:var(--text-main); font-weight:800;
   font-size: clamp(1.05rem, 1.1vw + 1rem, 1.6rem);
 }
 
-/* Botões no header */
-.button-link{
+/* Botões do header */
+.admin-page.empreendimento-detail-page .button-link{
   background:#fff; color:var(--primary);
   border:1px solid var(--primary); border-radius:10px;
   padding:.5rem .85rem; font-weight:700; text-decoration:none;
-  display:inline-flex; align-items:center; gap:.35rem;
+  display:inline-flex; align-items:center;
 }
-.button-link:hover{ background:rgba(138,77,255,.08); }
-
-.button.primary-button{
+.admin-page.empreendimento-detail-page .button-link:hover{ background:rgba(138,77,255,.08); }
+.admin-page.empreendimento-detail-page .button.primary-button{
   color:#fff; border:0; border-radius:10px;
   padding:.55rem .95rem; font-weight:800; text-decoration:none;
   background-image:linear-gradient(90deg, var(--primary), var(--primary-hover));
   box-shadow:0 6px 16px rgba(138,77,255,.25);
 }
-.button.primary-button:hover{ filter:brightness(1.05); }
+.admin-page.empreendimento-detail-page .button.primary-button:hover{ filter:brightness(1.05); }
 
-/* Área que rola (scroll único da página) */
-.page-content{
-  flex:1; min-height:0; overflow:auto;
-  padding:1rem; border:1px solid var(--border-color);
-  border-radius:var(--radius); background:var(--card-bg);
+/* ===== Container fixo ===== */
+.admin-page.empreendimento-detail-page .page-content{
+  flex:1; min-height:0;
+  display:flex; flex-direction:column;
+  border:1px solid var(--border-color);
+  border-radius:var(--radius);
+  background:var(--card-bg);
   box-shadow:var(--shadow);
+  overflow:hidden;
+}
 
+/* ===== Abas ===== */
+.admin-page.empreendimento-detail-page .tabs{
+  display:flex; gap:.5rem;
+  padding:.6rem;
+  border-bottom:1px solid var(--border-color);
+  position:sticky; top:0; z-index:2;
+  background:#fff;
+}
+.admin-page.empreendimento-detail-page .tab-btn{
+  appearance:none; border:1px solid var(--border-color);
+  background:#fff; color:var(--text-main);
+  padding:.45rem .8rem; border-radius:999px; font-weight:700; cursor:pointer;
+}
+.admin-page.empreendimento-detail-page .tab-btn:hover{ background:#f9fafb; }
+.admin-page.empreendimento-detail-page .tab-btn.is-active{
+  color:#fff; border-color:transparent;
+  background-image:linear-gradient(90deg, var(--primary), var(--primary-hover));
+  box-shadow:0 6px 16px rgba(138,77,255,.22);
+}
+
+/* ===== Painéis ===== */
+.admin-page.empreendimento-detail-page .panels{
+  flex:1; min-height:0; display:flex;
+}
+.admin-page.empreendimento-detail-page .panel{
+  display:none; flex-direction:column; flex:1; min-height:0;
+}
+.admin-page.empreendimento-detail-page .panel.is-visible{ display:flex; }
+
+/* DETALHES: rola por dentro */
+.admin-page.empreendimento-detail-page .panel-scroll{
+  flex:1; min-height:0; overflow:auto;
+  padding:1rem;
   scrollbar-width: thin; scrollbar-color: var(--primary) var(--background);
 }
-.page-content::-webkit-scrollbar{ width:10px; height:10px; }
-.page-content::-webkit-scrollbar-thumb{
+.admin-page.empreendimento-detail-page .panel-scroll::-webkit-scrollbar{ width:10px; height:10px; }
+.admin-page.empreendimento-detail-page .panel-scroll::-webkit-scrollbar-thumb{
   background:linear-gradient(180deg, var(--primary), var(--primary-hover));
   border-radius:8px;
 }
-.page-content::-webkit-scrollbar-track{ background:var(--background); border-radius:8px; }
-
-/* ===== GRID de detalhes ===== */
-.details-grid{
-  display:grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap:.9rem;
-  align-items:start;
-  min-width:0; /* evita overflow */
+.admin-page.empreendimento-detail-page .panel-scroll::-webkit-scrollbar-track{
+  background:var(--background); border-radius:8px;
 }
 
-/* Card de detalhe */
-.detail-item{
+/* GRID de detalhes */
+.admin-page.empreendimento-detail-page .details-grid{
+  display:grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap:.9rem; align-items:start; min-width:0;
+}
+.admin-page.empreendimento-detail-page .detail-item{
   position:relative;
   border:1px solid var(--border-color);
   border-radius:14px;
-  background:
-    linear-gradient(0deg, var(--tint-05), var(--tint-05)), #fff;
-  padding: .85rem 1rem;
+  background:linear-gradient(0deg, var(--tint-05), var(--tint-05)), #fff;
+  padding:.85rem 1rem;
   box-shadow:0 6px 18px rgba(17,24,39,.05);
   min-width:0;
 }
-.detail-item::before{
+.admin-page.empreendimento-detail-page .detail-item::before{
   content:""; position:absolute; left:0; top:0; bottom:0; width:6px;
   background:linear-gradient(180deg, var(--primary), var(--primary-hover));
   border-radius:14px 0 0 14px;
 }
-.detail-item strong{
-  display:inline-block;
-  font-weight:800; color:var(--text-main);
-  margin:0 0 .35rem 0;
+.admin-page.empreendimento-detail-page .detail-item strong{
+  display:inline-block; margin:0 0 .35rem 0;
   padding:.25rem .6rem; border-radius:999px;
+  font-weight:800; color:var(--text-main);
   background:linear-gradient(90deg, var(--tint-12), rgba(123,68,230,.12));
 }
-.detail-item p{ margin:.15rem 0; color:var(--text-main); }
-
-/* Item que ocupa a linha toda */
-.full-span{ grid-column: 1 / -1; }
-
-/* Imagem principal responsiva */
-.detail-item img{
-  max-width:min(420px, 100%);
-  height:auto; display:block; margin-top:.5rem;
+.admin-page.empreendimento-detail-page .detail-item p{ margin:.15rem 0; color:var(--text-main); }
+.admin-page.empreendimento-detail-page .full-span{ grid-column:1 / -1; }
+.admin-page.empreendimento-detail-page .detail-item img{
+  max-width:min(420px, 100%); height:auto; display:block; margin-top:.5rem;
   border-radius:12px; border:1px solid var(--border-color);
   box-shadow:0 8px 18px rgba(2,6,23,.08);
 }
 
-/* ===== Seção de Unidades ===== */
-.unidades-section{
-  margin-top:1.2rem;
-  border:1px solid var(--border-color);
-  border-radius:14px;
-  background:#fff;
-  box-shadow:var(--shadow);
-  padding:1rem;
+/* ===== UNIDADES: cadeia de altura correta ===== */
+.admin-page.empreendimento-detail-page .unidades-section{
+  flex:1; min-height:0;
+  display:flex; flex-direction:column;
+}
+.admin-page.empreendimento-detail-page .units-table-scroll{
+  flex:1; min-height:0;
+  overflow:hidden; /* quem rola é o filho (UnidadeList .units-scroll) */
 }
 
 /* ===== Responsivo ===== */
 @media (max-width:1280px){
-  .details-grid{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .admin-page.empreendimento-detail-page .details-grid{
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 @media (max-width:960px){
-  .details-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-page.empreendimento-detail-page .details-grid{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 @media (max-width:640px){
-  .page-header{ flex-direction:column; align-items:flex-start; gap:.5rem; }
-  .details-grid{ grid-template-columns: 1fr; }
+  .admin-page.empreendimento-detail-page .page-header{
+    flex-direction:column; align-items:flex-start; gap:.5rem;
+  }
+  .admin-page.empreendimento-detail-page .details-grid{
+    grid-template-columns: 1fr;
+  }
 }
+
+/* Mobile: se precisar, a página pode rolar */
+@media (max-width: 720px){
+  .admin-page.empreendimento-detail-page{
+    height:auto; min-height:100vh;
+  }
+  .admin-page.empreendimento-detail-page .page-content{
+    overflow:auto;
+  }
+}
+
+
