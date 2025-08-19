@@ -120,8 +120,7 @@
   text-decoration:none; display:inline-flex; align-items:center; gap:.35rem;
 }
 .button-link:hover{ background:#f9fafb; }
-.view-link{ }
-.edit-link{ }
+
 
 /* Mensagem de erro e vazio */
 .error-message{ color:#b91c1c; background:#fee2e2; border:1px solid #fecaca; padding:.6rem .8rem; border-radius:10px; }

@@ -1,149 +1,241 @@
-/* src/pages/ImovelAvulso/ImovelListPage/ImovelListPage.css */
+/* Paleta base */
+:root{
+  --primary:#8a4dff;
+  --primary-hover:#7b44e6;
+  --background:#f3f4f6;
+  --card-bg:#ffffff;
+  --text-main:#1f2937;
+  --text-light:#6b7280;
+  --border-color:#e5e7eb;
+  --danger:#ef4444;
 
-.imovel-list-page .page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.imovel-list-page .page-header h1 {
-  margin: 0;
-  font-size: 1.8em;
-  color: #333;
-}
-
-.imovel-list-page .table-responsive {
-  overflow-x: auto;
+  --radius:12px;
+  --shadow:0 8px 22px rgba(2,6,23,.08);
+  --focus:0 0 0 3px rgba(138,77,255,.35);
 }
 
-.imovel-list-page .data-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-  background-color: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border-radius: 6px;
-  overflow: hidden;
+/* Página principal: sem scroll externo; scroll só na tabela */
+.admin-page.imovel-list-page{
+  display:flex;
+  flex-direction:column;
+  height:100%;
+  min-height:0;
 }
 
-.imovel-list-page .data-table th,
-.imovel-list-page .data-table td {
-  border-bottom: 1px solid #ddd;
-  padding: 12px 15px;
-  text-align: left;
-  font-size: 0.95em;
-  vertical-align: middle;
+/* Header */
+.page-header{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:1rem; margin-bottom:.5rem;
 }
-.imovel-list-page .data-table tr td {
-    color: #555;
+.page-header h1{ margin:0; font-size:1.25rem; color:var(--text-main); }
+.header-actions{ display:flex; align-items:center; gap:.6rem; }
+
+.button.primary-button{
+  color:#fff;
+  background-image:linear-gradient(90deg, var(--primary), var(--primary-hover));
+  border:0; padding:.55rem .9rem; border-radius:10px; font-weight:700; cursor:pointer;
+  box-shadow:0 6px 16px rgba(138,77,255,.25);
+}
+.button.primary-button:hover{ filter:brightness(1.05); }
+
+/* OUTLINE agora roxo */
+.button.outline-button{
+  background:#fff; color:var(--primary);
+  border:1px solid var(--primary); border-radius:10px;
+  padding:.5rem .8rem; font-weight:700; cursor:pointer;
+}
+.button.outline-button:hover{ background:rgba(138,77,255,.08); }
+.button.outline-button:focus{ outline:none; box-shadow:var(--focus); }
+
+/* “Itens por página” */
+.page-size{ display:flex; align-items:center; gap:.5rem; color:var(--text-main); }
+.page-size select{
+  padding:.45rem .65rem; border:1px solid var(--border-color); border-radius:10px;
+  background:#fff; color:var(--text-main);
+}
+.page-size select:focus{ outline:none; border-color:var(--primary); box-shadow:var(--focus); }
+
+/* Shell geral da página (100% do viewport, scroll interno na tabela) */
+.imovel-shell{
+  display:flex; flex-direction:column;
+  flex:1; min-height:0;
+  gap:.75rem;
 }
 
+/* ===========================
+   FILTROS
+   =========================== */
 
-.imovel-list-page .data-table th {
-  background-color: #f8f9fa;
-  font-weight: 600;
-  color: #495057;
-  text-transform: uppercase;
-  font-size: 0.85em;
-}
-
-.imovel-list-page .data-table tr:hover {
-  background-color: #f1f3f5;
-}
-
-.imovel-list-page .actions-cell {
-    white-space: nowrap;
-    text-align: right;
+/* Container dos filtros quando ABERTO (exibido) */
+.imovel-list-page .filters-wrapper.open{
+  display:block;
+  border:1px solid var(--border-color);
+  border-radius:var(--radius);
+  background:var(--card-bg);
+  box-shadow:var(--shadow);
+  padding:.75rem;
 }
 
-.imovel-list-page .actions-cell .button-link {
-  margin-left: 10px;
-  padding: 5px 10px; 
-  font-size: 0.9em;
-  text-decoration: none;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-  cursor: pointer;
+/* Quando fechado, some COMPLETAMENTE (sem espaço, sem borda) */
+.imovel-list-page .filters-wrapper.closed{
+  display:none;      /* <- oculta 100% */
 }
 
-.imovel-list-page .actions-cell .button-link.edit-link {
-  background-color: #ffc107;
-  color: #212529;
-  border-color: #ffc107;
+/* Form interno (opcional, só estética) */
+.imovel-filters-form{
+  display:grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap:.75rem;
 }
-.imovel-list-page .actions-cell .button-link.edit-link:hover {
-  background-color: #e0a800;
-  border-color: #d39e00;
+.imovel-filters-form .filter-group label{ font-weight:600; color:var(--text-main); }
+.imovel-filters-form .filter-group input,
+.imovel-filters-form .filter-group select{
+  width:100%; padding:.55rem .65rem;
+  border:1px solid var(--border-color); border-radius:10px;
+  background:#fff; color:var(--text-main);
+}
+.imovel-filters-form .filter-group input:focus,
+.imovel-filters-form .filter-group select:focus{ outline:none; border-color:var(--primary); box-shadow:var(--focus); }
+.imovel-filters-form .filter-actions{ grid-column: 1 / -1; display:flex; gap:.6rem; }
+
+/* ===========================
+   ERROS
+   =========================== */
+.error-message{
+  color:#b91c1c; background:#fee2e2; border:1px solid #fecaca;
+  padding:.6rem .8rem; border-radius:10px;
 }
 
-.imovel-list-page .actions-cell .button-link.delete-link {
-  background-color: #f8d7da;
-  color: #721c24;
-  border-color: #f5c6cb;
-}
-.imovel-list-page .actions-cell .button-link.delete-link:hover {
-  background-color: #f1b0b7;
-  border-color: #eea2a9;
-}
-
-.status-badge {
-    padding: 0.25em 0.6em;
-    font-size: 0.85em;
-    font-weight: 600;
-    border-radius: 0.25rem;
-    color: #fff;
-    display: inline-block;
-}
-.status-badge.status-disponível { background-color: #28a745; }
-.status-badge.status-reservado { background-color: #ffc107; color: #212529; }
-.status-badge.status-vendido { background-color: #007bff; }
-.status-badge.status-inativo { background-color: #6c757d; }
-
-.header-actions {
-    display: flex;
-    gap: 10px;
+/* ===========================
+   TABELA com SCROLL
+   =========================== */
+.table-shell{
+  display:flex; flex-direction:column;
+  flex:1; min-height:0;
+  border:1px solid var(--border-color);
+  border-radius:var(--radius);
+  background:var(--card-bg);
+  box-shadow:var(--shadow);
 }
 
-.filters-wrapper {
-  overflow: hidden;
-  transition: max-height 0.4s ease-out, opacity 0.3s ease-out;
+/* ÚNICO SCROLL aqui */
+.table-scroll{
+  flex:1; min-height:0; overflow:auto;
+  border-radius:var(--radius);
+  /* Scrollbar roxa */
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) var(--background);
 }
-.filters-wrapper.closed {
-  max-height: 0;
-  opacity: 0;
+.table-scroll::-webkit-scrollbar{ width:10px; height:10px; }
+.table-scroll::-webkit-scrollbar-thumb{
+  background: linear-gradient(180deg, var(--primary), var(--primary-hover));
+  border-radius: 8px;
 }
-.filters-wrapper.open {
-  max-height: 500px;
-  opacity: 1;
+.table-scroll::-webkit-scrollbar-track{ background: var(--background); border-radius: 8px; }
+
+.center-loading{
+  display:flex; align-items:center; justify-content:center; padding:2rem; color:var(--text-light);
 }
 
-.imovel-list-page .header-actions {
-    display: flex;
-    gap: 10px;
+/* Tabela */
+.data-table{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  min-width: 1000px; /* ativa scroll horizontal em telas estreitas */
+}
+.data-table thead th{
+  position:sticky; top:0; z-index:2;
+  background:#fff; color:var(--text-main);
+  text-align:left; font-weight:700;
+  padding:.75rem .9rem;
+  border-bottom:1px solid var(--border-color);
+}
+.data-table tbody td{
+  padding:.7rem .9rem;
+  border-bottom:1px solid var(--border-color);
+  color:var(--text-main);
+}
+.data-table tbody tr:nth-child(even) td{ background:#fafafa; }
+.th-actions, .actions-cell{ text-align:right; white-space:nowrap; }
+
+/* Status badges (ajuste conforme seus valores reais) */
+.status-badge{
+  display:inline-block; padding:.25rem .6rem; border-radius:999px;
+  font-weight:700; font-size:.85rem;
+}
+.status-disponível, .status-disponivel{
+  background:#eef2ff; color:#3730a3; border:1px solid #c7d2fe;
+}
+.status-reservado{
+  background:#fff7ed; color:#9a3412; border:1px solid #fed7aa;
+}
+.status-vendido{
+  background:#fee2e2; color:#7f1d1d; border:1px solid #fecaca;
+}
+.status-inativo{
+  background:#f1f5f9; color:#334155; border:1px solid #e2e8f0;
 }
 
-/* Estilos para a animação de exibir/ocultar filtros */
-.filters-wrapper {
-  overflow: hidden;
-  transition: max-height 0.4s ease-out, opacity 0.3s ease-out, margin-bottom 0.4s ease-out;
+/* Ações */
+.button-link{
+  background:#fff; color:var(--text-main);
+  border:1px solid var(--border-color);
+  padding:.45rem .75rem; border-radius:10px;
+  cursor:pointer; font-weight:700;
+  text-decoration:none; display:inline-flex; align-items:center; gap:.35rem;
 }
+.button-link:hover{ background:#f9fafb; }
 
-.filters-wrapper.closed {
-  max-height: 0;
-  opacity: 0;
-  margin-bottom: 0;
-  /* Garante que não haja bordas ou paddings visíveis quando fechado */
-  border-top: 0;
-  border-bottom: 0;
-  padding-top: 0;
-  padding-bottom: 0;
+/* Botões com cor */
+.button-link.edit-link{
+  color:#fff;
+  background-image:linear-gradient(90deg, var(--primary), var(--primary-hover));
+  border-color:transparent;
+  box-shadow:0 4px 12px rgba(138,77,255,.25);
 }
+.button-link.edit-link:hover{ filter:brightness(1.05); }
 
-.filters-wrapper.open {
-  max-height: 500px; /* Um valor alto o suficiente para caber todos os filtros */
-  opacity: 1;
+.button-link.delete-link{
+  color:#fff; background:#ef4444; border-color:#ef4444;
+}
+.button-link.delete-link:hover{ filter:brightness(1.05); }
+
+.actions-cell .button-link + .button-link{ margin-left:8px; }
+
+/* ===========================
+   PAGINAÇÃO (se tiver)
+   =========================== */
+.pagination-bar{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:1rem; flex-wrap:wrap;
+  margin-top:.5rem;
+}
+.pagination-left{ color:var(--text-light); }
+.pagination-range strong{ color:var(--text-main); }
+
+.pagination-right{ display:flex; align-items:center; gap:.3rem; }
+.page-btn{
+  min-width:36px; height:36px; padding:0 .5rem;
+  border:1px solid var(--border-color); background:#fff; color:var(--text-main);
+  border-radius:10px; cursor:pointer; font-weight:700;
+}
+.page-btn:hover{ background:#f9fafb; }
+.page-btn:disabled{ opacity:.55; cursor:not-allowed; }
+.page-btn.is-active{
+  color:#fff; border-color:transparent;
+  background-image:linear-gradient(90deg, var(--primary), var(--primary-hover));
+  box-shadow:0 4px 12px rgba(138,77,255,.25);
+}
+.ellipsis{ padding:0 .25rem; color:var(--text-light); }
+
+/* Responsivo */
+@media (max-width: 960px){
+  .imovel-filters-form{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 640px){
+  .page-header{ flex-direction:column; align-items:flex-start; gap:.5rem; }
+  .header-actions{ flex-wrap:wrap; }
+  .pagination-bar{ flex-direction:column; align-items:flex-start; gap:.5rem; }
+  .imovel-filters-form{ grid-template-columns: repeat(1, minmax(0, 1fr)); }
 }
