@@ -293,7 +293,7 @@ function ReservaListPage() {
                               to={`/propostas-contratos/${res.propostaId}`}
                               className="button-link view-link"
                             >
-                              Visualizar Proposta
+                              Ver
                             </Link>
                           )}
 
@@ -339,6 +339,7 @@ function ReservaListPage() {
           </div>
         )}
       </div>
+      
     </div>
   );
 }
