@@ -111,7 +111,7 @@ app.use('/api', require('./routes/leadRequestRoutes'));
 app.use('/api/financeiro', require('./routes/financeiroRoutes'));
 
 
-
+app.use('/api/indexadores', require('./routes/indexadorRoutes'));
 
 
 const PORT = process.env.PORT || 5000;
