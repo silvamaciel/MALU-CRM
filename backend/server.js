@@ -108,6 +108,8 @@ app.use('/api/public', require('./routes/publicRoutes'));
 
 app.use('/api', require('./routes/leadRequestRoutes'));
 
+app.use('/api/financeiro', require('./routes/financeiroRoutes'));
+
 
 
 
