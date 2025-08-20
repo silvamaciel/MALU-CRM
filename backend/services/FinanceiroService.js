@@ -4,41 +4,68 @@ const Transacao = require('../models/Transacao');
 const mongoose = require('mongoose');
 
 /**
- * Gera o plano de pagamentos completo para um contrato.
+ * Gera o plano de pagamentos completo para um contrato, lendo
+ * a estrutura detalhada do PropostaContrato.
  */
 const gerarPlanoDePagamentos = async (contratoId) => {
-    // Busca o contrato e já popula o campo 'lead' para termos acesso ao ID
     const contrato = await PropostaContrato.findById(contratoId).populate('lead');
     if (!contrato) throw new Error("Contrato não encontrado.");
-    if (!contrato.lead) throw new Error("O contrato não está associado a nenhum lead.");
+    if (!contrato.planoDePagamento || contrato.planoDePagamento.length === 0) {
+        throw new Error("O contrato não possui um plano de pagamento definido para gerar as parcelas.");
+    }
 
+    // Apaga parcelas antigas para evitar duplicados ao regerar
     await Parcela.deleteMany({ contrato: contratoId });
 
-    const parcelas = [];
-    const valorParcela = (contrato.valorTotal - contrato.valorSinal) / contrato.numeroParcelas;
-    let dataVencimento = new Date(contrato.dataInicio);
+    const parcelasParaCriar = [];
 
-    for (let i = 1; i <= contrato.numeroParcelas; i++) {
-        dataVencimento.setMonth(dataVencimento.getMonth() + 1);
-        parcelas.push({
-            contrato: contratoId,
-            // VVVVV LÓGICA ATUALIZADA AQUI VVVVV
-            sacado: contrato.lead._id, // Pega o ID do lead a partir do contrato
-            // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-            company: contrato.company,
-            numeroParcela: i,
-            tipo: 'Parcela Mensal',
-            valorPrevisto: valorParcela,
-            dataVencimento: new Date(dataVencimento),
-            status: 'Pendente'
-        });
-    }
+    // Itera sobre cada LINHA do plano de pagamento do contrato
+    contrato.planoDePagamento.forEach(itemPlano => {
+        let dataVencimentoAtual = new Date(itemPlano.vencimentoPrimeira);
+        
+        // Cria todas as parcelas para aquela linha (ex: 36 parcelas mensais)
+        for (let i = 0; i < itemPlano.quantidade; i++) {
+            const novaParcela = {
+                contrato: contratoId,
+                sacado: contrato.lead._id,
+                company: contrato.company,
+                numeroParcela: i + 1, // Número sequencial dentro do tipo
+                tipo: itemPlano.tipoParcela,
+                valorPrevisto: itemPlano.valorUnitario,
+                dataVencimento: new Date(dataVencimentoAtual),
+                status: 'Pendente'
+            };
+            parcelasParaCriar.push(novaParcela);
 
-    if (parcelas.length > 0) {
-        await Parcela.insertMany(parcelas);
+            // Calcula o próximo vencimento com base no tipo de parcela
+            switch (itemPlano.tipoParcela) {
+                case 'PARCELA MENSAL':
+                    dataVencimentoAtual.setMonth(dataVencimentoAtual.getMonth() + 1);
+                    break;
+                case 'PARCELA BIMESTRAL':
+                    dataVencimentoAtual.setMonth(dataVencimentoAtual.getMonth() + 2);
+                    break;
+                case 'PARCELA TRIMESTRAL':
+                    dataVencimentoAtual.setMonth(dataVencimentoAtual.getMonth() + 3);
+                    break;
+                case 'PARCELA SEMESTRAL':
+                    dataVencimentoAtual.setMonth(dataVencimentoAtual.getMonth() + 6);
+                    break;
+                case 'INTERCALADA': // Geralmente anual
+                    dataVencimentoAtual.setFullYear(dataVencimentoAtual.getFullYear() + 1);
+                    break;
+                // Outros tipos como ATO, FINANCIAMENTO têm quantidade 1, então o loop não se repete.
+                default:
+                    break;
+            }
+        }
+    });
+
+    if (parcelasParaCriar.length > 0) {
+        await Parcela.insertMany(parcelasParaCriar);
     }
     
-    console.log(`${parcelas.length} parcelas geradas para o contrato ${contratoId}`);
+    console.log(`${parcelasParaCriar.length} parcelas geradas para o contrato ${contratoId}`);
     return { message: "Plano de pagamentos gerado com sucesso." };
 };
 
