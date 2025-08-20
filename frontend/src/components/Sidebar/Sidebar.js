@@ -107,7 +107,7 @@ function Sidebar({ userData, handleLogout, closeMobileSidebar }) {
             </NavLink>
           </li>
 
-          <li>
+          {/* } <li>
             <NavLink
               to="/financeiro"
               onClick={handleLinkClick}
@@ -118,6 +118,7 @@ function Sidebar({ userData, handleLogout, closeMobileSidebar }) {
               <FiDollarSign className="icon" /><span>Financeiro</span>
             </NavLink>
           </li>
+          */}
 
           {/* Administração */}
           {isAdmin && (
