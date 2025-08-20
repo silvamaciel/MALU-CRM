@@ -55,14 +55,24 @@ const parcelaSchema = new Schema({
     },
     status: {
         type: String,
-        enum: ['Pendente', 'Pago', 'Pago com Atraso', 'Atrasado', 'Cancelado'],
+        enum: ['Pendente', 'Pago', 'Pago com Atraso', 'Atrasado', 'Cancelado', 'Renegociada'],
         default: 'Pendente',
         index: true
     },
+    historicoAlteracoes: [{ // Regista cada alteração feita na parcela
+        data: { type: Date, default: Date.now },
+        usuario: { type: Schema.Types.ObjectId, ref: 'User' },
+        campo: String, // ex: 'dataVencimento', 'valorPrevisto'
+        valorAntigo: String,
+        valorNovo: String,
+        motivo: String
+    }],
+    
     observacoes: {
         type: String,
         trim: true
-    }
+    },
+    
 }, { timestamps: true });
 
 const Parcela = mongoose.model('Parcela', parcelaSchema);
