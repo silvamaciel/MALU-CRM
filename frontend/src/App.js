@@ -137,6 +137,8 @@ function App() {
                 <Route path="/agenda" element={<AgendaPage/>} />
                 <Route path="/tasks" element={<TasksPage />} />
 
+                <Route path="/financeiro" element={<FinanceiroPage />} />
+
 
 
                 {/* Rotas Admin (Renderizadas condicionalmente DENTRO do Outlet) */}

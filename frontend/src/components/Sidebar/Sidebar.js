@@ -19,7 +19,8 @@ import {
   FiUser,
   FiUserCheck,
   FiLink,
-  FiFileText
+  FiFileText,
+  FiDollarSign
 } from 'react-icons/fi';
 
 function Sidebar({ userData, handleLogout, closeMobileSidebar }) {
@@ -103,6 +104,18 @@ function Sidebar({ userData, handleLogout, closeMobileSidebar }) {
               }
             >
               <FiCalendar className="icon" /><span>Reservas</span>
+            </NavLink>
+          </li>
+
+          <li>
+            <NavLink
+              to="/financeiro"
+              onClick={handleLinkClick}
+              className={({isActive}) =>
+                isActive || location.pathname.startsWith('/financeiro') ? 'active' : ''
+              }
+            >
+              <FiDollarSign className="icon" /><span>Financeiro</span>
             </NavLink>
           </li>
 
