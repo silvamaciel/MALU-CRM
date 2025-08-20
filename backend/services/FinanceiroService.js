@@ -74,17 +74,24 @@ const gerarPlanoDePagamentos = async (contratoId) => {
  */
 const registrarBaixa = async (parcelaId, dadosBaixa, userId) => {
     const { valor, dataTransacao, metodoPagamento } = dadosBaixa;
-    const parcela = await Parcela.findById(parcelaId);
+    if (!valor || !dataTransacao || !metodoPagamento) {
+        throw new Error("Valor, data da transação e método de pagamento são obrigatórios.");
+    }
+
+    // Busca a parcela e já popula o 'sacado' para termos acesso ao ID dele
+    const parcela = await Parcela.findById(parcelaId).populate('sacado');
     if (!parcela) throw new Error("Parcela não encontrada.");
+    if (!parcela.sacado) throw new Error("Erro de integridade: Parcela não está associada a um sacado.");
 
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
-        // 1. Cria a transação
+        // 1. Cria a transação, agora incluindo o 'sacado'
         const novaTransacao = new Transacao({
             parcela: parcelaId,
             contrato: parcela.contrato,
             company: parcela.company,
+            sacado: parcela.sacado._id, // <<< CORRIGE O ERRO VALIDATIONERROR
             valor,
             metodoPagamento,
             dataTransacao,
@@ -92,18 +99,26 @@ const registrarBaixa = async (parcelaId, dadosBaixa, userId) => {
         });
         await novaTransacao.save({ session });
 
-        // 2. Atualiza a parcela
-        parcela.valorPago += valor;
-        parcela.dataPagamento = dataTransacao;
+        // 2. Acumula o valor pago na parcela
+        parcela.valorPago = (parcela.valorPago || 0) + valor;
+
+        // 3. Verifica se a parcela foi totalmente paga
         if (parcela.valorPago >= parcela.valorPrevisto) {
             parcela.status = new Date(dataTransacao) > parcela.dataVencimento ? 'Pago com Atraso' : 'Pago';
+            parcela.dataPagamento = dataTransacao; // Define a data de quitação
+        } else {
+            // Se for um pagamento parcial, o status continua como 'Pendente' ou 'Atrasado'
+            // Não alteramos o status aqui.
         }
+
         await parcela.save({ session });
 
         await session.commitTransaction();
+        console.log(`[FinanceiroSvc] Baixa de R$ ${valor} registada para a Parcela ID: ${parcelaId}`);
         return parcela;
     } catch (error) {
         await session.abortTransaction();
+        console.error(`[FinanceiroSvc] Erro ao registar baixa para a Parcela ID: ${parcelaId}`, error);
         throw error;
     } finally {
         session.endSession();
