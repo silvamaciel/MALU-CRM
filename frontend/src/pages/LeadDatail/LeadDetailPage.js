@@ -19,6 +19,10 @@ import LeadInfo from "./components/LeadInfo";
 import LeadHistory from "./components/LeadHistory";
 import TaskList from "../../components/TaskList/TaskList";
 
+
+import LeadChat from "./components/ChatModalForLead";
+
+
 import "../../components/TaskList/styleTaskList.css";
 import "./LeadDetailPage.css";
 import { toast } from "react-toastify";
@@ -263,16 +267,7 @@ function LeadDetailPage() {
 
         {/* FRAÇÃO DIREITA: Chat (placeholder/contêiner) */}
         <section className="ldp-panel ldp-right">
-          <div className="chat-panel">
-            <div className="chat-panel-header">
-              <h2>Chat</h2>
-              {/* Se quiser, coloque aqui botões de ação do chat */}
-            </div>
-            <div className="chat-panel-body">
-              {/* Substitua este placeholder pelo seu componente real de chat */}
-              <p>Área reservada para o Chat.</p>
-            </div>
-          </div>
+          <LeadChat leadId={leadDetails._id} variant="panel" />
         </section>
       </div>
 
