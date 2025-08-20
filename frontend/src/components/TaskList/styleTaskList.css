@@ -393,3 +393,81 @@ body { overflow: hidden; } /* deixa só o scroll interno da lista */
   .counter-btn{ transition: none; }
   .counter-btn.is-active{ transform: none; }
 }
+
+
+/* ====== FLUIDO, SEM SCROLL LATERAL ====== */
+
+/* 1) Nada de largura fixa */
+.tasks-list-component{
+  min-width: 0;     /* override do 720px */
+  width: 100%;
+  box-sizing: border-box;
+  padding: .75rem;
+}
+.task-item-full{
+  min-width: 0;     /* override do 700px */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 2) Scroll só vertical */
+.tasks-scroll{
+  overflow-y: auto;
+  overflow-x: hidden;   /* bloqueia horizontal */
+}
+
+/* 3) Conteúdo quebra linha */
+.task-content,
+.task-metadata-full,
+.task-title,
+.task-description{
+  min-width: 0;    /* permite encolher no grid */
+}
+.task-title,
+.task-description{
+  word-break: break-word;
+  overflow-wrap: anywhere;   /* quebra palavras longas/links */
+}
+.task-metadata-full{
+  display: flex;
+  flex-wrap: wrap;          /* quebra em várias linhas */
+  gap: .6rem 1rem;
+  font-size: .9rem;         /* um pouco mais leve */
+}
+.task-metadata-full span{
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* 4) Ações mais flexíveis */
+.task-actions{
+  display: flex;
+  flex-wrap: wrap;          /* se faltar espaço, pula linha */
+  gap: .5rem;
+  justify-content: flex-end;
+}
+
+/* 5) Layout responsivo: 3 colunas -> 1 coluna em telas estreitas */
+@media (max-width: 980px){
+  .task-item-full{
+    grid-template-columns: 1fr;   /* checkbox | conteúdo | ações, tudo em coluna */
+    align-items: initial;
+  }
+  .task-status-toggle{ order: -1; }     /* opcional: checkbox sobe */
+  .task-actions{
+    justify-content: flex-start;        /* botões alinham à esquerda em mobile */
+  }
+}
+
+/* 6) Aparência menos "grosseira" (paddings/tamanhos) */
+.task-item-full{ padding: .6rem .7rem; }
+.task-content .task-title{ font-size: 1rem; }
+.task-content .task-description{ font-size: .92rem; }
+.task-metadata-full{ font-size: .88rem; }
+
+/* 7) (opcional) amaciar cantos e sombra para parecer mais leve */
+.task-item-full{
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.03);
+}
