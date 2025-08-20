@@ -36,6 +36,8 @@ import ImovelFormPage from './pages/ImovelAvulso/ImovelFormPage/ImovelFormPage';
 import AgendaPage from './pages/AgendaPage/AgendaPage';
 import ChatPage from './pages/ChatPage/ChatPage';
 
+import FinanceiroPage from './pages/Financeiro/FinanceiroPage'
+
 import TasksPage from './pages/Tasks/TasksPage';
 
 
