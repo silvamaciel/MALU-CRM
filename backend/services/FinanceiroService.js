@@ -29,7 +29,7 @@ const gerarPlanoDePagamentos = async (contratoId) => {
                 contrato: contratoId,
                 sacado: contrato.lead._id,
                 company: contrato.company,
-                numeroParcela: i + 1, // Número sequencial dentro do tipo
+                numeroParcela: i + 1,
                 tipo: itemPlano.tipoParcela,
                 valorPrevisto: itemPlano.valorUnitario,
                 dataVencimento: new Date(dataVencimentoAtual),
