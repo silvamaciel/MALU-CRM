@@ -6,6 +6,24 @@
    Paleta: usa variáveis (.tasks-page), com fallback
    ================================ */
 
+
+/* Paleta disponível dentro do LeadDetail também */
+/* Paleta */
+:root {
+  --primary: #8a4dff;
+  --primary-hover: #7b44e6;
+  --background: #f3f4f6;
+  --card-bg: #ffffff;
+  --text-main: #1f2937;
+  --text-light: #6b7280;
+  --border-color: #e5e7eb;
+  --danger: #ef4444;
+
+  --radius: 12px;
+  --shadow: 0 8px 22px rgba(2, 6, 23, .08);
+  --focus: 0 0 0 3px rgba(138, 77, 255, .35);
+}
+
 /* -------- Shell geral -------- */
 .lead-detail-page.shell {
   display: flex;
@@ -21,20 +39,28 @@
   background: var(--background, #f5f7fb);
   color: var(--text-main, #0f172a);
 }
+
 @supports (height: 100dvh) {
-  .lead-detail-page.shell { height: 100dvh; }
+  .lead-detail-page.shell {
+    height: 100dvh;
+  }
 }
+
 @supports (height: 100svh) {
-  .lead-detail-page.shell { height: 100svh; }
+  .lead-detail-page.shell {
+    height: 100svh;
+  }
 }
 
 /* -------- Grid principal (duas frações) -------- */
 .ldp-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;  /* duas frações iguais */
+  grid-template-columns: 1fr 1fr;
+  /* duas frações iguais */
   gap: 12px;
   flex: 1 1 auto;
-  min-height: 0;                  /* permite scroll interno dos filhos */
+  min-height: 0;
+  /* permite scroll interno dos filhos */
 }
 
 /* -------- Painéis (frações esquerda e direita) -------- */
@@ -46,7 +72,7 @@
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
-  box-shadow: 0 1px 2px rgba(0,0,0,.04);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
 }
 
 /* =========================
@@ -81,21 +107,24 @@
   cursor: pointer;
   transition: background .15s ease, color .15s ease, border-color .15s ease, transform .02s ease;
 }
+
 .ldp-tab:hover {
   background: var(--primary-hover, #1d4ed8);
   color: #fff;
   border-color: var(--primary-hover, #1d4ed8);
 }
+
 .ldp-tab.active {
   background: var(--primary, #2563eb);
   color: #fff;
   border-color: var(--primary, #2563eb);
-  box-shadow: 0 1px 2px rgba(0,0,0,.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .1);
 }
 
 .ldp-left-content {
   padding: 12px;
-  overflow: auto;   /* o scroll fica no painel esquerdo */
+  overflow: auto;
+  /* o scroll fica no painel esquerdo */
   min-height: 0;
 
   /* Para permitir que o conteúdo selecionado (Info/Tasks/History) ocupe 100% */
@@ -112,6 +141,7 @@
   min-height: 0;
   height: 100%;
 }
+
 .chat-panel-header {
   position: sticky;
   top: 0;
@@ -123,15 +153,18 @@
   justify-content: space-between;
   align-items: center;
 }
+
 .chat-panel-header h2 {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
   color: var(--text-main, #0f172a);
 }
+
 .chat-panel-body {
   padding: 12px;
-  overflow: auto;   /* rolagem interna do chat */
+  overflow: auto;
+  /* rolagem interna do chat */
   min-height: 0;
   color: var(--text-light, #6b7280);
 }
@@ -139,15 +172,30 @@
 /* =========================
    Títulos/Estados auxiliares
    ========================= */
-.tasks-section > h2 {
+.tasks-section>h2 {
   margin: 0 0 8px;
   font-size: 16px;
   font-weight: 600;
   color: var(--text-main, #0f172a);
 }
-.error-message { color: var(--danger, #ef4444); font-weight: 500; margin: 6px 0; }
-.warning-message { color: var(--warning, #f59e0b); font-weight: 500; margin: 6px 0; }
-.success-message { color: var(--success, #10b981); font-weight: 500; margin: 6px 0; }
+
+.error-message {
+  color: var(--danger, #ef4444);
+  font-weight: 500;
+  margin: 6px 0;
+}
+
+.warning-message {
+  color: var(--warning, #f59e0b);
+  font-weight: 500;
+  margin: 6px 0;
+}
+
+.success-message {
+  color: var(--success, #10b981);
+  font-weight: 500;
+  margin: 6px 0;
+}
 
 /* =========================
    Botões do Header e TaskList
@@ -161,12 +209,14 @@
   font-weight: 600;
   transition: background .15s, color .15s, border-color .15s, transform .02s;
 }
+
 .lead-detail-page .header-actions .back-button,
 .lead-detail-page .header-actions .edit-button {
   background: #fff !important;
   color: var(--text-main, #0f172a) !important;
   border-color: var(--border-color, #e5e7eb) !important;
 }
+
 .lead-detail-page .header-actions .back-button:hover,
 .lead-detail-page .header-actions .edit-button:hover {
   background: var(--background, #f5f7fb) !important;
@@ -178,6 +228,7 @@
   border-color: var(--primary, #2563eb) !important;
   color: #fff !important;
 }
+
 .lead-detail-page .header-actions .action-button:hover,
 .lead-detail-page .tasks-section .create-link-task:hover {
   background: var(--primary-hover, #1d4ed8) !important;
@@ -190,6 +241,7 @@
   border-color: var(--danger, #ef4444) !important;
   color: #fff !important;
 }
+
 .lead-detail-page .header-actions .discard-button-detail:hover,
 .lead-detail-page .header-actions .delete-button-detail:hover {
   filter: brightness(0.95);
@@ -204,6 +256,7 @@
   padding: 6px 12px;
   font-weight: 600;
 }
+
 .lead-detail-page .tasks-section .button-link:hover {
   background: var(--background, #f5f7fb);
 }
@@ -212,7 +265,8 @@
    TaskList SEM SCROLL INTERNO
    (scroll só no painel esquerdo)
    ========================= */
-.ldp-left-content > * {       /* Info/Tasks/History ocupam o painel */
+.ldp-left-content>* {
+  /* Info/Tasks/History ocupam o painel */
   flex: 1 1 auto;
   min-height: 0;
 }
@@ -224,14 +278,17 @@
   flex: 1 1 auto;
   min-height: 0;
 }
+
 .ldp-left-content .tasks-section .tasklist-shell {
   flex: 1 1 auto;
   min-height: 0;
   height: 100%;
 }
+
 .ldp-left-content .tasks-section .tasks-toolbar,
 .ldp-left-content .tasks-section .tasks-pagination {
-  flex: 0 0 auto;  /* não crescem */
+  flex: 0 0 auto;
+  /* não crescem */
 }
 
 /* Remover scroll interno desta camada */
@@ -240,7 +297,8 @@
   min-height: 0;
   height: auto !important;
   max-height: none !important;
-  overflow: visible !important;   /* 🔑 sem scroll interno */
+  overflow: visible !important;
+  /* 🔑 sem scroll interno */
 }
 
 /* Lista pode crescer; quem rola é a fração esquerda */
@@ -254,26 +312,43 @@
 }
 
 /* O scroll permanece APENAS aqui */
-.ldp-left-content { overflow: auto; }
+.ldp-left-content {
+  overflow: auto;
+}
 
 /* =========================
    Responsividade “duas telas”
    ========================= */
 @media (max-width: 1100px) {
   .lead-detail-page.shell {
-    height: auto;     /* libera a altura total */
-    overflow: auto;   /* scroll da página */
+    height: auto;
+    /* libera a altura total */
+    overflow: auto;
+    /* scroll da página */
   }
 
   .ldp-grid {
-    grid-template-columns: 1fr; /* empilha as frações */
+    grid-template-columns: 1fr;
+    /* empilha as frações */
     gap: 10px;
   }
 
   /* Cada fração vira uma “tela” cheia em altura */
-  .ldp-panel { height: 100vh; }
-  @supports (height: 100dvh) { .ldp-panel { height: 100dvh; } }
-  @supports (height: 100svh) { .ldp-panel { height: 100svh; } }
+  .ldp-panel {
+    height: 100vh;
+  }
+
+  @supports (height: 100dvh) {
+    .ldp-panel {
+      height: 100dvh;
+    }
+  }
+
+  @supports (height: 100svh) {
+    .ldp-panel {
+      height: 100svh;
+    }
+  }
 }
 
 /* =========================
@@ -284,11 +359,13 @@
   width: 8px;
   height: 8px;
 }
+
 .ldp-left-content::-webkit-scrollbar-thumb,
 .chat-panel-body::-webkit-scrollbar-thumb {
-  background: rgba(0,0,0,.15);
+  background: rgba(0, 0, 0, .15);
   border-radius: 8px;
 }
+
 .ldp-left-content::-webkit-scrollbar-track,
 .chat-panel-body::-webkit-scrollbar-track {
   background: transparent;
@@ -301,7 +378,7 @@
 }
 
 /* Último filho com respiro ao fim do scroll */
-.ldp-panel > *:last-child {
+.ldp-panel>*:last-child {
   margin-bottom: 2px;
 }
 
@@ -309,16 +386,20 @@
 /* ====== FIX: Paginação sempre dentro do card esquerdo ====== */
 /* O contêiner que rola é o .ldp-left-content */
 .ldp-left-content {
-  overflow: auto;        /* já estava, reforçando */
-  padding-bottom: 8px;   /* um respiro para o raio da borda */
+  overflow: auto;
+  /* já estava, reforçando */
+  padding-bottom: 8px;
+  /* um respiro para o raio da borda */
 }
 
 /* Faz a paginação "grudar" no fundo do painel esquerdo e nunca sair dele */
 .ldp-left-content .tasks-section .tasks-pagination {
   position: sticky;
-  bottom: 0;                        /* gruda no fundo do scroll do painel esquerdo */
+  bottom: 0;
+  /* gruda no fundo do scroll do painel esquerdo */
   z-index: 2;
-  background: var(--card-bg, #fff); /* cobre a lista ao encostar */
+  background: var(--card-bg, #fff);
+  /* cobre a lista ao encostar */
   border-top: 1px solid var(--border-color, #e5e7eb);
   padding: 10px 12px;
   width: 100%;
@@ -328,7 +409,8 @@
 /* Garante espaço para a paginação não ficar encoberta ao rolar a lista */
 .ldp-left-content .tasks-section .tasks-scroll {
   /* segue sem scroll interno, apenas cria espaço no final para a sticky pagination */
-  padding-bottom: 72px !important;  /* ~altura da paginação + margem; ajuste fino se quiser */
+  padding-bottom: 72px !important;
+  /* ~altura da paginação + margem; ajuste fino se quiser */
   overflow: visible !important;
   max-height: none !important;
 }
@@ -347,6 +429,7 @@
   border-color: var(--primary, #2563eb);
   color: #fff;
 }
+
 .ldp-left-content .tasks-section .tasks-pagination .page-btn:hover:not([disabled]) {
   background: var(--primary-hover, #1d4ed8);
   border-color: var(--primary-hover, #1d4ed8);
@@ -361,7 +444,8 @@
 
 /* 0) A fração esquerda não rola: quem rola é o TaskList */
 .ldp-left-content {
-  overflow: hidden;              /* tirar o scroll do painel */
+  overflow: hidden;
+  /* tirar o scroll do painel */
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -379,7 +463,8 @@
 .lead-detail-page .tasklist-shell {
   flex: 1 1 auto;
   min-height: 0;
-  height: auto !important;       /* cancela calc(100vh - offset) */
+  height: auto !important;
+  /* cancela calc(100vh - offset) */
   max-height: none !important;
 }
 
@@ -387,7 +472,8 @@
 .lead-detail-page .tasklist-shell .tasks-scroll {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto !important;     /* rolagem só aqui */
+  overflow: auto !important;
+  /* rolagem só aqui */
   border: 1px solid var(--border-color, #e5e7eb);
   border-radius: var(--radius, 12px);
 }
@@ -425,6 +511,7 @@
   border-color: var(--primary, #2563eb);
   color: #fff;
 }
+
 .lead-detail-page .tasks-pagination .page-btn:hover:not([disabled]) {
   background: var(--primary-hover, #1d4ed8);
   border-color: var(--primary-hover, #1d4ed8);
@@ -432,8 +519,9 @@
 }
 
 /* ========== SCROLL POR ABA: Info/History rodam no painel; Tasks mantém scroll só na lista ========== */
-.ldp-left-content { 
-  overflow: auto !important;       /* padrão: rola o painel */
+.ldp-left-content {
+  overflow: auto !important;
+  /* padrão: rola o painel */
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -451,6 +539,7 @@
   height: auto !important;
   max-height: none !important;
 }
+
 .lead-detail-page .tasklist-shell .tasks-scroll {
   flex: 1 1 auto;
   min-height: 0;
@@ -468,11 +557,106 @@
 
 /* LeadInfo deve ocupar 100% da fração esquerda e rolar só o painel */
 .ldp-left-content.lefttab-info {
-  overflow: auto !important;   /* scroll do painel */
+  overflow: auto !important;
+  /* scroll do painel */
 }
+
 .ldp-left-content.lefttab-info .lead-details-column {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
+}
+
+
+/* ===== Variantes coloridas dos counters ===== */
+/* A VENCER – amarelo claro */
+.counter-btn--avencer {
+  background: color-mix(in srgb, var(--warning) 14%, #fff);
+  border-color: color-mix(in srgb, var(--warning) 40%, #fff);
+}
+
+.counter-btn--avencer .counter-title {
+  color: color-mix(in srgb, var(--warning) 70%, var(--text-main));
+}
+
+.counter-btn--avencer .counter-badge {
+  background: var(--warning);
+}
+
+.counter-btn--avencer:hover {
+  background: color-mix(in srgb, var(--warning) 18%, #fff);
+  box-shadow: 0 6px 16px rgba(245, 158, 11, .18);
+}
+
+.counter-btn--avencer.is-active {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--warning) 24%, #fff);
+}
+
+/* VENCIDAS – vermelho claro */
+.counter-btn--vencidas {
+  background: color-mix(in srgb, var(--danger) 12%, #fff);
+  border-color: color-mix(in srgb, var(--danger) 40%, #fff);
+}
+
+.counter-btn--vencidas .counter-title {
+  color: color-mix(in srgb, var(--danger) 70%, var(--text-main));
+}
+
+.counter-btn--vencidas .counter-badge {
+  background: var(--danger);
+}
+
+.counter-btn--vencidas:hover {
+  background: color-mix(in srgb, var(--danger) 16%, #fff);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, .18);
+}
+
+.counter-btn--vencidas.is-active {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--danger) 22%, #fff);
+}
+
+/* CONCLUÍDAS – verde claro */
+.counter-btn--concluidas {
+  background: color-mix(in srgb, var(--success) 12%, #fff);
+  border-color: color-mix(in srgb, var(--success) 42%, #fff);
+}
+
+.counter-btn--concluidas .counter-title {
+  color: color-mix(in srgb, var(--success) 75%, var(--text-main));
+}
+
+.counter-btn--concluidas .counter-badge {
+  background: var(--success);
+}
+
+.counter-btn--concluidas:hover {
+  background: color-mix(in srgb, var(--success) 16%, #fff);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, .18);
+}
+
+.counter-btn--concluidas.is-active {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--success) 22%, #fff);
+}
+
+/* Acessibilidade de foco */
+.counter-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, .18);
+  /* anel sutil padrão */
+}
+
+.counter-btn--avencer:focus-visible {
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, .25);
+}
+
+.counter-btn--vencidas:focus-visible {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, .25);
+}
+
+.counter-btn--concluidas:focus-visible {
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, .25);
 }

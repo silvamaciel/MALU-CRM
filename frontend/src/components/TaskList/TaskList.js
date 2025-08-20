@@ -1,3 +1,4 @@
+// src/components/TaskList/TaskList.js
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -9,14 +10,14 @@ import './styleTaskList.css';
 
 /**
  * Props:
- * - filters
+ * - filters            (ex.: { status: 'Pendente' | 'Concluída', ... })
  * - onTaskUpdate
  * - currentLeadId
- * - page, limit (opcional; modo controlado se passar onPageChange/onLimitChange)
- * - onLoaded: (meta) => { total, totalPages, currentPage }
- * - onPageChange?: (p) => void
- * - onLimitChange?: (l) => void
- * - viewportOffset?: string | number  (ex: '96px' para descontar header externo). Default: 0
+ * - page, limit        (controlado se vier onPageChange/onLimitChange)
+ * - onLoaded(meta)     { total, totalPages, currentPage }
+ * - onPageChange
+ * - onLimitChange
+ * - viewportOffset
  */
 function TaskList({
   filters,
@@ -56,6 +57,23 @@ function TaskList({
     localStorage.setItem('taskScope', ownerScope);
   }, [ownerScope]);
 
+  // ====== SUB-FILTRO LOCAL via contadores ======
+  // 'all' = pendentes (default) | 'aVencer' | 'vencidas' | 'concluidas'
+  const initialSub =
+    (filters?.status || '').toLowerCase() === 'Concluída' ? 'concluidas' : 'all';
+  const [subFilter, setSubFilter] = useState(initialSub);
+
+  // Se o parent mudar status (TasksPage), sincroniza o subFilter
+  useEffect(() => {
+    if ((filters?.status || '').toLowerCase() === 'Concluída') setSubFilter('concluidas');
+    else setSubFilter('all');
+  }, [filters?.status]);
+
+  const toggleFilter = (mode) => {
+    setLocalPage(1); // reset paginação
+    setSubFilter((prev) => (prev === mode ? 'all' : mode));
+  };
+
   const fetchTasks = useCallback(async () => {
     setLoading(true);
     try {
@@ -65,6 +83,10 @@ function TaskList({
         ...(ownerScope === 'mine' ? { mine: '1' } : {}),
         page: effectivePage,
         limit: effectiveLimit,
+
+        // Se sua API suportar, já pedimos ordenado:
+        orderBy: 'dueDate',
+        orderDir: 'asc',
       };
 
       const data = await getTasksApi(effectiveFilters);
@@ -88,7 +110,9 @@ function TaskList({
     }
   }, [filters, currentLeadId, ownerScope, effectivePage, effectiveLimit, onLoaded]);
 
-  useEffect(() => { fetchTasks(); }, [fetchTasks]);
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
 
   const goToPage = (p) => {
     const target = Math.max(1, Math.min(p, meta.totalPages || 1));
@@ -97,11 +121,16 @@ function TaskList({
   };
   const changePageSize = (newLimit) => {
     const lim = Number(newLimit) || 10;
-    if (isLimitControlled) onLimitChange(lim); else setLocalLimit(lim);
-    if (isPageControlled) onPageChange(1); else setLocalPage(1);
+    if (isLimitControlled) onLimitChange(lim);
+    else setLocalLimit(lim);
+    if (isPageControlled) onPageChange(1);
+    else setLocalPage(1);
   };
 
-  const openDeleteModal = (task) => { setDeleteTarget(task); setIsDeleteModalOpen(true); };
+  const openDeleteModal = (task) => {
+    setDeleteTarget(task);
+    setIsDeleteModalOpen(true);
+  };
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
     setIsProcessing(true);
@@ -125,7 +154,7 @@ function TaskList({
 
   const handleToggleStatus = async (task) => {
     try {
-      const newStatus = task.status === 'Pendente' ? 'Concluída' : 'Pendente';
+      const newStatus = task.status === 'Concluída' ? 'Pendente' : 'Concluída';
       await updateTaskApi(task._id, { status: newStatus });
       toast.success(`Tarefa marcada como ${newStatus.toLowerCase()}!`);
       fetchTasks();
@@ -135,13 +164,71 @@ function TaskList({
     }
   };
 
-  const handleOpenEditModal = (task) => { setTaskToEdit(task); setIsEditModalOpen(true); };
-  const handleCloseEditModal = () => { setIsEditModalOpen(false); setTaskToEdit(null); };
-  const handleEditSuccess = () => { handleCloseEditModal(); fetchTasks(); onTaskUpdate?.(); };
+  const handleOpenEditModal = (task) => {
+    setTaskToEdit(task);
+    setIsEditModalOpen(true);
+  };
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setTaskToEdit(null);
+  };
+  const handleEditSuccess = () => {
+    handleCloseEditModal();
+    fetchTasks();
+    onTaskUpdate?.();
+  };
 
   const handleOpenCreateModal = () => setIsCreateModalOpen(true);
   const handleCloseCreateModal = () => setIsCreateModalOpen(false);
-  const handleCreateSuccess = () => { handleCloseCreateModal(); fetchTasks(); onTaskUpdate?.(); };
+  const handleCreateSuccess = () => {
+    handleCloseCreateModal();
+    fetchTasks();
+    onTaskUpdate?.();
+  };
+
+  // ===== DERIVADOS: contadores + filtro local + ordenação =====
+  const now = new Date();
+  const safeDue = (t) => {
+    const d = new Date(t?.dueDate);
+    return isNaN(d.getTime()) ? null : d;
+  };
+
+  const counts = useMemo(() => {
+    const base = Array.isArray(tasks) ? tasks : [];
+    let aVencer = 0, vencidas = 0, concluidas = 0;
+    for (const t of base) {
+      if (t.status === 'Concluída') { concluidas++; continue; }
+      const d = safeDue(t);
+      if (!d || d >= now) aVencer++;
+      else vencidas++;
+    }
+    return { aVencer, vencidas, concluidas };
+  }, [tasks]); // 'now' fora dos deps para manter estável enquanto navega
+
+  const byMode = useMemo(() => {
+    const base = Array.isArray(tasks) ? tasks.slice() : [];
+    const out = base.filter((t) => {
+      const done = t.status === 'Concluída';
+      const d = safeDue(t);
+
+      if (subFilter === 'concluidas') return done;
+      if (subFilter === 'vencidas')   return !done && d && d <  now;
+      if (subFilter === 'aVencer')    return !done && (!d || d >= now);
+      // 'all' (pendentes)
+      return !done;
+    });
+
+    // Ordena por dueDate asc; sem dueDate vai pro fim
+    out.sort((a, b) => {
+      const da = safeDue(a), db = safeDue(b);
+      if (!da && !db) return 0;
+      if (!da) return 1;
+      if (!db) return -1;
+      return da - db;
+    });
+
+    return out;
+  }, [tasks, subFilter]);
 
   const showing = useMemo(() => {
     const total = meta.total || 0;
@@ -172,6 +259,38 @@ function TaskList({
     <>
       {/* SHELL limita a 100vh e organiza header / lista (scroll) / footer */}
       <div className="tasklist-shell" style={shellStyle}>
+
+        {/* ===== Counters / Filtros por status relativo ===== */}
+        <div className={`tasks-counters ${subFilter !== 'all' ? 'has-active' : ''}`}>
+          <button
+            className={`counter-btn counter-btn--avencer ${subFilter === 'aVencer' ? 'is-active' : ''}`}
+            onClick={() => toggleFilter('aVencer')}
+            title="Mostrar apenas pendentes com vencimento no futuro"
+          >
+            <span className="counter-title">A vencer</span>
+            <span className="counter-badge">{counts.aVencer}</span>
+          </button>
+
+          <button
+            className={`counter-btn counter-btn--vencidas ${subFilter === 'vencidas' ? 'is-active' : ''}`}
+            onClick={() => toggleFilter('vencidas')}
+            title="Mostrar apenas pendentes vencidas"
+          >
+            <span className="counter-title">Vencidas</span>
+            <span className="counter-badge">{counts.vencidas}</span>
+          </button>
+
+          <button
+            className={`counter-btn counter-btn--concluidas ${subFilter === 'concluidas' ? 'is-active' : ''}`}
+            onClick={() => toggleFilter('concluidas')}
+            title="Mostrar apenas concluídas"
+          >
+            <span className="counter-title">Concluídas</span>
+            <span className="counter-badge">{counts.concluidas}</span>
+          </button>
+        </div>
+
+        {/* Toolbar (nova tarefa + escopo) */}
         <div className="tasks-toolbar">
           <button onClick={handleOpenCreateModal} className="button-link create-link-task">
             + Nova Tarefa
@@ -194,8 +313,8 @@ function TaskList({
         {/* SCROLL apenas aqui */}
         <div className="tasks-scroll">
           <div className="tasks-list-component">
-            {tasks.length > 0 ? (
-              tasks.map((task) => (
+            {byMode.length > 0 ? (
+              byMode.map((task) => (
                 <div
                   key={task._id}
                   className={`task-item-full status-${task.status.toLowerCase()}`}
@@ -253,6 +372,7 @@ function TaskList({
           </div>
         </div>
 
+        {/* Paginação */}
         <div className="tasks-pagination">
           <div className="pagination-left">
             <span className="pagination-range">

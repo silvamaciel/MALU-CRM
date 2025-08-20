@@ -235,3 +235,162 @@ body { overflow: hidden; } /* deixa só o scroll interno da lista */
   scrollbar-width: thin; /* "auto" | "thin" */
   scrollbar-color: #8a4dff var(--background);
 }
+
+
+/* ===== Counters / Filtros superiores ===== */
+.tasks-counters{
+  display: flex;
+  gap: .5rem;
+  align-items: stretch;
+  flex-wrap: wrap;
+  margin-bottom: .25rem;
+}
+
+.counter-btn{
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .55rem .8rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,.05);
+  transition: transform .02s, box-shadow .15s, border-color .15s, background .15s;
+}
+.counter-btn:hover{
+  background: #f9fafb;
+  box-shadow: 0 4px 14px rgba(2,6,23,.08);
+}
+
+.counter-btn .counter-title{
+  font-weight: 800;
+  font-size: .9rem;
+  color: var(--text-main);
+}
+.counter-btn .counter-badge{
+  display: inline-flex;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 .4rem;
+  border-radius: 999px;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: .85rem;
+  color: #fff;
+  background: linear-gradient(90deg, var(--primary), var(--primary-hover));
+  box-shadow: 0 6px 16px rgba(37,99,235,.25);
+}
+
+/* estado ativo do filtro */
+.counter-btn.is-active{
+  border-color: transparent;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--primary) 12%, #fff), #fff);
+}
+.counter-btn.is-active .counter-title{
+  color: color-mix(in srgb, var(--primary) 75%, var(--text-main));
+}
+
+
+/* ===== Variantes coloridas dos counters ===== */
+/* A VENCER – amarelo claro */
+.counter-btn--avencer{
+  background: color-mix(in srgb, var(--warning) 14%, #fff);
+  border-color: color-mix(in srgb, var(--warning) 40%, #fff);
+}
+.counter-btn--avencer .counter-title{
+  color: color-mix(in srgb, var(--warning) 70%, var(--text-main));
+}
+.counter-btn--avencer .counter-badge{
+  background: var(--warning);
+}
+.counter-btn--avencer:hover{
+  background: color-mix(in srgb, var(--warning) 18%, #fff);
+  box-shadow: 0 6px 16px rgba(245, 158, 11, .18);
+}
+.counter-btn--avencer.is-active{
+  border-color: transparent;
+  background: color-mix(in srgb, var(--warning) 24%, #fff);
+}
+
+/* VENCIDAS – vermelho claro */
+.counter-btn--vencidas{
+  background: color-mix(in srgb, var(--danger) 12%, #fff);
+  border-color: color-mix(in srgb, var(--danger) 40%, #fff);
+}
+.counter-btn--vencidas .counter-title{
+  color: color-mix(in srgb, var(--danger) 70%, var(--text-main));
+}
+.counter-btn--vencidas .counter-badge{
+  background: var(--danger);
+}
+.counter-btn--vencidas:hover{
+  background: color-mix(in srgb, var(--danger) 16%, #fff);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, .18);
+}
+.counter-btn--vencidas.is-active{
+  border-color: transparent;
+  background: color-mix(in srgb, var(--danger) 22%, #fff);
+}
+
+/* CONCLUÍDAS – verde claro */
+.counter-btn--concluidas{
+  background: color-mix(in srgb, var(--success) 12%, #fff);
+  border-color: color-mix(in srgb, var(--success) 42%, #fff);
+}
+.counter-btn--concluidas .counter-title{
+  color: color-mix(in srgb, var(--success) 75%, var(--text-main));
+}
+.counter-btn--concluidas .counter-badge{
+  background: var(--success);
+}
+.counter-btn--concluidas:hover{
+  background: color-mix(in srgb, var(--success) 16%, #fff);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, .18);
+}
+.counter-btn--concluidas.is-active{
+  border-color: transparent;
+  background: color-mix(in srgb, var(--success) 22%, #fff);
+}
+
+/* Acessibilidade de foco */
+.counter-btn:focus-visible{
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.18); /* anel sutil padrão */
+}
+.counter-btn--avencer:focus-visible{
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, .25);
+}
+.counter-btn--vencidas:focus-visible{
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, .25);
+}
+.counter-btn--concluidas:focus-visible{
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, .25);
+}
+
+
+/* Transições suaves e preparo pro zoom */
+.counter-btn{
+  transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease, filter .15s ease, background .15s ease, border-color .15s ease;
+  will-change: transform;
+}
+
+/* Quando existe um ativo, os outros ficam um pouco “apagados” */
+.tasks-counters.has-active .counter-btn:not(.is-active){
+  opacity: .65;
+  filter: saturate(.7);
+}
+
+/* O botão ativo ganha um leve zoom e eleva sombra */
+.counter-btn.is-active{
+  transform: translateY(-1px) scale(1.03);
+  box-shadow: 0 8px 22px rgba(2,6,23,.14); /* um pouco mais forte que o hover */
+  z-index: 1; /* garante que a sombra não seja “cortada” */
+}
+
+/* Preferência de reduzir movimento: remove o zoom */
+@media (prefers-reduced-motion: reduce){
+  .counter-btn{ transition: none; }
+  .counter-btn.is-active{ transform: none; }
+}
