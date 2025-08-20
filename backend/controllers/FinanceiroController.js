@@ -51,9 +51,50 @@ const getDashboardController = asyncHandler(async (req, res, next) => {
 });
 
 
+const gerarParcelaAvulsaController = asyncHandler(async (req, res, next) => {
+    const parcela = await FinanceiroService.gerarParcelaAvulsa(req.body, req.user.company);
+    res.status(201).json({ success: true, data: parcela });
+});
+
+// --- Controllers para Credores ---
+
+const criarCredorController = asyncHandler(async (req, res) => {
+    const credor = await FinanceiroService.criarCredor(req.body, req.user.company);
+    res.status(201).json({ success: true, data: credor });
+});
+
+const listarCredoresController = asyncHandler(async (req, res) => {
+    const credores = await FinanceiroService.listarCredores(req.user.company);
+    res.status(200).json({ success: true, data: credores });
+});
+
+// --- Controllers para Despesas ---
+
+const criarDespesaController = asyncHandler(async (req, res) => {
+    const despesa = await FinanceiroService.criarDespesa(req.body, req.user.company, req.user._id);
+    res.status(201).json({ success: true, data: despesa });
+});
+
+const listarDespesasController = asyncHandler(async (req, res) => {
+    const result = await FinanceiroService.listarDespesas(req.user.company, req.query);
+    res.status(200).json({ success: true, ...result });
+});
+
+const registrarPagamentoController = asyncHandler(async (req, res) => {
+    const despesa = await FinanceiroService.registrarPagamentoDespesa(req.params.id, req.body, req.user._id);
+    res.status(200).json({ success: true, data: despesa });
+});
+
+
 module.exports = {
     gerarPlanoDePagamentosController,
     listarParcelasController,
     registrarBaixaController,
-    getDashboardController
+    getDashboardController,
+    gerarParcelaAvulsaController,
+    criarCredorController,
+    listarCredoresController,
+    criarDespesaController,
+    listarDespesasController,
+    registrarPagamentoController
 };

@@ -5,10 +5,10 @@ const parcelaSchema = new Schema({
     contrato: {
         type: Schema.Types.ObjectId,
         ref: 'PropostaContrato',
-        required: true,
+        required: false,
+        default: null,
         index: true
     },
-    
     sacado: {
         type: Schema.Types.ObjectId,
         ref: 'Lead',

@@ -19,5 +19,19 @@ router.post('/parcelas/:id/baixa', FinanceiroController.registrarBaixaController
 
 router.post('/contratos/:contratoId/gerar-plano', authorize('admin'), FinanceiroController.gerarPlanoDePagamentosController);
 
+router.post('/parcelas/avulsa', authorize('admin'), FinanceiroController.gerarParcelaAvulsaController);
+
+
+router.route('/credores')
+    .get(authorize('admin'), FinanceiroController.listarCredoresController)
+    .post(authorize('admin'), FinanceiroController.criarCredorController);
+
+// --- Rotas de Contas a Pagar (Despesas) ---
+router.route('/despesas')
+    .get(FinanceiroController.listarDespesasController)
+    .post(FinanceiroController.criarDespesaController);
+
+router.post('/despesas/:id/pagar', FinanceiroController.registrarPagamentoController);
+
 
 module.exports = router;

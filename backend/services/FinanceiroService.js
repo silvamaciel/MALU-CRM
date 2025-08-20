@@ -1,7 +1,10 @@
 const PropostaContrato = require('../models/PropostaContrato');
 const Parcela = require('../models/Parcela');
 const Transacao = require('../models/Transacao');
+const Lead = require('../models/Lead');
 const mongoose = require('mongoose');
+const Credor = require('../models/Credor');
+const Despesa = require('../models/Despesa');
 
 /**
  * Gera o plano de pagamentos completo para um contrato, lendo
@@ -22,7 +25,7 @@ const gerarPlanoDePagamentos = async (contratoId) => {
     // Itera sobre cada LINHA do plano de pagamento do contrato
     contrato.planoDePagamento.forEach(itemPlano => {
         let dataVencimentoAtual = new Date(itemPlano.vencimentoPrimeira);
-        
+
         // Cria todas as parcelas para aquela linha (ex: 36 parcelas mensais)
         for (let i = 0; i < itemPlano.quantidade; i++) {
             const novaParcela = {
@@ -64,7 +67,7 @@ const gerarPlanoDePagamentos = async (contratoId) => {
     if (parcelasParaCriar.length > 0) {
         await Parcela.insertMany(parcelasParaCriar);
     }
-    
+
     console.log(`${parcelasParaCriar.length} parcelas geradas para o contrato ${contratoId}`);
     return { message: "Plano de pagamentos gerado com sucesso." };
 };
@@ -133,12 +136,12 @@ const registrarBaixa = async (parcelaId, dadosBaixa, userId) => {
 const listarParcelas = async (companyId, queryParams) => {
     const { status, page = 1, limit = 10, sort = 'dataVencimento' } = queryParams;
     const skip = (page - 1) * limit;
-    
+
     const queryConditions = { company: companyId };
     if (status) {
         queryConditions.status = status;
     }
-    
+
     const [parcelas, total] = await Promise.all([
         Parcela.find(queryConditions)
             .populate({
@@ -151,7 +154,7 @@ const listarParcelas = async (companyId, queryParams) => {
             .lean(),
         Parcela.countDocuments(queryConditions)
     ]);
-    
+
     const totalPages = Math.ceil(total / limit);
     return { parcelas, total, totalPages, currentPage: parseInt(page) };
 };
@@ -172,7 +175,7 @@ const getDashboardData = async (companyId) => {
                     $sum: { $cond: [{ $in: ['$status', ['Pendente', 'Atrasado']] }, '$valorPrevisto', 0] }
                 },
                 recebidoNoMes: {
-                    $sum: { $cond: [{ $and: [ { $eq: ['$status', 'Pago'] }, { $gte: ['$dataPagamento', inicioDoMes] } ] }, '$valorPago', 0] }
+                    $sum: { $cond: [{ $and: [{ $eq: ['$status', 'Pago'] }, { $gte: ['$dataPagamento', inicioDoMes] }] }, '$valorPago', 0] }
                 },
                 totalVencido: {
                     $sum: { $cond: [{ $eq: ['$status', 'Atrasado'] }, '$valorPrevisto', 0] }
@@ -180,9 +183,123 @@ const getDashboardData = async (companyId) => {
             }
         }
     ]);
-    
+
     return kpis || { totalAReceber: 0, recebidoNoMes: 0, totalVencido: 0 };
 };
 
 
-module.exports = { gerarPlanoDePagamentos, registrarBaixa, getDashboardData, listarParcelas };
+/**
+ * Cria uma nova parcela avulsa (não vinculada a um contrato).
+ * Útil para cobranças de serviços, taxas, etc.
+ */
+const gerarParcelaAvulsa = async (dadosParcela, companyId) => {
+    const { sacado, tipo, valorPrevisto, dataVencimento, observacoes } = dadosParcela;
+
+    // Validação dos dados essenciais
+    if (!sacado || !valorPrevisto || !dataVencimento) {
+        throw new Error("Cliente (Sacado), Valor e Data de Vencimento são obrigatórios.");
+    }
+
+    // Verifica se o lead (sacado) pertence à empresa
+    const leadDoc = await Lead.findOne({ _id: sacado, company: companyId });
+    if (!leadDoc) {
+        throw new Error("Cliente não encontrado ou não pertence a esta empresa.");
+    }
+
+    const novaParcela = new Parcela({
+        sacado,
+        company: companyId,
+        tipo: tipo || 'Outra', // Define um tipo padrão se não for especificado
+        valorPrevisto,
+        dataVencimento,
+        observacoes,
+        status: 'Pendente',
+        contrato: null // Garante que não há vínculo com contrato
+    });
+
+    await novaParcela.save();
+    console.log(`[FinanceiroSvc] Parcela avulsa criada com sucesso para o lead ${leadDoc.nome}`);
+    return novaParcela;
+};
+
+
+// --- Funções para Credores ---
+
+const criarCredor = async (dadosCredor, companyId) => {
+    // Adicione validações aqui (ex: verificar se CPF/CNPJ já existe)
+    const novoCredor = new Credor({ ...dadosCredor, company: companyId });
+    await novoCredor.save();
+    return novoCredor;
+};
+
+const listarCredores = async (companyId) => {
+    return Credor.find({ company: companyId }).sort({ nome: 1 });
+};
+
+// --- Funções para Despesas (Contas a Pagar) ---
+
+const criarDespesa = async (dadosDespesa, companyId, userId) => {
+    const { descricao, credor, valor, dataVencimento } = dadosDespesa;
+    if (!descricao || !credor || !valor || !dataVencimento) {
+        throw new Error("Descrição, credor, valor e data de vencimento são obrigatórios.");
+    }
+
+    const novaDespesa = new Despesa({
+        ...dadosDespesa,
+        company: companyId,
+        registradoPor: userId
+    });
+    await novaDespesa.save();
+    return novaDespesa;
+};
+
+const listarDespesas = async (companyId, queryParams) => {
+    const { status, page = 1, limit = 10, sort = 'dataVencimento' } = queryParams;
+    const skip = (page - 1) * limit;
+
+    const queryConditions = { company: companyId };
+    if (status) {
+        queryConditions.status = status;
+    }
+
+    const [despesas, total] = await Promise.all([
+        Despesa.find(queryConditions)
+            .populate('credor', 'nome')
+            .sort(sort)
+            .skip(skip)
+            .limit(parseInt(limit))
+            .lean(),
+        Despesa.countDocuments(queryConditions)
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+    return { despesas, total, totalPages, currentPage: parseInt(page) };
+};
+
+const registrarPagamentoDespesa = async (despesaId, dadosPagamento, userId) => {
+    const { valorPago, dataPagamento } = dadosPagamento;
+    const despesa = await Despesa.findById(despesaId);
+    if (!despesa) throw new Error("Despesa não encontrada.");
+
+    // Lógica para criar uma "TransacaoDeSaida" pode ser adicionada aqui no futuro
+    despesa.status = 'Paga';
+    despesa.dataPagamento = dataPagamento;
+    // Lógica para pagamentos parciais pode ser adicionada aqui
+
+    await despesa.save();
+    return despesa;
+};
+
+
+module.exports = {
+    gerarPlanoDePagamentos,
+    registrarBaixa,
+    getDashboardData,
+    listarParcelas,
+    gerarParcelaAvulsa,
+    criarCredor,
+    listarCredores,
+    criarDespesa,
+    listarDespesas,
+    registrarPagamentoDespesa
+};
