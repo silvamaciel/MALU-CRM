@@ -8,7 +8,8 @@ const parcelaSchema = new Schema({
         required: true,
         index: true
     },
-    lead: {
+    
+    sacado: {
         type: Schema.Types.ObjectId,
         ref: 'Lead',
         required: true,
@@ -27,7 +28,11 @@ const parcelaSchema = new Schema({
     tipo: {
         type: String,
         required: true,
-        enum: ['Sinal', 'Parcela Mensal', 'Intercalada', 'Financiamento', 'Chaves', 'Outra'],
+        enum: [
+            "ATO", "PARCELA MENSAL", "PARCELA BIMESTRAL",
+            "PARCELA TRIMESTRAL", "PARCELA SEMESTRAL", "INTERCALADA",
+            "ENTREGA DE CHAVES", "FINANCIAMENTO", "OUTRA"
+        ],
         default: 'Parcela Mensal'
     },
     valorPrevisto: {
