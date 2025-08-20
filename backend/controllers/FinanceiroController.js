@@ -1,5 +1,6 @@
 const asyncHandler = require('../middlewares/asyncHandler');
 const FinanceiroService = require('../services/FinanceiroService');
+const IndexadorService = require('../services/IndexadorService');
 const ErrorResponse = require('../utils/errorResponse');
 
 /**
@@ -86,6 +87,24 @@ const registrarPagamentoController = asyncHandler(async (req, res) => {
 });
 
 
+
+const getIndexadoresController = asyncHandler(async (req, res) => {
+    const indexadores = await IndexadorService.getIndexadores(req.user.company);
+    res.status(200).json({ success: true, data: indexadores });
+});
+
+const createIndexadorController = asyncHandler(async (req, res) => {
+    const indexador = await IndexadorService.createIndexador(req.body, req.user.company);
+    res.status(201).json({ success: true, data: indexador });
+});
+
+const upsertValorIndexadorController = asyncHandler(async (req, res) => {
+    const indexador = await IndexadorService.upsertValorIndexador(req.params.id, req.body, req.user.company);
+    res.status(200).json({ success: true, data: indexador });
+});
+
+
+
 module.exports = {
     gerarPlanoDePagamentosController,
     listarParcelasController,
@@ -96,5 +115,8 @@ module.exports = {
     listarCredoresController,
     criarDespesaController,
     listarDespesasController,
-    registrarPagamentoController
+    registrarPagamentoController,
+    getIndexadoresController,
+    createIndexadorController,
+    upsertValorIndexadorController
 };

@@ -31,7 +31,20 @@ router.route('/despesas')
     .get(FinanceiroController.listarDespesasController)
     .post(FinanceiroController.criarDespesaController);
 
+
+router.route('/credores')
+    .get(authorize('admin'), FinanceiroController.listarCredoresController)
+    .post(authorize('admin'), FinanceiroController.criarCredorController);
+    
+    
+
 router.post('/despesas/:id/pagar', FinanceiroController.registrarPagamentoController);
+
+router.route('/indexadores')
+    .get(authorize('admin'), FinanceiroController.getIndexadoresController)
+    .post(authorize('admin'), FinanceiroController.createIndexadorController);
+
+router.post('/indexadores/:id/valores', authorize('admin'), FinanceiroController.upsertValorIndexadorController);
 
 
 module.exports = router;
