@@ -2,6 +2,23 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
+
+const regraReajusteSchema = new Schema({
+    aplicaA: [{ // A quais tipos de parcela esta regra se aplica
+        type: String,
+        enum: ["PARCELA MENSAL", "INTERCALADA", "ENTREGA DE CHAVES"]
+    }],
+    indexadorReajuste: { // Qual indexador usar para a correção
+        type: Schema.Types.ObjectId,
+        ref: 'Indexador'
+    },
+    aplicaMultaAtraso: { type: Boolean, default: true },
+    multaPercentual: { type: Number, default: 2 }, // 2%
+    aplicaJurosAtraso: { type: Boolean, default: true },
+    jurosMensalPercentual: { type: Number, default: 1 } // 1% ao mês (pro rata)
+}, { _id: false });
+
+
 // --- Parcelas ---
 const parcelaSchema = new Schema({
   tipoParcela: {
@@ -104,6 +121,8 @@ const propostaContratoSchema = new Schema({
 
   // --- Corretagem ---
   corretagem: corretagemSchema,
+
+  regrasDeReajuste: [regraReajusteSchema],
 
   // --- Contrato ---
   corpoContratoHTMLGerado: { type: String, required: true },
