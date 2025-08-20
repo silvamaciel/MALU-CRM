@@ -9,13 +9,16 @@
    Se o app já define essas variáveis globalmente, elas continuam valendo;
    estes valores servem como fallback específicos da tela de tarefas. */
 .tasks-page {
-  --_primary: var(--primary, #6f42c1);
-  --_primaryHover: var(--primary-hover, #56339d);
-  --_border: var(--border-color, #e5e7eb);
-  --_card: var(--card-bg, #fff);
-  --_bg: var(--background, #f6f8fb);
-  --_text: var(--text-main, #111827);
-  --_muted: var(--text-light, #6b7280);
+  --primary:        #2563eb;
+  --primary-hover:  #1d4ed8;
+  --background:     #f5f7fb;
+  --card-bg:        #ffffff;
+  --text-main:      #0f172a;
+  --text-light:     #6b7280;
+  --border-color:   #e5e7eb;
+  --success:        #10b981;
+  --danger:         #ef4444;
+  --warning:        #f59e0b;
 }
 
 /* Página com scroll */
@@ -44,7 +47,6 @@
   border-radius: 12px;
   padding: 14px 16px;
 }
-
 .tasks-page .page-header h1 {
   margin: 0;
   font-size: 1.2rem;
@@ -56,7 +58,6 @@
   align-items: center;
   gap: 10px;
 }
-
 .tasks-page .limit-label {
   display: inline-flex;
   align-items: center;
@@ -64,7 +65,6 @@
   color: var(--text-light);
   font-size: 0.95rem;
 }
-
 .tasks-page .limit-label select {
   padding: 6px 10px;
   border: 1px solid var(--border-color);
@@ -92,7 +92,6 @@
   grid-template-columns: repeat(3, minmax(160px, 1fr));
   gap: 12px;
 }
-
 .tasks-page .kpi-card-task {
   display: flex;
   flex-direction: column;
@@ -105,33 +104,19 @@
   padding: 16px 12px;
   text-align: center;
 }
-
 .tasks-page .kpi-card-task .kpi-value {
   font-size: 1.4rem;
   font-weight: 800;
   color: var(--text-main);
   line-height: 1;
 }
-
 .tasks-page .kpi-card-task .kpi-label {
   font-size: 0.9rem;
   color: var(--text-light);
 }
-
-.tasks-page .kpi-card-task.kpi-due {
-  background: #eff6ff;
-  border-color: #dbeafe;
-}
-
-.tasks-page .kpi-card-task.kpi-overdue {
-  background: #fef2f2;
-  border-color: #fee2e2;
-}
-
-.tasks-page .kpi-card-task.kpi-done {
-  background: #f0fdf4;
-  border-color: #dcfce7;
-}
+.tasks-page .kpi-card-task.kpi-due    { background: #eff6ff; border-color: #dbeafe; }
+.tasks-page .kpi-card-task.kpi-overdue{ background: #fef2f2; border-color: #fee2e2; }
+.tasks-page .kpi-card-task.kpi-done   { background: #f0fdf4; border-color: #dcfce7; }
 
 /* Filtros */
 .tasks-page .tasks-filters {
@@ -155,32 +140,25 @@
   cursor: pointer;
   transition: background .15s ease, color .15s ease, border-color .15s ease, opacity .15s ease;
 }
-
 .tasks-page .primary-button {
   background: var(--primary);
   color: #fff;
   border-color: var(--primary);
 }
-
 .tasks-page .primary-button:hover {
   background: var(--primary-hover);
   border-color: var(--primary-hover);
 }
-
 .tasks-page .outline-button {
   background: #fff;
   color: var(--text-main);
   border: 1px solid var(--border-color);
 }
-
-.tasks-page .outline-button:hover {
-  background: #f9fafb;
-}
+.tasks-page .outline-button:hover { background: #f9fafb; }
 
 /* A lista ocupa o espaço disponível, empurrando a paginação pro final */
 .tasks-page .tasks-list-container {
-  flex: 1 1 auto;
-  /* <- chave pra paginação ir pro fim */
+  flex: 1 1 auto;   /* <- chave pra paginação ir pro fim */
   min-height: 160px;
 }
 
@@ -201,7 +179,6 @@
   border-top: 1px solid var(--border-color);
   margin-top: 4px;
 }
-
 .tasks-page .page-btn {
   padding: 8px 12px;
   border-radius: 8px;
@@ -210,16 +187,8 @@
   color: var(--text-main);
   font-weight: 700;
 }
-
-.tasks-page .page-btn:disabled {
-  opacity: .5;
-  cursor: not-allowed;
-}
-
-.tasks-page .page-info {
-  color: var(--text-light);
-  font-size: 0.95rem;
-}
+.tasks-page .page-btn:disabled { opacity: .5; cursor: not-allowed; }
+.tasks-page .page-info { color: var(--text-light); font-size: 0.95rem; }
 
 /* Responsivo */
 @media (max-width: 900px) {
@@ -228,11 +197,11 @@
     align-items: flex-start;
     gap: 8px;
   }
-
   .tasks-page .list-toolbar {
     width: 100%;
     justify-content: flex-start;
   }
 }
+@media (max-width: 680px) {
 
-@media (max-width: 680px) {}
+}

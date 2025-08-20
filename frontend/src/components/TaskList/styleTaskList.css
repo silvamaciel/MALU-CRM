@@ -1,19 +1,18 @@
 /* Paleta */
-:root{
-  --primary:#8a4dff;
-  --primary-hover:#7b44e6;
-  --background:#f3f4f6;
-  --card-bg:#ffffff;
-  --text-main:#1f2937;
-  --text-light:#6b7280;
-  --border-color:#e5e7eb;
-  --danger:#ef4444;
 
-  --radius:12px;
-  --shadow:0 8px 22px rgba(2,6,23,.08);
-  --focus:0 0 0 3px rgba(138,77,255,.35);
+
+.tasklist-shell {
+  --primary:        #2563eb;
+  --primary-hover:  #1d4ed8;
+  --background:     #f5f7fb;
+  --card-bg:        #ffffff;
+  --text-main:      #0f172a;
+  --text-light:     #6b7280;
+  --border-color:   #e5e7eb;
+  --success:        #10b981;
+  --danger:         #ef4444;
+  --warning:        #f59e0b;
 }
-
 /* === SHELL ===
    Garante que o componente inteiro nunca ultrapasse 100vh.
    Se tiver header externo, passe viewportOffset no JS para descontar. */
