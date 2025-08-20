@@ -16,8 +16,8 @@ router.get('/parcelas', FinanceiroController.listarParcelasController);
 router.post('/parcelas/:id/baixa', FinanceiroController.registrarBaixaController);
 
 // Rota para gerar o plano de pagamentos de um contrato
-// Esta rota é mais para administração/testes. A chamada real virá do serviço de contratos.
-router.post('/contratos/:contratoId/gerar-plano', authorize(['admin']), FinanceiroController.gerarPlanoDePagamentosController);
+
+router.post('/contratos/:contratoId/gerar-plano', authorize('admin'), FinanceiroController.gerarPlanoDePagamentosController);
 
 
 module.exports = router;
