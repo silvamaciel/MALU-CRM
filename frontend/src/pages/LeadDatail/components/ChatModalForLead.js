@@ -8,6 +8,9 @@ import {
   createLeadFromConversationApi,
 } from '../../../api/chatApi';
 
+
+
+import './ChatModalForLead.css'
 /**
  * Props:
  * - leadId: string (obrigatório)

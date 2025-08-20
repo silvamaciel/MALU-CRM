@@ -1,11 +1,4 @@
-.chat-modal .modal-card {
-  width: min(100%, 940px);
-  max-height: 86vh;
-  display: flex;
-  flex-direction: column;
-}
-.chat-modal .modal-body {
-  flex: 1;
-  min-height: 480px;
-  overflow: hidden; /* o ChatWindow tem a área scroll */
+@media (max-width:768px){
+
+  .chat-window{ display:flex }
 }

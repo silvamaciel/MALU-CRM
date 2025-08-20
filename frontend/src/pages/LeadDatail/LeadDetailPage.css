@@ -660,3 +660,9 @@
 .counter-btn--concluidas:focus-visible {
   box-shadow: 0 0 0 3px rgba(16, 185, 129, .25);
 }
+
+
+@media (max-width:768px){
+
+  .chat-window{ display:flex }
+}
