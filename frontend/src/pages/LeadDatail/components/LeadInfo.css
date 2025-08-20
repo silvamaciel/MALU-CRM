@@ -1,0 +1,365 @@
+/* ===== Paleta base (usa suas variáveis) ===== */
+:root{
+  --primary:        var(--primary, #2563eb);
+  --primary-hover:  var(--primary-hover, #1d4ed8);
+  --background:     var(--background, #f5f7fb);
+  --card-bg:        var(--card-bg, #ffffff);
+  --text-main:      var(--text-main, #0f172a);
+  --text-light:     var(--text-light, #6b7280);
+  --border-color:   var(--border-color, #e5e7eb);
+  --success:        var(--success, #10b981);
+  --danger:         var(--danger, #ef4444);
+  --warning:        var(--warning, #f59e0b);
+  --radius: 12px;
+}
+
+/* Container ocupa 100% da fração */
+.lead-details-column{
+  display:flex; flex-direction:column; gap:10px;
+  flex:1 1 auto; min-height:0;
+}
+.lead-info-header{
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+}
+.ldp-section-title{ margin:0; font-size:15px; font-weight:800; color:var(--text-main); }
+
+.info-more-btn{
+  appearance:none; border:1px solid var(--primary); background:var(--primary);
+  color:#fff; border-radius:10px; padding:6px 10px; font-weight:800; font-size:12px;
+  box-shadow:0 4px 12px rgba(37,99,235,.18); cursor:pointer; transition:.15s;
+}
+.info-more-btn:hover{ background:var(--primary-hover); border-color:var(--primary-hover); }
+
+/* ===== GRID 12 colunas ===== */
+.lead-info-grid{
+  display:grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap:8px;
+}
+
+/* spans */
+.span-12{ grid-column: span 12; }
+.span-6 { grid-column: span 6; }
+.span-4 { grid-column: span 4; }
+
+/* Card compacto e proporcional */
+.card{
+  background:var(--card-bg);
+  border:1px solid var(--border-color);
+  border-radius:10px;
+  padding:10px 12px;              /* padding reduzido */
+  box-shadow:0 1px 2px rgba(0,0,0,.04);
+  display:flex; flex-direction:column; gap:4px;
+  min-height:52px;                 /* evita saltos */
+}
+.label{
+  font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.4px;
+  color:color-mix(in srgb, var(--primary) 50%, var(--text-light));
+}
+.value{
+  font-size:14px; color:var(--text-main); font-weight:700; line-height:1.25;
+}
+.value.strong{ font-size:16px; }
+.value .muted{ color:var(--text-light); font-weight:600; font-size:13px; }
+.value.wrap{ white-space:pre-wrap; word-break:break-word; }
+
+/* tons especiais */
+.card.tone-danger{
+  border-left:4px solid var(--danger);
+  background:color-mix(in srgb, var(--danger) 8%, #fff);
+}
+.card.note{
+  border-left:4px solid var(--primary);
+  background:color-mix(in srgb, var(--primary) 8%, #fff);
+}
+
+/* Pills / chips */
+.pill{
+  display:inline-flex; align-items:center; gap:.4ch;
+  padding:4px 10px; border-radius:999px; font-weight:800; font-size:11px; line-height:1;
+  border:1px solid transparent; box-shadow:0 1px 6px rgba(0,0,0,.06);
+}
+.pill.status.is-primary{ background:var(--primary); color:#fff; }
+.pill.status.is-info   { background:var(--primary-hover); color:#fff; }
+.pill.status.is-success{ background:var(--success); color:#fff; }
+.pill.status.is-warning{ background:var(--warning); color:#fff; }
+.pill.status.is-danger { background:var(--danger); color:#fff; }
+.pill.status.is-neutral{ background:#e5e7eb; color:#111827; }
+.pill-soft{
+  background:color-mix(in srgb, var(--primary) 10%, #fff);
+  border-color:color-mix(in srgb, var(--primary) 40%, #fff);
+  color:color-mix(in srgb, var(--primary) 80%, #111);
+}
+.pill-soft.is-neutral{
+  background:color-mix(in srgb, var(--text-light) 10%, #fff);
+  border-color:var(--border-color);
+  color:var(--text-main);
+}
+
+/* Última atualização */
+.last-updated{
+  font-size:12px; color:var(--text-light);
+}
+
+/* ===== Tags ===== */
+.tags-inline{
+  background:var(--card-bg);
+  border:1px solid var(--border-color);
+  border-radius:10px;
+  padding:8px 10px;
+}
+.tags-head{
+  display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;
+}
+.tags-title{
+  font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.5px;
+  color:color-mix(in srgb, var(--primary) 55%, var(--text-light));
+}
+.btn-link{
+  appearance:none; background:transparent; border:none; color:var(--primary);
+  font-weight:800; cursor:pointer; padding:4px 6px; border-radius:8px;
+}
+.btn-link:hover{ background:color-mix(in srgb, var(--primary) 10%, #fff); }
+
+.tags-wrap{ display:flex; flex-wrap:wrap; gap:6px; }
+.tag-chip{
+  font-size:11px; font-weight:800;
+  color:color-mix(in srgb, var(--primary) 85%, #111);
+  background:color-mix(in srgb, var(--primary) 15%, #fff);
+  border:1px solid color-mix(in srgb, var(--primary) 40%, #fff);
+  border-radius:999px; padding:4px 10px;
+}
+.tags-empty{ color:var(--text-light); }
+
+/* ===== Modal base ===== */
+.li-modal-overlay{
+  position:fixed; inset:0; background:rgba(15,23,42,.46);
+  display:flex; align-items:center; justify-content:center; z-index:1000;
+}
+.li-modal{
+  width:min(92vw, 980px); max-height:85vh;
+  background:var(--card-bg); border:1px solid var(--border-color);
+  border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,.25);
+  display:flex; flex-direction:column; overflow:hidden;
+}
+.li-modal.small{ width:min(92vw, 640px); }
+.li-modal-header{
+  padding:10px 12px; background:linear-gradient(90deg, var(--primary), var(--primary-hover));
+  color:#fff; display:flex; align-items:center; justify-content:space-between;
+}
+.li-modal-header h3{ margin:0; font-size:14px; font-weight:800; }
+.li-close-btn{
+  appearance:none; background:#fff; color:var(--primary); border:none;
+  width:28px; height:28px; border-radius:999px; cursor:pointer; font-size:18px; line-height:1;
+}
+.li-modal-body{ padding:10px; overflow:auto; min-height:0; }
+.li-modal-footer{ padding:8px 10px; border-top:1px solid var(--border-color); background:var(--background); display:flex; justify-content:flex-end; gap:8px; }
+.btn-neutral{
+  appearance:none; border:1px solid var(--border-color); background:#fff; color:var(--text-main);
+  border-radius:10px; padding:6px 10px; font-weight:800; font-size:12px; cursor:pointer;
+}
+
+/* Modal de tags */
+.tags-edit-row{ display:flex; gap:8px; margin-bottom:8px; }
+.tags-input{
+  flex:1 1 auto; min-width:0;
+  border:1px solid var(--border-color); border-radius:10px; padding:8px 10px;
+  font-size:14px; color:var(--text-main); background:#fff;
+}
+.tags-input:focus{ outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(37,99,235,.15); }
+.tag-chip.editable{ position:relative; padding-right:24px; }
+.chip-x{
+  position:absolute; right:4px; top:50%; transform:translateY(-50%);
+  appearance:none; border:none; background:transparent; color:#555; font-weight:800;
+  width:18px; height:18px; line-height:18px; border-radius:999px; cursor:pointer;
+}
+.chip-x:hover{ background:#eee; }
+
+
+/* =========================
+   MODAL – estilos completos
+   ========================= */
+
+.li-modal-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(15,23,42,.46);       /* backdrop */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.li-modal{
+  width: min(92vw, 980px);
+  max-height: 85vh;
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;                     /* header/footer fixos, body rola */
+}
+
+.li-modal.small{ width: min(92vw, 640px); }
+
+.li-modal-header{
+  padding: 12px 16px;
+  background: linear-gradient(90deg, var(--primary, #2563eb), var(--primary-hover, #1d4ed8));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.li-modal-header h3{
+  margin: 0;
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: .2px;
+}
+
+.li-close-btn{
+  appearance: none;
+  border: 0;
+  background: #fff;
+  color: var(--primary, #2563eb);
+  width: 32px; height: 32px;
+  border-radius: 999px;
+  font-size: 18px; font-weight: 900; line-height: 1;
+  display: inline-grid; place-items: center;
+  cursor: pointer;
+}
+.li-close-btn:hover{ filter: brightness(0.95); }
+
+.li-modal-body{
+  padding: 14px;
+  overflow: auto;      /* 🔑 rolagem do conteúdo */
+  min-height: 0;
+}
+
+.li-modal-footer{
+  padding: 10px 14px;
+  background: var(--background, #f5f7fb);
+  border-top: 1px solid var(--border-color, #e5e7eb);
+  display: flex; justify-content: flex-end; gap: 8px;
+}
+
+/* Botões do footer / gerais */
+.info-more-btn{
+  appearance: none;
+  border: 1px solid var(--primary, #2563eb);
+  background: var(--primary, #2563eb);
+  color: #fff;
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-weight: 800;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+  box-shadow: 0 4px 12px rgba(37,99,235,.18);
+}
+.info-more-btn:hover{ background: var(--primary-hover, #1d4ed8); border-color: var(--primary-hover, #1d4ed8); }
+
+.btn-neutral{
+  appearance: none;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: #fff;
+  color: var(--text-main, #0f172a);
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-weight: 800;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* ====== Grade de cartões dentro do modal ====== */
+.li-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+.li-card{
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.04);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.li-label{
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  font-weight: 800;
+  color: color-mix(in srgb, var(--primary, #2563eb) 55%, var(--text-light, #6b7280));
+}
+.li-value{
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main, #0f172a);
+  word-break: break-word;
+}
+.span-2{ grid-column: span 2; }
+@media (max-width: 720px){ .span-2{ grid-column: span 1; } }
+
+/* Destaques */
+.tone-danger{
+  border-left: 4px solid var(--danger, #ef4444);
+  background: color-mix(in srgb, var(--danger, #ef4444) 8%, #fff);
+}
+.note{
+  border-left: 4px solid var(--primary, #2563eb);
+  background: color-mix(in srgb, var(--primary, #2563eb) 8%, #fff);
+}
+
+/* ====== Chips / Pills ====== */
+.pill{
+  display: inline-flex; align-items: center; gap: .4ch;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-weight: 800; font-size: 11px; line-height: 1;
+  border: 1px solid transparent;
+  box-shadow: 0 1px 6px rgba(0,0,0,.06);
+}
+.pill.status.is-primary{ background: var(--primary, #2563eb);       color: #fff; }
+.pill.status.is-info   { background: var(--primary-hover, #1d4ed8); color: #fff; }
+.pill.status.is-success{ background: var(--success, #10b981);       color: #fff; }
+.pill.status.is-warning{ background: var(--warning, #f59e0b);       color: #fff; }
+.pill.status.is-danger { background: var(--danger, #ef4444);        color: #fff; }
+.pill.status.is-neutral{ background: #e5e7eb;                        color: #111827; }
+
+/* ====== Tags dentro do modal ====== */
+.li-tags{ display: flex; flex-wrap: wrap; gap: 6px; }
+.tag-chip{
+  font-size: 11px; font-weight: 800;
+  color: color-mix(in srgb, var(--primary, #2563eb) 85%, #111);
+  background: color-mix(in srgb, var(--primary, #2563eb) 15%, #fff);
+  border: 1px solid color-mix(in srgb, var(--primary, #2563eb) 40%, #fff);
+  border-radius: 999px; padding: 4px 10px;
+}
+
+/* ====== Modal "Gerenciar tags" (entradas e chips removíveis) ====== */
+.tags-edit-row{ display: flex; gap: 8px; margin-bottom: 8px; }
+.tags-input{
+  flex: 1 1 auto; min-width: 0;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 10px; padding: 8px 10px;
+  font-size: 14px; color: var(--text-main, #0f172a); background: #fff;
+}
+.tags-input:focus{
+  outline: none;
+  border-color: var(--primary, #2563eb);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+}
+
+.tags-wrap.editable .tag-chip{
+  position: relative; padding-right: 24px;
+}
+.chip-x{
+  position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+  appearance: none; border: none; background: transparent;
+  color: #555; font-weight: 800; width: 18px; height: 18px;
+  line-height: 18px; border-radius: 999px; cursor: pointer;
+}
+.chip-x:hover{ background: #eee; }

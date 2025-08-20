@@ -1,132 +1,478 @@
-/* src/pages/LeadDetail/LeadDetailPage.css */
+/* ================================
+   LeadDetailPage.css (COMPLETO)
+   Layout: 2 frações (Esq: Info/Tasks/History | Dir: Chat)
+   Desktop: 2 colunas 50/50 ocupando o viewport
+   Mobile: empilha; cada fração ocupa 100vh (duas “telas”)
+   Paleta: usa variáveis (.tasks-page), com fallback
+   ================================ */
 
-/* tokens simples p/ espaçamentos fluidos */
-:root{
-  --app-header-h: 64px;                 /* ajuste se seu header tem outra altura */
-  --page-pad: clamp(12px, 2vw, 20px);
-  --gap: clamp(8px, 1.4vw, 14px);
-  --card-bg: #fff;
-  --card-br: 10px;
-  --card-bd: #e9edf3;
-  --shadow: 0 4px 14px rgba(15,23,42,.06);
+/* -------- Shell geral -------- */
+.lead-detail-page.shell {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  box-sizing: border-box;
+
+  /* Fallback */
+  height: 100vh;
+  overflow: hidden;
+
+  background: var(--background, #f5f7fb);
+  color: var(--text-main, #0f172a);
+}
+@supports (height: 100dvh) {
+  .lead-detail-page.shell { height: 100dvh; }
+}
+@supports (height: 100svh) {
+  .lead-detail-page.shell { height: 100svh; }
 }
 
-/* ===== Página ===== */
-.lead-detail-page{
+/* -------- Grid principal (duas frações) -------- */
+.ldp-grid {
   display: grid;
-  grid-template-rows: auto 1fr;
-  gap: var(--gap);
-  padding: var(--page-pad);
+  grid-template-columns: 1fr 1fr;  /* duas frações iguais */
+  gap: 12px;
+  flex: 1 1 auto;
+  min-height: 0;                  /* permite scroll interno dos filhos */
+}
+
+/* -------- Painéis (frações esquerda e direita) -------- */
+.ldp-panel {
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0,0,0,.04);
+}
+
+/* =========================
+   Fração Esquerda (Tabs)
+   ========================= */
+.ldp-left-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: inherit;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  padding: 8px;
+}
+
+.ldp-tabs {
+  display: inline-flex;
+  gap: 6px;
+  background: var(--background, #f5f7fb);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 10px;
+  padding: 4px;
+}
+
+.ldp-tab {
+  appearance: none;
+  border: 1px solid var(--border-color, #e5e7eb);
   background: #fff;
+  color: var(--text-main, #0f172a);
+  padding: 8px 12px;
   border-radius: 8px;
-  box-shadow: var(--shadow);
-
-  /* o segredo do scroll em telas baixas */
-  min-height: calc(100dvh - var(--app-header-h));
-  max-height: none;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-}
-
-/* estados */
-.lead-detail-page.loading,
-.lead-detail-page.error-page{
-  text-align:center; padding: 2rem; font-size: 1rem;
-}
-
-/* ===== Header/Ações (component LeadHeaderActions) ===== */
-.lead-detail-page .lead-header-actions,
-.lead-detail-page .detail-header,
-.lead-detail-page .header-actions{
-  display:flex; align-items:center; gap: .5rem; flex-wrap: wrap;
-}
-
-/* se ainda ficar apertado, deixa rolar horizontalmente */
-.lead-detail-page .lead-header-actions{
-  overflow-x: auto; padding-bottom: 2px;
-}
-.lead-detail-page .lead-header-actions::-webkit-scrollbar{ height:6px }
-.lead-detail-page .lead-header-actions::-webkit-scrollbar-thumb{
-  background:#cbd5e1; border-radius:6px;
-}
-
-/* ===== Grid principal ===== */
-.detail-layout-grid{
-  display: grid;
-  grid-template-columns: 1fr;       /* mobile: 1 col */
-  gap: var(--gap);
-  min-height: 0;                    /* permite scroll interno se precisar */
-}
-
-/* desktop: 2 colunas */
-@media (min-width: 992px){
-  .detail-layout-grid{ grid-template-columns: 1.2fr 1fr; }
-}
-
-/* transforma os filhos em cards compactos */
-.detail-layout-grid > *{
-  background: var(--card-bg);
-  border: 1px solid var(--card-bd);
-  border-radius: var(--card-br);
-  box-shadow: var(--shadow);
-  padding: clamp(12px, 1.4vw, 16px);
-}
-
-/* Títulos dos cards */
-.detail-layout-grid h2{
-  margin: 0 0 .5rem 0;
   font-weight: 600;
-  font-size: clamp(15px, 1.2vw, 18px);
-  color: #0f172a;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease, border-color .15s ease, transform .02s ease;
+}
+.ldp-tab:hover {
+  background: var(--primary-hover, #1d4ed8);
+  color: #fff;
+  border-color: var(--primary-hover, #1d4ed8);
+}
+.ldp-tab.active {
+  background: var(--primary, #2563eb);
+  color: #fff;
+  border-color: var(--primary, #2563eb);
+  box-shadow: 0 1px 2px rgba(0,0,0,.1);
 }
 
-/* ===== Mensagens de erro info ===== */
-.error-message{
-  color:#721c24; background:#f8d7da; border:1px solid #f5c6cb;
-  padding:.75rem; border-radius:6px; margin: .25rem 0 .5rem 0;
-  font-size: .95rem;
+.ldp-left-content {
+  padding: 12px;
+  overflow: auto;   /* o scroll fica no painel esquerdo */
+  min-height: 0;
+
+  /* Para permitir que o conteúdo selecionado (Info/Tasks/History) ocupe 100% */
+  display: flex;
+  flex-direction: column;
 }
 
-/* ===== Histórico (altura adaptável) ===== */
-.lead-history-list{
-  list-style:none; margin:0; padding:.5rem;
-  border:1px solid #eef2f7; border-radius:8px; background:#fafbfc;
-
-  /* limita sem cortar a página */
-  max-height: min(40vh, 360px);
-  overflow:auto; -webkit-overflow-scrolling:touch;
+/* =========================
+   Fração Direita (Chat)
+   ========================= */
+.chat-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
 }
-.history-entry{ padding:.5rem .25rem; border-bottom:1px solid #f1f5f9; font-size:.95rem }
-.history-entry:last-child{ border-bottom:none }
-.history-timestamp{ display:block; font-size:.8rem; color:#64748b; margin-bottom:.15rem }
-
-/* ===== Tarefas ===== */
-.tasks-section h2{ margin-bottom:.5rem }
-
-/* ===== Botões genéricos da página (se usados aqui) ===== */
-.button{
-  padding: .55rem .9rem; border-radius:8px; font-weight:600;
-  border:1px solid #e5e7eb; background:#fff; color:#0f172a;
-  font-size: clamp(13px, 0.9vw, 15px); cursor:pointer;
+.chat-panel-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  background: inherit;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
-.button:hover{ filter: brightness(.98) }
-.back-button{ background:#f1f5f9 } .back-button:hover{ background:#e2e8f0 }
-.edit-button{ background:#fff7e0; border-color:#ffe08a }
-.discard-button-detail, .delete-button-detail{
-  background:#fee2e2; border-color:#fecaca; color:#991b1b;
+.chat-panel-header h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-main, #0f172a);
 }
-.reactivate-button{ background:#dcfce7; border-color:#bbf7d0; color:#166534 }
+.chat-panel-body {
+  padding: 12px;
+  overflow: auto;   /* rolagem interna do chat */
+  min-height: 0;
+  color: var(--text-light, #6b7280);
+}
 
-/* ===== Ajustes finos nos espaçamentos ===== */
-.detail-item{ background:#f8fafc; border:1px solid #eef2f7; border-radius:8px;
-  padding: .75rem }
-.detail-label{ font-size:.8rem; color:#475569; margin-bottom:.25rem; text-transform:uppercase }
-.detail-value{ font-size:.95rem; color:#0f172a }
+/* =========================
+   Títulos/Estados auxiliares
+   ========================= */
+.tasks-section > h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-main, #0f172a);
+}
+.error-message { color: var(--danger, #ef4444); font-weight: 500; margin: 6px 0; }
+.warning-message { color: var(--warning, #f59e0b); font-weight: 500; margin: 6px 0; }
+.success-message { color: var(--success, #10b981); font-weight: 500; margin: 6px 0; }
 
-/* quando houver bloco de conversa vazio, não ocupa “buraco” */
-.lead-conversations-column:empty{ display:none }
+/* =========================
+   Botões do Header e TaskList
+   ========================= */
+.lead-detail-page .header-actions .button {
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: #fff;
+  color: var(--text-main, #0f172a);
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-weight: 600;
+  transition: background .15s, color .15s, border-color .15s, transform .02s;
+}
+.lead-detail-page .header-actions .back-button,
+.lead-detail-page .header-actions .edit-button {
+  background: #fff !important;
+  color: var(--text-main, #0f172a) !important;
+  border-color: var(--border-color, #e5e7eb) !important;
+}
+.lead-detail-page .header-actions .back-button:hover,
+.lead-detail-page .header-actions .edit-button:hover {
+  background: var(--background, #f5f7fb) !important;
+}
 
-/* scrollbars sutis (opcional) */
-.lead-detail-page::-webkit-scrollbar{ width:10px }
-.lead-detail-page::-webkit-scrollbar-thumb{ background:#cbd5e1; border-radius:8px }
+.lead-detail-page .header-actions .action-button,
+.lead-detail-page .tasks-section .create-link-task {
+  background: var(--primary, #2563eb) !important;
+  border-color: var(--primary, #2563eb) !important;
+  color: #fff !important;
+}
+.lead-detail-page .header-actions .action-button:hover,
+.lead-detail-page .tasks-section .create-link-task:hover {
+  background: var(--primary-hover, #1d4ed8) !important;
+  border-color: var(--primary-hover, #1d4ed8) !important;
+}
+
+.lead-detail-page .header-actions .discard-button-detail,
+.lead-detail-page .header-actions .delete-button-detail {
+  background: var(--danger, #ef4444) !important;
+  border-color: var(--danger, #ef4444) !important;
+  color: #fff !important;
+}
+.lead-detail-page .header-actions .discard-button-detail:hover,
+.lead-detail-page .header-actions .delete-button-detail:hover {
+  filter: brightness(0.95);
+}
+
+/* Botões “link” do TaskList (Editar/Excluir) */
+.lead-detail-page .tasks-section .button-link {
+  background: #fff;
+  color: var(--text-main, #0f172a);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-weight: 600;
+}
+.lead-detail-page .tasks-section .button-link:hover {
+  background: var(--background, #f5f7fb);
+}
+
+/* =========================
+   TaskList SEM SCROLL INTERNO
+   (scroll só no painel esquerdo)
+   ========================= */
+.ldp-left-content > * {       /* Info/Tasks/History ocupam o painel */
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Estrutura do TaskList pelo DOM enviado */
+.ldp-left-content .tasks-section {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.ldp-left-content .tasks-section .tasklist-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+.ldp-left-content .tasks-section .tasks-toolbar,
+.ldp-left-content .tasks-section .tasks-pagination {
+  flex: 0 0 auto;  /* não crescem */
+}
+
+/* Remover scroll interno desta camada */
+.ldp-left-content .tasks-section .tasks-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;   /* 🔑 sem scroll interno */
+}
+
+/* Lista pode crescer; quem rola é a fração esquerda */
+.ldp-left-content .tasks-section .tasks-list-component,
+.ldp-left-content .tasks-section .tasks-list,
+.ldp-left-content .tasks-section .tasks-container,
+.ldp-left-content .tasks-section .task-items-wrapper {
+  min-height: 100%;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+/* O scroll permanece APENAS aqui */
+.ldp-left-content { overflow: auto; }
+
+/* =========================
+   Responsividade “duas telas”
+   ========================= */
+@media (max-width: 1100px) {
+  .lead-detail-page.shell {
+    height: auto;     /* libera a altura total */
+    overflow: auto;   /* scroll da página */
+  }
+
+  .ldp-grid {
+    grid-template-columns: 1fr; /* empilha as frações */
+    gap: 10px;
+  }
+
+  /* Cada fração vira uma “tela” cheia em altura */
+  .ldp-panel { height: 100vh; }
+  @supports (height: 100dvh) { .ldp-panel { height: 100dvh; } }
+  @supports (height: 100svh) { .ldp-panel { height: 100svh; } }
+}
+
+/* =========================
+   Refinos de UX/Acessibilidade
+   ========================= */
+.ldp-left-content::-webkit-scrollbar,
+.chat-panel-body::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.ldp-left-content::-webkit-scrollbar-thumb,
+.chat-panel-body::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,.15);
+  border-radius: 8px;
+}
+.ldp-left-content::-webkit-scrollbar-track,
+.chat-panel-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ldp-tab:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, .25);
+}
+
+/* Último filho com respiro ao fim do scroll */
+.ldp-panel > *:last-child {
+  margin-bottom: 2px;
+}
+
+
+/* ====== FIX: Paginação sempre dentro do card esquerdo ====== */
+/* O contêiner que rola é o .ldp-left-content */
+.ldp-left-content {
+  overflow: auto;        /* já estava, reforçando */
+  padding-bottom: 8px;   /* um respiro para o raio da borda */
+}
+
+/* Faz a paginação "grudar" no fundo do painel esquerdo e nunca sair dele */
+.ldp-left-content .tasks-section .tasks-pagination {
+  position: sticky;
+  bottom: 0;                        /* gruda no fundo do scroll do painel esquerdo */
+  z-index: 2;
+  background: var(--card-bg, #fff); /* cobre a lista ao encostar */
+  border-top: 1px solid var(--border-color, #e5e7eb);
+  padding: 10px 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Garante espaço para a paginação não ficar encoberta ao rolar a lista */
+.ldp-left-content .tasks-section .tasks-scroll {
+  /* segue sem scroll interno, apenas cria espaço no final para a sticky pagination */
+  padding-bottom: 72px !important;  /* ~altura da paginação + margem; ajuste fino se quiser */
+  overflow: visible !important;
+  max-height: none !important;
+}
+
+/* Em alguns temas a paginação pode ter margens negativas ou estourar bordas */
+.ldp-left-content .tasks-section .tasks-pagination,
+.ldp-left-content .tasks-section .tasks-toolbar {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* (Opcional) deixa os botões de página com cor primária coerente */
+.ldp-left-content .tasks-section .tasks-pagination .page-btn.is-active,
+.ldp-left-content .tasks-section .tasks-pagination .page-btn[aria-current="page"] {
+  background: var(--primary, #2563eb);
+  border-color: var(--primary, #2563eb);
+  color: #fff;
+}
+.ldp-left-content .tasks-section .tasks-pagination .page-btn:hover:not([disabled]) {
+  background: var(--primary-hover, #1d4ed8);
+  border-color: var(--primary-hover, #1d4ed8);
+  color: #fff;
+}
+
+
+/* ================================
+   LeadDetailPage × TaskList (OVERRIDES)
+   Mantém a paginação e a lista 100% dentro do card esquerdo
+   ================================ */
+
+/* 0) A fração esquerda não rola: quem rola é o TaskList */
+.ldp-left-content {
+  overflow: hidden;              /* tirar o scroll do painel */
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* 1) A aba "Tasks" ocupa todo o painel esquerdo */
+.ldp-left-content .tasks-section {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* 2) Neutraliza a altura baseada em viewport do TaskList quando dentro desta página */
+.lead-detail-page .tasklist-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto !important;       /* cancela calc(100vh - offset) */
+  max-height: none !important;
+}
+
+/* 3) ÚNICO scroll fica na área da lista */
+.lead-detail-page .tasklist-shell .tasks-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto !important;     /* rolagem só aqui */
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius, 12px);
+}
+
+/* 4) Paginação sem sticky (não sobrepõe itens) e sempre dentro do card */
+.lead-detail-page .tasklist-shell .tasks-pagination {
+  position: static !important;
+  bottom: auto !important;
+  z-index: 1;
+  background: transparent;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+  padding: 10px 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 5) Remover padding extra que adicionamos antes para "acomodar" sticky */
+.ldp-left-content .tasks-section .tasks-scroll {
+  padding-bottom: 0 !important;
+}
+
+/* 6) Segurança: qualquer wrapper interno da lista não deve criar outro scroll */
+.lead-detail-page .tasks-list-component,
+.lead-detail-page .tasks-list,
+.lead-detail-page .tasks-container,
+.lead-detail-page .task-items-wrapper {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+/* 7) Ajuste cosmético da paginação (cores primárias) */
+.lead-detail-page .tasks-pagination .page-btn.is-active,
+.lead-detail-page .tasks-pagination .page-btn[aria-current="page"] {
+  background: var(--primary, #2563eb);
+  border-color: var(--primary, #2563eb);
+  color: #fff;
+}
+.lead-detail-page .tasks-pagination .page-btn:hover:not([disabled]) {
+  background: var(--primary-hover, #1d4ed8);
+  border-color: var(--primary-hover, #1d4ed8);
+  color: #fff;
+}
+
+/* ========== SCROLL POR ABA: Info/History rodam no painel; Tasks mantém scroll só na lista ========== */
+.ldp-left-content { 
+  overflow: auto !important;       /* padrão: rola o painel */
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Quando a aba é Task, tiramos o scroll do painel para evitar scroll duplo */
+.ldp-left-content.lefttab-tasks {
+  overflow: hidden !important;
+}
+
+/* Garante que o TaskList continua rolando apenas por dentro da lista */
+.lead-detail-page .tasklist-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto !important;
+  max-height: none !important;
+}
+.lead-detail-page .tasklist-shell .tasks-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto !important;
+}
+
+/* Paginação do TaskList normal (sem sticky para não cobrir itens) */
+.lead-detail-page .tasklist-shell .tasks-pagination {
+  position: static !important;
+  bottom: auto !important;
+  padding: 10px 0;
+  background: transparent;
+}
+
+
+/* LeadInfo deve ocupar 100% da fração esquerda e rolar só o painel */
+.ldp-left-content.lefttab-info {
+  overflow: auto !important;   /* scroll do painel */
+}
+.ldp-left-content.lefttab-info .lead-details-column {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
