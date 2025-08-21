@@ -9,20 +9,27 @@ router.use(protect);
 router.get('/dashboard', FinanceiroController.getDashboardController);
 router.get('/parcelas', FinanceiroController.listarParcelasController);
 router.post('/parcelas/:id/baixa', FinanceiroController.registrarBaixaController);
-router.post('/contratos/:contratoId/gerar-plano', authorize('admin'), FinanceiroController.gerarPlanoDePagamentosController);
 router.post('/parcelas/avulsa', authorize('admin'), FinanceiroController.gerarParcelaAvulsaController);
 
-// --- Rotas de Contas a Pagar ---
-router.route('/despesas')
-    .get(FinanceiroController.listarDespesasController)
-    .post(FinanceiroController.criarDespesaController);
-router.post('/despesas/:id/pagar', FinanceiroController.registrarPagamentoController);
+// VVVVV ESTA É A ROTA CRÍTICA. VAMOS GARANTIR QUE ESTÁ PERFEITA VVVVV
+router.post(
+    '/contratos/:contratoId/gerar-plano', 
+    authorize('admin'), 
+    FinanceiroController.gerarPlanoDePagamentosController
+);
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-// --- Rotas de ADM Financeiro ---
+// --- Rotas de ADM e Contas a Pagar ---
 router.route('/credores')
     .get(authorize('admin'), FinanceiroController.listarCredoresController)
     .post(authorize('admin'), FinanceiroController.criarCredorController);
-    
+
+router.route('/despesas')
+    .get(FinanceiroController.listarDespesasController)
+    .post(FinanceiroController.criarDespesaController);
+
+router.post('/despesas/:id/pagar', FinanceiroController.registrarPagamentoController);
+
 router.route('/indexadores')
     .get(authorize('admin'), FinanceiroController.getIndexadoresController)
     .post(authorize('admin'), FinanceiroController.createIndexadorController);
