@@ -13,7 +13,8 @@ router.post('/parcelas/avulsa', authorize('admin'), FinanceiroController.gerarPa
 
 
 router.post(
-    '/contratos/:contratoId/gerar-plano',
+    '/contratos/:contratoId/gerar-plano', 
+    authorize('admin'), 
     FinanceiroController.gerarPlanoDePagamentosController
 );
 
