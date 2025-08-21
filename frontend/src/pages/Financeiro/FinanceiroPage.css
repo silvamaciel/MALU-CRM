@@ -53,7 +53,6 @@
   padding-bottom: 8px;
 }
 .tab-pill {
-  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 8px;
