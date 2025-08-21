@@ -17,7 +17,7 @@ export default function ParcelasTab() {
     totalVencido: 0,
   });
 
-  // Tabela
+  // Tabela / Lista
   const [rows, setRows] = useState([]);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
@@ -206,80 +206,166 @@ export default function ParcelasTab() {
         </button>
       </div>
 
-      {/* ===== TABELA + PAGINAÇÃO (no mesmo card) ===== */}
-      <div className="table-card" style={{ "--receber-offset": "340px" }}>
-        <div className="table-scroll">
-          <table className="table table-fixed">
-            <colgroup>
-              <col style={{ width: "24%" }} />
-              <col style={{ width: "14%" }} />
-              <col style={{ width: "14%" }} />
-              <col style={{ width: "14%" }} />
-              <col style={{ width: "14%" }} />
-              <col style={{ width: "10%" }} />
-              <col style={{ width: "10%" }} />
-            </colgroup>
-
-            <thead>
-              <tr>
-                <th>Sacado</th>
-                <th>Tipo</th>
-                <th>Vencimento</th>
-                <th className="right">Valor Previsto</th>
-                <th className="right">Pago</th>
-                <th>Status</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {loading && (
+      {/* ===== LISTA RESPONSIVA (tabela desktop / cards mobile) ===== */}
+      <div className="table-card">
+        <div className="list-body">
+          {/* --- TABELA (desktop) --- */}
+          <div className="table-scroll list-table">
+            <table className="table table-fixed">
+              <colgroup>
+                <col style={{ width: "24%" }} />
+                <col style={{ width: "14%" }} />
+                <col style={{ width: "14%" }} />
+                <col style={{ width: "14%" }} />
+                <col style={{ width: "14%" }} />
+                <col style={{ width: "10%" }} />
+                <col style={{ width: "10%" }} />
+              </colgroup>
+              <thead>
                 <tr>
-                  <td colSpan={7} style={{ textAlign: "center" }}>
-                    Carregando…
-                  </td>
+                  <th>Sacado</th>
+                  <th>Tipo</th>
+                  <th>Vencimento</th>
+                  <th className="right">Valor Previsto</th>
+                  <th className="right">Pago</th>
+                  <th>Status</th>
+                  <th>Ações</th>
                 </tr>
-              )}
-
-              {!loading && rows.length === 0 && (
-                <tr>
-                  <td colSpan={7} style={{ textAlign: "center" }}>
-                    Sem resultados
-                  </td>
-                </tr>
-              )}
-
-              {!loading &&
-                rows.map((p) => (
-                  <tr key={p._id}>
-                    <td className="ellipsis" title={p.sacado?.nome || "-"}>
-                      {p.sacado?.nome || "-"}
-                    </td>
-                    <td className="ellipsis" title={p.tipo || "-"}>
-                      {p.tipo || "-"}
-                    </td>
-                    <td>{formatDateBR(p.dataVencimento)}</td>
-                    <td className="money">{formatCurrencyBRL(p.valorPrevisto)}</td>
-                    <td className="money">{formatCurrencyBRL(p.valorPago)}</td>
-                    <td>
-                      <span className={`tag tag-${(p.status || "").toLowerCase()}`}>
-                        {p.status}
-                      </span>
-                    </td>
-                    <td>
-                      {p.status !== "Pago" && (
-                        <button
-                          className="button small primary"
-                          onClick={() => abrirBaixa(p)}
-                        >
-                          <FiCheckCircle /> Baixa
-                        </button>
-                      )}
+              </thead>
+              <tbody>
+                {loading && (
+                  <tr>
+                    <td colSpan={7} style={{ textAlign: "center" }}>
+                      Carregando…
                     </td>
                   </tr>
-                ))}
-            </tbody>
-          </table>
+                )}
+
+                {!loading && rows.length === 0 && (
+                  <tr>
+                    <td colSpan={7} style={{ textAlign: "center" }}>
+                      Sem resultados
+                    </td>
+                  </tr>
+                )}
+
+                {!loading &&
+                  rows.map((p) => (
+                    <tr key={p._id}>
+                      <td className="ellipsis" title={p.sacado?.nome || "-"}>
+                        {p.sacado?.nome || "-"}
+                      </td>
+                      <td className="ellipsis" title={p.tipo || "-"}>
+                        {p.tipo || "-"}
+                      </td>
+                      <td>{formatDateBR(p.dataVencimento)}</td>
+                      <td className="money">{formatCurrencyBRL(p.valorPrevisto)}</td>
+                      <td className="money">{formatCurrencyBRL(p.valorPago)}</td>
+                      <td>
+                        <span className={`tag tag-${(p.status || "").toLowerCase()}`}>
+                          {p.status}
+                        </span>
+                      </td>
+                      <td>
+                        {p.status !== "Pago" && (
+                          <button
+                            className="button small primary"
+                            onClick={() => abrirBaixa(p)}
+                          >
+                            <FiCheckCircle /> Baixa
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* --- CARDS (mobile/tablet) --- */}
+          <div className="cards-scroll list-cards">
+            {loading && <div className="cards-empty">Carregando…</div>}
+            {!loading && rows.length === 0 && (
+              <div className="cards-empty">Sem resultados</div>
+            )}
+
+            {!loading &&
+              rows.map((p) => (
+                <article
+                  key={p._id}
+                  className="parcela-card"
+                  aria-label={`Parcela de ${p.sacado?.nome || "-"}`}
+                >
+                  <header className="pc-header">
+                    <div className="pc-title">
+                      <strong className="pc-sacado">
+                        {p.sacado?.nome || "-"}
+                      </strong>
+                      <span className="pc-tipo">{p.tipo || "-"}</span>
+                    </div>
+                    <span className={`tag tag-${(p.status || "").toLowerCase()}`}>
+                      {p.status}
+                    </span>
+                  </header>
+
+                  <div className="pc-meta">
+                    <div className="pc-field">
+                      <span className="pc-label">Vencimento</span>
+                      <span className="pc-value">
+                        {formatDateBR(p.dataVencimento)}
+                      </span>
+                    </div>
+                    <div className="pc-field pc-right">
+                      <span className="pc-label">Previsto</span>
+                      <span className="pc-money">
+                        {formatCurrencyBRL(p.valorPrevisto)}
+                      </span>
+                    </div>
+                    <div className="pc-field pc-right">
+                      <span className="pc-label">Pago</span>
+                      <span className="pc-money">
+                        {formatCurrencyBRL(p.valorPago)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <footer className="pc-actions">
+                    {p.status !== "Pago" && (
+                      <button
+                        className="button small primary"
+                        onClick={() => abrirBaixa(p)}
+                      >
+                        <FiCheckCircle /> Baixa
+                      </button>
+                    )}
+
+                    <details className="pc-details">
+                      <summary className="outline">Ver detalhes</summary>
+                      <div className="pc-details-body">
+                        <div>
+                          <span className="pc-label">Contrato</span>{" "}
+                          <span className="pc-value">
+                            {p?.contrato?._id || "—"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="pc-label">Imóvel</span>{" "}
+                          <span className="pc-value">
+                            {p?.contrato?.imovel?.titulo || "—"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="pc-label">Método</span>{" "}
+                          <span className="pc-value">
+                            {p?.metodoPagamento || "—"}
+                          </span>
+                        </div>
+                      </div>
+                    </details>
+                  </footer>
+                </article>
+              ))}
+          </div>
         </div>
 
         {/* paginação fixa dentro do card */}
@@ -292,11 +378,11 @@ export default function ParcelasTab() {
             Anterior
           </button>
           <span>
-            Página {page} de {Math.max(1, Math.ceil(total / limit))}
+            Página {page} de {totalPages}
           </span>
           <button
             className="button"
-            disabled={page >= Math.max(1, Math.ceil(total / limit))}
+            disabled={page >= totalPages}
             onClick={() => setPage((p) => p + 1)}
           >
             Próxima
