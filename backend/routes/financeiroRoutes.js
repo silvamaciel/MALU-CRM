@@ -1,50 +1,32 @@
 const express = require('express');
 const router = express.Router();
-const { protect, authorize } = require('../middlewares/authMiddleware'); // Supondo que precise de autorização
+const { protect, authorize } = require('../middlewares/authMiddleware');
 const FinanceiroController = require('../controllers/FinanceiroController');
 
-// Todas as rotas financeiras são protegidas e exigem login
 router.use(protect);
 
-// Rota para buscar os KPIs do dashboard financeiro
+// --- Rotas de Contas a Receber ---
 router.get('/dashboard', FinanceiroController.getDashboardController);
-
-// Rota para listar todas as parcelas com filtros
 router.get('/parcelas', FinanceiroController.listarParcelasController);
-
-// Rota para registar a baixa de uma parcela específica
 router.post('/parcelas/:id/baixa', FinanceiroController.registrarBaixaController);
-
-// Rota para gerar o plano de pagamentos de um contrato
-
 router.post('/contratos/:contratoId/gerar-plano', authorize('admin'), FinanceiroController.gerarPlanoDePagamentosController);
-
 router.post('/parcelas/avulsa', authorize('admin'), FinanceiroController.gerarParcelaAvulsaController);
 
-
-router.route('/credores')
-    .get(authorize('admin'), FinanceiroController.listarCredoresController)
-    .post(authorize('admin'), FinanceiroController.criarCredorController);
-
-// --- Rotas de Contas a Pagar (Despesas) ---
+// --- Rotas de Contas a Pagar ---
 router.route('/despesas')
     .get(FinanceiroController.listarDespesasController)
     .post(FinanceiroController.criarDespesaController);
+router.post('/despesas/:id/pagar', FinanceiroController.registrarPagamentoController);
 
-
+// --- Rotas de ADM Financeiro ---
 router.route('/credores')
     .get(authorize('admin'), FinanceiroController.listarCredoresController)
     .post(authorize('admin'), FinanceiroController.criarCredorController);
     
-    
-
-router.post('/despesas/:id/pagar', FinanceiroController.registrarPagamentoController);
-
 router.route('/indexadores')
     .get(authorize('admin'), FinanceiroController.getIndexadoresController)
     .post(authorize('admin'), FinanceiroController.createIndexadorController);
 
 router.post('/indexadores/:id/valores', authorize('admin'), FinanceiroController.upsertValorIndexadorController);
-
 
 module.exports = router;
