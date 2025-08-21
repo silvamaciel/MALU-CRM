@@ -75,5 +75,10 @@ const parcelaSchema = new Schema({
     
 }, { timestamps: true });
 
+
+db.parcelas.createIndex({ company: 1, status: 1, dataVencimento: 1 });
+db.parcelas.createIndex({ company: 1, dataVencimento: 1 });
+db.parcelas.createIndex({ company: 1, sacado: 1 });
+
 const Parcela = mongoose.model('Parcela', parcelaSchema);
 module.exports = Parcela;
