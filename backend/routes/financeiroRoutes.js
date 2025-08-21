@@ -11,13 +11,12 @@ router.get('/parcelas', FinanceiroController.listarParcelasController);
 router.post('/parcelas/:id/baixa', FinanceiroController.registrarBaixaController);
 router.post('/parcelas/avulsa', authorize('admin'), FinanceiroController.gerarParcelaAvulsaController);
 
-// VVVVV ESTA É A ROTA CRÍTICA. VAMOS GARANTIR QUE ESTÁ PERFEITA VVVVV
+
 router.post(
-    '/contratos/:contratoId/gerar-plano', 
-    authorize('admin'), 
+    '/contratos/:contratoId/gerar-plano',
     FinanceiroController.gerarPlanoDePagamentosController
 );
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 
 // --- Rotas de ADM e Contas a Pagar ---
 router.route('/credores')
