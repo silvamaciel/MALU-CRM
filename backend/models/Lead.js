@@ -133,6 +133,5 @@ leadSchema.index({ company: 1, contato: 1 }, { unique: true, sparse: true });
 leadSchema.index({ company: 1, email: 1 }, { unique: true, sparse: true });
 
 
-db.leads.createIndex({ company: 1, nome: 1 });
 const Lead = mongoose.model("Lead", leadSchema);
 module.exports = Lead;
