@@ -1,0 +1,109 @@
+/* ======= ADM FINANCEIRO (escopo) ======= */
+.adm-grid * { box-sizing: border-box; }
+
+/* a tab ADM ocupa toda a altura disponível do MAIN */
+.adm-grid {
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;   /* Indexadores | Credores */
+  gap: 16px;
+
+  /* se passar do espaço, rola APENAS dentro da tab */
+  overflow: auto;
+
+  /* tipografia levemente fluida */
+  font-size: clamp(13px, 0.95rem, 16px);
+}
+
+/* cards padrão */
+.adm-grid .card {
+  background: #fff;
+  border: 1px solid #e6eaf1;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(17,24,39,.06);
+  padding: 16px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.adm-grid h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+/* utilidades */
+.adm-grid .mt { margin-top: 4px; }
+.adm-grid .muted { color: #6b7280; font-size: .92rem; }
+
+/* linha inline (criar indexador) */
+.adm-grid .inline-row { display: flex; gap: 10px; align-items: center; }
+.adm-grid .inline-row input { flex: 1; }
+
+/* inputs / selects */
+.adm-grid input,
+.adm-grid select,
+.adm-grid textarea {
+  height: 40px; width: 100%;
+  background: #fff; border: 1px solid #e6eaf1; border-radius: 10px;
+  padding: 0 12px; color: #111827; transition: border-color .15s, box-shadow .15s;
+}
+.adm-grid input:focus, .adm-grid select:focus, .adm-grid textarea:focus {
+  border-color: #93c5fd; box-shadow: 0 0 0 3px rgba(59,130,246,.15); outline: none;
+}
+
+/* grid do formulário */
+.adm-grid .form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 10px; align-items: end;
+}
+.adm-grid .form-grid label { display: flex; flex-direction: column; gap: 6px; font-size: .92rem; color: #374151; }
+.adm-grid .form-grid .modal-actions { display: flex; justify-content: flex-end; }
+
+/* botões (escopo local) */
+.adm-grid .button {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 40px; padding: 0 14px; border-radius: 10px;
+  border: 1px solid #e6eaf1; background: #fff; color: #1f2937;
+  cursor: pointer; transition: background .15s, box-shadow .15s, transform .02s;
+}
+.adm-grid .button:hover { background: #f3f6fb; }
+.adm-grid .button:active { transform: translateY(1px); }
+.adm-grid .button.primary { background: #2563eb; border-color: #2563eb; color: #fff; box-shadow: 0 8px 18px rgba(37,99,235,.22); }
+.adm-grid .button.primary:hover { background: #1d4ed8; }
+
+/* header da seção de credores */
+.adm-grid .section-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+
+/* listas */
+.adm-grid .list { list-style: none; margin: 0; padding: 0; }
+.adm-grid .list-item { display: flex; align-items: center; gap: 6px; padding: 10px 0; border-bottom: 1px solid #eef2f7; }
+.adm-grid .list-item:last-child { border-bottom: 0; }
+
+/* indexadores (accordion) */
+.adm-grid .indexador-item {
+  border: 1px solid #eef2f7; border-radius: 10px; padding: 8px 10px;
+  background: #fafcff; margin-bottom: 8px;
+}
+.adm-grid .indexador-item > summary {
+  display: flex; align-items: center; cursor: pointer; list-style: none;
+  font-weight: 700; color: #1f2937; gap: 8px;
+}
+.adm-grid .indexador-item > summary::-webkit-details-marker { display: none; }
+.adm-grid .indexador-item > summary::before {
+  content: "▸"; display: inline-block; transition: transform .15s ease; color: #2563eb;
+}
+.adm-grid .indexador-item[open] > summary::before { transform: rotate(90deg); }
+.adm-grid .indexador-item ul { margin: 8px 0 0 18px; padding: 0; list-style: disc; color: #374151; }
+
+/* responsivo */
+@media (max-width: 1100px) { .adm-grid { grid-template-columns: 1fr; } }
+@media (max-width: 768px)  {
+  .adm-grid .form-grid { grid-template-columns: 1fr; }
+  .adm-grid .inline-row { flex-direction: column; align-items: stretch; }
+}

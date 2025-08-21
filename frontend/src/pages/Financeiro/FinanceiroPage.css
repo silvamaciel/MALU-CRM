@@ -1,200 +1,102 @@
-/* ================================
-   OVERRIDES - Estilo ERP (igual às imagens)
-   Cole AO FINAL do FinanceiroPage.css
-=================================== */
-
-/* Plano de fundo mais claro e espaçamento */
+/* ======= PÁGINA FINANCEIRO (escopo) ======= */
 .financeiro-page {
   background: #f5f7fa;
-  padding: 24px;
+  /* ocupa exatamente o viewport e NÃO rola */
+  height: 100dvh;
+  overflow: hidden;
+
+  padding: 10px 12px;
+  color: #1f2937;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+
+  /* Tipografia fluida base — as tabs herdam e se ajustam */
+  font-size: clamp(14px, 0.95vw, 16px);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
-/* ---------------- Tabs (Receber / Pagar / ADM) --------------- */
-.tabs {
+/* container ocupa toda a altura e distribui header/tabs/main */
+.financeiro-container {
+  height: 100%;
+  width: min(96vw, 1440px);
+  margin: 0 auto;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ---------- header ---------- */
+.financeiro-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+.financeiro-header h1 {
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: .2px;
+  font-size: clamp(20px, 1.1rem + 0.6vw, 28px);
+}
+.financeiro-subtitle {
+  margin: 0;
+  color: #6b7280;
+  font-size: clamp(12px, 0.85rem, 13px);
+}
+
+/* ---------- abas ---------- */
+.financeiro-tabs {
   display: flex;
   gap: 10px;
   border-bottom: 2px solid #e6eaf1;
-  margin-bottom: 18px;
-  padding-bottom: 6px;
+  padding-bottom: 8px;
 }
-
-.tabs .tab {
+.tab-pill {
   position: relative;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 8px 14px;
+  background: #fff;
   border: 1px solid #e6eaf1;
   border-radius: 999px;
-  background: #fff;
   color: #374151;
   font-weight: 500;
-  transition: box-shadow .15s ease, border-color .15s ease, color .15s ease, transform .04s ease;
+  cursor: pointer;
+  transition: border-color .15s, box-shadow .15s, color .15s, transform .04s;
 }
-
-.tabs .tab:hover {
-  border-color: #d8deea;
-  box-shadow: 0 2px 8px rgba(17, 24, 39, 0.06);
-}
-
-.tabs .tab.active {
-  color: #1e40af;               /* azul escuro */
-  border-color: #3b82f6;        /* azul */
-  box-shadow: 0 4px 14px rgba(59,130,246,.18);
-}
-
-/* “Arco” azul na aba ativa (igual seu print) */
-.tabs .tab.active::after {
+.tab-pill:hover { border-color: #d8deea; box-shadow: 0 2px 8px rgba(17,24,39,.06); }
+.tab-pill.active { color: #1e40af; border-color: #3b82f6; box-shadow: 0 4px 14px rgba(59,130,246,.18); }
+.tab-pill .tab-icon { display: grid; place-items: center; font-size: 16px; }
+.tab-pill .tab-text { white-space: nowrap; }
+.tab-pill.active::after {
   content: "";
   position: absolute;
-  left: 18px;
-  right: 18px;
-  bottom: -10px;
-  height: 22px;
-  border: 2px solid #3b82f6;
-  border-top: none;
-  border-radius: 0 0 999px 999px;   /* arco */
-  pointer-events: none;
-  filter: drop-shadow(0 4px 6px rgba(59,130,246,.15));
+  left: 18px; right: 18px; bottom: -12px; height: 24px;
+  border: 2px solid #3b82f6; border-top: none; border-radius: 0 0 999px 999px;
+  pointer-events: none; filter: drop-shadow(0 4px 6px rgba(59,130,246,.15));
 }
 
-/* ---------------- KPI Container (Receber) -------------------- */
-.kpi-container {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(240px, 1fr));
-  gap: 16px;
-  margin-bottom: 18px;
+/* ---------- MAIN: ocupa o resto da altura ---------- */
+.financeiro-main {
+  /* área que sobra = rola só por dentro das tabs */
+  flex: 1 1 auto;
+  min-height: 0;   /* <- chave para o filho poder ter overflow dentro */
+  display: flex;
 }
-
-.kpi-card {
-  background: #fff;
-  border: 1px solid #e6eaf1;
-  border-radius: 12px;
-  padding: 18px;
-  min-height: 92px;
-  box-shadow: 0 1px 2px rgba(17,24,39,.05);
+/* cada aba (componente raiz) ocupa 100% da altura e gerencia seu próprio scroll */
+.financeiro-main > * {
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
 }
 
-.kpi-card .kpi-label {
-  font-size: 12px;
-  color: #6b7280;
-  margin-bottom: 6px;
-}
-
-.kpi-card .kpi-value {
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: .2px;
-}
-
-.kpi-info   { border-left: 4px solid #0ea5b7; }
-.kpi-info .kpi-value   { color: #0891b2; }
-.kpi-success { border-left: 4px solid #16a34a; }
-.kpi-success .kpi-value { color: #16a34a; }
-.kpi-danger { border-left: 4px solid #ef4444; }
-.kpi-danger .kpi-value { color: #ef4444; }
-
-/* ---------------- Toolbar / Filtros -------------------------- */
-.filters-row {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
-  margin-bottom: 14px;
-}
-input, select {
-  height: 40px;
-  background: #fff;
-  border: 1px solid #e6eaf1;
-  border-radius: 10px;
-  padding: 0 12px;
-}
-input:focus, select:focus {
-  border-color: #93c5fd;
-  box-shadow: 0 0 0 3px rgba(59,130,246,.15);
-}
-
-/* Botões: estilo claro + primário azul com sombra (igual print) */
-.button {
-  height: 40px;
-  border-radius: 10px;
-  border: 1px solid #e6eaf1;
-  background: #fff;
-  color: #1f2937;
-  padding: 0 14px;
-  transition: background .15s, box-shadow .15s, transform .02s;
-}
-.button:hover { background: #f3f6fb; }
-.button:active { transform: translateY(1px); }
-
-.button.primary {
-  background: #2563eb;
-  border-color: #2563eb;
-  color: #fff;
-  box-shadow: 0 8px 18px rgba(37,99,235,.22);
-}
-.button.primary:hover { background: #1d4ed8; }
-.button.secondary { background: #f4f6fa; color: #374151; }
-.button.small { height: 34px; padding: 0 12px; }
-
-/* Uma variante roxa (se quiser o +Adicionar Despesa roxo igual 2º print) */
-.button.cta {
-  background: #6366f1;
-  border-color: #6366f1;
-  color: #fff;
-  box-shadow: 0 8px 18px rgba(99,102,241,.24);
-}
-.button.cta:hover { background: #5458ee; }
-
-/* ---------------- Tabela ------------------------------- */
-.table-responsive {
-  background: #fff;
-  border: 1px solid #e6eaf1;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(17,24,39,.06);
-}
-
-.table { width:100%; border-collapse: collapse; }
-.table thead { background: #f9fbff; }
-.table th {
-  text-align: left; padding: 12px 14px;
-  font-size: 13px; font-weight: 700; color: #1f2937;
-  border-bottom: 1px solid #e6eaf1;
-}
-.table td {
-  padding: 12px 14px; font-size: 14px; color: #374151;
-  border-bottom: 1px solid #eef2f7;
-}
-.table tbody tr:hover { background: #f7fafc; }
-
-/* Chips de status (inclui "A PAGAR" acinzentado do print) */
-.tag {
-  display: inline-flex; align-items: center;
-  padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;
-}
-.tag-pendente { background:#fff7e6; color:#8a5a00; }
-.tag-pago     { background:#e6fbf2; color:#056042; }
-.tag-atrasado { background:#ffecec; color:#8e1b1b; }
-/* “A Pagar” (cinza) */
-.tag-a\ pagar { background:#e9edf3; color:#4b5563; }
-
-/* ---------------- Paginação ---------------------------- */
-.pagination .button {
-  min-width: 96px;
-  justify-content: center;
-}
-
-/* ---------------- ADM: cartões/seções ------------------ */
-.adm-grid .card, .adm-grid section.card {
-  background: #fff;
-  border: 1px solid #e6eaf1;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(17,24,39,.06);
-}
-
-/* ---------------- Responsivo --------------------------- */
+/* responsivo */
 @media (max-width: 992px) {
-  .kpi-container { grid-template-columns: 1fr; }
-  .tabs .tab.active::after { left: 12px; right: 12px; }
+  .financeiro-page { padding: 10px; }
+  .financeiro-tabs { gap: 8px; }
+  .tab-pill { padding: 8px 12px; }
+  .tab-pill.active::after { left: 12px; right: 12px; bottom: -10px; height: 22px; }
 }

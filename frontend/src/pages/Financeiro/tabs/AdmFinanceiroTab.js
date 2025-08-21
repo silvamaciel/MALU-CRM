@@ -4,8 +4,10 @@ import {
   listarCredoresApi
 } from '../../../api/financeiroApi';
 import { toast } from 'react-toastify';
-import CriarCredorModal from './CriarCredorModal';
+import CriarCredorModal from '../componentes/CriarCredorModal';
 import { FiPlusCircle, FiSave } from 'react-icons/fi';
+
+import './AdmFinanceiroTab.css'
 
 export default function AdmFinanceiroTab() {
   const [indexadores, setIndexadores] = useState([]);
