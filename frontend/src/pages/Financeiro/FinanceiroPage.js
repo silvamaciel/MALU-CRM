@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
 import ParcelasTab from './componentes/ParcelasTab';
-import IndexadoresTab from './componentes/IndexadoresTab';
-import ContasAPagarTab from './componentes/ContasAPagarTab'; // <<< NOVO IMPORT
+import ContasAPagarTab from './componentes/ContasAPagarTab';
+import AdmFinanceiroTab from './componentes/AdmFinanceiroTab';
 import './FinanceiroPage.css';
 
 function FinanceiroPage() {
-    const [activeTab, setActiveTab] = useState('parcelas'); // Começa na aba de parcelas
+    const [activeTab, setActiveTab] = useState('receber');
 
     const renderContent = () => {
         switch (activeTab) {
-            case 'parcelas':
+            case 'receber':
                 return <ParcelasTab />;
             case 'pagar':
                 return <ContasAPagarTab />;
-            case 'indexadores':
-                return <IndexadoresTab />;
+            case 'adm':
+                return <AdmFinanceiroTab />; // <<< USA O NOVO COMPONENTE
             default:
                 return <ParcelasTab />;
         }
@@ -27,13 +27,13 @@ function FinanceiroPage() {
             </header>
             <div className="page-content">
                 <div className="tabs-container">
-                    <button onClick={() => setActiveTab('parcelas')} className={`tab-button ${activeTab === 'parcelas' ? 'active' : ''}`}>
+                    <button onClick={() => setActiveTab('receber')} className={`tab-button ${activeTab === 'receber' ? 'active' : ''}`}>
                         Contas a Receber
                     </button>
                     <button onClick={() => setActiveTab('pagar')} className={`tab-button ${activeTab === 'pagar' ? 'active' : ''}`}>
                         Contas a Pagar
                     </button>
-                    <button onClick={() => setActiveTab('indexadores')} className={`tab-button ${activeTab === 'indexadores' ? 'active' : ''}`}>
+                    <button onClick={() => setActiveTab('adm')} className={`tab-button ${activeTab === 'adm' ? 'active' : ''}`}>
                         ADM Financeiro
                     </button>
                 </div>

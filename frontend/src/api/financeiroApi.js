@@ -36,11 +36,39 @@ export const registrarBaixaApi = async (parcelaId, dadosBaixa) => {
 
 export const getIndexadoresApi = async () => {
     try {
-        const response = await axiosInstance.get('/indexadores');
+        const response = await axiosInstance.get('/financeiro/indexadores');
         return response.data.data;
     } catch (error) {
         console.error("Erro ao buscar indexadores:", error.response?.data);
         throw error.response?.data || new Error("Falha ao buscar indexadores.");
+    }
+};
+
+
+
+/**
+ * Cria um novo tipo de indexador (ex: INCC, IGPM).
+ */
+export const createIndexadorApi = async (data) => {
+    try {
+        const response = await axiosInstance.post('/financeiro/indexadores', data);
+        return response.data.data;
+    } catch (error) {
+        console.error("Erro ao criar indexador:", error.response?.data);
+        throw error.response?.data || new Error("Falha ao criar indexador.");
+    }
+};
+
+/**
+ * Adiciona ou atualiza um valor mensal para um indexador existente.
+ */
+export const upsertValorIndexadorApi = async (indexadorId, valorData) => {
+    try {
+        const response = await axiosInstance.post(`/financeiro/indexadores/${indexadorId}/valores`, valorData);
+        return response.data.data;
+    } catch (error) {
+        console.error("Erro ao salvar valor do indexador:", error.response?.data);
+        throw error.response?.data || new Error("Falha ao salvar valor do indexador.");
     }
 };
 

@@ -12,6 +12,16 @@ const regraReajusteSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'Indexador'
     },
+
+    inicioReajuste: { // A partir de qual mês/ano o reajuste começa
+        type: String, // Formato "YYYY-MM"
+        required: true
+    },
+    periodicidade: { // De quanto em quanto tempo o reajuste é aplicado
+        type: String,
+        enum: ['Mensal', 'Anual'],
+        default: 'Anual'
+    },
     aplicaMultaAtraso: { type: Boolean, default: true },
     multaPercentual: { type: Number, default: 2 }, // 2%
     aplicaJurosAtraso: { type: Boolean, default: true },

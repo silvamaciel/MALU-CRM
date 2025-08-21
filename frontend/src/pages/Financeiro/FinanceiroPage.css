@@ -1,10 +1,22 @@
-/* Estilos Gerais da Página */
-.financeiro-page .tabs-container {
+/* src/pages/Financeiro/FinanceiroPage.css */
+
+/* --- Layout Principal da Página --- */
+.financeiro-page .page-header {
+    border-bottom: 1px solid #e3e6f0;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+}
+.financeiro-page h1 {
+    margin: 0;
+}
+
+/* --- Sistema de Abas (Tabs) --- */
+.tabs-container {
     margin-bottom: 25px;
     border-bottom: 2px solid #e9ecef;
 }
 .tab-button {
-    padding: 10px 20px;
+    padding: 12px 20px;
     border: none;
     background: none;
     cursor: pointer;
@@ -12,13 +24,21 @@
     font-weight: 500;
     color: #6c757d;
     margin-bottom: -2px; /* Alinha com a borda inferior */
+    transition: color 0.2s, border-bottom-color 0.2s;
+    border-bottom: 2px solid transparent;
 }
 .tab-button.active {
-    color: #007bff;
-    border-bottom: 2px solid #007bff;
+    color: #4e73df; /* Cor primária */
+    border-bottom-color: #4e73df;
+}
+.tab-button:hover:not(.active) {
+    color: #343a40;
+}
+.tab-content {
+    animation: fadeIn 0.5s;
 }
 
-/* Estilos para a Aba de Parcelas */
+/* --- Aba de Parcelas e Contas a Pagar --- */
 .kpi-container {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -27,32 +47,74 @@
 }
 .kpi-card {
     background-color: #fff;
-    padding: 20px;
+    padding: 20px 25px;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
-.kpi-label { display: block; color: #8898aa; margin-bottom: 5px; }
-.kpi-value { display: block; font-size: 1.8em; font-weight: 700; color: #32325d; }
-.kpi-card.kpi-success .kpi-value { color: #28a745; }
-.kpi-card.kpi-danger .kpi-value { color: #dc3545; }
-.kpi-card.kpi-info .kpi-value { color: #117a8b; }
+.kpi-label { display: block; color: #858796; margin-bottom: 5px; font-size: 0.9em; font-weight: 600; }
+.kpi-value { display: block; font-size: 1.8em; font-weight: 700; color: #3a3b45; }
+.kpi-card.kpi-success .kpi-value { color: #1cc88a; }
+.kpi-card.kpi-danger .kpi-value { color: #e74a3b; }
+.kpi-card.kpi-info .kpi-value { color: #36b9cc; }
 
 .table-container.card {
     background: #fff;
-    padding: 20px;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    overflow-x: auto; /* Garante que a tabela seja responsiva */
+}
+.table-container h3 { margin-top: 0; }
+.no-data-message {
+    text-align: center;
+    padding: 30px;
+    color: #858796;
+}
+
+/* --- Aba de ADM Financeiro --- */
+.adm-financeiro-tab {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 30px;
+}
+.adm-section {
+    background-color: #fff;
+    padding: 25px;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
-.table-container h3 { margin-top: 0; }
-/* ... (estilos para a sua tabela, tr, th, td) ... */
-
-/* Estilos para a Aba de Indexadores */
+.adm-section h3 {
+    margin-top: 0;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e3e6f0;
+}
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
 .indexadores-list {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 20px;
     margin-top: 20px;
 }
 .indexador-card { padding: 20px; }
 .add-valor-form { display: flex; gap: 10px; margin: 15px 0; }
-.valores-list { list-style: none; padding-left: 0; }
+.add-valor-form input { flex-grow: 1; }
+.valores-list { list-style: none; padding-left: 0; font-size: 0.9em; }
+.valores-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+.valores-list li:last-child {
+    border-bottom: none;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}

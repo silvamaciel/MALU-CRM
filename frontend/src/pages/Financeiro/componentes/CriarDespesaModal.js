@@ -61,7 +61,7 @@ function CriarDespesaModal({ isOpen, onClose, onSuccess }) {
                         </div>
                         <div className="form-group">
                             <label>Centro de Custo</label>
-                            <select name="centroDeCusto" onChange={handleChange}>
+                            <select name="centroDeCusto" value={formData.centroDeCusto} onChange={handleChange}>
                                 <option>Outros</option>
                                 <option>Comissões</option>
                                 <option>Marketing</option>
@@ -71,7 +71,7 @@ function CriarDespesaModal({ isOpen, onClose, onSuccess }) {
                     </div>
                     <div className="form-row">
                         <div className="form-group">
-                            <label>Valor</label>
+                            <label>Valor (R$)</label>
                             <input type="number" step="0.01" name="valor" onChange={handleChange} required />
                         </div>
                         <div className="form-group">
@@ -81,7 +81,6 @@ function CriarDespesaModal({ isOpen, onClose, onSuccess }) {
                     </div>
                     <div className="modal-actions">
                         <button type="button" className="button cancel-button" onClick={onClose} disabled={isSaving}>Cancelar</button>
-
                         <button type="submit" className="button submit-button" disabled={isSaving}>
                             {isSaving ? 'A salvar...' : 'Salvar Despesa'}
                         </button>

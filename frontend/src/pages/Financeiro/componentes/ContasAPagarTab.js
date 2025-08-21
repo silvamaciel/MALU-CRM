@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
-import { listarDespesasApi, criarDespesaApi } from '../../../api/financeiroApi';
-// Importaremos o modal de criação que faremos a seguir
-import CriarDespesaModal from './CriarDespesaModal'; 
+import { listarDespesasApi } from '../../../api/financeiroApi';
+import CriarDespesaModal from './CriarDespesaModal'; // Importaremos o modal que faremos a seguir
 import StatusBadge from '../../../components/StatusBadge/StatusBadge'; // Reutilize o StatusBadge
 
 function ContasAPagarTab() {
@@ -77,7 +76,7 @@ function ContasAPagarTab() {
                 {(!loading && despesas.length === 0) && <p className="no-data-message">Nenhuma despesa encontrada.</p>}
             </div>
 
-            {/* Paginação aqui, se necessário */}
+            {/* Componente de Paginação pode ser adicionado aqui */}
 
             <CriarDespesaModal 
                 isOpen={isModalOpen}
