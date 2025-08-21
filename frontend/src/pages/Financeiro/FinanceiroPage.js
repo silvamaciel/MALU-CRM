@@ -1,48 +1,48 @@
 import React, { useState } from 'react';
-import ParcelasTab from './componentes/ParcelasTab';
-import ContasAPagarTab from './componentes/ContasAPagarTab';
+import ParcelasTab from './tabs/ParcelasTab';
+import ContasAPagarTab from './tabs/ContasAPagarTab';
 import AdmFinanceiroTab from './componentes/AdmFinanceiroTab';
-import './FinanceiroPage.css';
+import { FiList, FiDollarSign, FiSettings } from 'react-icons/fi';
 
-function FinanceiroPage() {
-    const [activeTab, setActiveTab] = useState('receber');
+import './FinanceiroPage.css'
 
-    const renderContent = () => {
-        switch (activeTab) {
-            case 'receber':
-                return <ParcelasTab />;
-            case 'pagar':
-                return <ContasAPagarTab />;
-            case 'adm':
-                return <AdmFinanceiroTab />; // <<< USA O NOVO COMPONENTE
-            default:
-                return <ParcelasTab />;
-        }
-    };
+export default function FinanceiroPage() {
+  const [active, setActive] = useState('parcelas');
 
-    return (
-        <div className="admin-page financeiro-page">
-            <header className="page-header">
-                <h1>Módulo Financeiro</h1>
-            </header>
-            <div className="page-content">
-                <div className="tabs-container">
-                    <button onClick={() => setActiveTab('receber')} className={`tab-button ${activeTab === 'receber' ? 'active' : ''}`}>
-                        Contas a Receber
-                    </button>
-                    <button onClick={() => setActiveTab('pagar')} className={`tab-button ${activeTab === 'pagar' ? 'active' : ''}`}>
-                        Contas a Pagar
-                    </button>
-                    <button onClick={() => setActiveTab('adm')} className={`tab-button ${activeTab === 'adm' ? 'active' : ''}`}>
-                        ADM Financeiro
-                    </button>
-                </div>
-
-                <div className="tab-content">
-                    {renderContent()}
-                </div>
-            </div>
+  return (
+    <div className="financeiro-page">
+      <header className="financeiro-header">
+        <h1>Financeiro</h1>
+        <div className="tabs">
+          <button
+            className={`tab ${active==='parcelas'?'active':''}`}
+            onClick={()=>setActive('parcelas')}
+            title="Contas a Receber"
+          >
+            <FiDollarSign /> Receber
+          </button>
+          <button
+            className={`tab ${active==='pagar'?'active':''}`}
+            onClick={()=>setActive('pagar')}
+            title="Contas a Pagar"
+          >
+            <FiList /> Pagar
+          </button>
+          <button
+            className={`tab ${active==='adm'?'active':''}`}
+            onClick={()=>setActive('adm')}
+            title="Administração Financeira"
+          >
+            <FiSettings /> ADM
+          </button>
         </div>
-    );
+      </header>
+
+      <main>
+        {active === 'parcelas' && <ParcelasTab />}
+        {active === 'pagar' && <ContasAPagarTab />}
+        {active === 'adm' && <AdmFinanceiroTab />}
+      </main>
+    </div>
+  );
 }
-export default FinanceiroPage;

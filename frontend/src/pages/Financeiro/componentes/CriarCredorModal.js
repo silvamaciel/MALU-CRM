@@ -1,79 +1,53 @@
 import React, { useState } from 'react';
-import { toast } from 'react-toastify';
 import { criarCredorApi } from '../../../api/financeiroApi';
+import { toast } from 'react-toastify';
 
-function CriarCredorModal({ isOpen, onClose, onSuccess }) {
-    const [formData, setFormData] = useState({
-        nome: '',
-        cpfCnpj: '',
-        tipo: 'Fornecedor',
-        contato: '',
-        email: ''
-    });
-    const [isSaving, setIsSaving] = useState(false);
+export default function CriarCredorModal({ open, onClose, onSuccess }) {
+  const [nome, setNome] = useState('');
+  const [tipo, setTipo] = useState('Fornecedor');
+  const [loading, setLoading] = useState(false);
 
-    const handleChange = (e) => {
-        setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-    };
+  if (!open) return null;
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setIsSaving(true);
-        try {
-            await criarCredorApi(formData);
-            toast.success("Credor registado com sucesso!");
-            onSuccess(); // Notifica o pai para atualizar a lista
-        } catch (error) {
-            toast.error(error.message || "Falha ao registar credor.");
-        } finally {
-            setIsSaving(false);
-        }
-    };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      await criarCredorApi({ nome, tipo });
+      toast.success('Credor criado!');
+      onSuccess?.();
+      onClose();
+      setNome(''); setTipo('Fornecedor');
+    } catch (err) {
+      toast.error(err?.message || 'Falha ao criar credor.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    if (!isOpen) return null;
-
-    return (
-        <div className="modal-overlay">
-            <div className="modal-content">
-                <h2>Registar Novo Credor</h2>
-                <form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label>Nome</label>
-                        <input type="text" name="nome" onChange={handleChange} required />
-                    </div>
-                    <div className="form-group">
-                        <label>Tipo</label>
-                        <select name="tipo" value={formData.tipo} onChange={handleChange}>
-                            <option value="Fornecedor">Fornecedor</option>
-                            <option value="Corretor">Corretor</option>
-                            <option value="Funcionário">Funcionário</option>
-                            <option value="Outro">Outro</option>
-                        </select>
-                    </div>
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label>CPF / CNPJ</label>
-                            <input type="text" name="cpfCnpj" onChange={handleChange} />
-                        </div>
-                        <div className="form-group">
-                            <label>Telefone</label>
-                            <input type="tel" name="contato" onChange={handleChange} />
-                        </div>
-                    </div>
-                    <div className="form-group">
-                        <label>Email</label>
-                        <input type="email" name="email" onChange={handleChange} />
-                    </div>
-                    <div className="modal-actions">
-                        <button type="button" className="button cancel-button" onClick={onClose} disabled={isSaving}>Cancelar</button>
-                        <button type="submit" className="button submit-button" disabled={isSaving}>
-                            {isSaving ? 'A salvar...' : 'Salvar Credor'}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
+  return (
+    <div className="modal-overlay">
+      <div className="modal">
+        <h3>Novo Credor</h3>
+        <form onSubmit={handleSubmit} className="form-grid">
+          <label className="col-span-2">
+            Nome
+            <input value={nome} onChange={e=>setNome(e.target.value)} required />
+          </label>
+          <label>
+            Tipo
+            <select value={tipo} onChange={e=>setTipo(e.target.value)}>
+              <option>Fornecedor</option>
+              <option>Corretor</option>
+              <option>Prestador</option>
+            </select>
+          </label>
+          <div className="modal-actions col-span-2">
+            <button type="button" className="button secondary" onClick={onClose}>Cancelar</button>
+            <button type="submit" className="button primary" disabled={loading}>{loading ? 'Salvando…' : 'Criar'}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 }
-
-export default CriarCredorModal;

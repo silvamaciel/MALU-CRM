@@ -6,6 +6,19 @@ const mongoose = require('mongoose');
 const Credor = require('../models/Credor');
 const Despesa = require('../models/Despesa');
 
+// pra não errar timezone e incluir o dia inteiro
+const startOfDay = (d) => {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+};
+const endOfDay = (d) => {
+  const x = new Date(d);
+  x.setHours(23, 59, 59, 999);
+  return x;
+};
+
+
 /**
  * Gera o plano de pagamentos completo para um contrato, lendo
  * a estrutura detalhada do PropostaContrato.
@@ -136,61 +149,89 @@ const registrarBaixa = async (parcelaId, dadosBaixa, userId) => {
  * @param {object} queryParams - Os filtros vindos da URL (ex: status, page, limit).
  * @returns {Promise<object>} Um objeto contendo a lista de parcelas e os dados de paginação.
  */
+
+/**
+ * Lista parcelas com filtros, ordenação e paginação.
+ * @param {string} companyId
+ * @param {object} queryParams
+ */
 const listarParcelas = async (companyId, queryParams) => {
-    // 1. Desestruturação e valores padrão para os filtros e paginação
-    const { 
-        status, 
-        page = 1, 
-        limit = 10, 
-        sort = 'dataVencimento' // Ordenação padrão
-    } = queryParams;
-    
-    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
-    
-    // 2. Montagem da query de busca
-    const queryConditions = { company: new mongoose.Types.ObjectId(companyId) };
-    if (status) {
-        queryConditions.status = status; // Adiciona o filtro de status se ele for fornecido
+  const {
+    status,
+    q,                    
+    vencimentoDe,         
+    vencimentoAte,        
+    page = 1,
+    limit = 10,
+    sort = 'dataVencimento',
+  } = queryParams;
+
+  const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+
+  // --- 1) Monta condições base
+  const queryConditions = {
+    company: new mongoose.Types.ObjectId(companyId),
+  };
+
+  if (status) {
+    queryConditions.status = status;
+  }
+
+  // --- 2) Range de vencimento
+  if (vencimentoDe || vencimentoAte) {
+    queryConditions.dataVencimento = {};
+    if (vencimentoDe) queryConditions.dataVencimento.$gte = startOfDay(vencimentoDe);
+    if (vencimentoAte) queryConditions.dataVencimento.$lte = endOfDay(vencimentoAte);
+  }
+
+  // --- 3) Busca por nome do sacado (q)
+  // Estratégia: achar IDs de Lead por nome e filtrar as parcelas por esses IDs.
+  if (q && String(q).trim()) {
+    const regex = new RegExp(String(q).trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+    const leadIds = await Lead
+      .find({ company: companyId, nome: regex })
+      .distinct('_id');
+
+    // Se não encontrou nenhum lead, evita retornar tudo
+    if (leadIds.length === 0) {
+      return { parcelas: [], total: 0, totalPages: 1, currentPage: parseInt(page, 10) };
     }
-    
-    console.log(`[FinanceiroSvc] A buscar parcelas com as condições:`, queryConditions);
+    queryConditions.sacado = { $in: leadIds };
+  }
 
-    try {
-        // 3. Execução das buscas no banco de dados em paralelo para mais performance
-        const [parcelas, total] = await Promise.all([
-            Parcela.find(queryConditions)
-                .populate({
-                    path: 'sacado', // Popula os dados do Lead/Cliente
-                    select: 'nome'   // Seleciona apenas o nome para a tabela
-                })
-                .populate({
-                    path: 'contrato', // Popula os dados do Contrato
-                    select: 'imovel tipoImovel', // Pega a referência do imóvel
-                    populate: { // Popula os detalhes do imóvel (aninhado)
-                        path: 'imovel',
-                        select: 'titulo' // Pega o título do imóvel ou empreendimento
-                    }
-                })
-                .sort(sort)
-                .skip(skip)
-                .limit(parseInt(limit))
-                .lean(), // .lean() para uma consulta mais rápida, já que não vamos modificar os docs
-            Parcela.countDocuments(queryConditions) // Conta o número total de documentos para a paginação
-        ]);
-        
-        // 4. Cálculo da paginação
-        const totalPages = Math.ceil(total / limit) || 1;
-        
-        console.log(`[FinanceiroSvc] Encontradas ${parcelas.length} de ${total} parcelas.`);
+  console.log('[FinanceiroSvc] Parcela.find conditions =>', queryConditions);
 
-        // 5. Retorno do objeto completo para o frontend
-        return { parcelas, total, totalPages, currentPage: parseInt(page, 10) };
+  try {
+    const [parcelas, total] = await Promise.all([
+      Parcela.find(queryConditions)
+        .populate({ path: 'sacado', select: 'nome' })
+        .populate({
+          path: 'contrato',
+          select: 'imovel tipoImovel',
+          populate: { path: 'imovel', select: 'titulo' },
+        })
+        .sort(sort)
+        .skip(skip)
+        .limit(parseInt(limit, 10))
+        .lean(),
 
-    } catch (error) {
-        console.error("[FinanceiroSvc] Erro ao listar parcelas:", error);
-        throw new Error("Erro interno ao buscar as parcelas.");
-    }
+      Parcela.countDocuments(queryConditions),
+    ]);
+
+    const totalPages = Math.ceil(total / parseInt(limit, 10)) || 1;
+
+    return {
+      parcelas,
+      total,
+      totalPages,
+      currentPage: parseInt(page, 10),
+    };
+  } catch (error) {
+    console.error('[FinanceiroSvc] Erro ao listar parcelas:', error);
+    throw new Error('Erro interno ao buscar as parcelas.');
+  }
 };
+
 
 /**
  * Calcula os KPIs para o dashboard financeiro.

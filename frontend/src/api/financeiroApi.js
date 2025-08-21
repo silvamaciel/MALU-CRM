@@ -1,7 +1,5 @@
 import axiosInstance from "./axiosInstance";
 
-// --- API de Contas a Receber (Parcelas) e Dashboard ---
-
 export const getFinanceiroDashboardApi = async () => {
     try {
         const response = await axiosInstance.get('/financeiro/dashboard');
@@ -15,9 +13,30 @@ export const getFinanceiroDashboardApi = async () => {
 export const getParcelasApi = async (params = {}) => {
     try {
         const response = await axiosInstance.get('/financeiro/parcelas', { params });
-        return response.data;
+        const raw = response?.data ?? {};
+
+        // muitos backends devolvem { success, data: { data, total } } ou { data, total } direto
+        const envelope = raw?.data && (Array.isArray(raw.data) || typeof raw.data === 'object')
+            ? raw.data
+            : raw;
+
+        const rows =
+            envelope?.data ??
+            envelope?.rows ??
+            envelope?.items ??
+            envelope?.results ??
+            envelope?.parcelas ??
+            [];
+
+        const total =
+            envelope?.total ??
+            envelope?.count ??
+            envelope?.pagination?.total ??
+            rows.length;
+
+        return { data: rows, total };
     } catch (error) {
-        console.error("Erro ao buscar parcelas:", error.response?.data);
+        console.error("Erro ao buscar parcelas:", error.response?.data || error.message);
         throw error.response?.data || new Error("Falha ao buscar parcelas.");
     }
 };
@@ -32,8 +51,6 @@ export const registrarBaixaApi = async (parcelaId, dadosBaixa) => {
     }
 };
 
-// --- API de Indexadores (ADM Financeiro) ---
-
 export const getIndexadoresApi = async () => {
     try {
         const response = await axiosInstance.get('/financeiro/indexadores');
@@ -44,11 +61,6 @@ export const getIndexadoresApi = async () => {
     }
 };
 
-
-
-/**
- * Cria um novo tipo de indexador (ex: INCC, IGPM).
- */
 export const createIndexadorApi = async (data) => {
     try {
         const response = await axiosInstance.post('/financeiro/indexadores', data);
@@ -59,9 +71,6 @@ export const createIndexadorApi = async (data) => {
     }
 };
 
-/**
- * Adiciona ou atualiza um valor mensal para um indexador existente.
- */
 export const upsertValorIndexadorApi = async (indexadorId, valorData) => {
     try {
         const response = await axiosInstance.post(`/financeiro/indexadores/${indexadorId}/valores`, valorData);
@@ -72,11 +81,6 @@ export const upsertValorIndexadorApi = async (indexadorId, valorData) => {
     }
 };
 
-// --- Funções para Contas a Pagar (Despesas) e Credores ---
-
-/**
- * Busca a lista de credores da empresa.
- */
 export const listarCredoresApi = async () => {
     try {
         const response = await axiosInstance.get('/financeiro/credores');
@@ -87,9 +91,6 @@ export const listarCredoresApi = async () => {
     }
 };
 
-/**
- * Cria um novo credor.
- */
 export const criarCredorApi = async (dadosCredor) => {
     try {
         const response = await axiosInstance.post('/financeiro/credores', dadosCredor);
@@ -100,9 +101,6 @@ export const criarCredorApi = async (dadosCredor) => {
     }
 };
 
-/**
- * Busca a lista de despesas (contas a pagar) com filtros.
- */
 export const listarDespesasApi = async (params = {}) => {
     try {
         const response = await axiosInstance.get('/financeiro/despesas', { params });
@@ -113,9 +111,6 @@ export const listarDespesasApi = async (params = {}) => {
     }
 };
 
-/**
- * Cria uma nova despesa.
- */
 export const criarDespesaApi = async (dadosDespesa) => {
     try {
         const response = await axiosInstance.post('/financeiro/despesas', dadosDespesa);
@@ -126,9 +121,6 @@ export const criarDespesaApi = async (dadosDespesa) => {
     }
 };
 
-/**
- * Regista o pagamento de uma despesa.
- */
 export const registrarPagamentoDespesaApi = async (despesaId, dadosPagamento) => {
     try {
         const response = await axiosInstance.post(`/financeiro/despesas/${despesaId}/pagar`, dadosPagamento);

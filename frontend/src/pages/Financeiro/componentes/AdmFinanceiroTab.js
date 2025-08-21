@@ -1,152 +1,116 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { toast } from 'react-toastify';
-import { 
-    getIndexadoresApi, 
-    createIndexadorApi, 
-    upsertValorIndexadorApi,
-    listarCredoresApi 
+import React, { useEffect, useState } from 'react';
+import {
+  getIndexadoresApi, createIndexadorApi, upsertValorIndexadorApi,
+  listarCredoresApi
 } from '../../../api/financeiroApi';
-import CriarCredorModal from './CriarCredorModal'; // Importa o novo modal
+import { toast } from 'react-toastify';
+import CriarCredorModal from './CriarCredorModal';
+import { FiPlusCircle, FiSave } from 'react-icons/fi';
 
-// --- Sub-componente para a Gestão de Indexadores ---
-const GestaoIndexadores = ({ indexadores, loading, onUpdate }) => {
-    const [newIndexador, setNewIndexador] = useState({ nome: '', descricao: '' });
-    const [valores, setValores] = useState({}); // ex: { 'indexadorId': { mesAno: '...', valor: '' } }
+export default function AdmFinanceiroTab() {
+  const [indexadores, setIndexadores] = useState([]);
+  const [novoNome, setNovoNome] = useState('');
+  const [valorMes, setValorMes] = useState({ indexadorId:'', mesAno:'', valor:'' });
+  const [credores, setCredores] = useState([]);
+  const [modalCredor, setModalCredor] = useState(false);
 
-    const handleCreateIndexador = async (e) => {
-        e.preventDefault();
-        try {
-            await createIndexadorApi(newIndexador);
-            toast.success("Indexador criado com sucesso!");
-            setNewIndexador({ nome: '', descricao: '' });
-            onUpdate(); // Pede para o pai atualizar
-        } catch (error) { toast.error(error.message); }
-    };
+  const load = async () => {
+    try {
+      const [idx, cr] = await Promise.all([getIndexadoresApi(), listarCredoresApi()]);
+      setIndexadores(idx || []);
+      setCredores(cr || []);
+    } catch (e) {
+      toast.error('Falha ao carregar ADM Financeiro.');
+    }
+  };
 
-    const handleAddValor = async (e, indexadorId) => {
-        e.preventDefault();
-        const valorData = valores[indexadorId];
-        if (!valorData || !valorData.mesAno || !valorData.valor) {
-            toast.warn("Mês/Ano e Valor são obrigatórios.");
-            return;
-        }
-        try {
-            await upsertValorIndexadorApi(indexadorId, valorData);
-            toast.success("Valor do indexador salvo!");
-            setValores(prev => ({...prev, [indexadorId]: { mesAno: '', valor: '' }}));
-            onUpdate();
-        } catch (error) { toast.error(error.message); }
-    };
+  useEffect(()=>{ load(); },[]);
 
-    const handleValorChange = (indexadorId, field, value) => {
-        setValores(prev => ({
-            ...prev,
-            [indexadorId]: { ...prev[indexadorId], [field]: value }
-        }));
-    };
+  const criarIndexador = async () => {
+    if (!novoNome.trim()) return;
+    try {
+      await createIndexadorApi({ nome: novoNome.trim() });
+      toast.success('Indexador criado!');
+      setNovoNome('');
+      load();
+    } catch (e) {
+      toast.error('Falha ao criar indexador.');
+    }
+  };
 
-    return (
-        <div className="adm-section">
-            <h3>Gestão de Indexadores</h3>
-            <p>Adicione e gira os valores mensais dos indexadores utilizados nos contratos.</p>
-            <div className="card">
-                <form onSubmit={handleCreateIndexador} className="add-indexador-form">
-                    <input type="text" placeholder="Nome (ex: INCC)" value={newIndexador.nome} onChange={e => setNewIndexador({...newIndexador, nome: e.target.value.toUpperCase()})} required />
-                    <input type="text" placeholder="Descrição (opcional)" value={newIndexador.descricao} onChange={e => setNewIndexador({...newIndexador, descricao: e.target.value})} />
-                    <button type="submit" className="button primary-button">Criar Indexador</button>
-                </form>
-            </div>
-            <div className="indexadores-list">
-                {loading ? <p>A carregar...</p> : indexadores.map(idx => (
-                    <div key={idx._id} className="card indexador-card">
-                        <h4>{idx.nome}</h4>
-                        <form onSubmit={(e) => handleAddValor(e, idx._id)} className="add-valor-form">
-                            <input type="month" onChange={(e) => handleValorChange(idx._id, 'mesAno', e.target.value)} required />
-                            <input type="number" step="0.01" placeholder="Valor %" onChange={(e) => handleValorChange(idx._id, 'valor', parseFloat(e.target.value))} required />
-                            <button type="submit" className="button small-button">Adicionar</button>
-                        </form>
-                        <ul className="valores-list">
-                            {idx.valores.slice(-6).reverse().map(v => (
-                                <li key={v.mesAno}><span>{v.mesAno}</span> <strong>{v.valor}%</strong></li>
-                            ))}
-                        </ul>
-                    </div>
+  const salvarValor = async (e) => {
+    e.preventDefault();
+    try {
+      const { indexadorId, mesAno, valor } = valorMes;
+      await upsertValorIndexadorApi(indexadorId, { mesAno, valor: Number(valor) });
+      toast.success('Valor salvo!');
+      setValorMes({ indexadorId:'', mesAno:'', valor:'' });
+      load();
+    } catch (e) {
+      toast.error('Falha ao salvar valor do indexador.');
+    }
+  };
+
+  return (
+    <div className="adm-grid">
+      <section className="card">
+        <h3>Gestão de Indexadores</h3>
+        <div className="inline-row">
+          <input placeholder="Nome do indexador (ex: INCC)" value={novoNome} onChange={e=>setNovoNome(e.target.value)} />
+          <button className="button primary" onClick={criarIndexador}><FiPlusCircle /> Criar</button>
+        </div>
+
+        <form onSubmit={salvarValor} className="form-grid mt">
+          <label>
+            Indexador
+            <select value={valorMes.indexadorId} onChange={e=>setValorMes(v=>({...v, indexadorId:e.target.value}))} required>
+              <option value="" disabled>Selecione</option>
+              {indexadores.map(i => <option key={i._id} value={i._id}>{i.nome}</option>)}
+            </select>
+          </label>
+          <label>
+            Mês/Ano
+            <input placeholder="YYYY-MM" value={valorMes.mesAno} onChange={e=>setValorMes(v=>({...v, mesAno:e.target.value}))} required />
+          </label>
+          <label>
+            Valor (%)
+            <input type="number" step="0.0001" value={valorMes.valor} onChange={e=>setValorMes(v=>({...v, valor:e.target.value}))} required />
+          </label>
+          <div className="modal-actions">
+            <button className="button primary" type="submit"><FiSave /> Salvar</button>
+          </div>
+        </form>
+
+        <div className="list mt">
+          {indexadores.map(i => (
+            <details key={i._id} className="indexador-item">
+              <summary>{i.nome}</summary>
+              <ul>
+                {(i.valores || []).map(v => (
+                  <li key={v.mesAno}>{v.mesAno}: {v.valor}%</li>
                 ))}
-            </div>
+              </ul>
+            </details>
+          ))}
         </div>
-    );
-};
+      </section>
 
-// --- Sub-componente para a Gestão de Credores ---
-const GestaoCredores = ({ credores, loading, onUpdate }) => {
-    const [isModalOpen, setIsModalOpen] = useState(false);
-
-    const handleSuccess = () => {
-        setIsModalOpen(false);
-        onUpdate();
-    };
-
-    return (
-        <div className="adm-section">
-            <div className="section-header">
-                <h3>Gestão de Credores</h3>
-                <button onClick={() => setIsModalOpen(true)} className="button primary-button">+ Novo Credor</button>
-            </div>
-             {loading ? <p>A carregar...</p> : (
-                <div className="table-container">
-                    <table>
-                        <thead><tr><th>Nome</th><th>Tipo</th><th>CPF/CNPJ</th><th>Ações</th></tr></thead>
-                        <tbody>
-                            {credores.map(c => (
-                                <tr key={c._id}>
-                                    <td>{c.nome}</td>
-                                    <td>{c.tipo}</td>
-                                    <td>{c.cpfCnpj || 'N/A'}</td>
-                                    <td><button className="button-link">Editar</button></td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
-            <CriarCredorModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSuccess={handleSuccess} />
+      <section className="card">
+        <div className="section-header">
+          <h3>Gestão de Credores</h3>
+          <button className="button primary" onClick={()=>setModalCredor(true)}><FiPlusCircle /> Novo Credor</button>
         </div>
-    );
-};
+        <ul className="list">
+          {credores.map(c => (
+            <li key={c._id} className="list-item">
+              <strong>{c.nome}</strong> <span className="muted">({c.tipo})</span>
+            </li>
+          ))}
+          {credores.length === 0 && <li className="muted">Nenhum credor cadastrado.</li>}
+        </ul>
+      </section>
 
-
-function AdmFinanceiroTab() {
-    const [indexadores, setIndexadores] = useState([]);
-    const [credores, setCredores] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [refreshKey, setRefreshKey] = useState(0); // Para forçar atualização
-
-    const fetchData = useCallback(async () => {
-        setLoading(true);
-        try {
-            const [indexadoresData, credoresData] = await Promise.all([
-                getIndexadoresApi(),
-                listarCredoresApi()
-            ]);
-            setIndexadores(indexadoresData || []);
-            setCredores(credoresData || []);
-        } catch (error) {
-            toast.error("Erro ao carregar dados administrativos.");
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchData();
-    }, [fetchData, refreshKey]);
-
-    return (
-        <div className="adm-financeiro-tab">
-            <GestaoIndexadores indexadores={indexadores} loading={loading} onUpdate={() => setRefreshKey(prev => prev + 1)} />
-            <GestaoCredores credores={credores} loading={loading} onUpdate={() => setRefreshKey(prev => prev + 1)} />
-        </div>
-    );
+      <CriarCredorModal open={modalCredor} onClose={()=>setModalCredor(false)} onSuccess={()=>load()} />
+    </div>
+  );
 }
-
-export default AdmFinanceiroTab;

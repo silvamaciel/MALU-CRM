@@ -1,120 +1,200 @@
-/* src/pages/Financeiro/FinanceiroPage.css */
+/* ================================
+   OVERRIDES - Estilo ERP (igual às imagens)
+   Cole AO FINAL do FinanceiroPage.css
+=================================== */
 
-/* --- Layout Principal da Página --- */
-.financeiro-page .page-header {
-    border-bottom: 1px solid #e3e6f0;
-    margin-bottom: 25px;
-    padding-bottom: 15px;
-}
-.financeiro-page h1 {
-    margin: 0;
-}
-
-/* --- Sistema de Abas (Tabs) --- */
-.tabs-container {
-    margin-bottom: 25px;
-    border-bottom: 2px solid #e9ecef;
-}
-.tab-button {
-    padding: 12px 20px;
-    border: none;
-    background: none;
-    cursor: pointer;
-    font-size: 1.1em;
-    font-weight: 500;
-    color: #6c757d;
-    margin-bottom: -2px; /* Alinha com a borda inferior */
-    transition: color 0.2s, border-bottom-color 0.2s;
-    border-bottom: 2px solid transparent;
-}
-.tab-button.active {
-    color: #4e73df; /* Cor primária */
-    border-bottom-color: #4e73df;
-}
-.tab-button:hover:not(.active) {
-    color: #343a40;
-}
-.tab-content {
-    animation: fadeIn 0.5s;
+/* Plano de fundo mais claro e espaçamento */
+.financeiro-page {
+  background: #f5f7fa;
+  padding: 24px;
 }
 
-/* --- Aba de Parcelas e Contas a Pagar --- */
+/* ---------------- Tabs (Receber / Pagar / ADM) --------------- */
+.tabs {
+  display: flex;
+  gap: 10px;
+  border-bottom: 2px solid #e6eaf1;
+  margin-bottom: 18px;
+  padding-bottom: 6px;
+}
+
+.tabs .tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid #e6eaf1;
+  border-radius: 999px;
+  background: #fff;
+  color: #374151;
+  font-weight: 500;
+  transition: box-shadow .15s ease, border-color .15s ease, color .15s ease, transform .04s ease;
+}
+
+.tabs .tab:hover {
+  border-color: #d8deea;
+  box-shadow: 0 2px 8px rgba(17, 24, 39, 0.06);
+}
+
+.tabs .tab.active {
+  color: #1e40af;               /* azul escuro */
+  border-color: #3b82f6;        /* azul */
+  box-shadow: 0 4px 14px rgba(59,130,246,.18);
+}
+
+/* “Arco” azul na aba ativa (igual seu print) */
+.tabs .tab.active::after {
+  content: "";
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: -10px;
+  height: 22px;
+  border: 2px solid #3b82f6;
+  border-top: none;
+  border-radius: 0 0 999px 999px;   /* arco */
+  pointer-events: none;
+  filter: drop-shadow(0 4px 6px rgba(59,130,246,.15));
+}
+
+/* ---------------- KPI Container (Receber) -------------------- */
 .kpi-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    margin-bottom: 25px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
 }
+
 .kpi-card {
-    background-color: #fff;
-    padding: 20px 25px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-.kpi-label { display: block; color: #858796; margin-bottom: 5px; font-size: 0.9em; font-weight: 600; }
-.kpi-value { display: block; font-size: 1.8em; font-weight: 700; color: #3a3b45; }
-.kpi-card.kpi-success .kpi-value { color: #1cc88a; }
-.kpi-card.kpi-danger .kpi-value { color: #e74a3b; }
-.kpi-card.kpi-info .kpi-value { color: #36b9cc; }
-
-.table-container.card {
-    background: #fff;
-    padding: 25px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    overflow-x: auto; /* Garante que a tabela seja responsiva */
-}
-.table-container h3 { margin-top: 0; }
-.no-data-message {
-    text-align: center;
-    padding: 30px;
-    color: #858796;
+  background: #fff;
+  border: 1px solid #e6eaf1;
+  border-radius: 12px;
+  padding: 18px;
+  min-height: 92px;
+  box-shadow: 0 1px 2px rgba(17,24,39,.05);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
-/* --- Aba de ADM Financeiro --- */
-.adm-financeiro-tab {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 30px;
-}
-.adm-section {
-    background-color: #fff;
-    padding: 25px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-.adm-section h3 {
-    margin-top: 0;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #e3e6f0;
-}
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-}
-.indexadores-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 20px;
-    margin-top: 20px;
-}
-.indexador-card { padding: 20px; }
-.add-valor-form { display: flex; gap: 10px; margin: 15px 0; }
-.add-valor-form input { flex-grow: 1; }
-.valores-list { list-style: none; padding-left: 0; font-size: 0.9em; }
-.valores-list li {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid #f0f0f0;
-}
-.valores-list li:last-child {
-    border-bottom: none;
+.kpi-card .kpi-label {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 6px;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+.kpi-card .kpi-value {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: .2px;
+}
+
+.kpi-info   { border-left: 4px solid #0ea5b7; }
+.kpi-info .kpi-value   { color: #0891b2; }
+.kpi-success { border-left: 4px solid #16a34a; }
+.kpi-success .kpi-value { color: #16a34a; }
+.kpi-danger { border-left: 4px solid #ef4444; }
+.kpi-danger .kpi-value { color: #ef4444; }
+
+/* ---------------- Toolbar / Filtros -------------------------- */
+.filters-row {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  margin-bottom: 14px;
+}
+input, select {
+  height: 40px;
+  background: #fff;
+  border: 1px solid #e6eaf1;
+  border-radius: 10px;
+  padding: 0 12px;
+}
+input:focus, select:focus {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+}
+
+/* Botões: estilo claro + primário azul com sombra (igual print) */
+.button {
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid #e6eaf1;
+  background: #fff;
+  color: #1f2937;
+  padding: 0 14px;
+  transition: background .15s, box-shadow .15s, transform .02s;
+}
+.button:hover { background: #f3f6fb; }
+.button:active { transform: translateY(1px); }
+
+.button.primary {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(37,99,235,.22);
+}
+.button.primary:hover { background: #1d4ed8; }
+.button.secondary { background: #f4f6fa; color: #374151; }
+.button.small { height: 34px; padding: 0 12px; }
+
+/* Uma variante roxa (se quiser o +Adicionar Despesa roxo igual 2º print) */
+.button.cta {
+  background: #6366f1;
+  border-color: #6366f1;
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(99,102,241,.24);
+}
+.button.cta:hover { background: #5458ee; }
+
+/* ---------------- Tabela ------------------------------- */
+.table-responsive {
+  background: #fff;
+  border: 1px solid #e6eaf1;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(17,24,39,.06);
+}
+
+.table { width:100%; border-collapse: collapse; }
+.table thead { background: #f9fbff; }
+.table th {
+  text-align: left; padding: 12px 14px;
+  font-size: 13px; font-weight: 700; color: #1f2937;
+  border-bottom: 1px solid #e6eaf1;
+}
+.table td {
+  padding: 12px 14px; font-size: 14px; color: #374151;
+  border-bottom: 1px solid #eef2f7;
+}
+.table tbody tr:hover { background: #f7fafc; }
+
+/* Chips de status (inclui "A PAGAR" acinzentado do print) */
+.tag {
+  display: inline-flex; align-items: center;
+  padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;
+}
+.tag-pendente { background:#fff7e6; color:#8a5a00; }
+.tag-pago     { background:#e6fbf2; color:#056042; }
+.tag-atrasado { background:#ffecec; color:#8e1b1b; }
+/* “A Pagar” (cinza) */
+.tag-a\ pagar { background:#e9edf3; color:#4b5563; }
+
+/* ---------------- Paginação ---------------------------- */
+.pagination .button {
+  min-width: 96px;
+  justify-content: center;
+}
+
+/* ---------------- ADM: cartões/seções ------------------ */
+.adm-grid .card, .adm-grid section.card {
+  background: #fff;
+  border: 1px solid #e6eaf1;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(17,24,39,.06);
+}
+
+/* ---------------- Responsivo --------------------------- */
+@media (max-width: 992px) {
+  .kpi-container { grid-template-columns: 1fr; }
+  .tabs .tab.active::after { left: 12px; right: 12px; }
 }

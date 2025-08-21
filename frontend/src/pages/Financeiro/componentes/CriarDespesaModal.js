@@ -1,94 +1,76 @@
-import React, { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
+import React, { useState } from 'react';
 import { criarDespesaApi, listarCredoresApi } from '../../../api/financeiroApi';
+import { toast } from 'react-toastify';
+import { useEffect } from 'react';
 
-function CriarDespesaModal({ isOpen, onClose, onSuccess }) {
-    const [formData, setFormData] = useState({
-        descricao: '',
-        credor: '',
-        valor: '',
-        dataVencimento: '',
-        centroDeCusto: 'Outros'
-    });
-    const [credores, setCredores] = useState([]);
-    const [isSaving, setIsSaving] = useState(false);
+export default function CriarDespesaModal({ open, onClose, onSuccess }) {
+  const [descricao, setDescricao] = useState('');
+  const [credor, setCredor] = useState('');
+  const [valor, setValor] = useState('');
+  const [dataVencimento, setDataVencimento] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [credores, setCredores] = useState([]);
 
-    useEffect(() => {
-        // Carrega a lista de credores quando o modal é aberto
-        if (isOpen) {
-            listarCredoresApi()
-                .then(data => setCredores(data || []))
-                .catch(() => toast.error("Erro ao carregar a lista de credores."));
-        }
-    }, [isOpen]);
+  useEffect(() => {
+    if (!open) return;
+    (async () => {
+      try {
+        const data = await listarCredoresApi();
+        setCredores(data || []);
+      } catch (e) {
+        toast.error('Não foi possível carregar credores.');
+      }
+    })();
+  }, [open]);
 
-    const handleChange = (e) => {
-        setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-    };
+  if (!open) return null;
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setIsSaving(true);
-        try {
-            await criarDespesaApi(formData);
-            toast.success("Despesa adicionada com sucesso!");
-            onSuccess();
-        } catch (error) {
-            toast.error(error.message || "Falha ao criar despesa.");
-        } finally {
-            setIsSaving(false);
-        }
-    };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      await criarDespesaApi({ descricao, credor, valor: Number(valor), dataVencimento });
+      toast.success('Despesa criada!');
+      onSuccess?.();
+      onClose();
+      setDescricao(''); setCredor(''); setValor(''); setDataVencimento('');
+    } catch (err) {
+      toast.error(err?.message || 'Falha ao criar despesa.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    if (!isOpen) return null;
-
-    return (
-        <div className="modal-overlay">
-            <div className="modal-content">
-                <h2>Adicionar Nova Despesa</h2>
-                <form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label>Descrição</label>
-                        <input type="text" name="descricao" onChange={handleChange} required />
-                    </div>
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label>Credor</label>
-                            <select name="credor" onChange={handleChange} required>
-                                <option value="">Selecione...</option>
-                                {credores.map(c => <option key={c._id} value={c._id}>{c.nome}</option>)}
-                            </select>
-                        </div>
-                        <div className="form-group">
-                            <label>Centro de Custo</label>
-                            <select name="centroDeCusto" value={formData.centroDeCusto} onChange={handleChange}>
-                                <option>Outros</option>
-                                <option>Comissões</option>
-                                <option>Marketing</option>
-                                <option>Operacional</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label>Valor (R$)</label>
-                            <input type="number" step="0.01" name="valor" onChange={handleChange} required />
-                        </div>
-                        <div className="form-group">
-                            <label>Data de Vencimento</label>
-                            <input type="date" name="dataVencimento" onChange={handleChange} required />
-                        </div>
-                    </div>
-                    <div className="modal-actions">
-                        <button type="button" className="button cancel-button" onClick={onClose} disabled={isSaving}>Cancelar</button>
-                        <button type="submit" className="button submit-button" disabled={isSaving}>
-                            {isSaving ? 'A salvar...' : 'Salvar Despesa'}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
+  return (
+    <div className="modal-overlay">
+      <div className="modal">
+        <h3>Adicionar Despesa</h3>
+        <form onSubmit={handleSubmit} className="form-grid">
+          <label className="col-span-2">
+            Descrição
+            <input value={descricao} onChange={e=>setDescricao(e.target.value)} required />
+          </label>
+          <label>
+            Credor
+            <select value={credor} onChange={e=>setCredor(e.target.value)} required>
+              <option value="" disabled>Selecione</option>
+              {credores.map(c => <option key={c._id} value={c._id}>{c.nome}</option>)}
+            </select>
+          </label>
+          <label>
+            Valor
+            <input type="number" step="0.01" value={valor} onChange={e=>setValor(e.target.value)} required />
+          </label>
+          <label>
+            Vencimento
+            <input type="date" value={dataVencimento} onChange={e=>setDataVencimento(e.target.value)} required />
+          </label>
+          <div className="modal-actions col-span-2">
+            <button type="button" className="button secondary" onClick={onClose}>Cancelar</button>
+            <button type="submit" className="button primary" disabled={loading}>{loading ? 'Salvando…' : 'Criar'}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 }
-
-export default CriarDespesaModal;

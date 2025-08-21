@@ -1,0 +1,183 @@
+/* Escopo local */
+.parcelas-tab * { box-sizing: border-box; }
+
+/* KPI container – reaproveita as classes globais, mas garante grid e espaçamento */
+.parcelas-tab .kpi-container {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+/* ---------------- Responsividade da Tabela ---------------- */
+.parcelas-tab .table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  background: #fff;
+  border: 1px solid #e6eaf1;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(17,24,39,.06);
+}
+
+.parcelas-tab .table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.parcelas-tab .table-fixed {
+  table-layout: fixed; /* respeita colgroup e impede estourar largura */
+}
+
+.parcelas-tab .table thead { background: #f9fbff; }
+.parcelas-tab .table th {
+  text-align: left;
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1f2937;
+  border-bottom: 1px solid #e6eaf1;
+}
+.parcelas-tab .table td {
+  padding: 12px 14px;
+  font-size: 14px;
+  color: #374151;
+  border-bottom: 1px solid #eef2f7;
+  vertical-align: middle;
+}
+
+/* evita estourar por textos longos */
+.parcelas-tab .ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* números alinhados à direita */
+.parcelas-tab .money {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* hover leve */
+.parcelas-tab .table tbody tr:hover { background: #f7fafc; }
+
+/* ---------------- Filtros ---------------- */
+.parcelas-tab .filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.parcelas-tab .input-with-icon { position: relative; display: flex; align-items: center; }
+.parcelas-tab .input-with-icon > svg {
+  position: absolute; left: 10px; color: #9ca3af;
+}
+.parcelas-tab .input-with-icon > input {
+  padding-left: 34px;
+}
+
+/* ---------------- Modal de Baixa (com cor/contraste) ---------------- */
+.parcelas-tab .modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.38);
+  display: grid;
+  place-items: center;
+  z-index: 9990;
+  padding: 16px;
+}
+
+.parcelas-tab .modal {
+  background: #ffffff;
+  border: 1px solid #e6eaf1;
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(17,24,39,.18);
+  padding: 20px;
+  max-width: 720px;
+  width: 100%;
+  color: #111827;
+}
+
+.parcelas-tab .modal h3 {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.parcelas-tab label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  color: #6b7280; /* garante contraste com fundo branco */
+}
+
+.parcelas-tab input,
+.parcelas-tab select,
+.parcelas-tab textarea {
+  height: 40px;
+  background: #fff;
+  border: 1px solid #e6eaf1;
+  border-radius: 10px;
+  padding: 0 12px;
+  color: #111827;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.parcelas-tab textarea { height: auto; padding: 10px 12px; resize: vertical; min-height: 140px; }
+
+.parcelas-tab input:focus,
+.parcelas-tab select:focus,
+.parcelas-tab textarea:focus {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+}
+
+/* grid do form dentro do modal */
+.parcelas-tab .form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.parcelas-tab .col-span-2 { grid-column: span 2; }
+
+.parcelas-tab .modal-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* ---------------- Tags de Status ---------------- */
+.parcelas-tab .tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.parcelas-tab .tag-pendente { background:#fff7e6; color:#8a5a00; }
+.parcelas-tab .tag-pago     { background:#d9fbe9; color:#065f46; }
+.parcelas-tab .tag-atrasado { background:#ffecec; color:#8e1b1b; }
+
+/* ---------------- Paginação ---------------- */
+.parcelas-tab .pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+/* ---------------- Responsivo ---------------- */
+@media (max-width: 992px) {
+  .parcelas-tab .kpi-container {
+    grid-template-columns: 1fr;
+  }
+  .parcelas-tab .form-grid { grid-template-columns: 1fr; }
+  .parcelas-tab .col-span-2 { grid-column: span 1; }
+}

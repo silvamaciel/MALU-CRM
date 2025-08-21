@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { listarDespesasApi } from '../../../api/financeiroApi';
-import CriarDespesaModal from './CriarDespesaModal'; // Importaremos o modal que faremos a seguir
+import CriarDespesaModal from '../componentes/CriarDespesaModal'; // Importaremos o modal que faremos a seguir
 import StatusBadge from '../../../components/StatusBadge/StatusBadge'; // Reutilize o StatusBadge
 
 function ContasAPagarTab() {
