@@ -4,7 +4,6 @@ import { listarArquivosApi, uploadArquivoApi, apagarArquivoApi } from '../../api
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 import './DrivePage.css';
 
-// Função auxiliar para formatar o tamanho do ficheiro
 const formatFileSize = (bytes) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -13,19 +12,30 @@ const formatFileSize = (bytes) => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
-// Ícone genérico para diferentes tipos de ficheiro
 const FileIcon = ({ mimetype }) => {
     if (mimetype.startsWith('image/')) return <i className="fas fa-file-image file-icon"></i>;
     if (mimetype === 'application/pdf') return <i className="fas fa-file-pdf file-icon"></i>;
     if (mimetype.startsWith('audio/')) return <i className="fas fa-file-audio file-icon"></i>;
+    if (mimetype.startsWith('video/')) return <i className="fas fa-file-video file-icon"></i>;
     return <i className="fas fa-file-alt file-icon"></i>;
 };
+
+const CATEGORIAS = [
+    'Contratos', 
+    'Documentos Leads', 
+    'Materiais Empreendimentos', 
+    'Recibos', 
+    'Identidade Visual', 
+    'Mídia WhatsApp', 
+    'Outros'
+];
 
 function DrivePage() {
     const [files, setFiles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
+    const [selectedCategory, setSelectedCategory] = useState(CATEGORIAS[0]);
     
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -35,14 +45,14 @@ function DrivePage() {
     const fetchFiles = useCallback(async () => {
         setLoading(true);
         try {
-            const filesData = await listarArquivosApi();
+            const filesData = await listarArquivosApi({ categoria: selectedCategory });
             setFiles(filesData || []);
         } catch (error) {
-            toast.error("Erro ao carregar arquivos.");
+            toast.error(`Erro ao carregar arquivos da categoria ${selectedCategory}.`);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [selectedCategory]);
 
     useEffect(() => {
         fetchFiles();
@@ -59,15 +69,12 @@ function DrivePage() {
         setUploading(true);
         setUploadProgress(0);
 
-        const onUploadProgress = (progressEvent) => {
-            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            setUploadProgress(percentCompleted);
-        };
-
         try {
-            // Para uploads genéricos, usamos a categoria 'Outros'
-            const metadata = { categoria: 'Outros' };
-            await uploadArquivoApi(file, metadata, onUploadProgress);
+            const metadata = { categoria: selectedCategory };
+            await uploadArquivoApi(file, metadata, (progressEvent) => {
+                const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                setUploadProgress(percent);
+            });
             toast.success("Arquivo enviado com sucesso!");
             fetchFiles();
         } catch (error) {
@@ -85,14 +92,13 @@ function DrivePage() {
 
     const handleConfirmDelete = async () => {
         if (!deleteTarget) return;
+        setIsDeleteModalOpen(false); // Fecha o modal imediatamente para uma melhor UX
         try {
             await apagarArquivoApi(deleteTarget._id);
             toast.success("Arquivo apagado com sucesso!");
             fetchFiles();
         } catch (error) {
             toast.error("Falha ao apagar o arquivo.");
-        } finally {
-            setIsDeleteModalOpen(false);
         }
     };
 
@@ -100,36 +106,62 @@ function DrivePage() {
         <div className="admin-page drive-page">
             <header className="page-header">
                 <h1>Drive da Empresa</h1>
-                <button onClick={handleUploadClick} className="button primary-button" disabled={uploading}>
-                    {uploading ? `A enviar... ${uploadProgress}%` : 'Upload de Arquivo'}
-                </button>
-                <input type="file" ref={fileInputRef} onChange={handleFileSelected} style={{ display: 'none' }} />
             </header>
-            <div className="page-content">
-                {loading ? <p>A carregar arquivos...</p> : (
-                    <div className="files-grid">
-                        {files.map(file => (
-                            <div key={file._id} className="file-card">
-                                <a href={file.url} target="_blank" rel="noopener noreferrer" className="file-preview">
-                                    {file.mimetype.startsWith('image/') ? (
-                                        <img src={file.url} alt={file.nomeOriginal} className="file-thumbnail" />
-                                    ) : (
-                                        <div className="file-icon-container"><FileIcon mimetype={file.mimetype} /></div>
-                                    )}
-                                </a>
-                                <div className="file-info">
-                                    <p className="file-name" title={file.nomeOriginal}>{file.nomeOriginal}</p>
-                                    <p className="file-meta">{formatFileSize(file.size)}</p>
-                                </div>
-                                <div className="file-actions">
-                                    <button onClick={() => handleOpenDeleteModal(file)} className="button-link delete-link-file">&times;</button>
-                                </div>
-                            </div>
-                        ))}
+            <div className="drive-layout">
+                <aside className="drive-sidebar">
+                    <nav>
+                        <ul>
+                            {CATEGORIAS.map(cat => (
+                                <li key={cat}>
+                                    <button 
+                                        onClick={() => setSelectedCategory(cat)}
+                                        className={selectedCategory === cat ? 'active' : ''}
+                                    >
+                                        {cat}
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    </nav>
+                </aside>
+
+                <main className="drive-content">
+                    <div className="drive-content-header">
+                        <h2>{selectedCategory}</h2>
+                        <button onClick={handleUploadClick} className="button primary-button" disabled={uploading}>
+                            {uploading ? `A enviar... ${uploadProgress}%` : `+ Upload em ${selectedCategory}`}
+                        </button>
+                        <input type="file" ref={fileInputRef} onChange={handleFileSelected} style={{ display: 'none' }} />
                     </div>
-                )}
-                {(!loading && files.length === 0) && <p className="no-data-message">Nenhum arquivo encontrado. Clique em "Upload" para começar.</p>}
+
+                    <div className="page-content">
+                        {loading ? <p>A carregar arquivos...</p> : (
+                            <div className="files-grid">
+                                {files.map(file => (
+                                    <div key={file._id} className="file-card">
+                                        <a href={file.url} target="_blank" rel="noopener noreferrer" className="file-preview">
+                                            {file.mimetype.startsWith('image/') ? (
+                                                <img src={file.url} alt={file.nomeOriginal} className="file-thumbnail" />
+                                            ) : (
+                                                <div className="file-icon-container"><FileIcon mimetype={file.mimetype} /></div>
+                                            )}
+                                        </a>
+                                        <div className="file-info">
+                                            <p className="file-name" title={file.nomeOriginal}>{file.nomeOriginal}</p>
+                                            <p className="file-meta">{formatFileSize(file.size)}</p>
+                                        </div>
+                                        <div className="file-actions">
+                                            <button onClick={() => handleOpenDeleteModal(file)} className="button-link delete-link-file" title="Excluir Arquivo">&times;</button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        {(!loading && files.length === 0) && <p className="no-data-message">Nenhum arquivo nesta categoria.</p>}
+                    </div>
+                </main>
             </div>
+            
             <ConfirmModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}

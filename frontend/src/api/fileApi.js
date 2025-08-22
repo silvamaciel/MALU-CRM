@@ -12,7 +12,7 @@ export const listarArquivosApi = async (filters = {}) => {
 
 export const uploadArquivoApi = async (file, metadata, onUploadProgress) => {
     const formData = new FormData();
-    formData.append('arquivo', file); // 'arquivo' deve ser o mesmo nome do middleware no backend
+    formData.append('arquivo', file);
     formData.append('categoria', metadata.categoria);
     if (metadata.associations) {
         formData.append('associations', JSON.stringify(metadata.associations));
@@ -20,10 +20,8 @@ export const uploadArquivoApi = async (file, metadata, onUploadProgress) => {
 
     try {
         const response = await axiosInstance.post('/files/upload', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-            onUploadProgress: onUploadProgress,
+            headers: { 'Content-Type': 'multipart/form-data' },
+            onUploadProgress,
         });
         return response.data.data;
     } catch (error) {
