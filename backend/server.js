@@ -116,6 +116,7 @@ pp.use('/api/files', require('./routes/fileRoutes'));
 
 const PORT = process.env.PORT || 5000;
 
+
 app.get('/', (req, res) => {
   res.send('API rodando com sucesso ✅');
 });
