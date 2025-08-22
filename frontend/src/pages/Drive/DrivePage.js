@@ -65,14 +65,16 @@ function DrivePage() {
         };
 
         try {
-            await uploadArquivoApi(file, onUploadProgress);
+            // Para uploads genéricos, usamos a categoria 'Outros'
+            const metadata = { categoria: 'Outros' };
+            await uploadArquivoApi(file, metadata, onUploadProgress);
             toast.success("Arquivo enviado com sucesso!");
-            fetchFiles(); // Atualiza a lista
+            fetchFiles();
         } catch (error) {
             toast.error(error.message || "Falha no upload.");
         } finally {
             setUploading(false);
-            fileInputRef.current.value = null; // Limpa o input
+            fileInputRef.current.value = null;
         }
     };
     

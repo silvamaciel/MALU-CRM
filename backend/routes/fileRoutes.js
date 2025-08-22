@@ -7,7 +7,7 @@ const { upload } = require('../config/s3'); // <<< Importa o nosso middleware de
 // Todas as rotas de ficheiros são protegidas
 router.use(protect);
 
-// Rota para listar todos os ficheiros
+// Rota para listar todos os ficheiros (com filtros)
 router.get('/', FileController.listarArquivosController);
 
 // Rota para fazer o upload de um único ficheiro.
