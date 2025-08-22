@@ -20,7 +20,8 @@ import {
   FiUserCheck,
   FiLink,
   FiFileText,
-  FiDollarSign
+  FiDollarSign,
+  FiFolder
 } from 'react-icons/fi';
 
 function Sidebar({ userData, handleLogout, closeMobileSidebar }) {
@@ -42,19 +43,19 @@ function Sidebar({ userData, handleLogout, closeMobileSidebar }) {
       <nav className="sidebar-nav">
         <ul>
           <li>
-            <NavLink to="/dashboard" onClick={handleLinkClick} className={({isActive}) => isActive ? 'active' : ''}>
+            <NavLink to="/dashboard" onClick={handleLinkClick} className={({ isActive }) => isActive ? 'active' : ''}>
               <FiHome className="icon" /><span>Dashboard</span>
             </NavLink>
           </li>
 
           <li>
-            <NavLink to="/chat" onClick={handleLinkClick} className={({isActive}) => isActive ? 'active' : ''}>
+            <NavLink to="/chat" onClick={handleLinkClick} className={({ isActive }) => isActive ? 'active' : ''}>
               <FiMessageSquare className="icon" /><span>Chat</span>
             </NavLink>
           </li>
 
           <li>
-            <NavLink to="/leads" onClick={handleLinkClick} className={({isActive}) => isActive ? 'active' : ''}>
+            <NavLink to="/leads" onClick={handleLinkClick} className={({ isActive }) => isActive ? 'active' : ''}>
               <FiUsers className="icon" /><span>Leads</span>
             </NavLink>
           </li>
@@ -63,7 +64,7 @@ function Sidebar({ userData, handleLogout, closeMobileSidebar }) {
             <NavLink
               to="/tasks"
               onClick={handleLinkClick}
-              className={({isActive}) =>
+              className={({ isActive }) =>
                 isActive || location.pathname.startsWith('/Tasks') ? 'active' : ''
               }
             >
@@ -75,7 +76,7 @@ function Sidebar({ userData, handleLogout, closeMobileSidebar }) {
             <NavLink
               to="/empreendimentos"
               onClick={handleLinkClick}
-              className={({isActive}) =>
+              className={({ isActive }) =>
                 isActive || location.pathname.startsWith('/empreendimentos') ? 'active' : ''
               }
             >
@@ -87,7 +88,7 @@ function Sidebar({ userData, handleLogout, closeMobileSidebar }) {
             <NavLink
               to="/imoveis-avulsos"
               onClick={handleLinkClick}
-              className={({isActive}) =>
+              className={({ isActive }) =>
                 isActive || location.pathname.startsWith('/imoveis-avulsos') ? 'active' : ''
               }
             >
@@ -99,7 +100,7 @@ function Sidebar({ userData, handleLogout, closeMobileSidebar }) {
             <NavLink
               to="/reservas"
               onClick={handleLinkClick}
-              className={({isActive}) =>
+              className={({ isActive }) =>
                 isActive || location.pathname.startsWith('/reservas') ? 'active' : ''
               }
             >
@@ -120,6 +121,20 @@ function Sidebar({ userData, handleLogout, closeMobileSidebar }) {
           </li>
           */}
 
+
+          <li>
+            <NavLink
+              to="/drive"
+              onClick={handleLinkClick}
+              className={({ isActive }) =>
+                isActive || location.pathname.startsWith('/drive') ? 'active' : ''
+              }
+            >
+              <FiFolder className="icon" /><span>Drive</span>
+            </NavLink>
+          </li>
+
+
           {/* Administração */}
           {isAdmin && (
             <li className="admin-section">
@@ -128,32 +143,32 @@ function Sidebar({ userData, handleLogout, closeMobileSidebar }) {
               </span>
               <ul>
                 <li>
-                  <NavLink to="/admin/situacoes" onClick={handleLinkClick} className={({isActive}) => isActive ? 'active' : ''}>
+                  <NavLink to="/admin/situacoes" onClick={handleLinkClick} className={({ isActive }) => isActive ? 'active' : ''}>
                     <FiTag className="icon" /><span>Situações</span>
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/admin/origens" onClick={handleLinkClick} className={({isActive}) => isActive ? 'active' : ''}>
+                  <NavLink to="/admin/origens" onClick={handleLinkClick} className={({ isActive }) => isActive ? 'active' : ''}>
                     <FiShare2 className="icon" /><span>Origens</span>
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/admin/motivosdescarte" onClick={handleLinkClick} className={({isActive}) => isActive ? 'active' : ''}>
+                  <NavLink to="/admin/motivosdescarte" onClick={handleLinkClick} className={({ isActive }) => isActive ? 'active' : ''}>
                     <FiTrash2 className="icon" /><span>Motivos Descarte</span>
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/admin/usuarios" onClick={handleLinkClick} className={({isActive}) => isActive ? 'active' : ''}>
+                  <NavLink to="/admin/usuarios" onClick={handleLinkClick} className={({ isActive }) => isActive ? 'active' : ''}>
                     <FiUser className="icon" /><span>Usuários</span>
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/admin/brokers" className={({isActive}) => isActive ? 'active' : ''}>
+                  <NavLink to="/admin/brokers" className={({ isActive }) => isActive ? 'active' : ''}>
                     <FiUserCheck className="icon" /><span>Corretores Parceiros</span>
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/integracoes" onClick={handleLinkClick} className={({isActive}) => isActive ? 'active' : ''}>
+                  <NavLink to="/integracoes" onClick={handleLinkClick} className={({ isActive }) => isActive ? 'active' : ''}>
                     <FiLink className="icon" /><span>Integrações</span>
                   </NavLink>
                 </li>
@@ -161,7 +176,7 @@ function Sidebar({ userData, handleLogout, closeMobileSidebar }) {
                   <NavLink
                     to="/admin/modelos-contrato"
                     onClick={handleLinkClick}
-                    className={({isActive}) =>
+                    className={({ isActive }) =>
                       isActive || location.pathname.startsWith('/admin/modelos-contrato') ? 'active' : ''
                     }
                   >
