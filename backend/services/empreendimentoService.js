@@ -85,7 +85,7 @@ const getEmpreendimentosByCompany = async (companyId, filters = {}, paginationOp
         throw new Error("Erro ao buscar empreendimentos.");
     }
 };
-
+ 
 /**
  * Busca um empreendimento específico por ID, garantindo que pertence à empresa.
  * @param {string} empreendimentoId - ID do empreendimento.
