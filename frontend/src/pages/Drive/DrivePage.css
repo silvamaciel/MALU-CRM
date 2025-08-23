@@ -8,7 +8,6 @@
     height: calc(100vh - 180px); /* Ajuste a altura conforme o seu layout */
 }
 
-/* Barra Lateral de Pastas */
 .drive-sidebar {
     width: 250px;
     background-color: #fff;
@@ -44,7 +43,6 @@
     color: white;
 }
 
-/* Área de Conteúdo Principal */
 .drive-content {
     flex-grow: 1;
     background-color: #fff;
@@ -52,7 +50,7 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* Garante que o conteúdo interno não vaze */
+    overflow: hidden;
 }
 .drive-content-header {
     display: flex;
@@ -66,7 +64,7 @@
     margin: 0;
     font-size: 1.4em;
 }
-.drive-content .page-content {
+.drive-content .page-content-drive {
     overflow-y: auto;
     flex-grow: 1;
     padding: 25px;

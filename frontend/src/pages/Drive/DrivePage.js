@@ -4,6 +4,7 @@ import { listarArquivosApi, uploadArquivoApi, apagarArquivoApi } from '../../api
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 import './DrivePage.css';
 
+// Funções auxiliares (podem ser movidas para um ficheiro de utils)
 const formatFileSize = (bytes) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -20,14 +21,10 @@ const FileIcon = ({ mimetype }) => {
     return <i className="fas fa-file-alt file-icon"></i>;
 };
 
+// Categorias pré-definidas
 const CATEGORIAS = [
-    'Contratos', 
-    'Documentos Leads', 
-    'Materiais Empreendimentos', 
-    'Recibos', 
-    'Identidade Visual', 
-    'Mídia WhatsApp', 
-    'Outros'
+    'Contratos', 'Documentos Leads', 'Materiais Empreendimentos', 
+    'Recibos', 'Identidade Visual', 'Mídia WhatsApp', 'Outros'
 ];
 
 function DrivePage() {
@@ -70,7 +67,9 @@ function DrivePage() {
         setUploadProgress(0);
 
         try {
-            const metadata = { categoria: selectedCategory };
+            // Para uploads genéricos na DrivePage, não associamos a nenhuma entidade específica,
+            // apenas à categoria selecionada.
+            const metadata = { categoria: selectedCategory }; 
             await uploadArquivoApi(file, metadata, (progressEvent) => {
                 const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
                 setUploadProgress(percent);
@@ -92,7 +91,7 @@ function DrivePage() {
 
     const handleConfirmDelete = async () => {
         if (!deleteTarget) return;
-        setIsDeleteModalOpen(false); // Fecha o modal imediatamente para uma melhor UX
+        setIsDeleteModalOpen(false);
         try {
             await apagarArquivoApi(deleteTarget._id);
             toast.success("Arquivo apagado com sucesso!");
@@ -134,7 +133,7 @@ function DrivePage() {
                         <input type="file" ref={fileInputRef} onChange={handleFileSelected} style={{ display: 'none' }} />
                     </div>
 
-                    <div className="page-content">
+                    <div className="page-content-drive">
                         {loading ? <p>A carregar arquivos...</p> : (
                             <div className="files-grid">
                                 {files.map(file => (

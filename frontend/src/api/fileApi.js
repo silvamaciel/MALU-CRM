@@ -1,5 +1,9 @@
 import axiosInstance from "./axiosInstance";
 
+/**
+ * Lista os arquivos com base em filtros.
+ * @param {object} filters - Ex: { categoria: 'Contratos' } ou { associations: JSON.stringify({ item: 'leadId' }) }
+ */
 export const listarArquivosApi = async (filters = {}) => {
     try {
         const response = await axiosInstance.get('/files', { params: filters });
@@ -10,12 +14,19 @@ export const listarArquivosApi = async (filters = {}) => {
     }
 };
 
+/**
+ * Faz o upload de um novo arquivo com metadados.
+ * @param {File} file - O ficheiro a ser enviado.
+ * @param {object} metadata - { categoria, primaryAssociation: { kind, item } }.
+ * @param {function} onUploadProgress - Callback para monitorizar o progresso.
+ */
 export const uploadArquivoApi = async (file, metadata, onUploadProgress) => {
     const formData = new FormData();
-    formData.append('arquivo', file);
+    formData.append('arquivo', file); // 'arquivo' deve ser o mesmo nome do middleware no backend
     formData.append('categoria', metadata.categoria);
-    if (metadata.associations) {
-        formData.append('associations', JSON.stringify(metadata.associations));
+    if (metadata.primaryAssociation) {
+        // O backend espera que a associação primária seja uma string JSON
+        formData.append('primaryAssociation', JSON.stringify(metadata.primaryAssociation));
     }
 
     try {
@@ -30,6 +41,10 @@ export const uploadArquivoApi = async (file, metadata, onUploadProgress) => {
     }
 };
 
+/**
+ * Apaga um arquivo.
+ * @param {string} arquivoId - O _id do arquivo no MongoDB.
+ */
 export const apagarArquivoApi = async (arquivoId) => {
     try {
         const response = await axiosInstance.delete(`/files/${arquivoId}`);
