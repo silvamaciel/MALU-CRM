@@ -3,7 +3,7 @@ const Lead = require('../models/Lead');
 const PropostaContrato = require('../models/PropostaContrato');
 const Empreendimento = require('../models/Empreendimento');
 const { s3Client } = require('../config/s3'); // Importa o cliente S3 que configurámos
-const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const { DeleteObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
 
 /**
  * Cria um registo de ficheiro no MongoDB, deduzindo e salvando
