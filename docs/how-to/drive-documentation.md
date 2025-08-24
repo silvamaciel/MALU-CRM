@@ -266,6 +266,8 @@ curl -X DELETE "https://HOST/api/files/<ARQUIVO_ID>"
 
 ## Solução de Problemas (FAQ)
 
+
+
 - **“Nenhum arquivo nesta categoria”** ao entrar na pasta:
   - Verifique se o upload enviou `pasta` e `primaryAssociation` corretos.
   - Cheque no Mongo: `categoria`, `pasta`, `associations.item` do documento.
