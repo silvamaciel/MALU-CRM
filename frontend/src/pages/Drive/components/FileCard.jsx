@@ -1,6 +1,7 @@
 import React from 'react';
 import FileIcon from './FileIcon';
 
+
 const formatFileSize = (bytes) => {
   if (!bytes || bytes === 0) return '0 Bytes';
   const k = 1024;
@@ -9,13 +10,10 @@ const formatFileSize = (bytes) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
-/**
- * @param {Object} props
- * @param {import('../../models/fileModel').Arquivo} props.file
- * @param {Function} props.onDelete
- */
+
 export default function FileCard({ file, onDelete }) {
   const isImage = typeof file?.mimetype === 'string' && file.mimetype.startsWith('image/');
+
 
   return (
     <div className="file-card">
@@ -35,12 +33,14 @@ export default function FileCard({ file, onDelete }) {
         )}
       </a>
 
+
       <div className="file-info">
         <p className="file-name" title={file.nomeOriginal}>
           {file.nomeOriginal}
         </p>
         <p className="file-meta">{formatFileSize(file.size)}</p>
       </div>
+
 
       <div className="file-actions">
         <button

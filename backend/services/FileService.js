@@ -18,8 +18,7 @@ const registrarArquivo = async (file, metadata, companyId, userId) => {
     if (!metadata || !metadata.categoria) throw new Error("A categoria do ficheiro é obrigatória.");
 
     const { originalname, mimetype, size, location, key } = file;
-    const { categoria, primaryAssociation } = metadata;
-
+    const { categoria, primaryAssociation, pasta } = metadata;
     let associations = [];
 
     // --- Motor de Associação em Cascata ---
@@ -52,7 +51,7 @@ const registrarArquivo = async (file, metadata, companyId, userId) => {
             }
         }
     }
-    
+
     // Remove duplicados, caso existam
     const uniqueAssociations = Array.from(new Map(associations.map(a => [a.item.toString(), a])).values());
 
@@ -62,6 +61,7 @@ const registrarArquivo = async (file, metadata, companyId, userId) => {
         url: location,
         mimetype, size, company: companyId, uploadedBy: userId,
         categoria: categoria,
+        pasta: pasta || undefined,
         associations: uniqueAssociations
     });
 
@@ -85,6 +85,9 @@ const listarArquivos = async (companyId, filters = {}) => {
             console.error("Erro ao fazer parse das associações de filtro.");
         }
     }
+
+    if (!filters.pasta) delete queryConditions.pasta;
+    
     return Arquivo.find(queryConditions)
         .populate('uploadedBy', 'nome')
         .sort({ createdAt: -1 });
@@ -108,10 +111,10 @@ const apagarArquivo = async (arquivoId, companyId) => {
     try {
         await s3Client.send(new DeleteObjectCommand(deleteParams));
         console.log(`[FileService] Ficheiro '${arquivo.nomeNoBucket}' apagado do DigitalOcean Spaces.`);
-        
+
         await Arquivo.deleteOne({ _id: arquivoId });
         console.log(`[FileService] Registo do ficheiro ID '${arquivoId}' apagado do MongoDB.`);
-        
+
         return { message: "Ficheiro apagado com sucesso." };
     } catch (error) {
         console.error("[FileService] Erro ao apagar ficheiro do Space:", error);

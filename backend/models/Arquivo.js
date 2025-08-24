@@ -30,6 +30,7 @@ const arquivoSchema = new Schema({
         type: String,
         required: true
     },
+    pasta: { type: String, index: true },
     size: { // Tamanho em bytes
         type: Number,
         required: true
