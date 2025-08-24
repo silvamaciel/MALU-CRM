@@ -4,28 +4,28 @@ const { Schema } = mongoose;
 
 
 const regraReajusteSchema = new Schema({
-    aplicaA: [{ // A quais tipos de parcela esta regra se aplica
-        type: String,
-        enum: ["PARCELA MENSAL", "INTERCALADA", "ENTREGA DE CHAVES"]
-    }],
-    indexadorReajuste: { // Qual indexador usar para a correção
-        type: Schema.Types.ObjectId,
-        ref: 'Indexador'
-    },
+  aplicaA: [{ // A quais tipos de parcela esta regra se aplica
+    type: String,
+    enum: ["PARCELA MENSAL", "INTERCALADA", "ENTREGA DE CHAVES"]
+  }],
+  indexadorReajuste: { // Qual indexador usar para a correção
+    type: Schema.Types.ObjectId,
+    ref: 'Indexador'
+  },
 
-    inicioReajuste: { // A partir de qual mês/ano o reajuste começa
-        type: String, // Formato "YYYY-MM"
-        required: true
-    },
-    periodicidade: { // De quanto em quanto tempo o reajuste é aplicado
-        type: String,
-        enum: ['Mensal', 'Anual'],
-        default: 'Anual'
-    },
-    aplicaMultaAtraso: { type: Boolean, default: true },
-    multaPercentual: { type: Number, default: 2 }, // 2%
-    aplicaJurosAtraso: { type: Boolean, default: true },
-    jurosMensalPercentual: { type: Number, default: 1 } // 1% ao mês (pro rata)
+  inicioReajuste: { // A partir de qual mês/ano o reajuste começa
+    type: String, // Formato "YYYY-MM"
+    required: true
+  },
+  periodicidade: { // De quanto em quanto tempo o reajuste é aplicado
+    type: String,
+    enum: ['Mensal', 'Anual'],
+    default: 'Anual'
+  },
+  aplicaMultaAtraso: { type: Boolean, default: true },
+  multaPercentual: { type: Number, default: 2 }, // 2%
+  aplicaJurosAtraso: { type: Boolean, default: true },
+  jurosMensalPercentual: { type: Number, default: 1 } // 1% ao mês (pro rata)
 }, { _id: false });
 
 
@@ -95,6 +95,18 @@ const adquirenteSnapshotSchema = new Schema({
   nascimento: { type: Date }
 }, { _id: false });
 
+
+// --- assinadores de contrato (autentique) ---
+const signatarioSchema = new Schema({
+  nome: { type: String },
+  email: { type: String },
+  cpf: { type: String }, // Usaremos o CPF do adquirente
+  autentiqueSignerId: { type: String }, // ID que o Autentique retorna para cada signatário
+  status: { type: String, enum: ['Pendente', 'Assinado'], default: 'Pendente' }
+}, { _id: false });
+
+
+
 // --- PropostaContrato ---
 const propostaContratoSchema = new Schema({
   lead: { type: Schema.Types.ObjectId, ref: 'Lead', required: true, index: true },
@@ -118,6 +130,19 @@ const propostaContratoSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'ModeloContrato',
     required: false
+  },
+
+  autentiqueDocumentId: {
+    type: String,
+    default: null,
+    index: true
+  },
+  signatarios: [signatarioSchema],
+  statusAssinatura: {
+    type: String,
+    enum: ['Não Enviado', 'Aguardando Assinaturas', 'Finalizado', 'Recusado'],
+    default: 'Não Enviado',
+    index: true
   },
 
   // --- Financeiro ---
@@ -180,7 +205,7 @@ propostaContratoSchema.pre('save', function (next) {
   if (Array.isArray(this.planoDePagamento) && this.valorPropostaContrato) {
     const totalParcelas = this.planoDePagamento.reduce((acc, p) =>
       acc + (p.valorUnitario * (p.quantidade || 1)), 0);
-    
+
     const total = totalParcelas + (this.valorEntrada || 0);
 
     const margemAceitavel = 5.00; // R$ 5,00 de tolerância

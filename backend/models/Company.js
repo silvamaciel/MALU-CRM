@@ -38,6 +38,13 @@ const companySchema = new Schema(
       sparse: true    
       },
 
+      autentiqueApiToken: {
+        type: String,
+        trim: true,
+        // 'private: true' é uma boa prática para campos sensíveis,
+        // mas pode ser omitido se causar problemas com as suas queries.
+    },
+
       linkedFacebookForms: [{ 
         formId: { type: String, required: true },
         formName: { type: String } 

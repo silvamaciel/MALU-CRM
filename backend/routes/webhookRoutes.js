@@ -12,6 +12,9 @@ router.get('/facebook/leads', webhookController.verifyFacebookWebhook);
 // Rota para receber dados de leads do Facebook (POST)
 router.post('/facebook/leads', webhookController.handleFacebookLeadWebhook);
 
+
+router.post('/autentique', webhookAutentiqueController);
+
 // Adicione rotas para outros webhooks (ex: WhatsApp) aqui depois
 
 module.exports = router;

@@ -114,6 +114,8 @@ app.use('/api/financeiro', require('./routes/financeiroRoutes'));
 app.use('/api/files', require('./routes/fileRoutes'));
 
 
+app.use('/api/assinaturas', require('./routes/signatureRoutes'));
+
 const PORT = process.env.PORT || 5000;
 
 
