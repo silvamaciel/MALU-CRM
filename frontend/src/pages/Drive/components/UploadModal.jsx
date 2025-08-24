@@ -2,24 +2,24 @@ import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 
 
-import { uploadArquivoApi, apagarArquivoApi } from '../../api/fileApi';
-import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
+import { uploadArquivoApi, apagarArquivoApi } from '../../../api/fileApi';
+import ConfirmModal from '../../../components/ConfirmModal/ConfirmModal';
 
 
-import useFiles from './hooks/useFiles';
-import { CATEGORIAS, CATEGORY_META } from './models/categories';
+import useFiles from '../hooks/useFiles';
+import { CATEGORIAS, CATEGORY_META } from '../models/categories';
 
 
-import CategorySidebar from './components/CategorySidebar';
-import FileGrid from './components/FileGrid';
-import FolderGrid from './components/FolderGrid';
-import UploadModal from './components/UploadModal';
+import CategorySidebar from '../components/CategorySidebar';
+import FileGrid from '../components/FileGrid';
+import FolderGrid from '../components/FolderGrid';
+import UploadModal from '../components/UploadModal';
 
 
-import { getEmpreendimentos } from '../../api/empreendimentoApi';
+import { getEmpreendimentos } from '../../../api/empreendimentoApi';
 
 
-import './DrivePage.css';
+import '../DrivePage.css';
 
 
 export default function DrivePage() {
