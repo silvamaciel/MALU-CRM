@@ -1,24 +1,20 @@
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../middlewares/authMiddleware');
 const FileController = require('../controllers/FileController');
-const { upload } = require('../config/s3'); // <<< Importa o nosso middleware de upload
+const { upload } = require('../config/s3');
 
-// Todas as rotas de ficheiros são protegidas
-router.use(protect);
+// NADA de auth aqui
 
-// Rota para listar todos os ficheiros (com filtros)
+// Lista (GET /api/files)
 router.get('/', FileController.listarArquivosController);
 
-// Rota para fazer o upload de um único ficheiro.
-// O middleware 'upload.single('arquivo')' processa o ficheiro antes de chegar ao controller.
-// 'arquivo' deve ser o nome do campo no formulário do frontend.
+// Upload (POST /api/files/upload) - campo 'arquivo'
 router.post('/upload', upload.single('arquivo'), FileController.uploadArquivoController);
 
-// Rota para apagar um ficheiro
+// Preview (GET /api/files/:id/preview)  << CORRETO
+router.get('/:id/preview', FileController.previewArquivoController);
+
+// Delete (DELETE /api/files/:id)
 router.delete('/:id', FileController.apagarArquivoController);
-
-router.get('/files/:id/preview', FileController.previewArquivoController)
-
 
 module.exports = router;
