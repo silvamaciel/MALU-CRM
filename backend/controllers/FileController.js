@@ -2,9 +2,11 @@ const asyncHandler = require('../middlewares/asyncHandler');
 const FileService = require('../services/FileService');
 
 const uploadArquivoController = asyncHandler(async (req, res) => {
-    // O 'req.file' é o ficheiro que foi carregado para o DigitalOcean Spaces.
-    // O 'req.body' contém os outros campos do formulário (categoria, associations).
-    const arquivo = await FileService.registrarArquivo(req.file, req.body, req.user.company, req.user._id);
+    const body = { ...req.body };
+    if (typeof body.primaryAssociation === 'string') {
+        try { body.primaryAssociation = JSON.parse(body.primaryAssociation); } catch { }
+    }
+    const arquivo = await FileService.registrarArquivo(req.file, body, req.user.company, req.user._id);
     res.status(201).json({ success: true, data: arquivo });
 });
 

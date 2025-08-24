@@ -39,6 +39,7 @@ export default function FileCard({ file, onDelete }) {
           {file.nomeOriginal}
         </p>
         <p className="file-meta">{formatFileSize(file.size)}</p>
+        
       </div>
 
 

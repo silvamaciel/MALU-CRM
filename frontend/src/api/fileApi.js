@@ -29,6 +29,9 @@ export const uploadArquivoApi = async (file, metadata, onUploadProgress) => {
         formData.append('primaryAssociation', JSON.stringify(metadata.primaryAssociation));
     }
 
+    if (metadata.pasta) {
+        formData.append('pasta', metadata.pasta);
+    }
     try {
         const response = await axiosInstance.post('/files/upload', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },

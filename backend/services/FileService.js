@@ -14,61 +14,108 @@ const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
  * @param {string} userId - ID do utilizador que fez o upload.
  */
 const registrarArquivo = async (file, metadata, companyId, userId) => {
-    if (!file) throw new Error("Nenhum ficheiro recebido.");
-    if (!metadata || !metadata.categoria) throw new Error("A categoria do ficheiro é obrigatória.");
+  if (!file) throw new Error("Nenhum ficheiro recebido.");
+  if (!metadata || !metadata.categoria) throw new Error("A categoria do ficheiro é obrigatória.");
 
-    const { originalname, mimetype, size, location, key } = file;
-    const { categoria, primaryAssociation, pasta } = metadata;
-    let associations = [];
+  // multipart/form-data entrega strings em req.body
+  let { categoria, primaryAssociation, pasta } = metadata;
 
-    // --- Motor de Associação em Cascata ---
-    if (primaryAssociation && primaryAssociation.kind && primaryAssociation.item) {
-        associations.push(primaryAssociation); // Adiciona a associação principal
+  if (typeof primaryAssociation === 'string') {
+    try {
+      primaryAssociation = JSON.parse(primaryAssociation);
+    } catch (e) {
+      console.warn('[FileService] primaryAssociation inválido (string não-JSON):', primaryAssociation);
+      primaryAssociation = undefined;
+    }
+  }
+  if (typeof categoria === 'string') categoria = categoria.trim();
+  if (typeof pasta === 'string') pasta = pasta.trim();
 
-        // Se o ficheiro for associado a um Contrato, associa também ao Lead e ao Imóvel/Empreendimento
-        if (primaryAssociation.kind === 'PropostaContrato') {
-            const contrato = await PropostaContrato.findById(primaryAssociation.item).populate('lead imovel');
-            if (contrato) {
-                if (contrato.lead) {
-                    associations.push({ kind: 'Lead', item: contrato.lead._id });
-                }
-                if (contrato.imovel) {
-                    // Adiciona a associação ao ImovelAvulso ou Unidade
-                    associations.push({ kind: contrato.tipoImovel, item: contrato.imovel._id });
-                    // Se for uma Unidade, podemos ir mais fundo e associar ao Empreendimento pai
-                    if (contrato.tipoImovel === 'Unidade' && contrato.imovel.empreendimento) {
-                        associations.push({ kind: 'Empreendimento', item: contrato.imovel.empreendimento });
-                    }
-                }
-            }
+  const { originalname, mimetype, size, location, key } = file;
+
+  const associations = [];
+
+  // --- Associação principal + cascatas ---
+  if (primaryAssociation && primaryAssociation.kind && primaryAssociation.item) {
+    associations.push({ kind: primaryAssociation.kind, item: primaryAssociation.item });
+
+    // Se associado a Proposta/Contrato, agrega Lead e Imóvel/Empreendimento
+    if (primaryAssociation.kind === 'PropostaContrato') {
+      const contrato = await PropostaContrato
+        .findById(primaryAssociation.item)
+        .populate([
+          { path: 'lead', select: '_id' },
+          // imovel pode ser Unidade ou ImovelAvulso (ajuste os paths conforme seu schema)
+          { path: 'imovel', select: '_id empreendimento' },
+        ]);
+
+      if (contrato) {
+        if (contrato.lead?._id) {
+          associations.push({ kind: 'Lead', item: contrato.lead._id });
         }
 
-        // Se o ficheiro for associado a um Lead, associa também ao seu imóvel de interesse
-        if (primaryAssociation.kind === 'Lead') {
-            const lead = await Lead.findById(primaryAssociation.item).populate('imovelInteresse'); // Supondo que exista o campo 'imovelInteresse'
-            if (lead && lead.imovelInteresse) {
-                associations.push({ kind: lead.imovelInteresse.tipo, item: lead.imovelInteresse.id });
-            }
+        if (contrato.imovel?._id) {
+          // tenta respeitar o tipo já salvo no contrato
+          const tipo = contrato.tipoImovel
+            || (contrato.imovel?.empreendimento ? 'Unidade' : 'ImovelAvulso');
+
+          associations.push({ kind: tipo, item: contrato.imovel._id });
+
+          // se for Unidade, associa também ao Empreendimento pai
+          if ((tipo === 'Unidade' || contrato.imovel?.empreendimento) && contrato.imovel.empreendimento) {
+            associations.push({ kind: 'Empreendimento', item: contrato.imovel.empreendimento });
+          }
         }
+      }
     }
 
-    // Remove duplicados, caso existam
-    const uniqueAssociations = Array.from(new Map(associations.map(a => [a.item.toString(), a])).values());
+    // Se associado a Lead, agrega o imóvel de interesse (se existir)
+    if (primaryAssociation.kind === 'Lead') {
+      const lead = await Lead
+        .findById(primaryAssociation.item)
+        .populate('imovelInteresse'); // ajuste o path conforme seu schema
 
-    const novoArquivo = new Arquivo({
-        nomeOriginal: originalname,
-        nomeNoBucket: key,
-        url: location,
-        mimetype, size, company: companyId, uploadedBy: userId,
-        categoria: categoria,
-        pasta: pasta || undefined,
-        associations: uniqueAssociations
-    });
+      if (lead && lead.imovelInteresse) {
+        const tipoInt = lead.imovelInteresse?.tipo
+          || (lead.imovelInteresse?.empreendimento ? 'Unidade' : 'ImovelAvulso');
+        const idInt = lead.imovelInteresse?.id || lead.imovelInteresse?._id;
 
-    await novoArquivo.save();
-    console.log(`[FileService] Ficheiro '${originalname}' registado com ${uniqueAssociations.length} associações.`);
-    return novoArquivo;
+        if (tipoInt && idInt) {
+          associations.push({ kind: tipoInt, item: idInt });
+        }
+        if (tipoInt === 'Unidade' && lead.imovelInteresse?.empreendimento) {
+          associations.push({ kind: 'Empreendimento', item: lead.imovelInteresse.empreendimento });
+        }
+      }
+    }
+  }
+
+  // Remove duplicados por "kind:item"
+  const uniqueAssociations = Array.from(
+    new Map(associations.map(a => [`${a.kind}:${a.item}`, a])).values()
+  );
+
+  const novoArquivo = new Arquivo({
+    nomeOriginal: originalname,
+    nomeNoBucket: key,
+    url: location,
+    mimetype,
+    size,
+    company: companyId,
+    uploadedBy: userId,
+    categoria,
+    pasta: pasta || undefined, // subpasta opcional (ex.: "Imagens", "Plantas", "Documentos")
+    associations: uniqueAssociations,
+  });
+
+  await novoArquivo.save();
+  console.log(
+    `[FileService] Ficheiro '${originalname}' registado (cat=${categoria}, pasta=${pasta || ''}) com ${uniqueAssociations.length} associação(ões).`
+  );
+
+  return novoArquivo;
 };
+
 
 
 /**
