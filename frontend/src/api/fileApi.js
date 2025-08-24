@@ -57,3 +57,18 @@ export const apagarArquivoApi = async (arquivoId) => {
         throw error.response?.data || new Error("Falha ao apagar o arquivo.");
     }
 };
+
+
+
+export const getPreviewBlobApi = async (arquivoId) => {
+  try {
+    const response = await axiosInstance.get(`/files/${arquivoId}/preview`, {
+      responseType: 'blob',
+    });
+    const contentType = response.headers['content-type'] || 'application/octet-stream';
+    return { blob: response.data, contentType };
+  } catch (error) {
+    console.error("Erro ao obter preview:", error.response?.data || error.message);
+    throw error.response?.data || new Error("Falha ao obter preview.");
+  }
+};

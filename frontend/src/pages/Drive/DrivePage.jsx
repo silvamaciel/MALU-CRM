@@ -16,6 +16,9 @@ import UploadMetaModal from './components/UploadMetaModal';
 import { getEmpreendimentos } from '../../api/empreendimentoApi';
 import { getLeads } from '../../api/leads';
 
+import PreviewModal from './components/PreviewModal';
+
+
 import './DrivePage.css';
 
 const SUBFOLDERS_BY_CATEGORY = {
@@ -47,6 +50,21 @@ export default function DrivePage() {
   // Listas para o nível 1 (pastas)
   const [empItems, setEmpItems] = useState([]);
   const [leadItems, setLeadItems] = useState([]);
+
+  // constr para preview
+  const [previewFile, setPreviewFile] = useState(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+
+  const openPreview = useCallback((file) => {
+    setPreviewFile(file);
+    setIsPreviewOpen(true);
+  }, []);
+  const closePreview = useCallback(() => {
+    setIsPreviewOpen(false);
+    setPreviewFile(null);
+  }, []);
+
 
   // Deriva filtros para a API (sem setState!)
   const apiFilters = useMemo(() => {
@@ -279,8 +297,8 @@ export default function DrivePage() {
 
             {/* Nível final: arquivos da pasta selecionada */}
             {(!isCategoryEmp && !isCategoryLead) ||
-            (activeFolder && (subfolderItems.length === 0 || activeSubfolder)) ? (
-              <FileGrid files={visibleFiles} loading={loading} onDelete={openDeleteModal} />
+              (activeFolder && (subfolderItems.length === 0 || activeSubfolder)) ? (
+              <FileGrid files={files} loading={loading} onDelete={openDeleteModal} onPreview={openPreview} />
             ) : null}
           </div>
         </main>
@@ -302,6 +320,12 @@ export default function DrivePage() {
         onCancel={handleMetaCancel}
         onConfirm={handleMetaConfirm}
       />
+
+
+      <PreviewModal open={isPreviewOpen} file={previewFile} onClose={closePreview} />
+
     </div>
+
+
   );
 }

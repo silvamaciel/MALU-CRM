@@ -18,4 +18,7 @@ router.post('/upload', upload.single('arquivo'), FileController.uploadArquivoCon
 // Rota para apagar um ficheiro
 router.delete('/:id', FileController.apagarArquivoController);
 
+router.get('/files/:id/preview', auth, filesController.previewArquivoController);
+
+
 module.exports = router;

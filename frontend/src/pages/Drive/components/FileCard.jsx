@@ -11,18 +11,18 @@ const formatFileSize = (bytes) => {
 };
 
 
-export default function FileCard({ file, onDelete }) {
+export default function FileCard({ file, onDelete, onPreview }) {
   const isImage = typeof file?.mimetype === 'string' && file.mimetype.startsWith('image/');
 
 
   return (
     <div className="file-card">
-      <a
-        href={file.url}
-        target="_blank"
-        rel="noopener noreferrer"
+      <button
+        type="button"
         className="file-preview"
         title={file.nomeOriginal}
+        onClick={() => onPreview?.(file)}
+        style={{ cursor: 'pointer' }}
       >
         {isImage ? (
           <img src={file.url} alt={file.nomeOriginal} className="file-thumbnail" />
@@ -31,7 +31,7 @@ export default function FileCard({ file, onDelete }) {
             <FileIcon mimetype={file.mimetype} />
           </div>
         )}
-      </a>
+      </button>
 
 
       <div className="file-info">
@@ -39,11 +39,12 @@ export default function FileCard({ file, onDelete }) {
           {file.nomeOriginal}
         </p>
         <p className="file-meta">{formatFileSize(file.size)}</p>
-        
+
       </div>
 
 
       <div className="file-actions">
+        <a className="button" href={file.url} download title="Baixar">Baixar</a>
         <button
           onClick={() => onDelete?.(file)}
           className="button-link delete-link-file"

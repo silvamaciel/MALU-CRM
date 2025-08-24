@@ -171,9 +171,26 @@ const apagarArquivo = async (arquivoId, companyId) => {
 
 
 
+const getPreviewStream = async (arquivoId, companyId) => {
+  const arquivo = await Arquivo.findOne({ _id: arquivoId, company: companyId });
+  if (!arquivo) throw new Error('Arquivo não encontrado ou não pertence a esta empresa.');
+
+  const params = { Bucket: process.env.SPACES_BUCKET_NAME, Key: arquivo.nomeNoBucket };
+  const data = await s3Client.send(new GetObjectCommand(params));
+
+  return {
+    stream: data.Body,                                      // Readable stream
+    contentType: arquivo.mimetype || data.ContentType || 'application/octet-stream',
+    filename: arquivo.nomeOriginal,
+    contentLength: data.ContentLength,
+    lastModified: data.LastModified,
+  };
+};
+
 
 module.exports = {
     registrarArquivo,
     listarArquivos,
-    apagarArquivo
+    apagarArquivo,
+    getPreviewStream
 };

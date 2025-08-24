@@ -21,8 +21,22 @@ const apagarArquivoController = asyncHandler(async (req, res) => {
     res.status(200).json({ success: true, data: result });
 });
 
+const previewArquivoController = asyncHandler(async (req, res) => {
+    const { stream, contentType, filename } = await FileService.getPreviewStream(
+        req.params.id,
+        req.user.company
+    );
+
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(filename)}"`);
+
+    stream.pipe(res);
+});
+
+
 module.exports = {
     uploadArquivoController,
     listarArquivosController,
-    apagarArquivoController
+    apagarArquivoController,
+    previewArquivoController
 };
