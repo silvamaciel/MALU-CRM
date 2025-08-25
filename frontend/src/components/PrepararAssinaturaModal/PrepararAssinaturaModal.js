@@ -2,8 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { enviarParaAssinaturaApi } from '../../api/propostaContratoApi';
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
-import 'react-pdf/dist/esm/Page/TextLayer.css';
 import './PrepararAssinaturaModal.css';
 
 // Configuração do worker do PDF.js (necessário para a biblioteca funcionar)
