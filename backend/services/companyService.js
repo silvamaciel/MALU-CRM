@@ -1,5 +1,5 @@
 // services/companyService.js
-const company = require('../models/Company');
+const Company = require('../models/Company');
 const { cnpj } = require('cpf-cnpj-validator'); // Importa validador
 
 /**
@@ -36,13 +36,20 @@ const createCompany = async (companyData) => {
     }
 };
 
+
 /**
  * Busca as configurações de uma empresa (apenas campos seguros).
  * @param {string} companyId - ID da empresa.
  */
 const getCompanySettings = async (companyId) => {
-    const company = await Company.findById(companyId).select('nome autentiqueApiToken'); // Adicione outros campos de config aqui
-    if (!company) throw new Error("Empresa não encontrada.");
+    if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+        throw new Error("ID da empresa inválido para buscar configurações.");
+    }
+    // .select('+autentiqueApiToken') é necessário se você usou 'private: true' no modelo
+    const company = await Company.findById(companyId).select('nome autentiqueApiToken');
+    if (!company) {
+        throw new Error("Empresa não encontrada.");
+    }
     return company;
 };
 
@@ -55,7 +62,7 @@ const updateCompanySettings = async (companyId, settings) => {
     const { autentiqueApiToken } = settings;
     
     const updateData = {};
-    if (autentiqueApiToken !== undefined) { // Permite guardar um token vazio para desativar
+    if (autentiqueApiToken !== undefined) {
         updateData.autentiqueApiToken = autentiqueApiToken;
     }
     
