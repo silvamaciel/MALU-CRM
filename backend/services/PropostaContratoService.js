@@ -2,6 +2,7 @@
 const mongoose = require('mongoose');
 const PropostaContrato = require('../models/PropostaContrato');
 const Reserva = require('../models/Reserva');
+const Arquivo = require('../models/Arquivo');
 const Lead = require('../models/Lead');
 const Unidade = require('../models/Unidade');
 const Empreendimento = require('../models/Empreendimento');
