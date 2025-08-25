@@ -23,7 +23,7 @@ const createCompany = async (req, res) => {
  * Controller para buscar configuraçãoes da company
  */
 const getCompanySettingsController = asyncHandler(async (req, res) => {
-    const settings = await CompanyService.getCompanySettings(req.user.company);
+    const settings = await companyService.getCompanySettings(req.user.company);
     res.status(200).json({ success: true, data: settings });
 });
 
@@ -32,7 +32,7 @@ const getCompanySettingsController = asyncHandler(async (req, res) => {
  * Controller para Atualizar configuraçãoes da company
  */
 const updateCompanySettingsController = asyncHandler(async (req, res) => {
-    const result = await CompanyService.updateCompanySettings(req.user.company, req.body);
+    const result = await companyService.updateCompanySettings(req.user.company, req.body);
     res.status(200).json({ success: true, data: result });
 });
 
