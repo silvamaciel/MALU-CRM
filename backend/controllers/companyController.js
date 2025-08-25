@@ -1,5 +1,6 @@
 // controllers/companyController.js
 const companyService = require('../services/companyService');
+const asyncHandler = require("../middlewares/asyncHandler");
 
 /**
  * Controller para criar uma nova empresa.
