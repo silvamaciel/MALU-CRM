@@ -975,5 +975,6 @@ module.exports = {
     updatePropostaContrato,
     updateStatusPropostaContrato,
     registrarDistratoPropostaContrato,
-    gerarDocumentoHTML
+    gerarDocumentoHTML,
+    gerarEsalvarPdfContrato
 };
