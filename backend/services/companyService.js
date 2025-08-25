@@ -1,5 +1,5 @@
 // services/companyService.js
-const Company = require('../models/Company');
+const company = require('../models/Company');
 const { cnpj } = require('cpf-cnpj-validator'); // Importa validador
 
 /**
