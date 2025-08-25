@@ -1,17 +1,16 @@
-// routes/companyRoutes.js
 const express = require('express');
 const router = express.Router();
-const companyController = require('../controllers/companyController');
-const { protect } = require('../middlewares/authMiddleware');
+const { protect, authorize } = require('../middlewares/authMiddleware');
+const CompanyController = require('../controllers/CompanyController');
 
 
-router.post('/', companyController.createCompany);
+router.post('/', CompanyController.createCompany);
 
-
+router.use(protect);
 
 router.route('/settings')
-    .get(companyController.getCompanySettingsController)
-    .put(companyController.updateCompanySettingsController);
+    .get(authorize('admin'), CompanyController.getCompanySettingsController)
+    .put(authorize('admin'), CompanyController.updateCompanySettingsController);
 
 
 
