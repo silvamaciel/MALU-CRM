@@ -1,4 +1,5 @@
 // services/companyService.js
+const mongoose = require('mongoose');
 const Company = require('../models/Company');
 const { cnpj } = require('cpf-cnpj-validator'); // Importa validador
 
