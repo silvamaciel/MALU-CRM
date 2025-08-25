@@ -1,17 +1,19 @@
 const axios = require('axios');
 const PropostaContrato = require('../models/PropostaContrato');
+const FormData = require('form-data');
 const Company = require('../models/Company');
 const Arquivo = require('../models/Arquivo');
 
 /**
- * Envia um contrato do CRM para assinatura no Autentique.
- * @param {string} contratoId - O ID da PropostaContrato a ser enviada.
- * @param {string} companyId - O ID da empresa do utilizador logado (para segurança).
- * @returns {Promise<PropostaContrato>} O contrato atualizado com os dados do Autentique.
+ * Envia um contrato do CRM para assinatura via API GraphQL do Autentique.
+ * @param {string} contratoId - O ID da PropostaContrato.
+ * @param {string} companyId - O ID da empresa.
+ * @returns {Promise<PropostaContrato>} O contrato atualizado.
  */
 const enviarParaAssinatura = async (contratoId, companyId) => {
-    console.log(`[SignatureSvc] A iniciar processo de envio para assinatura do contrato: ${contratoId}`);
+    console.log(`[SignatureSvc] Iniciando envio para assinatura do contrato: ${contratoId}`);
 
+    // 1. Buscar o contrato e as informações associadas
     const contrato = await PropostaContrato.findOne({ _id: contratoId, company: companyId })
         .populate('company', 'autentiqueApiToken')
         .populate('lead', 'nome');
@@ -21,48 +23,89 @@ const enviarParaAssinatura = async (contratoId, companyId) => {
         throw new Error("A sua empresa não configurou o token da API do Autentique.");
     }
 
+    // 2. Encontrar o ficheiro PDF do contrato no "Drive"
     const arquivoContrato = await Arquivo.findOne({
-        company: companyId,
         'associations.kind': 'PropostaContrato',
         'associations.item': contratoId
     });
 
     if (!arquivoContrato || !arquivoContrato.url) {
-        throw new Error("O ficheiro PDF deste contrato não foi encontrado no Drive. Por favor, gere o contrato novamente.");
+        throw new Error("O ficheiro PDF deste contrato não foi encontrado no Drive.");
     }
     
-    const autentiqueApi = axios.create({
-        baseURL: 'https://api.autentique.com.br',
-        headers: { 'Authorization': `Bearer ${contrato.company.autentiqueApiToken}` }
-    });
-
+    // 3. Mapear os signatários
     const signers = contrato.adquirentesSnapshot.map(adquirente => ({
         email: adquirente.email,
         action: 'SIGN',
+        name: adquirente.nome // Adicionar o nome para uma melhor experiência
     }));
 
     if (signers.length === 0) {
         throw new Error("O contrato não tem adquirentes (signatários) definidos.");
     }
 
-    const payload = {
-        document: {
-            name: `Contrato de Venda - ${contrato.lead.nome}`,
-            file: arquivoContrato.url
-        },
-        signers: signers,
-    };
+    // 4. Montar a query GraphQL
+    const mutation = `
+        mutation CreateDocumentMutation($document: DocumentInput!, $signers: [SignerInput!]!, $file: Upload!) {
+            createDocument(
+                document: $document,
+                signers: $signers,
+                file: $file
+            ) {
+                id
+                name
+                signers {
+                    id
+                    email
+                }
+            }
+        }
+    `;
     
     try {
-        console.log(`[SignatureSvc DEBUG] A enviar para Autentique. URL do ficheiro: ${payload.document.file}`);
-        console.log(`[SignatureSvc DEBUG] Payload dos signatários:`, JSON.stringify(signers, null, 2));
+        // 5. Preparar o payload multipart/form-data
+        const formData = new FormData();
+        
+        const operations = {
+            query: mutation,
+            variables: {
+                document: { name: `Contrato de Venda - ${contrato.lead.nome}` },
+                signers: signers,
+                file: null // O ficheiro será mapeado abaixo
+            }
+        };
+        formData.append('operations', JSON.stringify(operations));
+        
+        // Mapeia o ficheiro para a variável 'file' da mutation
+        formData.append('map', JSON.stringify({ 'file_data': ['variables.file'] }));
+        
+        // Faz o download do ficheiro do seu DigitalOcean Spaces para um buffer
+        const fileResponse = await axios.get(arquivoContrato.url, { responseType: 'arraybuffer' });
+        const fileBuffer = Buffer.from(fileResponse.data);
 
-        const response = await autentiqueApi.post('/documents', payload); // A chamada agora é para '/documents'
+        // Anexa o buffer ao formulário
+        formData.append('file_data', fileBuffer, { filename: arquivoContrato.nomeOriginal });
 
-        const documentData = response.data.data;
+        console.log(`[SignatureSvc] A enviar documento para a API GraphQL do Autentique...`);
+        
+        // 6. Enviar a requisição para o Autentique
+        const response = await axios.post('https://api.autentique.com.br/v2/graphql', formData, {
+            headers: {
+                'Authorization': `Bearer ${contrato.company.autentiqueApiToken}`,
+                ...formData.getHeaders() // Adiciona os headers de 'multipart/form-data'
+            }
+        });
+
+        if (response.data.errors) {
+            console.error("[SignatureSvc] Erro retornado pela API GraphQL do Autentique:", response.data.errors);
+            throw new Error(response.data.errors[0].message);
+        }
+
+        const documentData = response.data.data.createDocument;
         const documentId = documentData.id;
         console.log(`[SignatureSvc] Documento criado no Autentique com o ID: ${documentId}`);
 
+        // 7. Atualizar o seu PropostaContrato com os dados retornados
         contrato.autentiqueDocumentId = documentId;
         contrato.statusAssinatura = 'Aguardando Assinaturas';
         contrato.signatarios = documentData.signers.map(signer => ({
@@ -75,8 +118,10 @@ const enviarParaAssinatura = async (contratoId, companyId) => {
         return contrato;
 
     } catch (error) {
-        console.error("[SignatureSvc] ERRO DETALHADO da API do Autentique:", error.response?.data || error.message);
-        throw new Error("Falha na comunicação com a API do Autentique.");
+        // Log detalhado do erro, se houver
+        console.error("[SignatureSvc] ERRO DETALHADO na comunicação com a API do Autentique:", error.response?.data || error.message);
+        // Retorna uma mensagem de erro mais amigável
+        throw new Error(error.response?.data?.errors?.[0]?.message || "Falha na comunicação com a API do Autentique.");
     }
 };
 
