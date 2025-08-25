@@ -54,10 +54,6 @@ const enviarParaAssinatura = async (contratoId, companyId) => {
             ) {
                 id
                 name
-                signers {
-                    id
-                    email
-                }
             }
         }
     `;
