@@ -30,40 +30,74 @@ const FileService = require('./FileService');
  * - `filename` {string}: O nome do arquivo gerado.
  */
 const gerarEsalvarPdfContrato = async (contratoId, companyId, userId) => {
-    const contrato = await PropostaContrato.findOne({ _id: contratoId, company: companyId });
-    if (!contrato) throw new Error("Contrato não encontrado.");
+    const contrato = await PropostaContrato.findOne({ _id: contratoId, company: companyId }).populate('lead');
+    if (!contrato || !contrato.corpoContratoHTMLGerado) {
+        throw new Error("Contrato não encontrado ou sem conteúdo HTML para gerar o PDF.");
+    }
 
     // 1. Apaga o contrato antigo do Drive, se existir
     const arquivoAntigo = await Arquivo.findOne({ 'associations.item': contratoId, categoria: 'Contratos' });
     if (arquivoAntigo) {
         await FileService.apagarArquivo(arquivoAntigo._id, companyId);
-        console.log(`[ContratoSvc] Versão antiga do contrato (${arquivoAntigo.nomeOriginal}) apagada do Drive.`);
+        console.log(`[ContratoSvc] Versão antiga do contrato apagada do Drive.`);
     }
     
-    // 2. Gera o novo PDF em memória (buffer)
+    const htmlContentFormatado = `
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+            <meta charset="UTF-8">
+            <title>Contrato</title>
+            <style>
+                body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 40px; line-height: 1.6; color: #333; }
+                h1, h2, h3 { font-weight: normal; color: #111; }
+                .ql-align-center { text-align: center; }
+                .ql-align-right { text-align: right; }
+                .ql-align-justify { text-align: justify; }
+                /* Adicione aqui outras classes do Quill.js que você usa */
+            </style>
+        </head>
+        <body>
+            ${contrato.corpoContratoHTMLGerado}
+        </body>
+        </html>
+    `;
+
+    // 2. Gera o novo PDF em memória (buffer) usando o HTML formatado
     const pdfBuffer = await new Promise((resolve, reject) => {
-        wkhtmltopdf(contrato.corpoContratoHTMLGerado, { pageSize: 'letter' }, (err, stream) => {
-            if (err) return reject(err);
-            const chunks = [];
-            stream.on('data', chunk => chunks.push(chunk));
-            stream.on('end', () => resolve(Buffer.concat(chunks)));
+        const stream = wkhtmltopdf(htmlContentFormatado, { // <<< Usa o HTML formatado
+            pageSize: 'A4',
+            marginTop: '15mm',
+            marginBottom: '15mm',
+            marginLeft: '5mm',
+            marginRight: '5mm'
         });
+        const chunks = [];
+        stream.on('data', chunk => chunks.push(chunk));
+        stream.on('end', () => resolve(Buffer.concat(chunks)));
+        stream.on('error', reject);
     });
 
     // 3. Faz o upload do buffer para o Drive
-    const nomeArquivo = `Contrato_${contrato.lead._id}.pdf`;
+    const nomeArquivo = `Contrato_${contrato.lead.nome.replace(/\s+/g, '_')}_${contrato._id}.pdf`;
     const metadata = {
         categoria: 'Contratos',
         primaryAssociation: { kind: 'PropostaContrato', item: contratoId }
     };
     
-    const arquivoSalvo = await FileService.uploadBuffer(pdfBuffer, { originalname: nomeArquivo, mimetype: 'application/pdf' }, metadata, companyId, userId);
+    const arquivoSalvo = await FileService.uploadBuffer(
+        pdfBuffer, 
+        { originalname: nomeArquivo, mimetype: 'application/pdf' }, 
+        metadata, 
+        companyId, 
+        userId
+    );
 
     console.log(`[ContratoSvc] Novo PDF do contrato salvo no Drive com URL: ${arquivoSalvo.url}`);
     
     // 4. Retorna o buffer do PDF para o download do utilizador
     return { buffer: pdfBuffer, filename: nomeArquivo };
-}; 
+};
 
 
 
