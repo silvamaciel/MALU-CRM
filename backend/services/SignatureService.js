@@ -12,18 +12,15 @@ const Arquivo = require('../models/Arquivo');
 const enviarParaAssinatura = async (contratoId, companyId) => {
     console.log(`[SignatureSvc] A iniciar processo de envio para assinatura do contrato: ${contratoId}`);
 
-    // 1. Buscar o contrato e as informações associadas
     const contrato = await PropostaContrato.findOne({ _id: contratoId, company: companyId })
-        .populate('company', 'autentiqueApiToken') // Popula apenas o token da empresa
-        .populate('lead', 'nome'); // Popula o nome do lead para o título do documento
+        .populate('company', 'autentiqueApiToken')
+        .populate('lead', 'nome');
 
-    if (!contrato) throw new Error("Contrato não encontrado ou não pertence a esta empresa.");
+    if (!contrato) throw new Error("Contrato não encontrado.");
     if (!contrato.company?.autentiqueApiToken) {
-        throw new Error("A sua empresa não configurou o token da API do Autentique. Por favor, vá à página de Integrações.");
+        throw new Error("A sua empresa não configurou o token da API do Autentique.");
     }
 
-    // 2. Encontrar o ficheiro PDF do contrato no "Drive"
-    // Assumimos que, ao gerar o contrato, um ficheiro foi criado e associado a ele.
     const arquivoContrato = await Arquivo.findOne({
         company: companyId,
         'associations.kind': 'PropostaContrato',
@@ -34,56 +31,53 @@ const enviarParaAssinatura = async (contratoId, companyId) => {
         throw new Error("O ficheiro PDF deste contrato não foi encontrado no Drive. Por favor, gere o contrato novamente.");
     }
     
-    // 3. Preparar a chamada para a API do Autentique
     const autentiqueApi = axios.create({
-        baseURL: 'https://api.autentique.com.br/v2/',
+        baseURL: 'https://api.autentique.com.br/v2', // Remove a barra '/' do final
         headers: { 'Authorization': `Bearer ${contrato.company.autentiqueApiToken}` }
     });
 
-    // 4. Mapear os adquirentes do contrato para o formato de signatários do Autentique
     const signers = contrato.adquirentesSnapshot.map(adquirente => ({
         email: adquirente.email,
-        action: 'SIGN', // Ação de assinar
-        // Outras informações podem ser adicionadas aqui, como 'name' e 'phone'
+        action: 'SIGN',
     }));
 
-    // Adicione aqui outros signatários, como um representante da sua empresa, se necessário
-
     if (signers.length === 0) {
-        throw new Error("O contrato não tem nenhum adquirente (signatário) definido.");
+        throw new Error("O contrato não tem adquirentes (signatários) definidos.");
     }
 
-    // 5. Montar o payload para a API do Autentique
     const payload = {
         document: {
             name: `Contrato de Venda - ${contrato.lead.nome}`,
-            // O Autentique pode buscar o ficheiro diretamente da URL pública
             file: arquivoContrato.url
         },
         signers: signers,
-        // sandbox: true // Use true para testes, se a API do Autentique suportar
     };
-
-    console.log(`[SignatureSvc] A enviar documento para a API do Autentique...`);
-    const response = await autentiqueApi.post('documents', payload);
-
-    const documentData = response.data.data;
-    const documentId = documentData.id;
-    console.log(`[SignatureSvc] Documento criado no Autentique com o ID: ${documentId}`);
-
-    // 6. Atualizar o seu PropostaContrato com os dados retornados
-    contrato.autentiqueDocumentId = documentId;
-    contrato.statusAssinatura = 'Aguardando Assinaturas';
     
-    // Mapeia os signatários retornados para o seu schema
-    contrato.signatarios = documentData.signers.map(signer => ({
-        email: signer.email,
-        autentiqueSignerId: signer.id,
-        status: 'Pendente'
-    }));
-    
-    await contrato.save();
-    return contrato;
+    try {
+        console.log(`[SignatureSvc DEBUG] A enviar para Autentique. URL do ficheiro: ${payload.document.file}`);
+        console.log(`[SignatureSvc DEBUG] Payload dos signatários:`, JSON.stringify(signers, null, 2));
+
+        const response = await autentiqueApi.post('/documents', payload); // A chamada agora é para '/documents'
+
+        const documentData = response.data.data;
+        const documentId = documentData.id;
+        console.log(`[SignatureSvc] Documento criado no Autentique com o ID: ${documentId}`);
+
+        contrato.autentiqueDocumentId = documentId;
+        contrato.statusAssinatura = 'Aguardando Assinaturas';
+        contrato.signatarios = documentData.signers.map(signer => ({
+            email: signer.email,
+            autentiqueSignerId: signer.id,
+            status: 'Pendente'
+        }));
+        
+        await contrato.save();
+        return contrato;
+
+    } catch (error) {
+        console.error("[SignatureSvc] ERRO DETALHADO da API do Autentique:", error.response?.data || error.message);
+        throw new Error("Falha na comunicação com a API do Autentique.");
+    }
 };
 
 
