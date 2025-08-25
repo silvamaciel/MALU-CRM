@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { enviarParaAssinaturaApi } from '../../api/propostaContratoApi';
 
 import './PrepararAssinaturaModal.css';
 
-// >>> FIX do worker: usar HTTPS e .mjs no pdfjs-dist@5.x
+// worker correto (pdfjs 5.x): HTTPS + .mjs
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 function PrepararAssinaturaModal({ isOpen, onClose, contrato, arquivoContrato, onSendSuccess }) {
@@ -13,6 +13,23 @@ function PrepararAssinaturaModal({ isOpen, onClose, contrato, arquivoContrato, o
   const [selectedSignerId, setSelectedSignerId] = useState(null);
   const [numPages, setNumPages] = useState(null);
   const [isSending, setIsSending] = useState(false);
+
+  // NOVO: mede a largura do container para aplicar a mesma em todas as páginas
+  const [pageWidth, setPageWidth] = useState(0);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const el = containerRef.current;
+    if (!el) return;
+
+    const ro = new ResizeObserver((entries) => {
+      const w = Math.floor(entries[0].contentRect.width); // arredonda para evitar reflows
+      setPageWidth(w);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [isOpen]);
 
   useEffect(() => {
     if (contrato?.adquirentesSnapshot) {
@@ -23,44 +40,37 @@ function PrepararAssinaturaModal({ isOpen, onClose, contrato, arquivoContrato, o
         pos_x: null, pos_y: null, page: null,
       }));
       setSigners(initialSigners);
-      if (initialSigners.length > 0) {
-        setSelectedSignerId(initialSigners[0].id);
-      }
+      if (initialSigners.length > 0) setSelectedSignerId(initialSigners[0].id);
     }
   }, [contrato, isOpen]);
 
-  const handleDocumentLoadSuccess = ({ numPages }) => {
-    setNumPages(numPages);
-  };
+  const handleDocumentLoadSuccess = ({ numPages }) => setNumPages(numPages);
 
   const handlePageClick = (event, pageNumber) => {
     if (!selectedSignerId) {
       toast.warn("Por favor, selecione um signatário na lista primeiro.");
       return;
     }
-
     const pageElement = event.currentTarget;
     const rect = pageElement.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
-
     const posX = (x / rect.width) * 100;
     const posY = (y / rect.height) * 100;
 
-    setSigners(prevSigners => prevSigners.map(signer =>
-      signer.id === selectedSignerId
-        ? { ...signer, pos_x: posX.toFixed(2), pos_y: posY.toFixed(2), page: pageNumber }
-        : signer
+    setSigners(prev => prev.map(s =>
+      s.id === selectedSignerId
+        ? { ...s, pos_x: posX.toFixed(2), pos_y: posY.toFixed(2), page: pageNumber }
+        : s
     ));
   };
 
   const handleSend = async () => {
-    const unpositionedSigner = signers.find(s => s.pos_x === null);
-    if (unpositionedSigner) {
-      toast.error(`Por favor, defina uma posição de assinatura para ${unpositionedSigner.name}.`);
+    const unpositioned = signers.find(s => s.pos_x === null);
+    if (unpositioned) {
+      toast.error(`Por favor, defina uma posição de assinatura para ${unpositioned.name}.`);
       return;
     }
-
     setIsSending(true);
     try {
       await enviarParaAssinaturaApi(contrato._id, signers);
@@ -80,7 +90,7 @@ function PrepararAssinaturaModal({ isOpen, onClose, contrato, arquivoContrato, o
       <div className="modal-overlay">
         <div className="modal-content">
           <h2>Erro: Ficheiro Não Encontrado</h2>
-          <p>O ficheiro PDF deste contrato não foi encontrado no Drive. Por favor, gere o documento novamente na página de detalhes do contrato antes de o enviar para assinatura.</p>
+          <p>Gere o documento novamente na página de detalhes antes de enviar para assinatura.</p>
           <div className="modal-actions">
             <button onClick={onClose} className="button cancel-button">Fechar</button>
           </div>
@@ -116,19 +126,26 @@ function PrepararAssinaturaModal({ isOpen, onClose, contrato, arquivoContrato, o
           </div>
         </div>
 
-        <div className="pdf-preview-container">
+        {/* Container que define a largura para TODAS as páginas */}
+        <div className="pdf-preview-container" ref={containerRef}>
           <Document
             file={arquivoContrato.url}
             onLoadSuccess={handleDocumentLoadSuccess}
-            onLoadError={console.error}
+            onLoadError={(e) => { console.error(e); toast.error('Falha ao carregar PDF.'); }}
           >
-            {Array.from(new Array(numPages), (el, index) => (
+            {Array.from(new Array(numPages || 0), (el, index) => (
               <div
                 key={`page_${index + 1}`}
                 className="pdf-page-wrapper"
                 onClick={(e) => handlePageClick(e, index + 1)}
               >
-                <Page pageNumber={index + 1} />
+                <Page
+                  pageNumber={index + 1}
+                  width={pageWidth || undefined}   // mesma largura em todas as páginas
+                  renderTextLayer={false}          // sem camadas adicionais
+                  renderAnnotationLayer={false}
+                  renderMode="canvas"
+                />
                 {signers.map(signer => (
                   signer.page === (index + 1) && (
                     <div

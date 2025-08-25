@@ -58,3 +58,35 @@
     font-size: 0.8em;
     pointer-events: none; /* Permite clicar "através" da caixa */
 }
+
+/* Contêiner do PDF ocupa toda a largura disponível */
+.pdf-preview-container {
+  width: 100%;
+  overflow: auto;
+}
+
+/* Cada página serve de referência para o box de assinatura */
+.pdf-page-wrapper {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+/* Canvas deve escalar uniformemente */
+.react-pdf__Page__canvas {
+  width: 100% !important;
+  height: auto !important;
+  display: block;
+}
+
+/* Desliga camadas do pdf.js, para zero “reformatação” */
+.react-pdf__Page__textContent,
+.react-pdf__Page__annotations {
+  display: none !important;
+}
+
+/* Marcador de assinatura posicionado exatamente no ponto clicado */
+.signature-box {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  /* seus estilos visuais aqui… */
+}
