@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const webhookController = require('../controllers/webhookController');
 const { handleWebhook } = require('../controllers/evolutionWebhookController');
+const SignatureController = require('../controllers/SignatureController');
 
 router.post('/evolution', handleWebhook);
 
@@ -13,7 +14,7 @@ router.get('/facebook/leads', webhookController.verifyFacebookWebhook);
 router.post('/facebook/leads', webhookController.handleFacebookLeadWebhook);
 
 
-router.post('/autentique', webhookAutentiqueController);
+router.post('/autentique', SignatureController.webhookAutentiqueController);
 
 // Adicione rotas para outros webhooks (ex: WhatsApp) aqui depois
 

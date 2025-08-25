@@ -1,0 +1,14 @@
+.signature-status-panel { padding: 20px; margin-top: 20px; }
+.signature-status-panel h4 { margin-top: 0; }
+.status-header { margin-bottom: 15px; }
+.signatarios-list { list-style: none; padding-left: 0; }
+.signer-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+.signer-item:last-child { border-bottom: none; }
+.signer-status { font-weight: bold; }
+.signer-item.status-assinado .signer-status { color: #28a745; }
+.signer-item.status-pendente .signer-status { color: #ffc107; }

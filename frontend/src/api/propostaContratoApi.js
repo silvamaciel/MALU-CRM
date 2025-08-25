@@ -158,3 +158,19 @@ export const gerarDocumentoApi = async (propostaId, modeloId) => {
         throw error.response?.data || new Error("Falha ao gerar o documento do contrato.");
     }
 };
+
+
+/**
+ * Envia uma Proposta/Contrato para assinatura via Autentique.
+ * @param {string} propostaContratoId - ID da Proposta/Contrato.
+ * @returns {Promise<object>} A Proposta/Contrato atualizada com os dados de assinatura.
+ */
+export const enviarParaAssinaturaApi = async (propostaContratoId) => {
+    try {
+        const response = await axiosInstance.post(`/assinaturas/contratos/${propostaContratoId}/enviar`);
+        return response.data.data;
+    } catch (error) {
+        console.error(`Erro ao enviar contrato ${propostaContratoId} para assinatura:`, error.response?.data);
+        throw error.response?.data || new Error("Falha ao enviar contrato para assinatura.");
+    }
+};

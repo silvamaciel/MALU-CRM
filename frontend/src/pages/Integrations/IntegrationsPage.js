@@ -4,6 +4,10 @@ import { sendGoogleAuthCode } from "../../api/auth";
 import { toast } from "react-toastify";
 import FacebookLogin from "@greatsumini/react-facebook-login";
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
+
+import { updateCompanySettingsApi, getCompanySettingsApi } from '../../api/companyApi';
+
+
 import axios from "axios";
 import {
   connectFacebookPage,
@@ -78,6 +82,11 @@ function IntegrationsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+
+  //States Autentique API 
+  const [autentiqueToken, setAutentiqueToken] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   // Função Principal para Carregar Dados da Página
   const fetchIntegrations = useCallback(async () => {
@@ -669,6 +678,38 @@ function IntegrationsPage() {
     }
   }, [selectedFormIds, pageForms, persistedFbConnection.pageId]);
 
+
+
+  // Autentique Useffect e Handler 
+
+  useEffect(() => {
+    getCompanySettingsApi().then(data => {
+      setAutentiqueToken(data.autentiqueApiToken || '');
+    }).catch(() => {
+      toast.error("Erro ao carregar as configurações de integração.");
+    });
+  }, []);
+
+
+  const handleSaveAutentique = async (e) => {
+    e.preventDefault();
+    setIsSaving(true);
+    try {
+        // CORREÇÃO: Dizemos que a propriedade 'autentiqueApiToken' (que o backend espera)
+        // deve receber o valor da nossa variável de estado 'autentiqueToken' (com 't' minúsculo).
+        await updateCompanySettingsApi({ autentiqueApiToken: autentiqueToken });
+        
+        toast.success("Token da API do Autentique guardado com sucesso!");
+    } catch (error) {
+        toast.error("Falha ao guardar o token.");
+    } finally {
+        setIsSaving(false);
+    }
+};
+
+  // Fim do autentique //  
+
+
   // --- Renderização ---
 
   if (isLoadingStatus && isLoadingGoogleContacts) {
@@ -1002,7 +1043,7 @@ function IntegrationsPage() {
           )}
         </div>
 
-        {/* Placeholder Cards */}
+        {/* Card Evolution Api*/}
         <div className="integration-card">
           <div className="integration-header">
             <div className="integration-info">
@@ -1081,6 +1122,38 @@ function IntegrationsPage() {
             </div>
           </div>
         </div>
+
+
+        {/* Card Autentique API  */}
+
+        <div className="integration-card">
+          <div className="integration-header">
+            {/* Adicione um logo do Autentique aqui */}
+            <div className="integration-info">
+              <h3>Autentique (Assinatura Eletrónica)</h3>
+              <p>Conecte a sua conta do Autentique para enviar contratos para assinatura.</p>
+            </div>
+          </div>
+          <div className="integration-body">
+            <form onSubmit={handleSaveAutentique}>
+              <div className="form-group">
+                <label>O seu Token da API do Autentique</label>
+                <input
+                  type="password"
+                  placeholder="Cole o seu token aqui"
+                  value={autentiqueToken}
+                  onChange={(e) => setAutentiqueToken(e.target.value)}
+                  required
+                />
+              </div>
+              <button type="submit" className="button primary-button" disabled={isSaving}>
+                {isSaving ? 'A guardar...' : 'Guardar Token'}
+              </button>
+            </form>
+          </div>
+        </div>
+
+
 
 
         {/* <<< MODAL PARA LISTAR/SELECIONAR CONTATOS GOOGLE >>> */}

@@ -1,5 +1,6 @@
 const asyncHandler = require('../middlewares/asyncHandler');
 const SignatureService = require('../services/SignatureService');
+const IntegartionService = require('../services/integrationService');
 
 /**
  * @desc    Envia um contrato para assinatura via Autentique.

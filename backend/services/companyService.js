@@ -36,10 +36,37 @@ const createCompany = async (companyData) => {
     }
 };
 
-// Adicione outras funções (get, update, delete) aqui quando necessário
-// const getAllCompanies = async () => { ... };
+/**
+ * Busca as configurações de uma empresa (apenas campos seguros).
+ * @param {string} companyId - ID da empresa.
+ */
+const getCompanySettings = async (companyId) => {
+    const company = await Company.findById(companyId).select('nome autentiqueApiToken'); // Adicione outros campos de config aqui
+    if (!company) throw new Error("Empresa não encontrada.");
+    return company;
+};
+
+/**
+ * Atualiza as configurações de integração de uma empresa.
+ * @param {string} companyId - ID da empresa.
+ * @param {object} settings - Objeto com as configurações a serem atualizadas.
+ */
+const updateCompanySettings = async (companyId, settings) => {
+    const { autentiqueApiToken } = settings;
+    
+    const updateData = {};
+    if (autentiqueApiToken !== undefined) { // Permite guardar um token vazio para desativar
+        updateData.autentiqueApiToken = autentiqueApiToken;
+    }
+    
+    const company = await Company.findByIdAndUpdate(companyId, { $set: updateData }, { new: true });
+    if (!company) throw new Error("Empresa não encontrada.");
+
+    return { message: "Configurações da empresa atualizadas com sucesso." };
+};
 
 module.exports = {
     createCompany,
-    // getAllCompanies,
+    getCompanySettings,
+    updateCompanySettings
 };

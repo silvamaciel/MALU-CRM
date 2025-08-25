@@ -11,6 +11,9 @@ const { PhoneNumberUtil, PhoneNumberFormat: PNF } = require('google-libphonenumb
 const phoneUtil = PhoneNumberUtil.getInstance();
 const EvolutionInstance = require('../models/EvolutionInstance');
 
+const PropostaContrato = require('../models/PropostaContrato');
+const Arquivo = require('../models/Arquivo');   
+
 
 
 
@@ -953,6 +956,107 @@ const deleteEvolutionInstance = async (instanceId, companyId) => {
     return { message: `Instância '${crmInstance.instanceName}' foi removida com sucesso.` };
 };
 
+
+/* ======================= AUTENTIQUE  ======================= */
+
+/**
+ * Envia um contrato do CRM para assinatura no Autentique.
+ * @param {string} contratoId - O ID da PropostaContrato a ser enviada.
+ * @param {string} companyId - O ID da empresa do utilizador logado.
+ * @returns {Promise<PropostaContrato>} O contrato atualizado.
+ */
+const enviarParaAssinatura = async (contratoId, companyId) => {
+    console.log(`[IntegSvc Autentique] A iniciar envio para assinatura do contrato: ${contratoId}`);
+
+    const contrato = await PropostaContrato.findOne({ _id: contratoId, company: companyId })
+        .populate('company', 'autentiqueApiToken')
+        .populate('lead', 'nome');
+
+    if (!contrato) throw new Error("Contrato não encontrado.");
+    if (!contrato.company?.autentiqueApiToken) {
+        throw new Error("A sua empresa não configurou o token da API do Autentique.");
+    }
+
+    const arquivoContrato = await Arquivo.findOne({
+        company: companyId,
+        'associations.kind': 'PropostaContrato',
+        'associations.item': contratoId
+    });
+
+    if (!arquivoContrato || !arquivoContrato.url) {
+        throw new Error("O ficheiro PDF deste contrato não foi encontrado no Drive.");
+    }
+    
+    const autentiqueApi = axios.create({
+        baseURL: 'https://api.autentique.com.br/v2/',
+        headers: { 'Authorization': `Bearer ${contrato.company.autentiqueApiToken}` }
+    });
+
+    const signers = contrato.adquirentesSnapshot.map(adquirente => ({
+        email: adquirente.email,
+        action: 'SIGN',
+    }));
+
+    if (signers.length === 0) {
+        throw new Error("O contrato não tem adquirentes (signatários) definidos.");
+    }
+
+    const payload = {
+        document: {
+            name: `Contrato - ${contrato.lead.nome}`,
+            file: arquivoContrato.url
+        },
+        signers: signers,
+    };
+
+    const response = await autentiqueApi.post('documents', payload);
+    const documentData = response.data.data;
+    const documentId = documentData.id;
+
+    contrato.autentiqueDocumentId = documentId;
+    contrato.statusAssinatura = 'Aguardando Assinaturas';
+    contrato.signatarios = documentData.signers.map(signer => ({
+        email: signer.email,
+        autentiqueSignerId: signer.id,
+        status: 'Pendente'
+    }));
+    
+    await contrato.save();
+    return contrato;
+};
+
+/**
+ * Processa webhooks do Autentique para atualizar o status das assinaturas.
+ */
+const handleAutentiqueWebhook = async (payload) => {
+    const documentId = payload.document?.id;
+    if (!documentId) return;
+
+    const contrato = await PropostaContrato.findOne({ autentiqueDocumentId: documentId });
+    if (!contrato) return;
+
+    const eventName = payload.event?.name;
+    
+    if (eventName === 'signer_signed') {
+        const signerEmail = payload.signer?.email;
+        const signatario = contrato.signatarios.find(s => s.email === signerEmail);
+        if (signatario) {
+            signatario.status = 'Assinado';
+        }
+    } else if (eventName === 'document_signed') {
+        contrato.statusAssinatura = 'Finalizado';
+        contrato.statusPropostaContrato = 'Vendido';
+        contrato.dataVendaEfetivada = new Date();
+    } else if (eventName === 'document_rejected') {
+        contrato.statusAssinatura = 'Recusado';
+    }
+    
+    await contrato.save();
+};
+
+
+
+/* ======================= FIM AUTENTIQUE  ======================= */
 
 module.exports = {
   connectFacebookPageIntegration,

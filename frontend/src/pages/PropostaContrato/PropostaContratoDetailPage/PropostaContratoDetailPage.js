@@ -10,12 +10,16 @@ import {
   registrarDistratoApi,
 } from "../../../api/propostaContratoApi";
 
-import "./PropostaContratoDetailPage.css"; // Crie este CSS
+import "./PropostaContratoDetailPage.css";
 import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
 import DiscardLeadModal from "../../../components/DiscardLeadModal/DiscardLeadModal";
 import { getDiscardReasons } from "../../../api/discardReasons";
 
 import GerarContratoModal from '../../../components/PropostaWizard/GerarContratoModal';
+import { enviarParaAssinaturaApi } from "../../../api/propostaContratoApi";
+import SignatureStatusPanel from "./SignatureStatusPanel";
+
+
 
 
 const STATUS_PROPOSTA_OPCOES = [
@@ -32,6 +36,8 @@ const STATUS_PROPOSTA_OPCOES = [
 function PropostaContratoDetailPage() {
   const { propostaContratoId } = useParams();
   const navigate = useNavigate();
+
+
 
   const [propostaContrato, setPropostaContrato] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -51,6 +57,7 @@ function PropostaContratoDetailPage() {
   const [motivosDescarte, setMotivosDescarte] = useState([]);
   const [isProcessingDistrato, setIsProcessingDistrato] = useState(false);
   const [distratoError, setDistratoError] = useState("");
+  const [isSendingSignature, setIsSendingSignature] = useState(false);
 
   const [isGerarContratoModalOpen, setIsGerarContratoModalOpen] = useState(false);
 
@@ -200,6 +207,9 @@ function PropostaContratoDetailPage() {
     }
   };
 
+
+
+
   useEffect(() => {
     const fetchMotivos = async () => {
       try {
@@ -243,11 +253,10 @@ function PropostaContratoDetailPage() {
     // O comentário do modal pode ser ADICIONADO ao motivo principal
     const motivoPrincipal =
       discardData.motivoTexto || "Distrato solicitado pelo cliente"; // Pega o texto do motivo selecionado
-    const comentarioFinalDistrato = `${motivoPrincipal}${
-      discardData.comentario
-        ? "\nObservações Adicionais: " + discardData.comentario
-        : ""
-    }`;
+    const comentarioFinalDistrato = `${motivoPrincipal}${discardData.comentario
+      ? "\nObservações Adicionais: " + discardData.comentario
+      : ""
+      }`;
 
     const dadosParaBackend = {
       novoStatus: "Distrato Realizado", // Status final da PropostaContrato
@@ -320,6 +329,27 @@ function PropostaContratoDetailPage() {
     acoesDeStatusPermitidas = ["Vendido", "Cancelado"];
   }
 
+
+  const handleEnviarParaAssinatura = async () => {
+    if (!propostaContrato) return;
+
+    const confirmSend = window.confirm("Tem certeza que deseja enviar este contrato para assinatura? Esta ação não pode ser desfeita.");
+    if (!confirmSend) return;
+
+    setIsSendingSignature(true);
+    toast.info("A preparar e a enviar o contrato para o Autentique...");
+    try {
+      await enviarParaAssinaturaApi(propostaContrato._id);
+      toast.success("Contrato enviado para assinatura com sucesso!");
+      fetchPropostaContrato(); // Atualiza a página para mostrar o novo status
+    } catch (error) {
+      toast.error(error.message || "Falha ao enviar para assinatura.");
+    } finally {
+      setIsSendingSignature(false);
+    }
+  };
+
+
   return (
     <div className="admin-page proposta-contrato-detail-page">
       <header className="page-header">
@@ -337,8 +367,8 @@ function PropostaContratoDetailPage() {
             to={`/propostas-contratos/${propostaContrato._id}/editar`}
             className="button-link-prime"
             style={{ marginRight: "10px" }}
-            // Desabilitar se status não permitir edição
-            // disabled={!["Em Elaboração", "Aguardando Aprovações"].includes(propostaContrato.statusPropostaContrato)}
+          // Desabilitar se status não permitir edição
+          // disabled={!["Em Elaboração", "Aguardando Aprovações"].includes(propostaContrato.statusPropostaContrato)}
           >
             Editar Proposta/Contrato
           </Link>
@@ -355,10 +385,12 @@ function PropostaContratoDetailPage() {
             {isDownloadingPdf ? "Gerando PDF..." : "Baixar PDF"}
           </button>
 
-          {/* Botões de Ação Futuros */}
-          {/* <button className="button primary-button" style={{marginRight: '10px'}}>Editar</button> */}
-          {/* <button className="button action-button" style={{marginRight: '10px'}}>Baixar PDF</button> */}
-          {/* Dropdown para Mudar Status */}
+          {(!propostaContrato.statusAssinatura || propostaContrato.statusAssinatura === 'Não Enviado') && (
+            <button onClick={handleEnviarParaAssinatura} className="button primary-button" disabled={isSendingSignature}>
+              {isSendingSignature ? 'A enviar...' : 'Enviar para Assinatura'}
+            </button>
+          )}
+
         </div>
       </header>
 
@@ -422,12 +454,11 @@ function PropostaContratoDetailPage() {
           <p>
             <strong>Imóvel:</strong>
             {propostaContrato.imovel?.identificador
-              ? `${propostaContrato.imovel.identificador} (Empreendimento: ${
-                  propostaContrato.imovel?.empreendimento?.nome || "N/A"
-                })`
+              ? `${propostaContrato.imovel.identificador} (Empreendimento: ${propostaContrato.imovel?.empreendimento?.nome || "N/A"
+              })`
               : propostaContrato.imovel?.titulo
-              ? propostaContrato.imovel.titulo
-              : "N/A"}
+                ? propostaContrato.imovel.titulo
+                : "N/A"}
           </p>
           <p>
             <strong>Valor da Proposta:</strong>{" "}
@@ -443,8 +474,8 @@ function PropostaContratoDetailPage() {
             <strong>Data da Proposta:</strong>{" "}
             {propostaContrato.dataProposta
               ? new Date(propostaContrato.dataProposta).toLocaleDateString(
-                  "pt-BR"
-                )
+                "pt-BR"
+              )
               : "N/A"}
           </p>
           <p>
@@ -463,6 +494,16 @@ function PropostaContratoDetailPage() {
             }}
           />
         </div>
+
+        {propostaContrato.statusAssinatura !== 'Não Enviado' && (
+          <SignatureStatusPanel
+            status={propostaContrato.statusAssinatura}
+            signatarios={propostaContrato.signatarios}
+          />
+        )}
+
+
+
 
         <ConfirmModal
           isOpen={confirmStatusModal.isOpen}
@@ -484,21 +525,20 @@ function PropostaContratoDetailPage() {
           isOpen={isDistratoModalOpen}
           onClose={handleCloseDistratoModal}
           onSubmit={handleConfirmDistrato} // Este handler agora faz mais do que só descartar
-          leadName={`Proposta/Contrato para: ${
-            propostaContrato?.lead?.nome || "Lead Desconhecido"
-          }`}
+          leadName={`Proposta/Contrato para: ${propostaContrato?.lead?.nome || "Lead Desconhecido"
+            }`}
           isProcessing={isProcessingDistrato}
           errorMessage={distratoError}
           discardReasons={motivosDescarte}
           initialComment={`Distrato referente à unidade ${propostaContrato?.unidade?.identificador} do empreendimento ${propostaContrato?.empreendimento?.nome}.`}
         />
 
-         <GerarContratoModal
-                    isOpen={isGerarContratoModalOpen}
-                    onClose={() => setIsGerarContratoModalOpen(false)}
-                    proposta={propostaContrato}
-                    onSaveSuccess={fetchPropostaContrato} // Chama o fetch para atualizar a página
-                />
+        <GerarContratoModal
+          isOpen={isGerarContratoModalOpen}
+          onClose={() => setIsGerarContratoModalOpen(false)}
+          proposta={propostaContrato}
+          onSaveSuccess={fetchPropostaContrato} // Chama o fetch para atualizar a página
+        />
 
         {/* TODO: Adicionar mais seções para Plano de Pagamento, Corretagem, etc. */}
       </div>
