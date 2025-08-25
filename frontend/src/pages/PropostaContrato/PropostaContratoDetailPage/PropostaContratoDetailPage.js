@@ -8,6 +8,7 @@ import {
   updatePropostaContratoApi,
   updatePropostaContratoStatusApi,
   registrarDistratoApi,
+  gerarEsalvarPdfApi
 } from "../../../api/propostaContratoApi";
 
 import "./PropostaContratoDetailPage.css";
@@ -88,7 +89,7 @@ function PropostaContratoDetailPage() {
     setIsDownloadingPdf(true);
     toast.info("Gerando PDF, por favor aguarde...");
     try {
-      const pdfBlob = await downloadPropostaContratoPdfApi(
+      const pdfBlob = await gerarEsalvarPdfApi(
         propostaContrato._id
       );
 
@@ -123,6 +124,27 @@ function PropostaContratoDetailPage() {
       setIsDownloadingPdf(false);
     }
   };
+
+
+  const handleDownloadAndSavePdf = async () => {
+    setIsDownloadingPdf(true);
+    toast.info("A gerar e a salvar o PDF no Drive...");
+    try {
+        const pdfBlob = await gerarEsalvarPdfApi(propostaContrato._id); // <<< CHAMA A NOVA FUNÇÃO
+        
+        // Lógica de download (a mesma que você já tem)
+        const url = window.URL.createObjectURL(pdfBlob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", `Contrato_${propostaContrato.lead?.nome}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        link.parentNode.removeChild(link);
+        
+        toast.success("PDF gerado e salvo no Drive com sucesso!");
+    } catch (err) { /* ... */ }
+    finally { setIsDownloadingPdf(false); }
+};
 
   const handleChangeStatus = async (novoStatus) => {
     if (
@@ -206,6 +228,8 @@ function PropostaContratoDetailPage() {
       });
     }
   };
+
+
 
 
 
@@ -377,7 +401,7 @@ function PropostaContratoDetailPage() {
 
           {/* Botão para baixar PDF */}
           <button
-            onClick={handleDownloadPdf}
+            onClick={handleDownloadAndSavePdf}
             className="button action-button"
             disabled={isDownloadingPdf}
             style={{ marginRight: "10px" }}

@@ -213,6 +213,14 @@ const gerarDocumentoController = asyncHandler(async (req, res, next) => {
 });
 
 
+const gerarEsalvarPdfController = asyncHandler(async (req, res) => {
+    const { buffer, filename } = await PropostaContratoService.gerarEsalvarPdfContrato(req.params.id, req.user.company, req.user._id);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+    res.send(buffer);
+});
+
+
 module.exports = {
     createPropostaContratoController,
     getPropostaContratoByIdController,
@@ -220,5 +228,6 @@ module.exports = {
     updatePropostaContratoController,
     updateStatusPropostaContratoController,
     registrarDistratoController,
-    gerarDocumentoController
+    gerarDocumentoController,
+    gerarEsalvarPdfController
 };

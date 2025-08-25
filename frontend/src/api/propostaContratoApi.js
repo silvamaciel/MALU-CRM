@@ -159,6 +159,22 @@ export const gerarDocumentoApi = async (propostaId, modeloId) => {
     }
 };
 
+/**
+ * Chama a API para gerar e salvar o PDF de um contrato e retorna o arquivo em formato Blob.
+ *
+ * @async
+ * @function gerarEsalvarPdfApi
+ * @param {string} propostaContratoId - O ID do contrato de proposta que será processado na API.
+ * @returns {Promise<Blob>} O PDF retornado pela API em formato Blob.
+ * @throws {Error} Se a requisição HTTP falhar.
+ */
+export const gerarEsalvarPdfApi = async (propostaContratoId) => {
+    const response = await axiosInstance.get(`/propostas-contratos/${propostaContratoId}/gerar-e-salvar-pdf`, {
+        responseType: 'blob', // IMPORTANTE: para receber o ficheiro
+    });
+    return response.data; 
+};
+
 
 /**
  * Envia uma Proposta/Contrato para assinatura via Autentique.

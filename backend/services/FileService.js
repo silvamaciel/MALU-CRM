@@ -4,6 +4,7 @@ const PropostaContrato = require('../models/PropostaContrato');
 const Empreendimento = require('../models/Empreendimento');
 const { s3Client } = require('../config/s3'); // Importa o cliente S3 que configurámos
 const { DeleteObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
+const { Upload } = require("@aws-sdk/lib-storage");
 
 /**
  * Cria um registo de ficheiro no MongoDB, deduzindo e salvando
@@ -188,9 +189,53 @@ const getPreviewStream = async (arquivoId, companyId) => {
 };
 
 
+/**
+ * Faz o upload de um buffer de ficheiro (ex: PDF gerado) para o S3/Spaces.
+ * @param {Buffer} buffer - O conteúdo do ficheiro.
+ *- @param {object} fileDetails - { originalname, mimetype, ... }.
+- * @param {object} metadata - { categoria, primaryAssociation, ... }.
+ * @returns {Promise<Arquivo>} O documento do arquivo salvo.
+ */
+const uploadBuffer = async (buffer, fileDetails, metadata, companyId, userId) => {
+    const { originalname, mimetype } = fileDetails;
+    const { categoria, primaryAssociation } = metadata;
+
+    const key = `company-${companyId}/${categoria.toLowerCase().replace(' ', '-')}/${Date.now()}-${originalname}`;
+
+    try {
+        const parallelUploads3 = new Upload({
+            client: s3Client,
+            params: {
+                Bucket: process.env.SPACES_BUCKET_NAME,
+                Key: key,
+                Body: buffer,
+                ACL: 'public-read',
+                ContentType: mimetype,
+            },
+        });
+
+        const result = await parallelUploads3.done();
+        
+        const fileDataForDb = {
+            originalname: originalname,
+            mimetype: mimetype,
+            size: buffer.length,
+            location: result.Location,
+            key: result.Key
+        };
+
+        const arquivoSalvo = await registrarArquivo(fileDataForDb, { categoria, primaryAssociation }, companyId, userId);
+        return arquivoSalvo;
+    } catch (error) {
+        console.error("[FileService] Erro ao fazer upload do buffer para o S3:", error);
+        throw new Error("Falha ao guardar o arquivo no Drive.");
+    }
+};
+
 module.exports = {
     registrarArquivo,
     listarArquivos,
     apagarArquivo,
-    getPreviewStream
+    getPreviewStream,
+    uploadBuffer
 };

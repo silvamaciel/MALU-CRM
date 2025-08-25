@@ -1,15 +1,16 @@
 // backend/routes/propostaContratoRoutes.js
 const express = require('express');
 const router = express.Router();
-const { 
+const {
     createPropostaContratoController,
     getPropostaContratoByIdController,
     downloadPropostaContratoPDFController,
     updatePropostaContratoController,
     updateStatusPropostaContratoController,
     registrarDistratoController,
-    gerarDocumentoController
- } = require('../controllers/PropostaContratoController'); // Ajuste o nome do arquivo se necessário
+    gerarDocumentoController,
+    gerarEsalvarPdfController
+} = require('../controllers/PropostaContratoController'); // Ajuste o nome do arquivo se necessário
 const { protect } = require('../middlewares/authMiddleware');
 
 // Todas as rotas serão protegidas
@@ -39,6 +40,8 @@ router.route('/:id/distrato')
 router.route('/:id/gerar-documento')
     .post(gerarDocumentoController);
 
+
+router.get('/:id/gerar-e-salvar-pdf', gerarEsalvarPdfController);
 // Rota alternativa se você quiser uma rota base /api/propostas-contratos e passar reservaId no corpo
 // router.route('/')
 //     .post(createPropostaContratoController); 

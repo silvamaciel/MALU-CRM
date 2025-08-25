@@ -13,10 +13,59 @@ const ModeloContrato = require('../models/ModeloContrato');
 const BrokerContact = require('../models/BrokerContact');
 const DiscardReason = require('../models/DiscardReason');
 const wkhtmltopdf = require('wkhtmltopdf');
+const FileService = require('./FileService');
+
+/**
+ * Gera um PDF atualizado de um contrato, substitui a versão antiga no Drive (se existir) e salva a nova versão.
+ *
+ * @async
+ * @function gerarEsalvarPdfContrato
+ * @param {string} contratoId - O ID do contrato (PropostaContrato) a ser processado.
+ * @param {string} companyId - O ID da empresa proprietária do contrato.
+ * @param {string} userId - O ID do usuário que está solicitando a operação.
+ * @throws {Error} Lança um erro se o contrato não for encontrado ou se ocorrer falha na geração do PDF.
+ * @returns {Promise<{ buffer: Buffer, filename: string }>} Objeto contendo:
+ * - `buffer` {Buffer}: O conteúdo do PDF em memória.
+ * - `filename` {string}: O nome do arquivo gerado.
+ */
+const gerarEsalvarPdfContrato = async (contratoId, companyId, userId) => {
+    const contrato = await PropostaContrato.findOne({ _id: contratoId, company: companyId });
+    if (!contrato) throw new Error("Contrato não encontrado.");
+
+    // 1. Apaga o contrato antigo do Drive, se existir
+    const arquivoAntigo = await Arquivo.findOne({ 'associations.item': contratoId, categoria: 'Contratos' });
+    if (arquivoAntigo) {
+        await FileService.apagarArquivo(arquivoAntigo._id, companyId);
+        console.log(`[ContratoSvc] Versão antiga do contrato (${arquivoAntigo.nomeOriginal}) apagada do Drive.`);
+    }
+    
+    // 2. Gera o novo PDF em memória (buffer)
+    const pdfBuffer = await new Promise((resolve, reject) => {
+        wkhtmltopdf(contrato.corpoContratoHTMLGerado, { pageSize: 'letter' }, (err, stream) => {
+            if (err) return reject(err);
+            const chunks = [];
+            stream.on('data', chunk => chunks.push(chunk));
+            stream.on('end', () => resolve(Buffer.concat(chunks)));
+        });
+    });
+
+    // 3. Faz o upload do buffer para o Drive
+    const nomeArquivo = `Contrato_${contrato.lead._id}.pdf`;
+    const metadata = {
+        categoria: 'Contratos',
+        primaryAssociation: { kind: 'PropostaContrato', item: contratoId }
+    };
+    
+    const arquivoSalvo = await FileService.uploadBuffer(pdfBuffer, { originalname: nomeArquivo, mimetype: 'application/pdf' }, metadata, companyId, userId);
+
+    console.log(`[ContratoSvc] Novo PDF do contrato salvo no Drive com URL: ${arquivoSalvo.url}`);
+    
+    // 4. Retorna o buffer do PDF para o download do utilizador
+    return { buffer: pdfBuffer, filename: nomeArquivo };
+}; 
 
 
 
- 
 /**
  * Monta um objeto com todos os dados necessários para substituir os placeholders de um template de contrato.
  * @param {object} propostaData - Os dados da proposta que vieram do formulário.
