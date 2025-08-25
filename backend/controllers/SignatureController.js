@@ -2,6 +2,7 @@ const asyncHandler = require('../middlewares/asyncHandler');
 const SignatureService = require('../services/SignatureService');
 const IntegartionService = require('../services/integrationService');
 
+
 /**
  * @desc    Envia um contrato para assinatura via Autentique.
  * @route   POST /api/assinaturas/contratos/:id/enviar
@@ -9,9 +10,10 @@ const IntegartionService = require('../services/integrationService');
  */
 const enviarContratoController = asyncHandler(async (req, res, next) => {
     const { id: contratoId } = req.params;
+    const { signers } = req.body; 
     const companyId = req.user.company;
 
-    const contratoAtualizado = await SignatureService.enviarParaAssinatura(contratoId, companyId);
+    const contratoAtualizado = await SignatureService.enviarParaAssinatura(contratoId, companyId, signers);
     
     res.status(200).json({ 
         success: true, 
@@ -29,10 +31,8 @@ const webhookAutentiqueController = asyncHandler(async (req, res, next) => {
     const payload = req.body;
     console.log("[SignatureCtrl] Webhook do Autentique recebido.");
     
-    // Delega o processamento para o serviço
     await SignatureService.handleAutentiqueWebhook(payload);
 
-    // Responde imediatamente com 200 OK para o Autentique
     res.status(200).send('Webhook recebido.');
 });
 

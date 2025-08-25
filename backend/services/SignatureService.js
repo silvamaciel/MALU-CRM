@@ -5,14 +5,16 @@ const Company = require('../models/Company');
 const Arquivo = require('../models/Arquivo');
 
 /**
- * Envia um contrato do CRM para assinatura via API GraphQL do Autentique.
+ * Envia um contrato para assinatura, incluindo a lista de signatários e as suas posições.
  * @param {string} contratoId - O ID da PropostaContrato.
  * @param {string} companyId - O ID da empresa.
+ * @param {Array<object>} signersFromFrontend - Lista de signatários customizada do frontend.
  * @returns {Promise<PropostaContrato>} O contrato atualizado.
  */
-const enviarParaAssinatura = async (contratoId, companyId) => {
-    console.log(`[SignatureSvc] A iniciar processo de envio para assinatura do contrato: ${contratoId}`);
+const enviarParaAssinatura = async (contratoId, companyId, signersFromFrontend) => {
+    console.log(`[SignatureSvc] Iniciando envio para assinatura do contrato: ${contratoId}`);
 
+    // 1. Buscar o contrato e as informações associadas
     const contrato = await PropostaContrato.findOne({ _id: contratoId, company: companyId })
         .populate('company', 'autentiqueApiToken')
         .populate('lead', 'nome');
@@ -21,7 +23,11 @@ const enviarParaAssinatura = async (contratoId, companyId) => {
     if (!contrato.company?.autentiqueApiToken) {
         throw new Error("A sua empresa não configurou o token da API do Autentique.");
     }
+    if (!signersFromFrontend || signersFromFrontend.length === 0) {
+        throw new Error("Pelo menos um signatário é obrigatório.");
+    }
 
+    // 2. Encontrar o ficheiro PDF do contrato no "Drive"
     const arquivoContrato = await Arquivo.findOne({
         'associations.kind': 'PropostaContrato',
         'associations.item': contratoId
@@ -30,23 +36,22 @@ const enviarParaAssinatura = async (contratoId, companyId) => {
         throw new Error("O ficheiro PDF deste contrato não foi encontrado no Drive.");
     }
     
-    const signers = contrato.adquirentesSnapshot.map(adquirente => ({
-        email: adquirente.email,
+    // 3. Mapear os signatários do frontend para o formato que a API GraphQL do Autentique espera
+    const signersForApi = signersFromFrontend.map(s => ({
+        email: s.email,
         action: 'SIGN',
-        name: adquirente.nome
+        name: s.name,
+        positions: [{ // O Autentique espera um array de posições
+            x: String(s.pos_x), // Posição X em percentagem (0.0 a 100.0)
+            y: String(s.pos_y), // Posição Y em percentagem (0.0 a 100.0)
+            z: String(s.page)   // O número da página (começando em 1)
+        }]
     }));
-
-    if (signers.length === 0) {
-        throw new Error("O contrato não tem adquirentes (signatários) definidos.");
-    }
-
+    
+    // 4. Montar a query GraphQL
     const mutation = `
         mutation CreateDocumentMutation($document: DocumentInput!, $signers: [SignerInput!]!, $file: Upload!) {
-            createDocument(
-                document: $document,
-                signers: $signers,
-                file: $file
-            ) {
+            createDocument(document: $document, signers: $signers, file: $file) {
                 id
                 name
             }
@@ -54,12 +59,13 @@ const enviarParaAssinatura = async (contratoId, companyId) => {
     `;
     
     try {
+        // 5. Preparar o payload multipart/form-data
         const formData = new FormData();
         const operations = {
             query: mutation,
             variables: {
                 document: { name: `Contrato de Venda - ${contrato.lead.nome}` },
-                signers: signers,
+                signers: signersForApi, // <<< USA A NOVA LISTA DE SIGNATÁRIOS COM POSIÇÕES
                 file: null
             }
         };
@@ -70,6 +76,7 @@ const enviarParaAssinatura = async (contratoId, companyId) => {
         const fileBuffer = Buffer.from(fileResponse.data);
         formData.append('file_data', fileBuffer, { filename: arquivoContrato.nomeOriginal });
 
+        // 6. Enviar a requisição para o Autentique
         const response = await axios.post('https://api.autentique.com.br/v2/graphql', formData, {
             headers: {
                 'Authorization': `Bearer ${contrato.company.autentiqueApiToken}`,
@@ -82,19 +89,15 @@ const enviarParaAssinatura = async (contratoId, companyId) => {
         }
 
         const documentData = response.data.data.createDocument;
+        
+        // 7. Atualizar o seu PropostaContrato
         contrato.autentiqueDocumentId = documentData.id;
         contrato.statusAssinatura = 'Aguardando Assinaturas';
-
-        // VVVVV A CORREÇÃO ESTÁ AQUI VVVVV
-        // Mapeia os signatários que NÓS ENVIÁMOS (a variável 'signers')
-        // para o schema do nosso contrato.
-        contrato.signatarios = signers.map(signer => ({
-            email: signer.email,
-            nome: signer.name,
-            // O autentiqueSignerId virá depois via webhook, por agora o status é o mais importante.
+        contrato.signatarios = signersFromFrontend.map(s => ({
+            email: s.email,
+            nome: s.name,
             status: 'Pendente'
         }));
-        // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         
         await contrato.save();
         return contrato;

@@ -11,6 +11,9 @@ import {
   gerarEsalvarPdfApi
 } from "../../../api/propostaContratoApi";
 
+import PrepararAssinaturaModal from '../../../components/PrepararAssinaturaModal/PrepararAssinaturaModal';
+
+
 import "./PropostaContratoDetailPage.css";
 import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
 import DiscardLeadModal from "../../../components/DiscardLeadModal/DiscardLeadModal";
@@ -38,6 +41,8 @@ function PropostaContratoDetailPage() {
   const { propostaContratoId } = useParams();
   const navigate = useNavigate();
 
+  const [isSignatureModalOpen, setIsSignatureModalOpen] = useState(false);
+    const [arquivoContrato, setArquivoContrato] = useState(null); 
 
 
   const [propostaContrato, setPropostaContrato] = useState(null);
@@ -78,6 +83,13 @@ function PropostaContratoDetailPage() {
       setLoading(false);
     }
   }, [propostaContratoId]);
+
+
+    const handleSendSuccess = () => {
+        setIsSignatureModalOpen(false);
+        fetchPropostaContrato();
+    };
+
 
   useEffect(() => {
     fetchPropostaContrato();
@@ -410,9 +422,9 @@ function PropostaContratoDetailPage() {
           </button>
 
           {(!propostaContrato.statusAssinatura || propostaContrato.statusAssinatura === 'Não Enviado') && (
-            <button onClick={handleEnviarParaAssinatura} className="button primary-button" disabled={isSendingSignature}>
-              {isSendingSignature ? 'A enviar...' : 'Enviar para Assinatura'}
-            </button>
+            <button onClick={() => setIsSignatureModalOpen(true)} className="button primary-button">
+                    Preparar para Assinatura
+                </button>
           )}
 
         </div>
@@ -556,6 +568,14 @@ function PropostaContratoDetailPage() {
           discardReasons={motivosDescarte}
           initialComment={`Distrato referente à unidade ${propostaContrato?.unidade?.identificador} do empreendimento ${propostaContrato?.empreendimento?.nome}.`}
         />
+
+         <PrepararAssinaturaModal
+                isOpen={isSignatureModalOpen}
+                onClose={() => setIsSignatureModalOpen(false)}
+                contrato={propostaContrato}
+                arquivoContrato={arquivoContrato} // Passa o ficheiro para o modal
+                onSendSuccess={handleSendSuccess}
+            />
 
         <GerarContratoModal
           isOpen={isGerarContratoModalOpen}
