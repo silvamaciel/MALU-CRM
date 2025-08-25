@@ -8,23 +8,19 @@ import {
   updatePropostaContratoApi,
   updatePropostaContratoStatusApi,
   registrarDistratoApi,
-  gerarEsalvarPdfApi
+  gerarEsalvarPdfApi,
+  enviarParaAssinaturaApi
 } from "../../../api/propostaContratoApi";
 
+import { listarArquivosApi } from "../../../api/fileApi"; // <<< adicionado
+
 import PrepararAssinaturaModal from '../../../components/PrepararAssinaturaModal/PrepararAssinaturaModal';
-
-
 import "./PropostaContratoDetailPage.css";
 import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
 import DiscardLeadModal from "../../../components/DiscardLeadModal/DiscardLeadModal";
 import { getDiscardReasons } from "../../../api/discardReasons";
-
 import GerarContratoModal from '../../../components/PropostaWizard/GerarContratoModal';
-import { enviarParaAssinaturaApi } from "../../../api/propostaContratoApi";
 import SignatureStatusPanel from "./SignatureStatusPanel";
-
-
-
 
 const STATUS_PROPOSTA_OPCOES = [
   "Em Elaboração",
@@ -42,8 +38,7 @@ function PropostaContratoDetailPage() {
   const navigate = useNavigate();
 
   const [isSignatureModalOpen, setIsSignatureModalOpen] = useState(false);
-    const [arquivoContrato, setArquivoContrato] = useState(null); 
-
+  const [arquivoContrato, setArquivoContrato] = useState(null); // mantém variável original
 
   const [propostaContrato, setPropostaContrato] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -74,6 +69,23 @@ function PropostaContratoDetailPage() {
     try {
       const data = await getPropostaContratoByIdApi(propostaContratoId);
       setPropostaContrato(data);
+
+      // <<< NOVO: buscar arquivo do contrato associado (sem renomear variáveis)
+      try {
+        const files = await listarArquivosApi({
+          categoria: 'Contratos',
+          associations: JSON.stringify({ item: propostaContratoId })
+        });
+        if (files && files.length > 0) {
+          setArquivoContrato(files[0]);
+        } else {
+          setArquivoContrato(null);
+        }
+      } catch (e) {
+        // Não quebra fluxo caso Drive não responda; apenas loga
+        console.warn("Falha ao listar arquivos do contrato:", e);
+      }
+
     } catch (err) {
       const errorMsg =
         err.message || "Erro ao carregar dados da proposta/contrato.";
@@ -84,20 +96,18 @@ function PropostaContratoDetailPage() {
     }
   }, [propostaContratoId]);
 
-
-    const handleSendSuccess = () => {
-        setIsSignatureModalOpen(false);
-        fetchPropostaContrato();
-    };
-
+  const handleSendSuccess = () => {
+    setIsSignatureModalOpen(false);
+    fetchPropostaContrato();
+  };
 
   useEffect(() => {
     fetchPropostaContrato();
   }, [fetchPropostaContrato]);
-  //Handler para Baixar Pdf
+
+  //Handler para Baixar Pdf (mantido)
   const handleDownloadPdf = async () => {
     if (!propostaContrato || !propostaContrato._id) return;
-
     setIsDownloadingPdf(true);
     toast.info("Gerando PDF, por favor aguarde...");
     try {
@@ -105,11 +115,9 @@ function PropostaContratoDetailPage() {
         propostaContrato._id
       );
 
-      // Cria um link temporário para o download
       const url = window.URL.createObjectURL(pdfBlob);
       const link = document.createElement("a");
       link.href = url;
-      // Define o nome do arquivo
       const leadName =
         propostaContrato.lead?.nome?.replace(/\s+/g, "_") || "Lead";
       const unidadeId =
@@ -121,10 +129,9 @@ function PropostaContratoDetailPage() {
       );
 
       document.body.appendChild(link);
-      link.click(); // Simula o clique para iniciar o download
-
-      link.parentNode.removeChild(link); // Remove o link temporário
-      window.URL.revokeObjectURL(url); // Libera o objeto URL
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
 
       toast.success("Download do PDF iniciado!");
     } catch (err) {
@@ -137,26 +144,33 @@ function PropostaContratoDetailPage() {
     }
   };
 
-
   const handleDownloadAndSavePdf = async () => {
     setIsDownloadingPdf(true);
     toast.info("A gerar e a salvar o PDF no Drive...");
     try {
-        const pdfBlob = await gerarEsalvarPdfApi(propostaContrato._id); // <<< CHAMA A NOVA FUNÇÃO
-        
-        // Lógica de download (a mesma que você já tem)
-        const url = window.URL.createObjectURL(pdfBlob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.setAttribute("download", `Contrato_${propostaContrato.lead?.nome}.pdf`);
-        document.body.appendChild(link);
-        link.click();
-        link.parentNode.removeChild(link);
-        
-        toast.success("PDF gerado e salvo no Drive com sucesso!");
-    } catch (err) { /* ... */ }
-    finally { setIsDownloadingPdf(false); }
-};
+      const pdfBlob = await gerarEsalvarPdfApi(propostaContrato._id); // mantém função original
+
+      // Lógica de download (a mesma já existente)
+      const url = window.URL.createObjectURL(pdfBlob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `Contrato_${propostaContrato.lead?.nome}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+
+      toast.success("PDF gerado e salvo no Drive com sucesso!");
+
+      // >>> após salvar, re-busca dados para capturar novo arquivo (como no "novo")
+      fetchPropostaContrato();
+    } catch (err) {
+      const errorMsg = err?.message || "Falha ao processar o PDF.";
+      toast.error(errorMsg);
+      console.error(err);
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
 
   const handleChangeStatus = async (novoStatus) => {
     if (
@@ -182,14 +196,12 @@ function PropostaContratoDetailPage() {
     toast.info(`Atualizando status para ${novoStatus}...`);
     let dadosAdicionais = {};
 
-    // Coletar dados adicionais se necessário para certos status
     if (novoStatus === "Assinado") {
       const dataAssinatura = prompt(
         "Digite a data da assinatura (AAAA-MM-DD):",
         new Date().toISOString().split("T")[0]
       );
       if (!dataAssinatura) {
-        // Usuário cancelou o prompt
         setIsUpdatingStatus(false);
         setConfirmStatusModal({
           isOpen: false,
@@ -227,7 +239,7 @@ function PropostaContratoDetailPage() {
       toast.success(
         `Status da Proposta/Contrato atualizado para "${novoStatus}"!`
       );
-      fetchPropostaContrato(true); // Re-busca os dados para atualizar a UI e mostrar o toast de sucesso do fetch
+      fetchPropostaContrato(true);
     } catch (err) {
       toast.error(err.message || "Falha ao atualizar status.");
     } finally {
@@ -241,15 +253,10 @@ function PropostaContratoDetailPage() {
     }
   };
 
-
-
-
-
-
   useEffect(() => {
     const fetchMotivos = async () => {
       try {
-        const data = await getDiscardReasons(); // Assume que busca para a company correta ou são globais
+        const data = await getDiscardReasons();
         setMotivosDescarte(data || []);
       } catch (error) {
         console.error("Erro ao buscar motivos de descarte:", error);
@@ -269,7 +276,7 @@ function PropostaContratoDetailPage() {
       );
       return;
     }
-    setDistratoError(""); // Limpa erros anteriores do modal
+    setDistratoError("");
     setIsDistratoModalOpen(true);
   };
 
@@ -279,31 +286,27 @@ function PropostaContratoDetailPage() {
   };
 
   const handleConfirmDistrato = async (discardData) => {
-    // discardData virá do modal: { motivoDescarteId, comentario }
     if (!propostaContrato) return;
 
     setIsProcessingDistrato(true);
     setDistratoError("");
     toast.info("Registrando distrato...");
 
-    // O comentário do modal pode ser ADICIONADO ao motivo principal
     const motivoPrincipal =
-      discardData.motivoTexto || "Distrato solicitado pelo cliente"; // Pega o texto do motivo selecionado
+      discardData.motivoTexto || "Distrato solicitado pelo cliente";
     const comentarioFinalDistrato = `${motivoPrincipal}${discardData.comentario
       ? "\nObservações Adicionais: " + discardData.comentario
       : ""
       }`;
 
     const dadosParaBackend = {
-      novoStatus: "Distrato Realizado", // Status final da PropostaContrato
-      motivoDistrato: comentarioFinalDistrato, // O motivo + comentário para PropostaContrato.motivoDistrato
-      dataDistrato: new Date().toISOString().split("T")[0], // Data atual
-      // Backend também precisará do motivoDescarteId para o Lead
+      novoStatus: "Distrato Realizado",
+      motivoDistrato: comentarioFinalDistrato,
+      dataDistrato: new Date().toISOString().split("T")[0],
       leadMotivoDescarteId: discardData.motivoDescarteId,
     };
 
     try {
-      // A API updatePropostaContratoStatusApi precisa ser capaz de receber e passar leadMotivoDescarteId para o serviço
       await registrarDistratoApi(propostaContrato._id, dadosParaBackend);
       toast.success("Distrato registrado com sucesso!");
       handleCloseDistratoModal();
@@ -311,10 +314,51 @@ function PropostaContratoDetailPage() {
     } catch (err) {
       const errorMsg =
         err.error || err.message || "Falha ao registrar distrato.";
-      setDistratoError(errorMsg); // Mostra erro no modal
+      setDistratoError(errorMsg);
       toast.error(errorMsg);
     } finally {
       setIsProcessingDistrato(false);
+    }
+  };
+
+  // Ações de status válidas (mantidas)
+  let acoesDeStatusPermitidas = [];
+  const statusAtual = propostaContrato?.statusPropostaContrato;
+
+  if (statusAtual === "Em Elaboração") {
+    acoesDeStatusPermitidas = [
+      "Aguardando Aprovações",
+      "Aguardando Assinatura Cliente",
+      "Cancelado",
+    ];
+  } else if (statusAtual === "Aguardando Aprovações") {
+    acoesDeStatusPermitidas = [
+      "Aguardando Assinatura Cliente",
+      "Recusado",
+      "Cancelado",
+    ];
+  } else if (statusAtual === "Aguardando Assinatura Cliente") {
+    acoesDeStatusPermitidas = ["Assinado", "Recusado", "Cancelado"];
+  } else if (statusAtual === "Assinado") {
+    acoesDeStatusPermitidas = ["Vendido", "Cancelado"];
+  }
+
+  const handleEnviarParaAssinatura = async () => {
+    if (!propostaContrato) return;
+
+    const confirmSend = window.confirm("Tem certeza que deseja enviar este contrato para assinatura? Esta ação não pode ser desfeita.");
+    if (!confirmSend) return;
+
+    setIsSendingSignature(true);
+    toast.info("A preparar e a enviar o contrato para o Autentique...");
+    try {
+      await enviarParaAssinaturaApi(propostaContrato._id);
+      toast.success("Contrato enviado para assinatura com sucesso!");
+      fetchPropostaContrato();
+    } catch (error) {
+      toast.error(error.message || "Falha ao enviar para assinatura.");
+    } finally {
+      setIsSendingSignature(false);
     }
   };
 
@@ -342,50 +386,6 @@ function PropostaContratoDetailPage() {
     );
   }
 
-  // Lógica para definir quais botões de status mostrar
-  // Baseado no status atual, quais são as próximas ações válidas?
-  let acoesDeStatusPermitidas = [];
-  const statusAtual = propostaContrato.statusPropostaContrato;
-
-  if (statusAtual === "Em Elaboração") {
-    acoesDeStatusPermitidas = [
-      "Aguardando Aprovações",
-      "Aguardando Assinatura Cliente",
-      "Cancelado",
-    ];
-  } else if (statusAtual === "Aguardando Aprovações") {
-    acoesDeStatusPermitidas = [
-      "Aguardando Assinatura Cliente",
-      "Recusado",
-      "Cancelado",
-    ];
-  } else if (statusAtual === "Aguardando Assinatura Cliente") {
-    acoesDeStatusPermitidas = ["Assinado", "Recusado", "Cancelado"];
-  } else if (statusAtual === "Assinado") {
-    acoesDeStatusPermitidas = ["Vendido", "Cancelado"];
-  }
-
-
-  const handleEnviarParaAssinatura = async () => {
-    if (!propostaContrato) return;
-
-    const confirmSend = window.confirm("Tem certeza que deseja enviar este contrato para assinatura? Esta ação não pode ser desfeita.");
-    if (!confirmSend) return;
-
-    setIsSendingSignature(true);
-    toast.info("A preparar e a enviar o contrato para o Autentique...");
-    try {
-      await enviarParaAssinaturaApi(propostaContrato._id);
-      toast.success("Contrato enviado para assinatura com sucesso!");
-      fetchPropostaContrato(); // Atualiza a página para mostrar o novo status
-    } catch (error) {
-      toast.error(error.message || "Falha ao enviar para assinatura.");
-    } finally {
-      setIsSendingSignature(false);
-    }
-  };
-
-
   return (
     <div className="admin-page proposta-contrato-detail-page">
       <header className="page-header">
@@ -403,15 +403,13 @@ function PropostaContratoDetailPage() {
             to={`/propostas-contratos/${propostaContrato._id}/editar`}
             className="button-link-prime"
             style={{ marginRight: "10px" }}
-          // Desabilitar se status não permitir edição
-          // disabled={!["Em Elaboração", "Aguardando Aprovações"].includes(propostaContrato.statusPropostaContrato)}
           >
             Editar Proposta/Contrato
           </Link>
 
           <button onClick={() => setIsGerarContratoModalOpen(true)} className="button action-button">Gerar/Editar Documento </button>
 
-          {/* Botão para baixar PDF */}
+          {/* Botão para baixar/gerar+salvar PDF (mantido, agora também reatualiza arquivos) */}
           <button
             onClick={handleDownloadAndSavePdf}
             className="button action-button"
@@ -423,14 +421,12 @@ function PropostaContratoDetailPage() {
 
           {(!propostaContrato.statusAssinatura || propostaContrato.statusAssinatura === 'Não Enviado') && (
             <button onClick={() => setIsSignatureModalOpen(true)} className="button primary-button">
-                    Preparar para Assinatura
-                </button>
+              Preparar para Assinatura
+            </button>
           )}
-
         </div>
       </header>
 
-      {/* SEÇÃO DE STATUS ATUAL E AÇÕES DE MUDANÇA DE STATUS VVVVV */}
       <div
         className="status-actions-section"
         style={{
@@ -453,8 +449,8 @@ function PropostaContratoDetailPage() {
         {propostaContrato.statusPropostaContrato === "Vendido" && (
           <button
             onClick={handleOpenDistratoModal}
-            className="button خطر-button small-button" // Ou um estilo apropriado
-            disabled={isProcessingDistrato || isUpdatingStatus} // Use um estado de loading apropriado
+            className="button خطر-button small-button"
+            disabled={isProcessingDistrato || isUpdatingStatus}
           >
             Registrar Distrato
           </button>
@@ -519,6 +515,7 @@ function PropostaContratoDetailPage() {
             {propostaContrato.responsavelNegociacao?.nome || "N/A"}
           </p>
         </div>
+
         <div className="contrato-preview-section">
           <h3>Conteúdo do Contrato</h3>
           <div
@@ -538,9 +535,6 @@ function PropostaContratoDetailPage() {
           />
         )}
 
-
-
-
         <ConfirmModal
           isOpen={confirmStatusModal.isOpen}
           onClose={() =>
@@ -557,10 +551,11 @@ function PropostaContratoDetailPage() {
           confirmText="Sim, Confirmar"
           isProcessing={isUpdatingStatus}
         />
+
         <DiscardLeadModal
           isOpen={isDistratoModalOpen}
           onClose={handleCloseDistratoModal}
-          onSubmit={handleConfirmDistrato} // Este handler agora faz mais do que só descartar
+          onSubmit={handleConfirmDistrato}
           leadName={`Proposta/Contrato para: ${propostaContrato?.lead?.nome || "Lead Desconhecido"
             }`}
           isProcessing={isProcessingDistrato}
@@ -569,22 +564,20 @@ function PropostaContratoDetailPage() {
           initialComment={`Distrato referente à unidade ${propostaContrato?.unidade?.identificador} do empreendimento ${propostaContrato?.empreendimento?.nome}.`}
         />
 
-         <PrepararAssinaturaModal
-                isOpen={isSignatureModalOpen}
-                onClose={() => setIsSignatureModalOpen(false)}
-                contrato={propostaContrato}
-                arquivoContrato={arquivoContrato} // Passa o ficheiro para o modal
-                onSendSuccess={handleSendSuccess}
-            />
+        <PrepararAssinaturaModal
+          isOpen={isSignatureModalOpen}
+          onClose={() => setIsSignatureModalOpen(false)}
+          contrato={propostaContrato}
+          arquivoContrato={arquivoContrato} // agora populado via listarArquivosApi
+          onSendSuccess={handleSendSuccess}
+        />
 
         <GerarContratoModal
           isOpen={isGerarContratoModalOpen}
           onClose={() => setIsGerarContratoModalOpen(false)}
           proposta={propostaContrato}
-          onSaveSuccess={fetchPropostaContrato} // Chama o fetch para atualizar a página
+          onSaveSuccess={fetchPropostaContrato}
         />
-
-        {/* TODO: Adicionar mais seções para Plano de Pagamento, Corretagem, etc. */}
       </div>
     </div>
   );

@@ -1,0 +1,16 @@
+.signature-status-panel { padding: 20px; margin-top: 20px; }
+.signature-status-panel h4 { margin-top: 0; }
+.status-header { margin-bottom: 15px; }
+.signatarios-list { list-style: none; padding-left: 0; margin: 0; }
+.signer-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.9em;
+}
+.signer-item:last-child { border-bottom: none; }
+.signer-email { color: #5a5c69; }
+.signer-status { font-weight: bold; }
+.signer-item.status-assinado .signer-status { color: #1cc88a; } /* Verde */
+.signer-item.status-pendente .signer-status { color: #f6c23e; } /* Amarelo */
