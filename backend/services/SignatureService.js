@@ -32,7 +32,7 @@ const enviarParaAssinatura = async (contratoId, companyId) => {
     }
     
     const autentiqueApi = axios.create({
-        baseURL: 'https://api.autentique.com.br/v2', // Remove a barra '/' do final
+        baseURL: 'https://api.autentique.com.br',
         headers: { 'Authorization': `Bearer ${contrato.company.autentiqueApiToken}` }
     });
 
