@@ -500,6 +500,29 @@ function LeadFormModal({
                 </div>
               )}
 
+              {/* TAGS */}
+              {!isHidden("tags") && (
+                <div className="lfm-field lfm-col-2">
+                  <label>Tags</label>
+                  <div className="lfm-tags">
+                    <div className="lfm-tags-list">
+                      {formData.tags.map((tag) => (
+                        <span key={tag} className="lfm-tag">
+                          {tag}
+                          <button type="button" onClick={() => removeTag(tag)} aria-label={`Remover ${tag}`}>×</button>
+                        </span>
+                      ))}
+                    </div>
+                    <input
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={onTagKeyDown}
+                      placeholder="Digite a tag e pressione Enter"
+                    />
+                    <button type="button" className="lfm-btn small" onClick={addTag}>Adicionar</button>
+                  </div>
+                </div>
+              )}
 
               {/* READ-ONLY: Corretor (se vier) */}
               {(corretorInfo?.id || formData.corretorResponsavel) && !isHidden("corretorResponsavel") && (
@@ -570,18 +593,16 @@ function LeadFormModal({
                         />
                       </div>
                       <div className="lfm-field">
-                        <label htmlFor="lfm-contato">Contato *</label>
+                        <label>Contato</label>
                         <PhoneInput
-                          id="lfm-contato"
-                          value={formData.contato}
-                          onChange={handlePhoneChange}
                           defaultCountry="BR"
                           international
                           limitMaxLength
-                          required
+                          value={c.contato || ""}
+                          onChange={(value) => handleCoadqChange(idx, "contato", value || "")}
                           className="lfm-phone"
                         />
-                        {formData.contato && !isValidPhoneNumber(formData.contato) && (
+                        {c.contato && !isValidPhoneNumber(c.contato) && (
                           <small className="lfm-error-text">Número inválido</small>
                         )}
                       </div>

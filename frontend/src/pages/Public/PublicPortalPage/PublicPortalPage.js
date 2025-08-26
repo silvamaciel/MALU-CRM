@@ -126,11 +126,12 @@ function PublicPortalPage() {
         onClose={() => setOpenLeadModal(false)}
         prefill={{
           corretorResponsavel: verifiedBroker?._id || null,
+          submittedByBroker: verifiedBroker?._id || null,
         }}
         corretorInfo={
           verifiedBroker ? { id: verifiedBroker._id, nome: verifiedBroker.nome } : undefined
         }
-        hideFields={['situacao', 'origem', 'responsavel']}
+        hideFields={['situacao', 'origem', 'responsavel', 'tags']}
         createApi={(payload) => {
           if (!verifiedBroker?._id) return Promise.reject(new Error('Corretor ausente.'));
           return submitLeadRequestPublicApi({
