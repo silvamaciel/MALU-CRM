@@ -1,36 +1,420 @@
+/* LeadFormModal.css */
+
+/* =========================
+   Paleta & Base
+   ========================= */
+:root {
+  --bg-overlay: rgba(10, 12, 16, 0.55);
+
+  --brand-500: #6d4aff;   /* Roxo principal */
+  --brand-600: #5b39f2;
+  --brand-700: #4b2ed1;
+
+  --accent-500: #00c2a8;  /* Verde água / teal */
+  --accent-600: #00a790;
+
+  --info-500: #3aa0ff;    /* Azul info */
+  --danger-500: #ff4d4f;  /* Vermelho erro */
+  --warn-500: #ffb020;    /* Amarelo aviso */
+  --ok-500: #21c55d;      /* Sucesso */
+
+  --text-900: #0f172a;
+  --text-700: #334155;
+  --text-500: #64748b;
+
+  --surface-0: #ffffff;
+  --surface-50: #f8fafc;
+  --surface-100: #f1f5f9;
+  --surface-200: #e2e8f0;
+  --surface-300: #cbd5e1;
+
+  --ring: 2px;
+  --radius: 16px;
+  --radius-sm: 12px;
+  --radius-lg: 20px;
+
+  --shadow-lg: 0 20px 50px rgba(24, 20, 53, 0.25);
+  --shadow-md: 0 10px 30px rgba(24, 20, 53, 0.20);
+  --shadow-sm: 0 6px 18px rgba(24, 20, 53, 0.14);
+
+  --transition: 160ms ease;
+}
+
+/* =========================
+   Backdrop & Modal
+   ========================= */
 .lfm-backdrop {
-  position: fixed; inset: 0; background: rgba(0,0,0,.4);
-  display: flex; align-items: center; justify-content: center; z-index: 9999;
+  position: fixed;
+  inset: 0;
+  background: var(--bg-overlay);
+  backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  z-index: 999;
+  animation: lfmFadeIn 140ms ease-out;
 }
+
+@keyframes lfmFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 .lfm-modal {
-  width: min(920px, 92vw); max-height: 90vh; overflow: auto;
-  background: #fff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.2);
-  padding: 16px 18px 8px;
+  width: min(1100px, 100%);
+  max-height: 90vh;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--surface-0) 0%, #fbfbff 100%);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid rgba(109, 74, 255, 0.08);
+  animation: lfmPop 180ms ease-out;
 }
-.lfm-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.lfm-close { font-size: 22px; border: 0; background: transparent; cursor: pointer; }
-.lfm-loading, .lfm-error { padding: 24px; text-align: center; }
-.lfm-error-text { color: #d32f2f; }
-.lfm-form { margin-top: 8px; }
-.lfm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-.lfm-field { display: flex; flex-direction: column; gap: 6px; }
-.lfm-field input, .lfm-field select, .lfm-field textarea, .lfm-phone {
-  width: 100%; padding: 10px; border: 1px solid #e0e0e0; border-radius: 8px;
-}
-.lfm-field textarea { min-height: 90px; resize: vertical; }
-.lfm-col-2 { grid-column: span 2; }
-.lfm-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 12px; }
-.lfm-btn { padding: 10px 16px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; }
-.lfm-btn.primary { background: #1f6feb; color: #fff; }
-.lfm-btn.ghost { background: #fff; border-color: #cfd8dc; color: #37474f; }
-.lfm-footer-links { display:flex; gap:12px; margin: 8px 0 4px; }
 
+@keyframes lfmPop {
+  from { transform: translateY(8px) scale(0.98); opacity: 0; }
+  to   { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* =========================
+   Header
+   ========================= */
+.lfm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 24px;
+  background:
+    radial-gradient(1200px 120px at 10% 0%, rgba(109, 74, 255, 0.12), transparent 40%),
+    radial-gradient(900px 120px at 90% 0%, rgba(58, 160, 255, 0.12), transparent 40%),
+    linear-gradient(180deg, #ffffff, #fbfaff);
+  border-bottom: 1px solid var(--surface-200);
+}
+
+.lfm-header h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-900);
+  letter-spacing: 0.2px;
+}
+
+.lfm-close {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  color: var(--text-700);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform var(--transition), background var(--transition), color var(--transition);
+}
+.lfm-close:hover { background: var(--surface-100); transform: rotate(4deg); color: var(--brand-600); }
+.lfm-close:active { transform: scale(0.98); }
+
+/* =========================
+   Loading & Error
+   ========================= */
+.lfm-loading, .lfm-error {
+  padding: 24px;
+  border-top: 1px dashed var(--surface-200);
+}
+.lfm-loading p { color: var(--text-700); }
+.lfm-error p { color: var(--danger-500); font-weight: 600; }
+
+/* =========================
+   Form & Grid
+   ========================= */
+.lfm-form {
+  padding: 20px 24px 12px;
+  overflow: auto;
+  max-height: 66vh;
+}
+
+.lfm-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 18px;
+}
+
+.lfm-col-2 {
+  grid-column: 1 / -1;
+}
+
+/* =========================
+   Field / Inputs
+   ========================= */
+.lfm-field {
+  display: grid;
+  gap: 8px;
+}
+
+.lfm-field label {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-700);
+}
+
+.lfm-field input,
+.lfm-field select,
+.lfm-field textarea,
+.lfm-phone .PhoneInputInput {
+  width: 100%;
+  border: 1px solid var(--surface-200);
+  background: var(--surface-0);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  font-size: 0.95rem;
+  color: var(--text-900);
+  outline: none;
+  transition: border var(--transition), box-shadow var(--transition), background var(--transition);
+  box-shadow: 0 1px 0 rgba(16, 24, 40, 0.02);
+}
+
+.lfm-field textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.lfm-field input::placeholder,
+.lfm-field textarea::placeholder {
+  color: var(--text-500);
+}
+
+.lfm-field input:focus,
+.lfm-field select:focus,
+.lfm-field textarea:focus,
+.lfm-phone .PhoneInputInput:focus {
+  border-color: var(--brand-500);
+  box-shadow: 0 0 0 var(--ring) rgba(109, 74, 255, 0.25);
+  background: #fff;
+}
+
+/* PhoneInput (react-phone-number-input) */
+.lfm-phone {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--surface-200);
+  border-radius: var(--radius);
+  padding: 4px 10px 4px 6px;
+  gap: 8px;
+  transition: border var(--transition), box-shadow var(--transition), background var(--transition);
+  background: var(--surface-0);
+}
+
+.lfm-phone:focus-within {
+  border-color: var(--brand-500);
+  box-shadow: 0 0 0 var(--ring) rgba(109, 74, 255, 0.25);
+  background: #fff;
+}
+
+.lfm-phone .PhoneInputCountrySelect {
+  border: none;
+  background: transparent;
+  color: var(--text-700);
+  outline: none;
+  padding: 8px 6px;
+  border-radius: 10px;
+}
+
+.lfm-error-text {
+  color: var(--danger-500);
+  font-size: 0.82rem;
+}
+
+/* =========================
+   Readonly blocks
+   ========================= */
 .lfm-readonly {
-  display:flex; flex-direction:column; gap:4px;
-  padding:10px; border:1px dashed #cfd8dc; border-radius:8px; background:#fafafa;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(180deg, #f6f7ff 0%, #fafdff 100%);
+  border: 1px dashed rgba(109, 74, 255, 0.35);
+  color: var(--text-700);
+  padding: 12px 14px;
+  border-radius: var(--radius);
 }
 
-@media (max-width: 640px) {
-  .lfm-grid { grid-template-columns: 1fr; }
-  .lfm-col-2 { grid-column: span 1; }
+/* =========================
+   Buttons
+   ========================= */
+.lfm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 14px 24px 22px;
+  border-top: 1px solid var(--surface-200);
+  background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+}
+
+.lfm-btn {
+  --btn-bg: var(--surface-100);
+  --btn-bd: var(--surface-200);
+  --btn-fg: var(--text-900);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--btn-bd);
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform var(--transition), box-shadow var(--transition), background var(--transition), border var(--transition), color var(--transition);
+  box-shadow: var(--shadow-sm);
+}
+
+.lfm-btn:hover { transform: translateY(-1px); }
+.lfm-btn:active { transform: translateY(0); box-shadow: none; }
+
+.lfm-btn.primary {
+  --btn-bg: linear-gradient(180deg, var(--brand-500), var(--brand-700));
+  --btn-bd: transparent;
+  --btn-fg: #ffffff;
+  box-shadow: 0 8px 18px rgba(109, 74, 255, 0.35);
+}
+.lfm-btn.primary:hover {
+  filter: brightness(1.03);
+}
+.lfm-btn.primary:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.lfm-btn.ghost {
+  --btn-bg: transparent;
+  --btn-bd: var(--surface-300);
+  --btn-fg: var(--text-700);
+}
+.lfm-btn.ghost:hover {
+  background: var(--surface-50);
+}
+
+.lfm-btn.outline {
+  --btn-bg: #ffffff;
+  --btn-bd: rgba(58, 160, 255, 0.55);
+  --btn-fg: var(--info-500);
+}
+.lfm-btn.outline:hover {
+  background: rgba(58, 160, 255, 0.06);
+}
+
+.lfm-btn.small {
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+/* Contextual helpers */
+.lfm-btn.success {
+  --btn-bg: linear-gradient(180deg, var(--ok-500), #14a34a);
+  --btn-bd: transparent;
+  --btn-fg: #fff;
+}
+.lfm-btn.warn {
+  --btn-bg: linear-gradient(180deg, var(--warn-500), #e59500);
+  --btn-bd: transparent;
+  --btn-fg: #1e1e1e;
+}
+.lfm-btn.danger {
+  --btn-bg: linear-gradient(180deg, var(--danger-500), #e53537);
+  --btn-bd: transparent;
+  --btn-fg: #fff;
+}
+
+/* =========================
+   Coadquirentes
+   ========================= */
+.lfm-coadquirentes {
+  margin-top: 6px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--surface-300);
+}
+
+.lfm-coadq-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.lfm-coadq-header h3 {
+  font-size: 1rem;
+  color: var(--text-900);
+  font-weight: 800;
+}
+
+.lfm-coadq-item {
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  border: 1px solid var(--surface-200);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 14px;
+  margin-top: 10px;
+}
+
+.lfm-coadq-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+
+.lfm-coadq-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* =========================
+   Footer Links
+   ========================= */
+.lfm-footer-links {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 24px 20px;
+  border-top: 1px solid var(--surface-200);
+  background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+}
+
+.lfm-footer-links a {
+  color: var(--brand-600);
+  font-weight: 600;
+  text-decoration: none;
+  transition: color var(--transition);
+}
+.lfm-footer-links a:hover { color: var(--brand-700); }
+
+/* =========================
+   Responsividade
+   ========================= */
+@media (max-width: 980px) {
+  .lfm-grid,
+  .lfm-coadq-grid {
+    grid-template-columns: 1fr;
+  }
+  .lfm-modal {
+    max-height: 92vh;
+  }
+  .lfm-form {
+    max-height: 70vh;
+  }
+}
+
+@media (max-width: 520px) {
+  .lfm-header { padding: 16px; }
+  .lfm-form { padding: 16px; }
+  .lfm-actions { padding: 12px 16px 18px; }
+  .lfm-footer-links { padding: 10px 16px 16px; }
+  .lfm-modal { border-radius: 14px; }
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -13,18 +13,37 @@ import "react-phone-number-input/style.css";
 
 import "./LeadFormModal.css";
 
+const ESTADO_CIVIL_OPCOES = [
+  "Solteiro(a)",
+  "Casado(a)",
+  "Divorciado(a)",
+  "Viúvo(a)",
+  "União Estável",
+  "Outro",
+];
+
 const initialState = {
+  // LeadRequest base
   nome: "",
   contato: "",
   email: "",
   nascimento: "",
   endereco: "",
   cpf: "",
-  situacao: "",
-  origem: "",
-  responsavel: "",
+  rg: "",
+  nacionalidade: "Brasileiro(a)",
+  estadoCivil: "",
+  profissao: "",
   comentario: "",
-  corretorResponsavel: "", // novo campo (vai só no payload)
+  origem: "",         // ObjectId
+  responsavel: "",    // usuário interno (não está no LeadRequest, mas mantido como antes)
+  // metadados
+  tags: [],           // array de strings
+  // corretor
+  corretorResponsavel: "",   // ObjectId (broker) — required no LeadRequest
+  submittedByBroker: "",     // ObjectId (broker) — required no LeadRequest
+  // coadquirentes (opcional, só envia se tiver pelo botão)
+  coadquirentes: [],  // [{nome, cpf, rg, nacionalidade, estadoCivil, profissao, email, contato, endereco, nascimento}]
 };
 
 function LeadFormModal({
@@ -35,9 +54,9 @@ function LeadFormModal({
   prefill,
   hideFields = [],
   corretorInfo, // { id, nome }
-  createApi
+  createApi,    // opcional para sobrescrever o create padrão
 }) {
-  const createFn = createApi
+  const createFn = createApi || createLead;
   const isEditMode = Boolean(leadId);
   const isHidden = (f) => hideFields.includes(f);
 
@@ -56,14 +75,21 @@ function LeadFormModal({
   // Reset + prefill (create only)
   useEffect(() => {
     if (!isOpen) return;
-    setFormData(initialState);
+    setFormData((prev) => {
+      const base = { ...initialState };
+      // se vier corretorInfo, pré-seta corretorResponsavel e submittedByBroker
+      if (corretorInfo?.id) {
+        base.corretorResponsavel = corretorInfo.id;
+        base.submittedByBroker = corretorInfo.id;
+      }
+      // prefill (somente create)
+      if (!isEditMode && prefill) Object.assign(base, prefill);
+      return base;
+    });
     setInitialData(null);
     setOptionsError(null);
     setIsProcessing(false);
-    if (!isEditMode && prefill) {
-      setFormData((prev) => ({ ...prev, ...prefill }));
-    }
-  }, [isOpen, isEditMode, prefill]);
+  }, [isOpen, isEditMode, prefill, corretorInfo]);
 
   // ESC close
   useEffect(() => {
@@ -104,8 +130,12 @@ function LeadFormModal({
     (async () => {
       setIsLoadingData(true);
       try {
+        // Observação: getLeadById pode não trazer todos os campos do LeadRequest.
+        // Vamos fazer mapping defensivo para não quebrar.
         const data = await getLeadById(leadId);
-        const formattedNascimento = data.nascimento ? data.nascimento.substring(0, 10) : "";
+
+        const formattedNascimento = data.nascimento ? String(data.nascimento).substring(0, 10) : "";
+
         const formDataToSet = {
           nome: data.nome || "",
           contato: data.contato || "",
@@ -113,12 +143,36 @@ function LeadFormModal({
           nascimento: formattedNascimento,
           endereco: data.endereco || "",
           cpf: data.cpf || "",
+          rg: data.rg || "",
+          nacionalidade: data.nacionalidade || "Brasileiro(a)",
+          estadoCivil: data.estadoCivil || "",
+          profissao: data.profissao || "",
           situacao: data.situacao?._id || "",
           origem: data.origem?._id || "",
           responsavel: data.responsavel?._id || "",
           comentario: data.comentario || "",
-          corretorResponsavel: data.corretorResponsavel?._id || "", // se existir
+          // arrays / metadados
+          tags: Array.isArray(data.tags) ? data.tags : [],
+          // corretor
+          corretorResponsavel: data.corretorResponsavel?._id || corretorInfo?.id || "",
+          submittedByBroker: data.submittedByBroker?._id || corretorInfo?.id || "",
+          // coadquirentes (se existir no retorno)
+          coadquirentes: Array.isArray(data.coadquirentes)
+            ? data.coadquirentes.map((c) => ({
+              nome: c.nome || "",
+              cpf: c.cpf || "",
+              rg: c.rg || "",
+              nacionalidade: c.nacionalidade || "Brasileiro(a)",
+              estadoCivil: c.estadoCivil || "",
+              profissao: c.profissao || "",
+              email: c.email || "",
+              contato: c.contato || "",
+              endereco: c.endereco || "",
+              nascimento: c.nascimento ? String(c.nascimento).substring(0, 10) : "",
+            }))
+            : [],
         };
+
         setFormData((prev) => ({ ...prev, ...formDataToSet }));
         setInitialData(formDataToSet);
       } catch (err) {
@@ -127,8 +181,9 @@ function LeadFormModal({
         setIsLoadingData(false);
       }
     })();
-  }, [isOpen, isEditMode, leadId]);
+  }, [isOpen, isEditMode, leadId, corretorInfo]);
 
+  // helpers
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -148,13 +203,75 @@ function LeadFormModal({
     return clone;
   };
 
+  // ====== TAGS ======
+  const [tagInput, setTagInput] = useState("");
+  const addTag = useCallback(() => {
+    const t = (tagInput || "").trim().toLowerCase();
+    if (!t) return;
+    if (formData.tags.includes(t)) {
+      setTagInput("");
+      return;
+    }
+    setFormData((prev) => ({ ...prev, tags: [...prev.tags, t] }));
+    setTagInput("");
+  }, [tagInput, formData.tags]);
+
+  const removeTag = useCallback((tag) => {
+    setFormData((prev) => ({ ...prev, tags: prev.tags.filter((t) => t !== tag) }));
+  }, []);
+
+  const onTagKeyDown = (e) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      addTag();
+    }
+  };
+
+  // ====== COADQUIRENTES ======
+  const addCoadquirente = useCallback(() => {
+    setFormData((prev) => ({
+      ...prev,
+      coadquirentes: [
+        ...prev.coadquirentes,
+        {
+          nome: "",
+          cpf: "",
+          rg: "",
+          nacionalidade: "Brasileiro(a)",
+          estadoCivil: "",
+          profissao: "",
+          email: "",
+          contato: "",
+          endereco: "",
+          nascimento: "",
+        },
+      ],
+    }));
+  }, []);
+
+  const removeCoadquirente = useCallback((idx) => {
+    setFormData((prev) => {
+      const next = [...prev.coadquirentes];
+      next.splice(idx, 1);
+      return { ...prev, coadquirentes: next };
+    });
+  }, []);
+
+  const handleCoadqChange = useCallback((idx, field, value) => {
+    setFormData((prev) => {
+      const next = [...prev.coadquirentes];
+      next[idx] = { ...next[idx], [field]: value };
+      return { ...prev, coadquirentes: next };
+    });
+  }, []);
+
   const handleSubmit = useCallback(
     async (e) => {
       e.preventDefault();
       if (isProcessing) return;
       setIsProcessing(true);
 
-      // Min validações
+      // Validações mínimas
       if (!formData.nome || !formData.contato) {
         toast.warn("Nome e Contato são obrigatórios.");
         setIsProcessing(false);
@@ -170,40 +287,83 @@ function LeadFormModal({
         setIsProcessing(false);
         return;
       }
+      // Se estiver usando o modelo LeadRequest: corretor é obrigatório
+      if (!formData.corretorResponsavel || !formData.submittedByBroker) {
+        toast.warn("Corretor responsável não definido.");
+        setIsProcessing(false);
+        return;
+      }
 
       try {
+        // Normaliza payload
+        const basePayload = { ...formData };
+
+        // Limpa CPF vazio
+        if (basePayload.cpf && basePayload.cpf.replace(/\D/g, "") === "") delete basePayload.cpf;
+        // coadquirentes: só envia se houver pelo menos 1
+        if (!Array.isArray(basePayload.coadquirentes) || basePayload.coadquirentes.length === 0) {
+          delete basePayload.coadquirentes;
+        } else {
+          basePayload.coadquirentes = basePayload.coadquirentes.map((c) => {
+            const copy = { ...c };
+            if (copy.cpf && copy.cpf.replace(/\D/g, "") === "") delete copy.cpf;
+            // remove campos vazios para não poluir
+            Object.keys(copy).forEach((k) => {
+              if (copy[k] === "" || copy[k] === null) delete copy[k];
+            });
+            return copy;
+          });
+        }
+        // Tags: garante array de strings
+        if (!Array.isArray(basePayload.tags)) basePayload.tags = [];
+
+        const payload = stripHiddenFields(basePayload);
+
         if (isEditMode) {
           if (!initialData) {
             toast.error("Dados iniciais não carregados.");
             setIsProcessing(false);
             return;
           }
+          // diff apenas nos campos que mudaram (inclui novos campos)
           const changed = {};
-          Object.keys(formData).forEach((k) => {
-            if (isHidden(k)) return; // ignora campo oculto no diff
-            const curr = formData[k] ?? "";
-            const init = initialData[k] ?? "";
-            if (curr !== init) changed[k] = curr === "" ? null : curr;
+          Object.keys(payload).forEach((k) => {
+            if (isHidden(k)) return;
+            const curr = payload[k];
+            const init = initialData[k];
+
+            const isEqual =
+              Array.isArray(curr) && Array.isArray(init)
+                ? JSON.stringify(curr) === JSON.stringify(init)
+                : curr === init;
+
+            if (!isEqual) {
+              changed[k] = curr === "" ? null : curr;
+            }
           });
+
           if (Object.keys(changed).length === 0) {
             toast.info("Nenhuma alteração detectada.");
             setIsProcessing(false);
             return;
           }
-          const payload = stripHiddenFields(changed);
-          await updateLead(leadId, payload);
+          await updateLead(leadId, changed);
           toast.success("Lead atualizado!");
         } else {
-          const payload = stripHiddenFields({ ...formData });
+          // Create: remove chaves vazias não obrigatórias
           Object.keys(payload).forEach((k) => {
-            if (!["nome", "contato"].includes(k) && (payload[k] === "" || payload[k] === null)) {
-              delete payload[k];
+            if (!["nome", "contato", "corretorResponsavel", "submittedByBroker"].includes(k)) {
+              if (payload[k] === "" || payload[k] === null) delete payload[k];
             }
           });
-          if (payload.cpf && payload.cpf.replace(/\D/g, "") === "") delete payload.cpf;
           await createFn(payload);
           toast.success("Lead cadastrado!");
-          setFormData(initialState);
+          // Reset preservando corretor, se existir
+          setFormData((prev) => ({
+            ...initialState,
+            corretorResponsavel: prev.corretorResponsavel,
+            submittedByBroker: prev.submittedByBroker,
+          }));
         }
 
         onSaved?.();
@@ -215,7 +375,7 @@ function LeadFormModal({
         setIsProcessing(false);
       }
     },
-    [formData, initialData, isEditMode, leadId, isProcessing, hideFields, onSaved, onClose]
+    [formData, initialData, isEditMode, leadId, isProcessing, hideFields, onSaved, onClose, createFn]
   );
 
   if (!isOpen) return null;
@@ -224,7 +384,11 @@ function LeadFormModal({
     <div className="lfm-backdrop" onMouseDown={handleBackdropClick}>
       <div className="lfm-modal" role="dialog" aria-modal="true" onMouseDown={(e) => e.stopPropagation()}>
         <div className="lfm-header">
-          <h2>{isEditMode ? `Editar Lead${initialData?.nome ? `: ${initialData.nome}` : ""}` : "Cadastrar Lead"}</h2>
+          <h2>
+            {isEditMode
+              ? `Editar Lead${initialData?.nome ? `: ${initialData.nome}` : ""}`
+              : "Cadastrar Lead"}
+          </h2>
           <button
             type="button"
             className="lfm-close"
@@ -241,6 +405,7 @@ function LeadFormModal({
         {!loadingOptions && !isLoadingData && !optionsError && (
           <form className="lfm-form" onSubmit={handleSubmit}>
             <div className="lfm-grid">
+              {/* Básicos */}
               {!isHidden("nome") && (
                 <div className="lfm-field">
                   <label htmlFor="lfm-nome">Nome Completo *</label>
@@ -281,6 +446,39 @@ function LeadFormModal({
                 </div>
               )}
 
+              {!isHidden("rg") && (
+                <div className="lfm-field">
+                  <label htmlFor="lfm-rg">RG</label>
+                  <input id="lfm-rg" name="rg" value={formData.rg} onChange={handleChange} />
+                </div>
+              )}
+
+              {!isHidden("nacionalidade") && (
+                <div className="lfm-field">
+                  <label htmlFor="lfm-nacionalidade">Nacionalidade</label>
+                  <input id="lfm-nacionalidade" name="nacionalidade" value={formData.nacionalidade} onChange={handleChange} />
+                </div>
+              )}
+
+              {!isHidden("estadoCivil") && (
+                <div className="lfm-field">
+                  <label htmlFor="lfm-estado-civil">Estado Civil</label>
+                  <select id="lfm-estado-civil" name="estadoCivil" value={formData.estadoCivil} onChange={handleChange}>
+                    <option value=""></option>
+                    {ESTADO_CIVIL_OPCOES.map((ec) => (
+                      <option key={ec} value={ec}>{ec}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {!isHidden("profissao") && (
+                <div className="lfm-field">
+                  <label htmlFor="lfm-profissao">Profissão</label>
+                  <input id="lfm-profissao" name="profissao" value={formData.profissao} onChange={handleChange} />
+                </div>
+              )}
+
               {!isHidden("nascimento") && (
                 <div className="lfm-field">
                   <label htmlFor="lfm-nasc">Data de Nascimento</label>
@@ -302,17 +500,19 @@ function LeadFormModal({
                 </div>
               )}
 
-              {/* READ-ONLY: Corretor Responsável (quando vier) */}
-              {corretorInfo?.id && (
+
+              {/* READ-ONLY: Corretor (se vier) */}
+              {(corretorInfo?.id || formData.corretorResponsavel) && !isHidden("corretorResponsavel") && (
                 <div className="lfm-field lfm-col-2">
                   <label>Corretor Responsável</label>
                   <div className="lfm-readonly">
-                    <span>{corretorInfo.nome}</span>
-                    <small>ID: {corretorInfo.id}</small>
+                    <span>{corretorInfo?.nome || "Definido"}</span>
+                    <small>ID: {corretorInfo?.id || formData.corretorResponsavel}</small>
                   </div>
                 </div>
               )}
 
+              {/* Campos já existentes (listas) */}
               {!isHidden("situacao") && (
                 <div className="lfm-field">
                   <label htmlFor="lfm-situacao">Situação</label>
@@ -349,6 +549,117 @@ function LeadFormModal({
                 </div>
               )}
             </div>
+
+            {/* COADQUIRENTES - apenas botão visível por padrão */}
+            {!isHidden("coadquirentes") && (
+              <div className="lfm-coadquirentes lfm-col-2">
+                <div className="lfm-coadq-header">
+                  <h3>Coadquirentes</h3>
+                  <button type="button" className="lfm-btn outline" onClick={addCoadquirente}>+ Adicionar coadquirente</button>
+                </div>
+
+                {formData.coadquirentes.length > 0 && formData.coadquirentes.map((c, idx) => (
+                  <div key={idx} className="lfm-coadq-item">
+                    <div className="lfm-coadq-grid">
+                      <div className="lfm-field">
+                        <label>Nome *</label>
+                        <input
+                          value={c.nome}
+                          onChange={(e) => handleCoadqChange(idx, "nome", e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="lfm-field">
+                        <label htmlFor="lfm-contato">Contato *</label>
+                        <PhoneInput
+                          id="lfm-contato"
+                          value={formData.contato}
+                          onChange={handlePhoneChange}
+                          defaultCountry="BR"
+                          international
+                          limitMaxLength
+                          required
+                          className="lfm-phone"
+                        />
+                        {formData.contato && !isValidPhoneNumber(formData.contato) && (
+                          <small className="lfm-error-text">Número inválido</small>
+                        )}
+                      </div>
+                      <div className="lfm-field">
+                        <label>Email</label>
+                        <input
+                          type="email"
+                          value={c.email || ""}
+                          onChange={(e) => handleCoadqChange(idx, "email", e.target.value)}
+                        />
+                      </div>
+                      <div className="lfm-field">
+                        <label>CPF</label>
+                        <input
+                          maxLength={11}
+                          value={c.cpf || ""}
+                          onChange={(e) => handleCoadqChange(idx, "cpf", e.target.value)}
+                        />
+                      </div>
+                      <div className="lfm-field">
+                        <label>RG</label>
+                        <input
+                          value={c.rg || ""}
+                          onChange={(e) => handleCoadqChange(idx, "rg", e.target.value)}
+                        />
+                      </div>
+                      <div className="lfm-field">
+                        <label>Nacionalidade</label>
+                        <input
+                          value={c.nacionalidade || "Brasileiro(a)"}
+                          onChange={(e) => handleCoadqChange(idx, "nacionalidade", e.target.value)}
+                        />
+                      </div>
+                      <div className="lfm-field">
+                        <label>Estado Civil</label>
+                        <select
+                          value={c.estadoCivil || ""}
+                          onChange={(e) => handleCoadqChange(idx, "estadoCivil", e.target.value)}
+                        >
+                          <option value=""></option>
+                          {ESTADO_CIVIL_OPCOES.map((ec) => (
+                            <option key={ec} value={ec}>{ec}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="lfm-field">
+                        <label>Profissão</label>
+                        <input
+                          value={c.profissao || ""}
+                          onChange={(e) => handleCoadqChange(idx, "profissao", e.target.value)}
+                        />
+                      </div>
+                      <div className="lfm-field">
+                        <label>Data de Nascimento</label>
+                        <input
+                          type="date"
+                          value={c.nascimento || ""}
+                          onChange={(e) => handleCoadqChange(idx, "nascimento", e.target.value)}
+                        />
+                      </div>
+                      <div className="lfm-field lfm-col-2">
+                        <label>Endereço</label>
+                        <input
+                          value={c.endereco || ""}
+                          onChange={(e) => handleCoadqChange(idx, "endereco", e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="lfm-coadq-actions">
+                      <button type="button" className="lfm-btn ghost" onClick={() => removeCoadquirente(idx)}>
+                        Remover coadquirente
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div className="lfm-actions">
               <button type="button" className="lfm-btn ghost" onClick={() => !isProcessing && onClose?.()}>
