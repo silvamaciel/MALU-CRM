@@ -8,6 +8,8 @@ import BrokerRegisterStep from './componentes/BrokerRegisterStep';
 
 import LeadFormModal from '../../../components/LeadFormModal/LeadFormModal';
 import { submitLeadRequestPublicApi } from '../../../api/leadRequests';
+import { uploadArquivoApi } from '../../../api//fileApi';
+
 
 import './PublicPortalPage.css';
 
@@ -131,14 +133,27 @@ function PublicPortalPage() {
         corretorInfo={
           verifiedBroker ? { id: verifiedBroker._id, nome: verifiedBroker.nome } : undefined
         }
-        hideFields={['situacao', 'origem', 'responsavel', 'tags']}
+        hideFields={['situacao', 'origem', 'responsavel', 'tags']} // sem tags
         createApi={(payload) => {
           if (!verifiedBroker?._id) return Promise.reject(new Error('Corretor ausente.'));
-          return submitLeadRequestPublicApi({
+          const finalPayload = {
             ...payload,
             company: companyId,
             corretorResponsavel: verifiedBroker._id,
-          });
+            submittedByBroker: verifiedBroker._id,
+          };
+          delete finalPayload.tags;
+          return submitLeadRequestPublicApi(finalPayload); // deve retornar o _id do LeadRequest
+        }}
+        afterCreateUploadDocs={async ({ createdId, files }) => {
+          const metaBase = {
+            categoria: 'Documentos Leads',
+            pasta: 'Pendentes', // ou 'Documentos' se preferir já usar a pasta final
+            primaryAssociation: { kind: 'LeadRequest', item: createdId },
+          };
+
+          // envios em paralelo
+          await Promise.all(files.map((file) => uploadArquivoApi(file, metaBase)));
         }}
         onSaved={() => {
           setOpenLeadModal(false);

@@ -35,15 +35,12 @@ const initialState = {
   estadoCivil: "",
   profissao: "",
   comentario: "",
-  origem: "",         // ObjectId
-  responsavel: "",    // usuário interno (não está no LeadRequest, mas mantido como antes)
-  // metadados
-  tags: [],           // array de strings
-  // corretor
-  corretorResponsavel: "",   // ObjectId (broker) — required no LeadRequest
-  submittedByBroker: "",     // ObjectId (broker) — required no LeadRequest
-  // coadquirentes (opcional, só envia se tiver pelo botão)
-  coadquirentes: [],  // [{nome, cpf, rg, nacionalidade, estadoCivil, profissao, email, contato, endereco, nascimento}]
+  origem: "",
+  responsavel: "",
+  tags: [],
+  corretorResponsavel: "",
+  submittedByBroker: "",
+  coadquirentes: [],
 };
 
 function LeadFormModal({
@@ -53,8 +50,9 @@ function LeadFormModal({
   onSaved,
   prefill,
   hideFields = [],
-  corretorInfo, // { id, nome }
-  createApi,    // opcional para sobrescrever o create padrão
+  corretorInfo,
+  createApi,
+  afterCreateUploadDocs
 }) {
   const createFn = createApi || createLead;
   const isEditMode = Boolean(leadId);
@@ -71,6 +69,14 @@ function LeadFormModal({
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [optionsError, setOptionsError] = useState(null);
+
+  const [files, setFiles] = useState([]);
+
+  // handler simples
+  const handleFilesChange = useCallback((e) => {
+    const fList = Array.from(e.target.files || []);
+    setFiles(fList);
+  }, []);
 
   // Reset + prefill (create only)
   useEffect(() => {
@@ -265,118 +271,143 @@ function LeadFormModal({
     });
   }, []);
 
-  const handleSubmit = useCallback(
-    async (e) => {
-      e.preventDefault();
-      if (isProcessing) return;
-      setIsProcessing(true);
+ const handleSubmit = useCallback(
+  async (e) => {
+    e.preventDefault();
+    if (isProcessing) return;
+    setIsProcessing(true);
 
-      // Validações mínimas
-      if (!formData.nome || !formData.contato) {
-        toast.warn("Nome e Contato são obrigatórios.");
-        setIsProcessing(false);
-        return;
-      }
-      if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
-        toast.warn("Formato de email inválido.");
-        setIsProcessing(false);
-        return;
-      }
-      if (formData.contato && !isValidPhoneNumber(formData.contato)) {
-        toast.warn("Telefone inválido.");
-        setIsProcessing(false);
-        return;
-      }
-      // Se estiver usando o modelo LeadRequest: corretor é obrigatório
-      if (!formData.corretorResponsavel || !formData.submittedByBroker) {
-        toast.warn("Corretor responsável não definido.");
-        setIsProcessing(false);
-        return;
-      }
+    // Validações mínimas
+    if (!formData.nome || !formData.contato) {
+      toast.warn("Nome e Contato são obrigatórios.");
+      setIsProcessing(false);
+      return;
+    }
+    if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
+      toast.warn("Formato de email inválido.");
+      setIsProcessing(false);
+      return;
+    }
+    if (formData.contato && !isValidPhoneNumber(formData.contato)) {
+      toast.warn("Telefone inválido.");
+      setIsProcessing(false);
+      return;
+    }
+    if (!formData.corretorResponsavel || !formData.submittedByBroker) {
+      toast.warn("Corretor responsável não definido.");
+      setIsProcessing(false);
+      return;
+    }
 
-      try {
-        // Normaliza payload
-        const basePayload = { ...formData };
+    try {
+      // Normaliza payload
+      const basePayload = { ...formData };
 
-        // Limpa CPF vazio
-        if (basePayload.cpf && basePayload.cpf.replace(/\D/g, "") === "") delete basePayload.cpf;
-        // coadquirentes: só envia se houver pelo menos 1
-        if (!Array.isArray(basePayload.coadquirentes) || basePayload.coadquirentes.length === 0) {
-          delete basePayload.coadquirentes;
-        } else {
-          basePayload.coadquirentes = basePayload.coadquirentes.map((c) => {
-            const copy = { ...c };
-            if (copy.cpf && copy.cpf.replace(/\D/g, "") === "") delete copy.cpf;
-            // remove campos vazios para não poluir
-            Object.keys(copy).forEach((k) => {
-              if (copy[k] === "" || copy[k] === null) delete copy[k];
-            });
-            return copy;
+      if (basePayload.cpf && basePayload.cpf.replace(/\D/g, "") === "")
+        delete basePayload.cpf;
+
+      if (!Array.isArray(basePayload.coadquirentes) || basePayload.coadquirentes.length === 0) {
+        delete basePayload.coadquirentes;
+      } else {
+        basePayload.coadquirentes = basePayload.coadquirentes.map((c) => {
+          const copy = { ...c };
+          if (copy.cpf && copy.cpf.replace(/\D/g, "") === "") delete copy.cpf;
+          Object.keys(copy).forEach((k) => {
+            if (copy[k] === "" || copy[k] === null) delete copy[k];
           });
-        }
-        // Tags: garante array de strings
-        if (!Array.isArray(basePayload.tags)) basePayload.tags = [];
+          return copy;
+        });
+      }
 
-        const payload = stripHiddenFields(basePayload);
+      if (!Array.isArray(basePayload.tags)) basePayload.tags = [];
 
-        if (isEditMode) {
-          if (!initialData) {
-            toast.error("Dados iniciais não carregados.");
-            setIsProcessing(false);
-            return;
-          }
-          // diff apenas nos campos que mudaram (inclui novos campos)
-          const changed = {};
-          Object.keys(payload).forEach((k) => {
-            if (isHidden(k)) return;
-            const curr = payload[k];
-            const init = initialData[k];
+      const payload = stripHiddenFields(basePayload);
 
-            const isEqual =
-              Array.isArray(curr) && Array.isArray(init)
-                ? JSON.stringify(curr) === JSON.stringify(init)
-                : curr === init;
-
-            if (!isEqual) {
-              changed[k] = curr === "" ? null : curr;
-            }
-          });
-
-          if (Object.keys(changed).length === 0) {
-            toast.info("Nenhuma alteração detectada.");
-            setIsProcessing(false);
-            return;
-          }
-          await updateLead(leadId, changed);
-          toast.success("Lead atualizado!");
-        } else {
-          // Create: remove chaves vazias não obrigatórias
-          Object.keys(payload).forEach((k) => {
-            if (!["nome", "contato", "corretorResponsavel", "submittedByBroker"].includes(k)) {
-              if (payload[k] === "" || payload[k] === null) delete payload[k];
-            }
-          });
-          await createFn(payload);
-          toast.success("Lead cadastrado!");
-          // Reset preservando corretor, se existir
-          setFormData((prev) => ({
-            ...initialState,
-            corretorResponsavel: prev.corretorResponsavel,
-            submittedByBroker: prev.submittedByBroker,
-          }));
+      if (isEditMode) {
+        if (!initialData) {
+          toast.error("Dados iniciais não carregados.");
+          setIsProcessing(false);
+          return;
         }
 
-        onSaved?.();
-        onClose?.();
-      } catch (err) {
-        toast.error(err?.message || `Falha ao ${isEditMode ? "atualizar" : "cadastrar"}.`);
-        console.error(err);
-      } finally {
-        setIsProcessing(false);
+        const changed = {};
+        Object.keys(payload).forEach((k) => {
+          if (isHidden(k)) return;
+          const curr = payload[k];
+          const init = initialData[k];
+
+          const isEqual =
+            Array.isArray(curr) && Array.isArray(init)
+              ? JSON.stringify(curr) === JSON.stringify(init)
+              : curr === init;
+
+          if (!isEqual) {
+            changed[k] = curr === "" ? null : curr;
+          }
+        });
+
+        if (Object.keys(changed).length === 0) {
+          toast.info("Nenhuma alteração detectada.");
+          setIsProcessing(false);
+          return;
+        }
+
+        await updateLead(leadId, changed);
+        toast.success("Lead atualizado!");
+      } else {
+        // CREATE (ajustado)
+        // -------------------
+        Object.keys(payload).forEach((k) => {
+          if (!["nome", "contato", "corretorResponsavel", "submittedByBroker"].includes(k)) {
+            if (payload[k] === "" || payload[k] === null) delete payload[k];
+          }
+        });
+
+        // cria LeadRequest via createFn (submitLeadRequestPublicApi)
+        const created = await createFn(payload);
+
+        // pega o _id que a API retornou
+        const createdId = created?._id || created?.data?._id || created?.data?.data?._id;
+
+        // <<< AQUI: se houver arquivos e a prop afterCreateUploadDocs foi passada, dispara upload
+        if (files.length && typeof afterCreateUploadDocs === "function" && createdId) {
+          await afterCreateUploadDocs({ createdId, files });
+        }
+
+        toast.success("Lead cadastrado!");
+
+        setFormData((prev) => ({
+          ...initialState,
+          corretorResponsavel: prev.corretorResponsavel,
+          submittedByBroker: prev.submittedByBroker,
+        }));
+        setFiles([]); // limpa seleção de arquivos
       }
-    },
-    [formData, initialData, isEditMode, leadId, isProcessing, hideFields, onSaved, onClose, createFn]
-  );
+
+      onSaved?.();
+      onClose?.();
+    } catch (err) {
+      toast.error(err?.message || `Falha ao ${isEditMode ? "atualizar" : "cadastrar"}.`);
+      console.error(err);
+    } finally {
+      setIsProcessing(false);
+    }
+  },
+  [
+    formData,
+    initialData,
+    isEditMode,
+    leadId,
+    isProcessing,
+    hideFields,
+    onSaved,
+    onClose,
+    createFn,
+    files,                
+    afterCreateUploadDocs 
+  ]
+);
+
 
   if (!isOpen) return null;
 
@@ -679,6 +710,22 @@ function LeadFormModal({
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {!isHidden("documentos") && (
+              <div className="lfm-field lfm-col-2">
+                <label htmlFor="lfm-docs">Documentos do cliente (PDF, imagens, etc.)</label>
+                <input
+                  id="lfm-docs"
+                  type="file"
+                  multiple
+                  onChange={handleFilesChange}
+                  accept=".pdf,image/*"
+                />
+                {files?.length > 0 && (
+                  <small className="lfm-hint">{files.length} arquivo(s) selecionado(s)</small>
+                )}
               </div>
             )}
 

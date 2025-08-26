@@ -5,7 +5,7 @@ const associacaoSchema = new Schema({
     kind: { // O tipo de entidade à qual este ficheiro está associado
         type: String,
         required: true,
-        enum: ['Lead', 'PropostaContrato', 'Empreendimento', 'Unidade', 'ImovelAvulso', 'User']
+        enum: ['Lead', 'PropostaContrato', 'Empreendimento', 'Unidade', 'ImovelAvulso', 'User', "LeadRequest"]
     },
     item: { // O ID da entidade específica
         type: Schema.Types.ObjectId,

@@ -232,10 +232,33 @@ const uploadBuffer = async (buffer, fileDetails, metadata, companyId, userId) =>
     }
 };
 
+
+
+async function migrateAssociationsFromLeadRequestToLead(leadRequestId, leadId, companyId) {
+  const query = { company: companyId, 'associations.kind': 'LeadRequest', 'associations.item': leadRequestId };
+  const arquivos = await Arquivo.find(query).lean();
+
+  if (!arquivos.length) return { moved: 0 };
+
+  const bulk = Arquivo.collection.initializeUnorderedBulkOp();
+  arquivos.forEach((arq) => {
+    const newAssociations = arq.associations
+      .filter(a => !(a.kind === 'LeadRequest' && String(a.item) === String(leadRequestId)))
+      .concat([{ kind: 'Lead', item: leadId }]);
+
+    bulk.find({ _id: arq._id }).updateOne({ $set: { associations: newAssociations, pasta: 'Documentos', categoria: 'Documentos Leads' }});
+  });
+
+  const result = await bulk.execute();
+  return { moved: result.nModified || arquivos.length };
+}
+
+
 module.exports = {
     registrarArquivo,
     listarArquivos,
     apagarArquivo,
     getPreviewStream,
-    uploadBuffer
+    uploadBuffer,
+    migrateAssociationsFromLeadRequestToLead
 };
