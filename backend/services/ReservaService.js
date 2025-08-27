@@ -7,7 +7,9 @@ const Empreendimento = require('../models/Empreendimento');
 const ImovelAvulso = require('../models/ImovelAvulso');
 const LeadStage = require('../models/LeadStage');
 const { logHistory } = require('./LeadService');
+const PropostaContrato = require('../models/PropostaContrato');
 require('../models/ImovelAvulso');
+
 
 const Company = require('../models/Company');
 
@@ -176,12 +178,12 @@ const getReservasByCompany = async (companyId, queryParams = {}) => {
     const d = {};
     if (from) {
       const start = new Date(from);
-      start.setHours(0,0,0,0);
+      start.setHours(0, 0, 0, 0);
       d.$gte = start;
     }
     if (to) {
       const end = new Date(to);
-      end.setHours(23,59,59,999);
+      end.setHours(23, 59, 59, 999);
       d.$lte = end;
     }
     queryConditions.dataReserva = d;
@@ -276,7 +278,9 @@ const getReservaById = async (reservaId, companyId) => {
 };
 
 
-async function deleteReserva(reservaId, companyId, userId) {
+async function deleteReserva(reservaId, companyId, userId, opts = {}) {
+  const { cascade = true } = opts; // por padrão, apaga também a proposta vinculada
+
   if (!mongoose.Types.ObjectId.isValid(reservaId) || !mongoose.Types.ObjectId.isValid(companyId)) {
     throw new Error('ID inválido.');
   }
@@ -285,9 +289,48 @@ async function deleteReserva(reservaId, companyId, userId) {
   session.startTransaction();
 
   try {
-    // 1) Reserva da empresa
+    // 1) Carrega a reserva da empresa
     const reserva = await Reserva.findOne({ _id: reservaId, company: companyId }).session(session);
     if (!reserva) throw new Error('Reserva não encontrada para esta empresa.');
+
+    // Bloqueios de negócio comuns (ajuste como preferir)
+    if (String(reserva.statusReserva).toLowerCase() === 'convertidaemvenda') {
+      throw new Error('Não é possível excluir: a reserva já foi convertida em venda. Use distrato/cancelamento.');
+    }
+
+    // 1.1) Se houver proposta vinculada e cascade=true, apaga a proposta com segurança
+    let propostaFoiApagada = false;
+    let propostaApagadaId = null;
+
+    if (cascade && reserva.propostaId) {
+      const proposta = await PropostaContrato.findOne({
+        _id: reserva.propostaId,
+        company: companyId,
+      }).session(session);
+
+      if (proposta) {
+        // Regra de proteção mínima
+        const status = String(proposta.statusPropostaContrato || '').toLowerCase();
+        if (status === 'vendido' || status === 'distrato realizado') {
+          throw new Error('Não é possível excluir: a proposta vinculada está Vendida/Distratada. Use o fluxo de distrato.');
+        }
+
+        const existeParcelaPaga = await Parcela.exists({
+          company: companyId,
+          propostaContrato: proposta._id,
+          status: 'Pago'
+        }).session(session);
+        if (existeParcelaPaga) {
+          throw new Error('Não é possível excluir: existem parcelas pagas. Use cancelamento/distrato.');
+        }
+
+        await Parcela.deleteMany({ company: companyId, propostaContrato: proposta._id }).session(session);
+
+        await PropostaContrato.deleteOne({ _id: proposta._id }).session(session);
+        propostaFoiApagada = true;
+        propostaApagadaId = proposta._id;
+      }
+    }
 
     // 2) Resolve modelo do imóvel de forma resiliente
     const modelNames = new Set(mongoose.modelNames());
@@ -354,8 +397,14 @@ async function deleteReserva(reservaId, companyId, userId) {
         lead._id,
         userId,
         'RESERVA_CANCELADA',
-        `Reserva ${reservaId} excluída. Imóvel liberado${imovel ? ` (${imovelModelUsed}:${imovel._id})` : ''}.`,
-        { reservaId, imovelId: imovel?._id || null, tipoImovel: imovelModelUsed || desired || null }
+        `Reserva ${reservaId} excluída. ${propostaFoiApagada ? `Proposta ${propostaApagadaId} removida. ` : ''}Imóvel liberado${imovel ? ` (${imovelModelUsed}:${imovel._id})` : ''}.`,
+        {
+          reservaId,
+          propostaDeletada: propostaFoiApagada,
+          propostaId: propostaApagadaId,
+          imovelId: imovel?._id || null,
+          tipoImovel: imovelModelUsed || desired || null
+        }
       );
     }
 
@@ -363,7 +412,14 @@ async function deleteReserva(reservaId, companyId, userId) {
     await Reserva.deleteOne({ _id: reservaId, company: companyId }).session(session);
 
     await session.commitTransaction();
-    return { ok: true, reservaId, imovelId: imovel?._id || null, leadId: lead?._id || null };
+    return {
+      ok: true,
+      reservaId,
+      propostaDeletada: propostaFoiApagada,
+      propostaId: propostaApagadaId,
+      imovelId: imovel?._id || null,
+      leadId: lead?._id || null
+    };
   } catch (err) {
     await session.abortTransaction();
     throw new Error(err.message || 'Erro ao excluir reserva.');
@@ -382,5 +438,5 @@ module.exports = {
   getReservasByCompany,
   getReservaById,
   deleteReserva
-  
+
 };

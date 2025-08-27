@@ -90,10 +90,12 @@ const deleteReservaController = asyncHandler(async (req, res, next) => {
   const userId = req.user._id;
   const { id } = req.params;
 
-  const result = await ReservaService.deleteReserva(id, companyId, userId);
+  const cascade = String(req.query.cascade || 'true').toLowerCase() === 'true';
+
+  const result = await ReservaService.deleteReserva(id, companyId, userId, { cascade });
   return res.status(200).json({
     success: true,
-    message: 'Reserva excluída com sucesso.',
+    message: cascade ? 'Reserva (e vínculos) excluídos.' : 'Reserva excluída.',
     data: result,
   });
 });
