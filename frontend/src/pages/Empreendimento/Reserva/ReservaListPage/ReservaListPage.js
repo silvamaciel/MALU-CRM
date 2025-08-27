@@ -106,19 +106,35 @@ function ReservaListPage() {
     navigate(`/reservas/${reservaId}/proposta-contrato/novo`);
   };
 
-  const handleDelete = async (reservaId) => {
-    const ok = window.confirm("Excluir esta reserva? Esta ação é irreversível.");
-    if (!ok) return;
-    try {
-      await deleteReservaApi(reservaId);
-      toast.success("Reserva excluída.");
-      // Recarrega a página atual mantendo filtros
-      fetchReservas(page, limit);
-    } catch (err) {
-      const msg = err?.error || err?.message || "Falha ao excluir a reserva.";
-      toast.error(msg);
-    }
-  };
+  const handleDelete = async (resOrObj) => {
+  const resObj = typeof resOrObj === 'string'
+    ? reservas.find(r => r._id === resOrObj)
+    : resOrObj;
+
+  const reservaId = resObj?._id || resOrObj;
+
+  const msgConfirm = resObj?.propostaId
+    ? "Excluir esta reserva e a Proposta/Contrato vinculada? Esta ação é irreversível."
+    : "Excluir esta reserva? Esta ação é irreversível.";
+
+  if (!window.confirm(msgConfirm)) return;
+
+  try {
+    const payload = await deleteReservaApi(reservaId, { cascade: true });
+    const data = payload?.data || payload;
+    const foiCascade = !!data?.propostaDeletada;
+
+    toast.success(foiCascade ? "Reserva e Proposta/Contrato excluídas." : "Reserva excluída.");
+    fetchReservas(page, limit);
+  } catch (err) {
+    const msg =
+      err?.response?.data?.error ||
+      err?.error ||
+      err?.message ||
+      "Falha ao excluir a reserva.";
+    toast.error(msg);
+  }
+};
 
   return (
     <div className="admin-page reserva-list-page">
@@ -297,7 +313,7 @@ function ReservaListPage() {
 
                           <button
                             className="button danger-button small-button"
-                            onClick={() => handleDelete(res._id)}
+                            onClick={() => handleDelete(res)}
                             type="button"
                           >
                             Excluir
