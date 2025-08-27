@@ -11,15 +11,34 @@ export default function ImovelAvulsoQuickCreateModal({ open, onClose, onCreated,
 
   const [form, setForm] = useState({
     titulo: '',
+    construtoraNome: '',
     tipoImovel: TIPO_IMOVEL_OPCOES[0],
     preco: '',
     areaTotal: '',
     cidade: defaultCidade,
     uf: defaultUF,
     responsavel: '',
-    marcarVendido: true, // padrão: já marcar como vendido
+    marcarVendido: true,
   });
 
+  // RESET: toda vez que abrir o modal, zera o formulário (usando os defaults de cidade/UF)
+  useEffect(() => {
+    if (open) {
+      setForm({
+        titulo: '',
+        construtoraNome: '',
+        tipoImovel: TIPO_IMOVEL_OPCOES[0],
+        preco: '',
+        areaTotal: '',
+        cidade: defaultCidade,
+        uf: defaultUF,
+        responsavel: '',
+        marcarVendido: true,
+      });
+    }
+  }, [open, defaultCidade, defaultUF]);
+
+  // Carrega responsáveis quando abrir
   useEffect(() => {
     if (!open) return;
     (async () => {
@@ -28,23 +47,26 @@ export default function ImovelAvulsoQuickCreateModal({ open, onClose, onCreated,
         const resp = await getUsuarios({ ativo: true });
         const list = resp?.users || resp?.data || resp || [];
         setResponsaveis(list);
-        if (!form.responsavel && list.length) {
-          setForm((prev) => ({ ...prev, responsavel: list[0]._id }));
+        if (list.length) {
+          // define automaticamente o primeiro responsável, se ainda não houver um
+          setForm(prev => prev.responsavel ? prev : { ...prev, responsavel: list[0]._id });
         }
-      } catch (e) {
+      } catch {
         toast.error('Falha ao carregar responsáveis.');
       } finally {
         setLoading(false);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm((prev) => ({
+    setForm(prev => ({
       ...prev,
-      [name]: type === 'number' ? (value === '' ? '' : Number(value)) : type === 'checkbox' ? checked : value,
+      [name]:
+        type === 'number' ? (value === '' ? '' : Number(value))
+        : type === 'checkbox' ? checked
+        : value,
     }));
   };
 
@@ -66,7 +88,7 @@ export default function ImovelAvulsoQuickCreateModal({ open, onClose, onCreated,
         responsavel: form.responsavel,
         construtoraNome: form.construtoraNome || '',
         descricao: '',
-        fotos: [],    
+        fotos: [],
       };
 
       const created = await createImovelApi(payload);
@@ -90,12 +112,18 @@ export default function ImovelAvulsoQuickCreateModal({ open, onClose, onCreated,
         <form onSubmit={handleSubmit}>
           <div className="form-group full-width">
             <label>Título*</label>
-            <input name="titulo" value={form.titulo} onChange={handleChange} required disabled={loading} />
+            <input name="titulo" value={form.titulo} onChange={handleChange} required disabled={loading} autoFocus />
           </div>
 
           <div className="form-group full-width">
-            <label>Título*</label>
-            <input name="construtoraNome" value={form.construtoraNome} onChange={handleChange} required disabled={loading} />
+            <label>Construtora (opcional)</label>
+            <input
+              name="construtoraNome"
+              value={form.construtoraNome}
+              onChange={handleChange}
+              placeholder="Ex.: Construtora Exemplo Ltda"
+              disabled={loading}
+            />
           </div>
 
           <div className="form-row">
