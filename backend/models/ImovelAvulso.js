@@ -32,6 +32,8 @@ const imovelAvulsoSchema = new Schema({
     banheiros: { type: Number, default: 0 },
     vagasGaragem: { type: Number, default: 0 },
     areaTotal: { type: Number, required: [true, 'A área total é obrigatória.'] }, // m²
+
+    construtoraNome: { type: String, trim: true, index: true },
     
     preco: { type: Number, required: [true, 'O preço é obrigatório.'] },
 
@@ -42,7 +44,8 @@ const imovelAvulsoSchema = new Schema({
     }],
     
     company: { type: Schema.Types.ObjectId, ref: 'Company', required: true, index: true },
-    responsavel: { type: Schema.Types.ObjectId, ref: 'User', required: true }, // Corretor responsável pelo imóvel
+    responsavel: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+
     
     currentLeadId: { type: Schema.Types.ObjectId, ref: 'Lead', default: null },
     currentReservaId: { type: Schema.Types.ObjectId, ref: 'Reserva', default: null },

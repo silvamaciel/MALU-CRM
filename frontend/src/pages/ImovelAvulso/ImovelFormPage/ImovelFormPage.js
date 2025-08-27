@@ -1,3 +1,5 @@
+// frontend\src\pages\ImovelAvulso\ImovelFormPage\ImovelFormPage.js
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -18,6 +20,7 @@ function ImovelFormPage() {
         quartos: 0, suites: 0, banheiros: 0, vagasGaragem: 0,
         areaTotal: '', preco: '',
         endereco: { logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', uf: '', cep: '' },
+        construtoraNome: imovelData.construtoraNome || '',
         responsavel: '', fotos: [],
     });
 
@@ -128,7 +131,8 @@ function ImovelFormPage() {
                         {/* Informações Principais */}
                         <div className="form-section">
                             <h3>Informações Principais</h3>
-                            <div className="form-group full-width"><label>Título do Anúncio*</label><input type="text" name="titulo" value={formData.titulo} onChange={handleChange} required /></div>
+                            <div className="form-group full-width"><label>Nome do Imóvel*</label><input type="text" name="titulo" value={formData.titulo} onChange={handleChange} required /></div>
+                            <div className="form-group full-width"><label>Construtora*</label><input type="text" name="construtoraNome" value={formData.construtoraNome} onChange={handleChange} required /></div>
                             <div className="form-group full-width"><label>Descrição</label><textarea name="descricao" value={formData.descricao} onChange={handleChange} rows="4"></textarea></div>
                             <div className="form-row">
                                 <div className="form-group"><label>Tipo de Imóvel*</label><select name="tipoImovel" value={formData.tipoImovel} onChange={handleChange} required>{TIPO_IMOVEL_OPCOES.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
