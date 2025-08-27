@@ -20,7 +20,7 @@ function ImovelFormPage() {
         quartos: 0, suites: 0, banheiros: 0, vagasGaragem: 0,
         areaTotal: '', preco: '',
         endereco: { logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', uf: '', cep: '' },
-        construtoraNome: imovelData.construtoraNome || '',
+        construtoraNome: '',
         responsavel: '', fotos: [],
     });
 

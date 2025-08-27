@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
-import { createImovelApi } from '../api/imovelAvulsoApi';
-import { getUsuarios } from '../api/users';
+import { createImovelApi } from '../../api/imovelAvulsoApi';
+import { getUsuarios } from '../../api/users';
 
 const TIPO_IMOVEL_OPCOES = ['Apartamento', 'Casa', 'Terreno', 'Sala Comercial', 'Loja', 'Galpão', 'Outro'];
 
