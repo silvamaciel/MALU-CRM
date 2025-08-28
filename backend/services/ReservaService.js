@@ -8,6 +8,7 @@ const ImovelAvulso = require('../models/ImovelAvulso');
 const LeadStage = require('../models/LeadStage');
 const { logHistory } = require('./LeadService');
 const PropostaContrato = require('../models/PropostaContrato');
+const Parcela = require('../models/Parcela')
 require('../models/ImovelAvulso');
 
 
