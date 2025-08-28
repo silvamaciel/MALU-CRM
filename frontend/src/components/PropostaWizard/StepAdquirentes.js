@@ -4,7 +4,7 @@ import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import './StepAdquirentes.css';
 import './WizardSteps.css';
-import dateToInput from '../../utils/date'
+import {dateToInput} from '../../utils/date'
 
 const ESTADO_CIVIL_OPCOES = ["Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)", "União Estável", "Outro"];
 
