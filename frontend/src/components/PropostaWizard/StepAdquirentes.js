@@ -4,6 +4,7 @@ import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import './StepAdquirentes.css';
 import './WizardSteps.css';
+import dateToInput from '../../utils/date'
 
 const ESTADO_CIVIL_OPCOES = ["Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)", "União Estável", "Outro"];
 
@@ -80,7 +81,7 @@ function StepAdquirentes({ formData, setFormData }) {
           </div>
           <div className="form-group">
             <label>Data de Nascimento</label>
-            <input type="date" name="nascimento" value={adquirentePrincipal.nascimento ? new Date(adquirentePrincipal.nascimento).toISOString().split('T')[0] : ''} onChange={handlePrincipalChange} />
+            <input type="date" name="nascimento" value={dateToInput(adquirentePrincipal.nascimento ?? adquirentePrincipal.nascimento ?? '' )} onChange={handlePrincipalChange} />
           </div>
         </div>
 
@@ -146,7 +147,7 @@ function StepAdquirentes({ formData, setFormData }) {
             </div>
             <div className="form-group">
               <label>Data de Nascimento</label>
-              <input type="date" name="nascimento" value={coad.nascimento ? new Date(coad.nascimento).toISOString().split('T')[0] : ''} onChange={(e) => handleCoadquirenteChange(index, e)} />
+              <input type="date" name="nascimento" value={dateToInput(coad.nascimento ?? coad.nascimento ?? '')} onChange={(e) => handleCoadquirenteChange(index, e)} />
             </div>
           </div>
 
