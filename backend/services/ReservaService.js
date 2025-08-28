@@ -280,7 +280,7 @@ const getReservaById = async (reservaId, companyId) => {
 
 
 async function deleteReserva(reservaId, companyId, userId, opts = {}) {
-  const { cascade = true } = opts; // por padrão, apaga também a proposta vinculada
+  const { cascade = true } = opts;
 
   if (!mongoose.Types.ObjectId.isValid(reservaId) || !mongoose.Types.ObjectId.isValid(companyId)) {
     throw new Error('ID inválido.');
@@ -294,7 +294,7 @@ async function deleteReserva(reservaId, companyId, userId, opts = {}) {
     const reserva = await Reserva.findOne({ _id: reservaId, company: companyId }).session(session);
     if (!reserva) throw new Error('Reserva não encontrada para esta empresa.');
 
-    // Bloqueios de negócio comuns (ajuste como preferir)
+    // Bloqueio de negócio
     if (String(reserva.statusReserva).toLowerCase() === 'convertidaemvenda') {
       throw new Error('Não é possível excluir: a reserva já foi convertida em venda. Use distrato/cancelamento.');
     }
@@ -310,12 +310,12 @@ async function deleteReserva(reservaId, companyId, userId, opts = {}) {
       }).session(session);
 
       if (proposta) {
-        // Regra de proteção mínima
         const status = String(proposta.statusPropostaContrato || '').toLowerCase();
         if (status === 'vendido' || status === 'distrato realizado') {
           throw new Error('Não é possível excluir: a proposta vinculada está Vendida/Distratada. Use o fluxo de distrato.');
         }
 
+        // impede deletar se existe parcela paga
         const existeParcelaPaga = await Parcela.exists({
           company: companyId,
           propostaContrato: proposta._id,
@@ -325,6 +325,7 @@ async function deleteReserva(reservaId, companyId, userId, opts = {}) {
           throw new Error('Não é possível excluir: existem parcelas pagas. Use cancelamento/distrato.');
         }
 
+        // remove parcelas não pagas (se existirem)
         await Parcela.deleteMany({ company: companyId, propostaContrato: proposta._id }).session(session);
 
         await PropostaContrato.deleteOne({ _id: proposta._id }).session(session);
@@ -333,7 +334,7 @@ async function deleteReserva(reservaId, companyId, userId, opts = {}) {
       }
     }
 
-    // 2) Resolve modelo do imóvel de forma resiliente
+    // 2) Resolve modelo do imóvel de forma resiliente (para log e fallback)
     const modelNames = new Set(mongoose.modelNames());
     const desired = String(reserva.tipoImovel || '').trim();
     let imovel = null;
@@ -366,18 +367,29 @@ async function deleteReserva(reservaId, companyId, userId, opts = {}) {
       }
     }
 
-    // 4) Liberar imóvel (se encontrado)
-    if (imovel) {
-      if ('currentLeadId' in imovel) imovel.currentLeadId = undefined;
-      if ('currentReservaId' in imovel) imovel.currentReservaId = undefined;
+    // 4) Liberar imóvel (SEMPRE setar Disponível para Unidade e Avulso)
+    const unsetCommon = { currentLeadId: '', currentReservaId: '', reservaId: '' };
 
-      if ('statusUnidade' in imovel) imovel.statusUnidade = 'Disponível';
-      else if ('statusImovel' in imovel) imovel.statusImovel = 'Disponível';
-      else if ('status' in imovel) imovel.status = 'Disponível';
-
-      await imovel.save({ session });
+    if (imovelModelUsed === 'Unidade') {
+      await Unidade.updateOne(
+        { _id: reserva.imovel, company: companyId },
+        { $set: { statusUnidade: 'Disponível', status: 'Disponível' }, $unset: unsetCommon }
+      ).session(session);
+    } else if (imovelModelUsed === 'ImovelAvulso') {
+      await ImovelAvulso.updateOne(
+        { _id: reserva.imovel, company: companyId },
+        { $set: { statusImovel: 'Disponível', status: 'Disponível' }, $unset: unsetCommon }
+      ).session(session);
     } else {
-      console.warn(`[ReservaService] Imóvel não localizado (reserva ${reservaId}). Tipo informado: "${desired}".`);
+      // Fallback defensivo: tenta atualizar nos dois modelos (apenas um vai casar)
+      await Unidade.updateOne(
+        { _id: reserva.imovel, company: companyId },
+        { $set: { statusUnidade: 'Disponível', status: 'Disponível' }, $unset: unsetCommon }
+      ).session(session);
+      await ImovelAvulso.updateOne(
+        { _id: reserva.imovel, company: companyId },
+        { $set: { statusImovel: 'Disponível', status: 'Disponível' }, $unset: unsetCommon }
+      ).session(session);
     }
 
     // 5) Ajustar lead (se existir)
@@ -398,12 +410,12 @@ async function deleteReserva(reservaId, companyId, userId, opts = {}) {
         lead._id,
         userId,
         'RESERVA_CANCELADA',
-        `Reserva ${reservaId} excluída. ${propostaFoiApagada ? `Proposta ${propostaApagadaId} removida. ` : ''}Imóvel liberado${imovel ? ` (${imovelModelUsed}:${imovel._id})` : ''}.`,
+        `Reserva ${reservaId} excluída. ${propostaFoiApagada ? `Proposta ${propostaApagadaId} removida. ` : ''}Imóvel liberado (${imovelModelUsed || desired || 'desconhecido'}:${reserva.imovel}).`,
         {
           reservaId,
           propostaDeletada: propostaFoiApagada,
           propostaId: propostaApagadaId,
-          imovelId: imovel?._id || null,
+          imovelId: reserva.imovel,
           tipoImovel: imovelModelUsed || desired || null
         }
       );
@@ -418,7 +430,7 @@ async function deleteReserva(reservaId, companyId, userId, opts = {}) {
       reservaId,
       propostaDeletada: propostaFoiApagada,
       propostaId: propostaApagadaId,
-      imovelId: imovel?._id || null,
+      imovelId: reserva.imovel,
       leadId: lead?._id || null
     };
   } catch (err) {
