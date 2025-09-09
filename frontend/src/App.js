@@ -33,7 +33,6 @@ import PropostaContratoFormPage from './pages/PropostaContrato/PropostaContratoF
 import PropostaContratoDetailPage from './pages/PropostaContrato/PropostaContratoDetailPage/PropostaContratoDetailPage';
 import ImovelListPage from './pages/ImovelAvulso/ImovelListPage/ImovelListPage';
 import ImovelFormPage from './pages/ImovelAvulso/ImovelFormPage/ImovelFormPage';
-import AgendaPage from './pages/AgendaPage/AgendaPage';
 import ChatPage from './pages/ChatPage/ChatPage';
 
 import FinanceiroPage from './pages/Financeiro/FinanceiroPage'
@@ -138,7 +137,7 @@ function App() {
           <Route path="/reservas/:reservaId/proposta-contrato/novo" element={<PropostaContratoFormPage />} />
           <Route path="/propostas-contratos/:propostaContratoId" element={<PropostaContratoDetailPage />} />
           <Route path="/propostas-contratos/:propostaContratoId/editar" element={<PropostaContratoFormPage />} />
-          <Route path="/agenda" element={<AgendaPage />} />
+        
           <Route path="/tasks" element={<TasksPage />} />
 
           <Route path="/financeiro" element={<FinanceiroPage />} />
