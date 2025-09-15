@@ -7,7 +7,8 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "db:indexes:create": "cross-env IDX_MODE=create node scripts/indexes.js",
-    "db:indexes:sync": "cross-env IDX_MODE=sync node scripts/indexes.js"
+    "db:indexes:sync": "cross-env IDX_MODE=sync node scripts/indexes.js",
+    "docs:backend": "node scripts/generate-docs.mjs"
   },
   "keywords": [],
   "author": "",
@@ -40,7 +41,12 @@
     "wkhtmltopdf": "^0.4.0"
   },
   "devDependencies": {
+    "@babel/parser": "^7.28.4",
+    "@babel/traverse": "^7.28.4",
+    "comment-parser": "^1.4.1",
     "cross-env": "^7.0.3",
+    "fast-glob": "^3.3.3",
+    "fs-extra": "^11.3.1",
     "nodemon": "^3.1.10"
   }
 }
