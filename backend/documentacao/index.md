@@ -1,9 +1,8 @@
 # Documentação do Backend
 
-Gerado automaticamente por `scripts/generate-docs.mjs`.
+Gerado por `scripts/generate-docs.mjs`.
 
 ## Conteúdo
-
 - [Rotas](./rotas.md)
 - [Modelos (Mongoose)](./modelos.md)
 - [Serviços](./servicos.md)
@@ -11,6 +10,8 @@ Gerado automaticamente por `scripts/generate-docs.mjs`.
 - [Utils](./utils.md)
 - [Config & Env](./config.md)
 - [Docker](./docker.md)
+- [Schema → PostgreSQL (mapa & DDL)](./schema-mapeamento.md)
+- [Mongo Alerts (populate/aggregate/lean/distinct/updates)](./mongo-alertas.md)
 - [Grafo de dependências](./grafo-dependencias.md)
 
-> Objetivo: apoiar a migração para PostgreSQL identificando o encadeamento (rotas → controllers → services → models) e dependências específicas de Mongo/Mongoose.
+> Use **schema-mapeamento.md** e **postgres-draft.sql** como base de migração.

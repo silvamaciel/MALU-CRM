@@ -1,7 +1,4 @@
 # Grafo de dependências (imports)
-
-> Visualize este Mermaid em VSCode (extensão), Obsidian, GitLab etc.
-
 ```mermaid
 graph LR
   "routes/authRoutes.js" --> "express"

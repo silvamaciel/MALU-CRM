@@ -1,5 +1,4 @@
 # Middlewares
-
 Total: **3**
 
 - `asyncHandler` — função exportada  

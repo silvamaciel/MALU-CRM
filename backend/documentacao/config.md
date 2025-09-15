@@ -1,12 +1,10 @@
 # Config & Variáveis de Ambiente
 
 Arquivos em `config/`:
-
 - `config/db.js`
 - `config/s3.js`
 
-Variáveis de ambiente usadas (`process.env`):
-
+Variáveis de ambiente usadas:
 - `EVOLUTION_API_URL`
 - `FB_APP_SECRET`
 - `FB_VERIFY_TOKEN`

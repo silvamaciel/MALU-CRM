@@ -1,7 +1,5 @@
 # Services
-
-Services que importam **models** (candidatos a refator para PostgreSQL):
-
+Services que importam **models**:
 - `services/authService.js`
   • Models importados: ../models/User
 - `services/brokerContactService.js`
@@ -58,7 +56,6 @@ Services que importam **models** (candidatos a refator para PostgreSQL):
   • Models importados: ../models/Company, ../models/User, ../models/origem, ../models/Lead
 
 Controllers que importam **services**:
-
 - `controllers/authController.js`
   • Services importados: ../services/authService
 - `controllers/brokerContactController.js`
