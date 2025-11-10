@@ -24,6 +24,12 @@ const formatCurrencyBR = (value) => {
   return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
+const toNumberFromCurrencyDigits = (value) => {
+  const onlyDigits = String(value).replace(/\D/g, '');
+  if (!onlyDigits) return 0;
+  return parseFloat(onlyDigits) / 100;
+};
+
 function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM, reservaBase }) {
   const [totalParcelas, setTotalParcelas] = useState(0);
 
@@ -74,6 +80,13 @@ function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM, reservaB
       list[index][name] = value;
     }
 
+    setFormData(prev => ({ ...prev, planoDePagamento: list }));
+  };
+
+  // Handler específico p/ Valor Unitário com formatação ao digitar
+  const handlePlanoDePagamentoValorUnitarioInput = (index, rawValue) => {
+    const list = [...(formData.planoDePagamento || [])];
+    list[index].valorUnitario = toNumberFromCurrencyDigits(rawValue);
     setFormData(prev => ({ ...prev, planoDePagamento: list }));
   };
 
@@ -231,7 +244,7 @@ function StepFinanceiro({ formData, setFormData, isSaving, usuariosCRM, reservaB
                   name="valorUnitario"
                   className="currency-input"
                   value={formatCurrencyBR(parcela.valorUnitario)}
-                  onChange={(e) => handlePlanoDePagamentoChange(index, e)}
+                  onChange={(e) => handlePlanoDePagamentoValorUnitarioInput(index, e.target.value)}
                   required
                   disabled={isSaving}
                   inputMode="decimal"
