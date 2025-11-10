@@ -11,4 +11,4 @@
 .signer-item:last-child { border-bottom: none; }
 .signer-status { font-weight: bold; }
 .signer-item.status-assinado .signer-status { color: #28a745; }
-.signer-item.status-pendente .signer-status { color: #ffc107; }
+.signer-item.status-pendente .signer-status { color: #ffc107; } 
