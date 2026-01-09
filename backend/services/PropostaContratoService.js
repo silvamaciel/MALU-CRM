@@ -6,7 +6,7 @@ const Arquivo = require('../models/Arquivo');
 const Lead = require('../models/Lead');
 const Unidade = require('../models/Unidade');
 const Empreendimento = require('../models/Empreendimento');
-const Company = require('../models/Company'); 
+const Company = require('../models/Company');
 const LeadStage = require('../models/LeadStage');
 const { logHistory } = require('./LeadService');
 const User = require('../models/User');
@@ -30,19 +30,19 @@ const FileService = require('./FileService');
  * - `filename` {string}: O nome do arquivo gerado.
  */
 const gerarEsalvarPdfContrato = async (contratoId, companyId, userId) => {
-    const contrato = await PropostaContrato.findOne({ _id: contratoId, company: companyId }).populate('lead');
-    if (!contrato || !contrato.corpoContratoHTMLGerado) {
-        throw new Error("Contrato não encontrado ou sem conteúdo HTML para gerar o PDF.");
-    }
+  const contrato = await PropostaContrato.findOne({ _id: contratoId, company: companyId }).populate('lead');
+  if (!contrato || !contrato.corpoContratoHTMLGerado) {
+    throw new Error("Contrato não encontrado ou sem conteúdo HTML para gerar o PDF.");
+  }
 
-    // 1. Apaga o contrato antigo do Drive, se existir
-    const arquivoAntigo = await Arquivo.findOne({ 'associations.item': contratoId, categoria: 'Contratos' });
-    if (arquivoAntigo) {
-        await FileService.apagarArquivo(arquivoAntigo._id, companyId);
-        console.log(`[ContratoSvc] Versão antiga do contrato apagada do Drive.`);
-    }
-    
-    const htmlContentFormatado = `
+  // 1. Apaga o contrato antigo do Drive, se existir
+  const arquivoAntigo = await Arquivo.findOne({ 'associations.item': contratoId, categoria: 'Contratos' });
+  if (arquivoAntigo) {
+    await FileService.apagarArquivo(arquivoAntigo._id, companyId);
+    console.log(`[ContratoSvc] Versão antiga do contrato apagada do Drive.`);
+  }
+
+  const htmlContentFormatado = `
         <!DOCTYPE html>
         <html lang="pt-BR">
         <head>
@@ -63,40 +63,45 @@ const gerarEsalvarPdfContrato = async (contratoId, companyId, userId) => {
         </html>
     `;
 
-    // 2. Gera o novo PDF em memória (buffer) usando o HTML formatado
-    const pdfBuffer = await new Promise((resolve, reject) => {
-        const stream = wkhtmltopdf(htmlContentFormatado, { // <<< Usa o HTML formatado
-            pageSize: 'A4',
-            marginTop: '15mm',
-            marginBottom: '15mm',
-            marginLeft: '5mm',
-            marginRight: '5mm'
-        });
-        const chunks = [];
-        stream.on('data', chunk => chunks.push(chunk));
-        stream.on('end', () => resolve(Buffer.concat(chunks)));
-        stream.on('error', reject);
+  // 2. Gera o novo PDF em memória (buffer) usando o HTML formatado
+  const pdfBuffer = await new Promise((resolve, reject) => {
+    const stream = wkhtmltopdf(htmlContentFormatado, { // <<< Usa o HTML formatado
+      pageSize: 'A4',
+      marginTop: '15mm',
+      marginBottom: '15mm',
+      marginLeft: '5mm',
+      marginRight: '5mm'
     });
+    const chunks = [];
+    stream.on('data', chunk => chunks.push(chunk));
+    stream.on('end', () => resolve(Buffer.concat(chunks)));
+    stream.on('error', reject);
+  });
 
-    // 3. Faz o upload do buffer para o Drive
-    const nomeArquivo = `Contrato_${contrato.lead.nome.replace(/\s+/g, '_')}_${contrato._id}.pdf`;
-    const metadata = {
-        categoria: 'Contratos',
-        primaryAssociation: { kind: 'PropostaContrato', item: contratoId }
-    };
-    
-    const arquivoSalvo = await FileService.uploadBuffer(
-        pdfBuffer, 
-        { originalname: nomeArquivo, mimetype: 'application/pdf' }, 
-        metadata, 
-        companyId, 
-        userId
-    );
+  // 3. Faz o upload do buffer para o Drive
+  const nomeLead =
+    contrato.lead?.nome && contrato.lead.nome.trim()
+      ? contrato.lead.nome.replace(/\s+/g, '_')
+      : 'Sem_Lead';
 
-    console.log(`[ContratoSvc] Novo PDF do contrato salvo no Drive com URL: ${arquivoSalvo.url}`);
-    
-    // 4. Retorna o buffer do PDF para o download do utilizador
-    return { buffer: pdfBuffer, filename: nomeArquivo };
+  const nomeArquivo = `Contrato_${nomeLead}_${contrato._id}.pdf`;
+  const metadata = {
+    categoria: 'Contratos',
+    primaryAssociation: { kind: 'PropostaContrato', item: contratoId }
+  };
+
+  const arquivoSalvo = await FileService.uploadBuffer(
+    pdfBuffer,
+    { originalname: nomeArquivo, mimetype: 'application/pdf' },
+    metadata,
+    companyId,
+    userId
+  );
+
+  console.log(`[ContratoSvc] Novo PDF do contrato salvo no Drive com URL: ${arquivoSalvo.url}`);
+
+  // 4. Retorna o buffer do PDF para o download do utilizador
+  return { buffer: pdfBuffer, filename: nomeArquivo };
 };
 
 
@@ -148,12 +153,12 @@ const montarDadosParaTemplate = (propostaData, leadDoc, imovelDoc, empresaVended
   dados['vendedor_representante_cpf'] = empresaVendedora?.representanteLegalCPF || '';
 
   // --- 2. Dados dos Compradores (Principal + Coadquirentes) ---
- const todosAdquirentes = propostaData.adquirentesSnapshot || [];
+  const todosAdquirentes = propostaData.adquirentesSnapshot || [];
 
-let blocoHtmlCoadquirentes = '';
-let blocoAssinaturasCompradores = '';
+  let blocoHtmlCoadquirentes = '';
+  let blocoAssinaturasCompradores = '';
 
-todosAdquirentes.forEach((adq, index) => {
+  todosAdquirentes.forEach((adq, index) => {
     const prefixo = index === 0 ? 'lead_principal' : `coadquirente${index}`;
 
     dados[`${prefixo}_nome`] = adq.nome || '';
@@ -168,7 +173,7 @@ todosAdquirentes.forEach((adq, index) => {
     dados[`${prefixo}_nascimento`] = formatDate(adq.nascimento);
 
     if (index > 0) {
-        blocoHtmlCoadquirentes += `
+      blocoHtmlCoadquirentes += `
         <p>
             <strong>Coadquirente ${index}</strong><br>
             Nome: ${adq.nome || ''}<br>
@@ -198,7 +203,7 @@ todosAdquirentes.forEach((adq, index) => {
         <br>
         </p>
     `;
-    });
+  });
 
   dados['bloco_html_coadquirentes'] = blocoHtmlCoadquirentes || '';
   dados['bloco_assinaturas_compradores'] = blocoAssinaturasCompradores;
@@ -427,50 +432,50 @@ const preencherTemplateContrato = (templateHtml = "", dados = {}) => {
  * @returns {Promise<PropostaContrato|null>} A Proposta/Contrato encontrada ou null.
  */
 const getPropostaContratoById = async (propostaContratoId, companyId) => {
-    if (!mongoose.Types.ObjectId.isValid(propostaContratoId) || !mongoose.Types.ObjectId.isValid(companyId)) {
-        throw new Error("ID da Proposta/Contrato ou da Empresa inválido.");
+  if (!mongoose.Types.ObjectId.isValid(propostaContratoId) || !mongoose.Types.ObjectId.isValid(companyId)) {
+    throw new Error("ID da Proposta/Contrato ou da Empresa inválido.");
+  }
+
+  console.log(`[PropContSvc] Buscando Proposta/Contrato ID: ${propostaContratoId} para Company: ${companyId}`);
+
+  try {
+    const propostaContrato = await PropostaContrato.findOne({ _id: propostaContratoId, company: companyId })
+      .populate({ path: 'lead', select: 'nome email contato cpf rg estadoCivil profissao nacionalidade' })
+      .populate({
+        path: 'imovel',
+        strictPopulate: false,
+        select: 'identificador titulo tipologia areaUtil empreendimento preco precoTabela',
+        populate: {
+          path: 'empreendimento',
+          select: 'nome localizacao memorialIncorporacao',
+          strictPopulate: false
+        }
+      })
+      .populate({ path: 'reserva', select: 'dataReserva validadeReserva valorSinal' })
+      .populate({ path: 'modeloContratoUtilizado', select: 'nomeModelo tipoDocumento' })
+      .populate({ path: 'responsavelNegociacao', select: 'nome email' })
+      .populate({ path: 'createdBy', select: 'nome email' })
+      .populate({ path: 'corretagem.corretorPrincipal', model: 'BrokerContact', select: 'nome creci cpfCnpj contato email' })
+      .lean();
+
+    if (!propostaContrato) {
+      console.log(`[PropContSvc] Proposta/Contrato ID: ${propostaContratoId} não encontrada para Company: ${companyId}.`);
+      return null;
     }
 
-    console.log(`[PropContSvc] Buscando Proposta/Contrato ID: ${propostaContratoId} para Company: ${companyId}`);
-
-    try {
-        const propostaContrato = await PropostaContrato.findOne({ _id: propostaContratoId, company: companyId })
-            .populate({ path: 'lead', select: 'nome email contato cpf rg estadoCivil profissao nacionalidade' })
-            .populate({
-                path: 'imovel',
-                strictPopulate: false,
-                select: 'identificador titulo tipologia areaUtil empreendimento preco precoTabela',
-                populate: {
-                    path: 'empreendimento',
-                    select: 'nome localizacao memorialIncorporacao',
-                    strictPopulate: false
-                }
-            })
-            .populate({ path: 'reserva', select: 'dataReserva validadeReserva valorSinal' })
-            .populate({ path: 'modeloContratoUtilizado', select: 'nomeModelo tipoDocumento' })
-            .populate({ path: 'responsavelNegociacao', select: 'nome email' })
-            .populate({ path: 'createdBy', select: 'nome email' })
-            .populate({ path: 'corretagem.corretorPrincipal', model: 'BrokerContact', select: 'nome creci cpfCnpj contato email' })
-            .lean();
-
-        if (!propostaContrato) {
-            console.log(`[PropContSvc] Proposta/Contrato ID: ${propostaContratoId} não encontrada para Company: ${companyId}.`);
-            return null;
-        }
-
-        if (propostaContrato.company) {
-            const empresaVendedora = await Company.findById(propostaContrato.company)
-                .select('nome razaoSocial cnpj endereco representanteLegalNome representanteLegalCPF')
-                .lean();
-            propostaContrato.dadosEmpresaVendedora = empresaVendedora || {};
-        }
-
-        return propostaContrato;
-
-    } catch (error) {
-        console.error(`[PropContSvc] Erro ao buscar Proposta/Contrato ${propostaContratoId}:`, error);
-        throw new Error("Erro ao buscar Proposta/Contrato por ID.");
+    if (propostaContrato.company) {
+      const empresaVendedora = await Company.findById(propostaContrato.company)
+        .select('nome razaoSocial cnpj endereco representanteLegalNome representanteLegalCPF')
+        .lean();
+      propostaContrato.dadosEmpresaVendedora = empresaVendedora || {};
     }
+
+    return propostaContrato;
+
+  } catch (error) {
+    console.error(`[PropContSvc] Erro ao buscar Proposta/Contrato ${propostaContratoId}:`, error);
+    throw new Error("Erro ao buscar Proposta/Contrato por ID.");
+  }
 };
 
 
@@ -1003,13 +1008,13 @@ const gerarDocumentoHTML = async (propostaId, modeloId, companyId) => {
 };
 
 module.exports = {
-    createPropostaContrato,
-    preencherTemplateContrato,
-    getPropostaContratoById,
-    gerarPDFPropostaContrato,
-    updatePropostaContrato,
-    updateStatusPropostaContrato,
-    registrarDistratoPropostaContrato,
-    gerarDocumentoHTML,
-    gerarEsalvarPdfContrato
+  createPropostaContrato,
+  preencherTemplateContrato,
+  getPropostaContratoById,
+  gerarPDFPropostaContrato,
+  updatePropostaContrato,
+  updateStatusPropostaContrato,
+  registrarDistratoPropostaContrato,
+  gerarDocumentoHTML,
+  gerarEsalvarPdfContrato
 };
